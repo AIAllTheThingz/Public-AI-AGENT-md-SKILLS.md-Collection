@@ -22,10 +22,11 @@ status: baseline
 - `../validate-schemas/requirements.txt`
 - `../validate-schemas/requirements.lock`
 - `../../.github/workflows/`
+- referenced local composite-action `action.yml` / `action.yaml` metadata
 
 ## Runtime dependency
 
-- `PyYAML==6.0.3`, installed through the repository hash-locked validation dependency set, is used to parse workflow YAML structurally.
+- `PyYAML==6.0.3`, installed through the repository hash-locked validation dependency set, is used to parse workflow and local composite-action YAML structurally.
 
 ## Acceptance checks
 
@@ -37,11 +38,13 @@ status: baseline
 - exit codes match the common contract
 - required tool package files are present
 - central unit-test module count covers declared tool packages
-- every direct validation dependency is represented exactly in the SHA-256-hashed resolved lock
+- every resolved validation dependency carries at least one valid SHA-256 hash
+- every direct validation dependency is represented exactly in the resolved lock
 - ordinary inline requirement comments do not create false lock-drift findings
 - GitHub Actions workflow YAML parses successfully
 - third-party repository actions use full 40-character Git commit SHAs
 - `docker://` actions use immutable `sha256:<64-hex>` OCI digests
+- referenced local composite actions are traversed recursively and nested external `uses` references satisfy immutable-pin rules
 - hosted runners do not use floating `*-latest` images
 - quoted YAML scalars and legal key-spacing variants cannot bypass or falsely trigger workflow pin checks
 - positive and negative regression tests pass
