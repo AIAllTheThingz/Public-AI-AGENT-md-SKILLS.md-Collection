@@ -44,8 +44,8 @@ Release notes distinguish:
 - Added a permanent read-only skill validator for metadata, progressive disclosure, package-routing coverage, root-manifest registration, safe local links, and optional agent UI metadata.
 - Integrated skill validation and its positive, boundary, negative, and deterministic tests into the complete validation pipeline.
 - Extended the repository skill-collection regression test to cover the virtualization router and its nine package routes.
-- Extended the skill-collection regression test to cover the operating-system router and its nine package routes.
-- Extended the skill-collection regression test to cover the networking router and its four package routes.
+- Extended the repository skill-collection regression test to cover the operating-system router and its nine package routes.
+- Extended the repository skill-collection regression test to cover the networking router and its four package routes.
 
 ### Security
 
