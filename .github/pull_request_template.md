@@ -11,6 +11,12 @@ Describe the focused change and why it is needed.
 
 A change classified as **Breaking** requires independent specialist review under `MAINTAINERS.md`, including during the pre-1.0 period.
 
+For **High** or **Critical** risk changes, complete these additional control-evidence fields:
+
+- Threat analysis: Link or concise summary / Not applicable for Low or Moderate
+- Rollback plan: Link or concise summary / Not applicable for Low or Moderate
+- Explicit approval: Reviewer/approver and link to approval record / Pending
+
 ## Ownership and review routing
 
 - Applicable CODEOWNER:
