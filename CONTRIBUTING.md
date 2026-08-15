@@ -71,7 +71,7 @@ A release pull request must update:
 - `releases/migrations/<VERSION>.md`
 - affected package, schema, template, tool, and root manifests
 
-Release automation and release tooling should receive specialist review when material or security-sensitive. Independent specialist review is mandatory when [`MAINTAINERS.md`](MAINTAINERS.md) requires it, including high/critical changes, breaking repository releases, the final `1.0.0` compatibility approval, and stable-maturity commitments.
+Release automation and release tooling should receive specialist review when material or security-sensitive. Independent specialist review is mandatory when [`MAINTAINERS.md`](MAINTAINERS.md) requires it, including high/critical changes, any breaking repository change, the final `1.0.0` compatibility approval, and stable-maturity commitments.
 
 Tags are created only after the reviewed release commit is merged to `main`. Published tags must not be moved or recreated.
 

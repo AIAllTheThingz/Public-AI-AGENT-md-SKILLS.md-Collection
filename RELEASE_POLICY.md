@@ -21,7 +21,7 @@ The Release Manager coordinates a release but may not bypass:
 - migration requirements
 - the `1.0.0` compatibility gate
 
-Routine low- and moderate-risk release-tooling or release-automation maintenance may be maintainer self-reviewed after permanent CI when no independent-review gate applies. Breaking releases, high/critical changes, the final `1.0.0` compatibility approval, and other commitments identified by `MAINTAINERS.md` still require independent specialist review.
+Routine low- and moderate-risk release-tooling or release-automation maintenance may be maintainer self-reviewed after permanent CI when no independent-review gate applies. Breaking changes, high/critical changes, the final `1.0.0` compatibility approval, and other commitments identified by `MAINTAINERS.md` still require independent specialist review.
 
 ## Repository semantic versioning
 
@@ -218,7 +218,7 @@ The release pull request must:
 
 The final release commit must receive the review class required by `MAINTAINERS.md`.
 
-Breaking releases and the final `1.0.0` compatibility approval require independent specialist review. Material release-workflow, release-tool, schema-contract, and security-sensitive release changes should receive specialist review when practical and require independence when `MAINTAINERS.md` classifies the change into an independent-review gate.
+Any breaking change covered by the release and the final `1.0.0` compatibility approval require independent specialist review. Material release-workflow, release-tool, schema-contract, and security-sensitive release changes should receive specialist review when practical and require independence when `MAINTAINERS.md` classifies the change into an independent-review gate.
 
 ### 3. Merge
 

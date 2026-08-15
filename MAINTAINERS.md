@@ -87,7 +87,7 @@ The Security Maintainer coordinates private vulnerability handling, security-sen
 
 This repository is a public standards and reference library maintained by one active maintainer. The previous policy made independent external review mandatory for broad classes of low- and moderate-risk governance, security-hardening, schema, tooling, dependency, workflow, and release-maintenance changes. That rule was not consistently achievable and created a gap between documented policy and actual repository operation.
 
-The lightweight model narrows mandatory independent review to decisions where an independent party materially changes the risk boundary: high or critical changes, breaking published compatibility commitments, final `1.0.0` approval, and stable-maturity commitments. For ordinary low- and moderate-risk maintenance, requiring an external reviewer by category alone would often leave safe corrections blocked indefinitely without materially improving assurance.
+The lightweight model narrows mandatory independent review to decisions where an independent party materially changes the risk boundary: high or critical changes, any breaking repository change as defined by `RELEASE_POLICY.md`, final `1.0.0` approval, and stable-maturity commitments. For ordinary low- and moderate-risk maintenance, requiring an external reviewer by category alone would often leave safe corrections blocked indefinitely without materially improving assurance.
 
 This change accepts the risk that a sole maintainer can miss defects in moderate-risk work. That risk is reduced by retaining these compensating controls:
 
@@ -97,7 +97,7 @@ This change accepts the risk that a sole maintainer can miss defects in moderate
 - CODEOWNERS continues to identify affected ownership and specialist areas
 - specialist review remains recommended when it would materially improve confidence
 - requested changes and review conversations must be addressed before merge
-- high/critical risk and published/stable compatibility commitments still require independent review
+- high/critical risk, breaking repository changes, and stable compatibility commitments still require independent review
 - emergency changes remain narrowly scoped and require follow-up appropriate to the risk
 
 The lighter review rule is not permission to downgrade a change's risk classification to avoid review. If uncertainty, blast radius, irreversibility, security impact, or compatibility impact raises the change to high or critical risk, the independent-review gate applies.
@@ -135,12 +135,12 @@ For material changes in a specialized area, a qualified specialist review should
 Independent specialist review is required for:
 
 - changes classified as high or critical risk
-- breaking repository releases or changes that remove or invalidate a published stable compatibility commitment
+- any change classified as breaking under `RELEASE_POLICY.md`, including pre-1.0 breaking changes
 - the final `1.0.0` compatibility approval
 - promotion of a component from `baseline` to `stable`, or a material incompatible change to an existing stable component
 - another repository policy that explicitly invokes this independent-review gate for a comparable high-impact commitment
 
-Routine low- or moderate-risk governance, security-hardening, schema, executable-tool, dependency, workflow, or release-automation changes do **not** automatically require an external reviewer. They still require documented impact, permanent CI, and maintainer review.
+Routine low- or moderate-risk governance, security-hardening, schema, executable-tool, dependency, workflow, or release-automation changes that are not classified as breaking do **not** automatically require an external reviewer. They still require documented impact, permanent CI, and maintainer review.
 
 When independent specialist review is required, the specialist reviewer must not be the author. Re-labeling the same person as both maintainer and specialist does not create independence.
 
@@ -182,9 +182,9 @@ Until a second active maintainer is appointed, the Lead Maintainer may self-merg
 - compatibility, security impact, validation, and limitations are stated
 - no unresolved external review objection remains
 
-This may include routine normative, security-hardening, schema, executable-tool, dependency, CI, or release-automation maintenance when it remains low or moderate risk and does not alter a stable compatibility commitment.
+This may include routine normative, security-hardening, schema, executable-tool, dependency, CI, or release-automation maintenance when it remains low or moderate risk, is not classified as breaking under `RELEASE_POLICY.md`, and does not alter a stable compatibility commitment.
 
-Self-merge is prohibited when independent specialist review is required by this policy, including high/critical risk, a breaking repository release, the final `1.0.0` compatibility approval, or promotion to `stable`, unless the emergency-change process applies.
+Self-merge is prohibited when independent specialist review is required by this policy, including high/critical risk, any breaking repository change, the final `1.0.0` compatibility approval, or promotion to `stable`, unless the emergency-change process applies.
 
 ## Emergency changes
 
@@ -224,7 +224,8 @@ Within seven calendar days, the maintainer must:
 - correct any deficiencies found
 - document root cause, impact, and remaining risk
 - restore normal branch and review controls if they were temporarily changed
-- obtain independent specialist review if the emergency change would normally trigger an independent-review gate; otherwise seek specialist review when it would materially improve confidence
+- complete and record a retrospective review of the emergency change, authorization, evidence, and incident or change record
+- when the emergency change triggers an independent-review gate, the retrospective review must include qualified independent specialist review; otherwise an active maintainer may perform the retrospective review and should seek specialist input when it would materially improve confidence
 
 If confidentiality is required, the public record may omit exploit details but must still identify that an emergency maintenance action occurred.
 
