@@ -16,9 +16,9 @@ It applies to repository administration and maintenance. It does not replace the
 
 The repository currently has one active maintainer.
 
-The maintainer may hold several responsibility areas, but one person cannot provide independent review of their own change. Changes that require independent specialist review must wait for a qualified reviewer who is not the author, unless the emergency-change process applies.
+The active maintainer may self-review and self-merge low- and moderate-risk repository changes after permanent CI passes when no independent-review gate below applies, no independent approval requirement imposed by another applicable repository policy applies, and no unresolved external objection remains. External specialist input is encouraged for material technical changes, but it is not automatically a merge blocker.
 
-This limitation must remain visible until at least two active maintainers or qualified specialist reviewers are appointed.
+When this policy requires independent specialist review, one person cannot provide that review for their own change. That limitation must remain visible until additional maintainers or qualified specialist reviewers are available.
 
 ## Maintainer roles
 
@@ -45,17 +45,17 @@ An Area Maintainer owns review quality and compatibility for one or more reposit
 
 - reviewing normative and breaking changes
 - keeping documentation, examples, schemas, and tests synchronized
-- identifying specialist review requirements
+- identifying when specialist review would materially improve confidence or is required by this policy
 - maintaining authoritative references and last-reviewed information
 - escalating unresolved risk or ownership gaps
 
 ### Specialist Reviewer
 
-A Specialist Reviewer provides qualified review for sensitive subject matter. A specialist reviewer does not need permanent merge access, but must be identifiable, independent from the author where required, and competent in the affected area.
+A Specialist Reviewer provides qualified review for sensitive subject matter. A specialist reviewer does not need permanent merge access, but must be identifiable and competent in the affected area. Independence from the author is required only when this policy explicitly calls for independent specialist review.
 
 ### Release Manager
 
-The Release Manager coordinates versioning, release notes, tags, release artifacts, migration notes, and release evidence. Release authority does not override required technical or specialist review.
+The Release Manager coordinates versioning, release notes, tags, release artifacts, migration notes, and release evidence. Release authority does not override any review gate that this policy explicitly requires.
 
 ### Security Maintainer
 
@@ -63,25 +63,46 @@ The Security Maintainer coordinates private vulnerability handling, security-sen
 
 ## Area ownership
 
-`CODEOWNERS` routes review requests. This table defines the review responsibility behind those routes.
+`CODEOWNERS` routes review requests. This table defines the review responsibility and specialist guidance behind those routes.
 
-| Area | Repository paths | Current owner | Required review class |
+| Area | Repository paths | Current owner | Review guidance |
 |---|---|---|---|
-| Repository governance and authority | `AGENTS.md`, `MAINTAINERS.md`, `.github/CODEOWNERS`, `governance/` | @AIAllTheThingz | Governance specialist for normative changes |
-| Security policy and secure-development controls | `SECURITY.md`, `governance/SECURE_DEVELOPMENT_POLICY.md`, `governance/THREAT_MODELING_POLICY.md`, `governance/VULNERABILITY_RESPONSE.md`, `disciplines/application-security/`, `profiles/security-tool/` | @AIAllTheThingz | Security specialist for normative or risk-reducing changes |
-| Schemas and machine-readable contracts | `schemas/`, schema-backed JSON templates, `tools/validate-schemas/` | @AIAllTheThingz | Schema or compatibility specialist for contract changes |
-| Executable tools and CI | `tools/`, `.github/workflows/` | @AIAllTheThingz | Tooling or CI specialist for executable or permission changes |
-| Licensing and contribution terms | `LICENSE`, `NOTICE`, `LICENSING.md`, license sections of `README.md` and `CONTRIBUTING.md` | @AIAllTheThingz | Lead Maintainer; legal review when terms change |
-| Languages | `languages/` | @AIAllTheThingz | Relevant language specialist for normative changes |
-| Engineering disciplines | `disciplines/` | @AIAllTheThingz | Relevant discipline specialist for normative changes |
-| Platforms | `platforms/` | @AIAllTheThingz | Relevant platform specialist for provider or operational changes |
-| Virtualization | `virtualization/` | @AIAllTheThingz | Relevant virtualization specialist for hypervisor, control-plane, recovery, lifecycle, or migration changes |
-| Operating systems | `operating-systems/` | @AIAllTheThingz | Relevant operating-system specialist for lifecycle, servicing, security, recovery, upgrade, or fleet-management changes |
-| Networking | `networking/` | @AIAllTheThingz | Relevant network specialist for control-plane, routing, switching, fabric, security, lifecycle, firmware, recovery, or migration changes |
-| Frameworks | `frameworks/` | @AIAllTheThingz | Relevant framework specialist for normative changes |
+| Repository governance and authority | `AGENTS.md`, `MAINTAINERS.md`, `.github/CODEOWNERS`, `governance/` | @AIAllTheThingz | Governance specialist recommended for material normative changes; independent review when a gate below applies |
+| Security policy and secure-development controls | `SECURITY.md`, `governance/SECURE_DEVELOPMENT_POLICY.md`, `governance/THREAT_MODELING_POLICY.md`, `governance/VULNERABILITY_RESPONSE.md`, `disciplines/application-security/`, `profiles/security-tool/` | @AIAllTheThingz | Security specialist recommended for material changes; independent review for high/critical changes |
+| Schemas and machine-readable contracts | `schemas/`, schema-backed JSON templates, `tools/validate-schemas/` | @AIAllTheThingz | Schema or compatibility specialist recommended for contract changes; independent review when stable compatibility is affected |
+| Executable tools and CI | `tools/`, `.github/workflows/` | @AIAllTheThingz | Tooling or CI specialist recommended for material behavior or permission changes |
+| Licensing and contribution terms | `LICENSE`, `NOTICE`, `LICENSING.md`, license sections of `README.md` and `CONTRIBUTING.md` | @AIAllTheThingz | Lead Maintainer; qualified legal review should be sought when terms change |
+| Languages | `languages/` | @AIAllTheThingz | Relevant language specialist recommended for material normative changes |
+| Engineering disciplines | `disciplines/` | @AIAllTheThingz | Relevant discipline specialist recommended for material normative changes |
+| Platforms | `platforms/` | @AIAllTheThingz | Relevant platform specialist recommended for provider or operational changes |
+| Virtualization | `virtualization/` | @AIAllTheThingz | Relevant virtualization specialist recommended for hypervisor, control-plane, recovery, lifecycle, or migration changes |
+| Operating systems | `operating-systems/` | @AIAllTheThingz | Relevant operating-system specialist recommended for lifecycle, servicing, security, recovery, upgrade, or fleet-management changes |
+| Networking | `networking/` | @AIAllTheThingz | Relevant network specialist recommended for control-plane, routing, switching, fabric, security, lifecycle, firmware, recovery, or migration changes |
+| Frameworks | `frameworks/` | @AIAllTheThingz | Relevant framework specialist recommended for material normative changes |
 | Project profiles | `profiles/` | @AIAllTheThingz | Profile and affected-area review |
 | Templates and examples | `templates/`, `examples/` | @AIAllTheThingz | Affected contract or governance owner |
 | Catalog and repository documentation | `README.md`, `CATALOG.md`, `MANIFEST.md`, `ROADMAP.md`, `SOURCES.md` | @AIAllTheThingz | Affected area owner |
+
+## Review model rationale and risk controls
+
+This repository is a public standards and reference library maintained by one active maintainer. The previous policy made independent external review mandatory for broad classes of low- and moderate-risk governance, security-hardening, schema, tooling, dependency, workflow, and release-maintenance changes. That rule was not consistently achievable and created a gap between documented policy and actual repository operation.
+
+The lightweight model narrows mandatory independent review to decisions where an independent party materially changes the risk boundary: high or critical changes, any breaking repository change as defined by `RELEASE_POLICY.md`, final `1.0.0` approval, and stable-maturity commitments. For ordinary low- and moderate-risk maintenance, requiring an external reviewer by category alone would often leave safe corrections blocked indefinitely without materially improving assurance.
+
+This narrowing applies only to independent specialist review under this maintainer policy. It does not waive separate approval requirements imposed by other governance policies; for example, `governance/EXCEPTION_PROCESS.md` requires the requester not to be the sole approver for moderate, high, or critical exceptions.
+
+This change accepts the risk that a sole maintainer can miss defects in moderate-risk work. That risk is reduced by retaining these compensating controls:
+
+- normal changes use pull requests rather than direct default-branch pushes
+- permanent CI must pass on the final head
+- compatibility, security, validation, and limitations must be documented
+- CODEOWNERS continues to identify affected ownership and specialist areas
+- specialist review remains recommended when it would materially improve confidence
+- requested changes and review conversations must be addressed before merge
+- high/critical risk, breaking repository changes, and stable compatibility commitments still require independent review
+- emergency changes remain narrowly scoped and require follow-up appropriate to the risk
+
+The lighter review rule is not permission to downgrade a change's risk classification to avoid review. If uncertainty, blast radius, irreversibility, security impact, or compatibility impact raises the change to high or critical risk, the independent-review gate applies.
 
 ## Review classes
 
@@ -93,7 +114,7 @@ Requirements:
 
 - permanent CI passes
 - affected links and examples remain correct
-- one active maintainer reviews the final diff
+- an active maintainer reviews the final diff
 
 The current sole maintainer may merge their own low-risk editorial change after a documented self-review and successful CI.
 
@@ -103,30 +124,31 @@ Normative changes add, remove, or alter requirements, evidence expectations, exc
 
 Requirements:
 
-- affected area owner review
+- affected area owner review or documented maintainer self-review
 - explicit compatibility and security impact
 - examples, templates, schemas, and validation updated as applicable
 - permanent CI passes
 - unresolved review findings are closed or explicitly accepted by an authorized maintainer
 
-A normative change in a sensitive area also requires specialist review.
+For material changes in a specialized area, a qualified specialist review should be requested when practical. Specialist review becomes an independent merge requirement only when one of the gates below applies.
 
 ### Independent specialist review
 
 Independent specialist review is required for:
 
-- governance authority, precedence, approval, exception, or human-review rules
-- security policy, threat-modeling, vulnerability handling, authentication, authorization, cryptography, secrets, or destructive-action controls
-- schema required fields, types, enums, identifiers, versioning, extension behavior, or compatibility promises
-- executable tool behavior, filesystem writes, subprocess execution, dependency changes, workflow permissions, or release automation
 - changes classified as high or critical risk
-- breaking repository releases
+- any change classified as breaking under `RELEASE_POLICY.md`, including pre-1.0 breaking changes
+- the final `1.0.0` compatibility approval
+- promotion of a component from `baseline` to `stable`, or a material incompatible change to an existing stable component
+- another repository policy that explicitly invokes this independent-review gate for a comparable high-impact commitment
 
-The specialist reviewer must not be the author. Re-labeling the same person as both maintainer and specialist does not create independence.
+Routine low- or moderate-risk governance, security-hardening, schema, executable-tool, dependency, workflow, or release-automation changes that are not classified as breaking do **not** automatically require an external reviewer. They still require documented impact, permanent CI, and maintainer review.
 
-While the repository has only one active maintainer, affected changes must either:
+When independent specialist review is required, the specialist reviewer must not be the author. Re-labeling the same person as both maintainer and specialist does not create independence.
 
-1. obtain review from a qualified external specialist recorded in the pull request, or
+While the repository has only one active maintainer, a change that triggers an independent-review gate must either:
+
+1. obtain review from a qualified external specialist recorded in the pull request,
 2. remain unmerged, or
 3. use the emergency-change process when delay would materially increase active harm.
 
@@ -141,7 +163,7 @@ A person may merge into the default branch only when all of the following are tr
 - they are listed as an active maintainer in this document
 - they have the required GitHub repository permission
 - permanent CI has passed for the final head commit
-- required CODEOWNER and specialist reviews have been satisfied
+- any review or approval gate required by this policy or another applicable repository policy has been satisfied
 - requested changes and unresolved review findings have been addressed
 - compatibility, security, validation, and remaining limitations are documented
 - the pull request scope is coherent and contains no unrelated changes
@@ -149,20 +171,22 @@ A person may merge into the default branch only when all of the following are tr
 
 Normal changes must use pull requests. Direct pushes to the protected default branch are prohibited except where GitHub administrative recovery makes a pull request technically impossible and the emergency process is followed.
 
-CODEOWNERS identifies reviewers. It does not itself grant merge authority, prove specialist competence, or replace branch protection.
+CODEOWNERS identifies relevant owners and reviewers. It does not itself grant merge authority, prove specialist competence, or create an independent approval requirement. Independent review or approval remains mandatory wherever this policy or another applicable repository policy requires it.
 
 ## Author self-merge
 
-Until a second active maintainer is appointed, the Lead Maintainer may self-merge only when:
+Until a second active maintainer is appointed, the Lead Maintainer may self-merge when:
 
 - the change is low or moderate risk
-- no independent specialist review is required
+- no independent specialist-review gate or other applicable independent-approval requirement applies
 - permanent CI passes on the final commit
 - the pull request contains an explicit self-review record
-- compatibility, security impact, and limitations are stated
+- compatibility, security impact, validation, and limitations are stated
 - no unresolved external review objection remains
 
-Self-merge is prohibited for high-risk, critical-risk, breaking, governance-authority, security-sensitive, schema-contract, or executable-tool changes unless the emergency-change process applies.
+This may include routine normative, security-hardening, schema, executable-tool, dependency, CI, or release-automation maintenance when it remains low or moderate risk, is not classified as breaking under `RELEASE_POLICY.md`, and does not alter a stable compatibility commitment.
+
+Self-merge is prohibited when independent specialist review is required by this policy, including high/critical risk, any breaking repository change, the final `1.0.0` compatibility approval, or promotion to `stable`. Self-merge is also prohibited when another applicable repository policy requires an independent approver, including moderate, high, or critical exception requests or renewals under `governance/EXCEPTION_PROCESS.md`. Any emergency or exception-specific override must come from the policy that defines that gate; this maintainer policy does not waive it.
 
 ## Emergency changes
 
@@ -198,11 +222,12 @@ The emergency change must:
 Within seven calendar days, the maintainer must:
 
 - open or update a public follow-up record unless confidentiality prevents it
-- obtain independent specialist review
 - run omitted validation
 - correct any deficiencies found
 - document root cause, impact, and remaining risk
 - restore normal branch and review controls if they were temporarily changed
+- complete and record a retrospective review of the emergency change, authorization, evidence, and incident or change record
+- when the emergency change triggers an independent-review gate, the retrospective review must include qualified independent specialist review; otherwise an active maintainer may perform the retrospective review and should seek specialist input when it would materially improve confidence
 
 If confidentiality is required, the public record may omit exploit details but must still identify that an emergency maintenance action occurred.
 
@@ -323,12 +348,13 @@ Examples include:
 
 Repository rules should require, where supported:
 
-- pull requests for the default branch
+- pull requests for normal changes to the default branch
 - successful permanent validation
-- required CODEOWNER review
-- resolution of review conversations
+- resolution of requested-change review conversations
 - prevention of force pushes and branch deletion
 - restricted bypass authority
+
+CODEOWNERS should route relevant review requests, but while the repository has one active maintainer it should not be configured as a mandatory approval gate for routine low- and moderate-risk changes. Independent specialist review is required when this policy's independent-review gate applies. Separate independent approval requirements imposed by other applicable governance policies remain mandatory; for example, `governance/EXCEPTION_PROCESS.md` requires an independent approver for moderate, high, or critical exceptions.
 
 This document defines policy. GitHub rulesets and permissions provide enforcement. A mismatch between policy and configuration must be treated as a repository administration defect.
 

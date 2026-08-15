@@ -14,7 +14,7 @@ Before modifying this repository:
 4. Read every scoped `AGENTS.md` between the repository root and the target file.
 5. Inspect referenced standards, schemas, examples, templates, release notes, and migration notes.
 6. Classify the change as editorial, normative, compatibility-related, security-related, breaking, or release-related.
-7. Identify the applicable CODEOWNER, area owner, specialist-review, and release-review requirements.
+7. Identify the applicable CODEOWNER, area owner, and whether specialist or release review is recommended or independently required.
 
 ## Mandatory working method
 
@@ -28,6 +28,7 @@ Before modifying this repository:
 - Report what was validated and what was not.
 - Do not claim completion without evidence.
 - Do not treat CODEOWNERS routing as proof of authorization or independent review.
+- Do not invent a requirement for external approval when `MAINTAINERS.md` classifies specialist review as recommended rather than mandatory.
 
 ## Non-negotiable rules
 

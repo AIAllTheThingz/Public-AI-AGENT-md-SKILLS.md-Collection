@@ -14,15 +14,14 @@ Release ownership and merge authority are defined by [`MAINTAINERS.md`](MAINTAIN
 
 The Release Manager coordinates a release but may not bypass:
 
-- required CODEOWNER review
-- independent specialist review
-- security review
-- schema or tool compatibility review
+- review gates explicitly required by `MAINTAINERS.md`
+- security review appropriate to release risk
+- schema or tool compatibility review appropriate to changed contracts
 - permanent CI
 - migration requirements
 - the `1.0.0` compatibility gate
 
-The current sole maintainer cannot independently approve their own release-automation, breaking-release, governance, security, schema, or executable-tool changes. The specialist-review requirements in `MAINTAINERS.md` remain applicable.
+Routine low- and moderate-risk release-tooling or release-automation maintenance may be maintainer self-reviewed after permanent CI when no independent-review gate applies. Breaking changes, high/critical changes, the final `1.0.0` compatibility approval, and other commitments identified by `MAINTAINERS.md` still require independent specialist review.
 
 ## Repository semantic versioning
 
@@ -172,7 +171,7 @@ Accelerated removal requires:
 - affected-consumer analysis
 - the safest available migration or containment path
 - Security Maintainer approval
-- independent specialist review where feasible
+- specialist review where feasible and independent review when required by `MAINTAINERS.md`
 - release-note disclosure appropriate to the vulnerability context
 
 Confidential vulnerability details must not be exposed merely to make the changelog feel complete.
@@ -210,7 +209,7 @@ The release pull request must:
 4. add `releases/migrations/<VERSION>.md`
 5. update affected manifests, policies, schemas, templates, examples, and tools
 6. classify compatibility and risk
-7. identify required reviewers
+7. identify recommended and required reviewers
 8. run the permanent validation pipeline
 9. build release artifacts locally or in CI
 10. verify checksums and the release manifest
@@ -219,7 +218,7 @@ The release pull request must:
 
 The final release commit must receive the review class required by `MAINTAINERS.md`.
 
-Breaking releases, `1.0.0`, release workflow changes, release-tool changes, schema-contract changes, and security-sensitive releases require independent specialist review.
+Any breaking change covered by the release and the final `1.0.0` compatibility approval require independent specialist review. Material release-workflow, release-tool, schema-contract, and security-sensitive release changes should receive specialist review when practical and require independence when `MAINTAINERS.md` classifies the change into an independent-review gate.
 
 ### 3. Merge
 
@@ -381,4 +380,4 @@ The release record should retain:
 
 ## Policy maintenance
 
-Changes to this policy, `VERSION`, release tooling, or release workflow are release-governance and executable-tool changes. They require Release Manager review, Tooling or CI specialist review, compatibility analysis, and permanent CI.
+Changes to this policy, `VERSION`, release tooling, or release workflow are release-governance or executable-tool changes. They require Release Manager review, compatibility analysis, and permanent CI. Tooling or CI specialist review should be requested for material changes and becomes independently required when `MAINTAINERS.md` places the change behind an independent-review gate.
