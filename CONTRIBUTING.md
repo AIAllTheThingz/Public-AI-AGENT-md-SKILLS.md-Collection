@@ -19,7 +19,7 @@ A useful change should do at least one of the following:
 ## Before opening a pull request
 
 1. Read the root `AGENTS.md`.
-2. Read [`MAINTAINERS.md`](MAINTAINERS.md) and identify the applicable area owner and review class.
+2. Read [`MAINTAINERS.md`](MAINTAINERS.md) and identify the applicable area owner, review class, and whether specialist review is recommended or independently required.
 3. Read [`RELEASE_POLICY.md`](RELEASE_POLICY.md) and [`MATURITY_POLICY.md`](MATURITY_POLICY.md) when the change affects compatibility, versions, deprecations, maturity, tags, release notes, or release automation.
 4. Read the affected language, discipline, platform, virtualization, operating-system, networking, framework, profile, schema, template, or tool standards.
 5. Keep the change focused.
@@ -41,13 +41,15 @@ Include:
 - change classification and risk
 - repository version and release impact
 - applicable CODEOWNER and area owner
-- required specialist review and whether it is independent from the author
+- whether specialist review is recommended or independently required
 - security impact
 - compatibility impact
 - changelog, release-note, deprecation, and migration impact
 - validation performed
 - validation not performed
 - remaining limitations
+
+A concise pull request template is provided under `.github/pull_request_template.md`. Additional detail is appropriate for high-risk, breaking, stable-maturity, or release changes, but routine changes do not need a large governance dossier.
 
 ## Versioning and changelog
 
@@ -69,7 +71,7 @@ A release pull request must update:
 - `releases/migrations/<VERSION>.md`
 - affected package, schema, template, tool, and root manifests
 
-Release automation, release tooling, breaking releases, and `1.0.0` require the specialist review defined by `MAINTAINERS.md`.
+Release automation and release tooling should receive specialist review when material or security-sensitive. Independent specialist review is mandatory when [`MAINTAINERS.md`](MAINTAINERS.md) requires it, including high/critical changes, breaking repository releases, the final `1.0.0` compatibility approval, and stable-maturity commitments.
 
 Tags are created only after the reviewed release commit is merged to `main`. Published tags must not be moved or recreated.
 
@@ -83,9 +85,9 @@ Promotion to `stable` requires adoption, compatibility, source, validation, owne
 
 Review and merge authority are defined by [`MAINTAINERS.md`](MAINTAINERS.md). Review routing is defined by [`.github/CODEOWNERS`](.github/CODEOWNERS).
 
-CODEOWNERS does not grant merge authority or prove that a reviewer is independent or qualified. Sensitive normative changes involving governance, security, schemas, executable tools, CI permissions, release automation, or breaking releases require the specialist review defined in the maintainer policy.
+CODEOWNERS does not grant merge authority or prove that a reviewer is independent or qualified. Specialist review is encouraged for material governance, security, schema, tooling, CI, release, and technology-specific changes. It becomes an independent merge requirement only when the maintainer policy explicitly says so.
 
-The current sole maintainer may self-merge only where the maintainer policy explicitly permits it. Self-review must not be represented as independent specialist review.
+While the repository has one active maintainer, low- and moderate-risk changes may be self-reviewed and self-merged after permanent CI passes when no independent-review gate applies and no unresolved external objection remains. Self-review must never be represented as independent specialist review.
 
 ## Standards writing
 
