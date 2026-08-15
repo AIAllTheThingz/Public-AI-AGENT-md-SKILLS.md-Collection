@@ -85,9 +85,9 @@ Promotion to `stable` requires adoption, compatibility, source, validation, owne
 
 Review and merge authority are defined by [`MAINTAINERS.md`](MAINTAINERS.md). Review routing is defined by [`.github/CODEOWNERS`](.github/CODEOWNERS).
 
-CODEOWNERS does not grant merge authority or prove that a reviewer is independent or qualified. Specialist review is encouraged for material governance, security, schema, tooling, CI, release, and technology-specific changes. It becomes an independent merge requirement only when the maintainer policy explicitly says so.
+CODEOWNERS does not grant merge authority or prove that a reviewer is independent or qualified. Specialist review is encouraged for material governance, security, schema, tooling, CI, release, and technology-specific changes. It becomes an independent merge requirement only when the maintainer policy explicitly says so. Other applicable repository policies may separately require independent approval.
 
-While the repository has one active maintainer, low- and moderate-risk changes may be self-reviewed and self-merged after permanent CI passes when no independent-review gate applies and no unresolved external objection remains. Self-review must never be represented as independent specialist review.
+While the repository has one active maintainer, low- and moderate-risk changes may be self-reviewed and self-merged after permanent CI passes when no independent specialist-review gate or other applicable independent-approval requirement applies and no unresolved external objection remains. Self-review must never be represented as independent specialist review.
 
 ## Standards writing
 
