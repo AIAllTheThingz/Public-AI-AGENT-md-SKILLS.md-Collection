@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate tool package structure, executable entry points, contracts, and tests."""
+"""Validate tool package structure, executable entry points, contracts, dependencies, workflows, and tests."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
 
 TOOL = "validate-tools"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 TOOL_PACKAGES = {
     "validate-standards": "validate_repository.py",
@@ -37,10 +37,87 @@ REQUIRED_COLLECTION = [
     "RELEASE_AND_COMPATIBILITY.md", "TROUBLESHOOTING.md",
 ]
 FRONTMATTER_ID = re.compile(r"^id:\s*(\S+)\s*$", re.MULTILINE)
+WORKFLOW_USE = re.compile(r"^\s*-?\s*uses:\s*([^@\s]+)@([^\s#]+)")
+WORKFLOW_RUNNER = re.compile(r"^\s*runs-on:\s*([^\s#]+)")
+FULL_SHA = re.compile(r"^[A-Fa-f0-9]{40}$")
 
 
 def rel(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
+
+
+def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
+    direct = root / "tools" / "validate-schemas" / "requirements.txt"
+    lock = root / "tools" / "validate-schemas" / "requirements.lock"
+
+    if not direct.is_file():
+        findings.append(Finding(
+            "DEPENDENCY_INPUT_MISSING",
+            "Direct validation dependency file is missing.",
+            path=rel(direct, root),
+        ))
+        return
+    if not lock.is_file():
+        findings.append(Finding(
+            "DEPENDENCY_LOCK_MISSING",
+            "Hash-locked validation dependency file is missing.",
+            path=rel(lock, root),
+        ))
+        return
+
+    direct_specs = [
+        line.strip()
+        for line in direct.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    lock_text = lock.read_text(encoding="utf-8")
+
+    if "--hash=sha256:" not in lock_text:
+        findings.append(Finding(
+            "DEPENDENCY_LOCK_UNHASHED",
+            "requirements.lock must contain SHA-256 hashes for resolved dependencies.",
+            path=rel(lock, root),
+        ))
+
+    for spec in direct_specs:
+        if spec not in lock_text:
+            findings.append(Finding(
+                "DEPENDENCY_LOCK_OUT_OF_SYNC",
+                f"Direct dependency is not represented exactly in requirements.lock: {spec}",
+                path=rel(lock, root),
+            ))
+
+
+def validate_workflow_pins(root: Path, findings: list[Finding]) -> None:
+    workflows = root / ".github" / "workflows"
+    if not workflows.is_dir():
+        return
+
+    for path in sorted(list(workflows.glob("*.yml")) + list(workflows.glob("*.yaml"))):
+        for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            use = WORKFLOW_USE.match(line)
+            if use:
+                action, ref = use.groups()
+                if action.startswith("./"):
+                    continue
+                if not FULL_SHA.fullmatch(ref):
+                    findings.append(Finding(
+                        "WORKFLOW_ACTION_NOT_PINNED",
+                        f"Third-party action must be pinned to a full 40-character commit SHA: {action}@{ref}",
+                        path=rel(path, root),
+                        line=line_number,
+                    ))
+
+            runner = WORKFLOW_RUNNER.match(line)
+            if runner:
+                value = runner.group(1)
+                if "${{" not in value and value.endswith("-latest"):
+                    findings.append(Finding(
+                        "WORKFLOW_RUNNER_FLOATING",
+                        f"Hosted runner must use an explicit image family rather than {value}.",
+                        path=rel(path, root),
+                        line=line_number,
+                    ))
 
 
 def run(args: argparse.Namespace) -> ToolResult:
@@ -93,6 +170,9 @@ def run(args: argparse.Namespace) -> ToolResult:
             except py_compile.PyCompileError as exc:
                 findings.append(Finding("TOOL_COMPILE", str(exc), path=rel(python_file, root)))
 
+    validate_dependency_lock(root, findings)
+    validate_workflow_pins(root, findings)
+
     tests = sorted((tools / "tests").glob("test_*.py"))
     if len(tests) < len(TOOL_PACKAGES):
         findings.append(Finding(
@@ -132,6 +212,8 @@ def run(args: argparse.Namespace) -> ToolResult:
             "identifiedDocuments": len(ids),
             "testModules": len(tests),
             "unitTestsRun": args.run_unit_tests,
+            "dependencyLockPresent": (root / "tools" / "validate-schemas" / "requirements.lock").is_file(),
+            "workflowPinningChecked": True,
             "findings": len(findings),
         },
     )
