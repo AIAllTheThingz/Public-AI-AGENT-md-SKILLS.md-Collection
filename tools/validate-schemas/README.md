@@ -1,7 +1,7 @@
 ---
 id: TOOL-PKG-VALIDATE-SCHEMAS-001
 title: Validate Schemas Tool
-version: 1.0.0
+version: 1.1.0
 status: baseline
 ---
 
@@ -25,6 +25,14 @@ The stable path is part of the repository tooling contract. Moving or renaming i
 - Writes: only an optional result file
 - Network: none
 - Default behavior: safe and non-destructive
+
+## Dependencies
+
+[`requirements.txt`](requirements.txt) records the small direct dependency intent for maintainers and dependency-update tooling.
+
+[`requirements.lock`](requirements.lock) is the generated, fully resolved, SHA-256-hashed dependency set used by hosted validation and release workflows. It is generated with Python 3.13 and must be refreshed whenever the direct requirement changes.
+
+Hosted CI installs the lock with `pip --require-hashes`. The tool validator checks that direct requirements remain represented in the lock and that the lock contains SHA-256 hashes.
 
 ## Common options
 
@@ -54,7 +62,10 @@ python tools/validate-schemas/validate_schemas.py --help
 
 ## Examples
 
+For the same dependency boundary used by hosted CI:
+
 ```bash
+python -m pip install --require-hashes -r tools/validate-schemas/requirements.lock
 python tools/validate-schemas/validate_schemas.py
 ```
 
@@ -123,6 +134,7 @@ Breaking changes include:
 - structural validity is not semantic truth
 - instance discovery is filename-based
 - remote schema resolution is intentionally unsupported
+- the checked-in lock represents the hosted Python/runtime boundary and must be regenerated when that boundary changes
 
 ## Review checklist
 
@@ -132,13 +144,13 @@ Reviewers should confirm:
 - positive and negative tests exist
 - output and exit codes are stable
 - filesystem and subprocess handling are safe
-- dependency changes are pinned and justified
+- dependency changes are pinned, hash-locked for hosted CI, and justified
 - compatibility impact is documented
 - the complete pipeline passes
 
 ## Maintenance
 
-Update the script, README, manifest, examples, tests, catalog, and CI together when behavior changes.
+Update the script, dependency input and lock, README, manifest, examples, tests, catalog, and CI together when behavior changes.
 
 ## Completion boundary
 
