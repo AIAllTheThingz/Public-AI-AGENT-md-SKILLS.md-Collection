@@ -8,7 +8,7 @@ on:
       - .github/workflows/issue-29-generate-lock.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generate-lock:
@@ -17,8 +17,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -27,7 +25,7 @@ jobs:
           cache: pip
           cache-dependency-path: tools/validate-schemas/requirements.txt
 
-      - name: Generate hash-locked requirements
+      - name: Generate and verify hash-locked requirements
         shell: bash
         run: |
           set -euo pipefail
@@ -41,6 +39,20 @@ jobs:
             --disable-pip-version-check \
             --require-hashes \
             -r tools/validate-schemas/requirements.lock
+
+      - name: Commit generated lock to this branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/validate-schemas/requirements.lock
+          if git diff --cached --quiet; then
+            echo 'Generated lock is already current.'
+            exit 0
+          fi
+          git commit -m 'build: add hash-locked validation dependencies'
+          git push origin HEAD:ci/issue-29-workflow-hardening
 
       - name: Upload generated lock
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
