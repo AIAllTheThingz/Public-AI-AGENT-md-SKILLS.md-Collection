@@ -22,6 +22,10 @@ For **High** or **Critical** risk changes, complete these additional control-evi
 - Applicable CODEOWNER:
 - Area owner:
 - Specialist review: Not needed / Recommended / Independently required
+- Other policy-required independent approval: None / Required / Completed
+- Applicable approval policy, approver, and record: None / Policy + approver + link / Pending
+
+Separate independent approval requirements imposed by other applicable repository policies remain mandatory even when independent specialist review is not required. For example, moderate, high, or critical exception requests or renewals must satisfy `governance/EXCEPTION_PROCESS.md`.
 
 ## Impact
 
@@ -47,4 +51,4 @@ Record remaining assumptions, limitations, or follow-up work. Use `None` when th
 
 ## Maintainer review
 
-For low- or moderate-risk changes that do not require independent specialist review, the active maintainer may record a self-review here after permanent CI passes.
+For low- or moderate-risk changes that do not require independent specialist review or any other policy-required independent approval, the active maintainer may record a self-review here after permanent CI passes.
