@@ -10,6 +10,7 @@
 - `SECURITY.md`
 - `MAINTAINERS.md`
 - `.github/CODEOWNERS`
+- `.github/pull_request_template.md`
 - `VERSION`
 - `CHANGELOG.md`
 - `RELEASE_POLICY.md`

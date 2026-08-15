@@ -159,9 +159,9 @@ Component maturity is governed by [`MATURITY_POLICY.md`](MATURITY_POLICY.md). A 
 
 Repository ownership, area review, specialist-review requirements, merge authority, emergency changes, inactivity, and succession are defined in [`MAINTAINERS.md`](MAINTAINERS.md).
 
-Review routing is defined in [`.github/CODEOWNERS`](.github/CODEOWNERS). CODEOWNERS requests review; it does not grant merge authority or replace the independence requirements in the maintainer policy.
+Review routing is defined in [`.github/CODEOWNERS`](.github/CODEOWNERS). CODEOWNERS requests review; it does not grant merge authority or create an independent-approval requirement by itself.
 
-The repository currently has one active maintainer: **Metello Zuccolini** ([@AIAllTheThingz](https://github.com/AIAllTheThingz)). Independent specialist review must come from a qualified reviewer who is not the author.
+The repository currently has one active maintainer: **Metello Zuccolini** ([@AIAllTheThingz](https://github.com/AIAllTheThingz)). Routine low- and moderate-risk maintenance may be self-reviewed after permanent CI when no independent-review gate applies. Specialist review is encouraged for material technical changes; when independent specialist review is required by the maintainer or maturity policy, it must come from a qualified reviewer who is not the author.
 
 ## Contributing
 

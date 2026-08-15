@@ -16,7 +16,7 @@ Release notes distinguish:
 
 ### Breaking changes
 
-- None.
+- Changed repository-maintenance approval behavior relative to the prepared `0.9.0` governance contract: low- and moderate-risk repository changes may now be maintainer self-reviewed after permanent CI when no independent-review gate applies. Independent review remains mandatory for high/critical risk, any breaking repository change, the final `1.0.0` compatibility approval, and stable-maturity commitments. This change affects repository maintenance governance only; it does not weaken adopter-facing engineering or security standards.
 
 ### Normative changes
 
@@ -35,7 +35,7 @@ Release notes distinguish:
 
 ### Editorial changes
 
-- None.
+- Added a concise pull request template for summary, impact, validation, limitations, and maintainer self-review without introducing heavyweight governance records.
 
 ### Tooling changes
 
@@ -49,8 +49,8 @@ Release notes distinguish:
 - Added a permanent read-only skill validator for metadata, progressive disclosure, package-routing coverage, root-manifest registration, safe local links, and optional agent UI metadata.
 - Integrated skill validation and its positive, boundary, negative, and deterministic tests into the complete validation pipeline.
 - Extended the repository skill-collection regression test to cover the virtualization router and its nine package routes.
-- Extended the skill-collection regression test to cover the operating-system router and its nine package routes.
-- Extended the skill-collection regression test to cover the networking router and its four package routes.
+- Extended the repository skill-collection regression test to cover the operating-system router and its nine package routes.
+- Extended the repository skill-collection regression test to cover the networking router and its four package routes.
 
 ### Security
 
@@ -70,6 +70,7 @@ Release notes distinguish:
 
 ### Migration notes
 
+- Repository maintainers following the prepared `0.9.0` maintenance policy should update local review expectations: low- and moderate-risk repository maintenance may be self-reviewed after permanent CI only when no independent-review gate applies; any breaking repository change still requires independent specialist review. Existing adopter-facing package requirements, security controls, and project human-review requirements are unchanged by this repository-maintenance policy update.
 - Maintainers changing validation dependencies must update `tools/validate-schemas/requirements.txt`, regenerate `requirements.lock` with the documented Python 3.13 boundary, and commit the resulting SHA-256 hashes; CI intentionally rejects direct-dependency/lock drift.
 - Existing `languages/dotnet` adopters remain valid. Repositories with C# source should add `languages/csharp` at their next standards update; modern C# projects normally compose `csharp` for language semantics and `dotnet` for SDK, target framework, CLR, MSBuild, NuGet, hosting, and publishing behavior.
 - Existing `VMware.PowerCLI` adopters are not required to perform an immediate or blind rename. They should inventory the distribution and child modules, verify the current Broadcom-supported migration and compatibility path, test the selected `VCF.PowerCLI` constraint, and update dependency records separately from operational execution.

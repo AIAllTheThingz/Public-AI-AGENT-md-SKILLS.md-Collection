@@ -1,10 +1,13 @@
 # Public-Access-Agents review routing
 #
-# CODEOWNERS requests review. It does not grant merge authority, prove
-# specialist independence, or replace the requirements in MAINTAINERS.md.
+# CODEOWNERS requests relevant review. It does not grant merge authority,
+# prove specialist independence, or create an independent-approval requirement
+# by itself. MAINTAINERS.md defines when specialist review is recommended and
+# when independent review is mandatory.
 #
-# Current ownership is assigned to the sole active maintainer. Sensitive
-# normative changes still require a qualified reviewer who is not the author.
+# Current ownership is assigned to the sole active maintainer. Routine low- and
+# moderate-risk changes may be maintainer self-reviewed after permanent CI when
+# no independent-review gate applies.
 #
 # GitHub uses the last matching pattern. Broad collection ownership therefore
 # appears before sensitive and contract-specific overrides.
