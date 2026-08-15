@@ -27,12 +27,14 @@ status: baseline
 ## Runtime dependency
 
 - `PyYAML==6.0.3`, installed through the repository hash-locked validation dependency set, is used to parse workflow and local composite-action YAML structurally.
+- CLI help remains available before PyYAML is installed; validation without the dependency must report a structured error and exit through the common code-`2` dependency/input path.
 
 ## Acceptance checks
 
 - primary entry point compiles
 - declared package Python entry points compile
-- `--help` exits successfully
+- `--help` exits successfully even when PyYAML is unavailable
+- missing PyYAML during validation produces structured error output and exit code `2`
 - text output is readable
 - JSON output conforms to the result contract
 - exit codes match the common contract
@@ -46,7 +48,9 @@ status: baseline
 - `docker://` actions use immutable `sha256:<64-hex>` OCI digests
 - referenced local composite actions are traversed recursively and nested external `uses` references satisfy immutable-pin rules
 - hosted runners do not use floating `*-latest` images
+- static matrix runner validation applies partial-match `exclude` entries before evaluating effective runner values and inspects later `include` runner values
 - quoted YAML scalars and legal key-spacing variants cannot bypass or falsely trigger workflow pin checks
-- positive and negative regression tests pass
+- positive, negative, and error-path regression tests pass
 - stable path remains unchanged
+- README limitations, review checklist, maintenance guidance, and completion boundary remain present and synchronized
 - documentation, catalog, examples, and behavior remain synchronized
