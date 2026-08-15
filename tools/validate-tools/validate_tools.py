@@ -10,6 +10,9 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, Iterable
+
+import yaml
 
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
@@ -17,7 +20,7 @@ sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
 
 TOOL = "validate-tools"
-VERSION = "1.3.1"
+VERSION = "1.3.2"
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 TOOL_PACKAGES = {
     "validate-standards": "validate_repository.py",
@@ -37,18 +40,22 @@ REQUIRED_COLLECTION = [
     "RELEASE_AND_COMPATIBILITY.md", "TROUBLESHOOTING.md",
 ]
 FRONTMATTER_ID = re.compile(r"^id:\s*(\S+)\s*$", re.MULTILINE)
-WORKFLOW_USE = re.compile(r"^\s*-?\s*uses:\s*(.+?)\s*$")
-WORKFLOW_RUNNER = re.compile(r"^\s*runs-on:\s*(.+?)\s*$")
 FULL_SHA = re.compile(r"^[A-Fa-f0-9]{40}$")
+OCI_SHA256 = re.compile(r"^sha256:[A-Fa-f0-9]{64}$")
 
 
 def rel(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
 
 
+def strip_requirement_comment(value: str) -> str:
+    """Remove a PEP 508 requirements-file inline comment introduced by whitespace."""
+    return re.split(r"\s+#", value, maxsplit=1)[0].strip()
+
+
 def normalize_requirement(value: str) -> str:
     """Normalize one requirement declaration for exact input/lock comparison."""
-    cleaned = value.strip()
+    cleaned = strip_requirement_comment(value)
     if cleaned.endswith("\\"):
         cleaned = cleaned[:-1].rstrip()
     return re.sub(r"\s+", "", cleaned).casefold()
@@ -63,22 +70,10 @@ def locked_requirement_specs(lock_text: str) -> set[str]:
         stripped = line.strip()
         if not stripped or stripped.startswith(("#", "-")):
             continue
-        specs.add(normalize_requirement(stripped))
+        normalized = normalize_requirement(stripped)
+        if normalized:
+            specs.add(normalized)
     return specs
-
-
-def yaml_scalar_value(raw: str) -> str:
-    """Extract a simple YAML scalar while accepting ordinary single/double quoting."""
-    value = raw.strip()
-    if not value:
-        return value
-    if value[0] in {"'", '"'}:
-        quote = value[0]
-        end = value.find(quote, 1)
-        if end == -1:
-            return value
-        return value[1:end].strip()
-    return value.split(" #", 1)[0].strip()
 
 
 def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
@@ -100,13 +95,14 @@ def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
         ))
         return
 
-    direct_specs = [
-        line.strip()
+    direct_specs = {
+        normalize_requirement(line)
         for line in direct.read_text(encoding="utf-8").splitlines()
-        if line.strip() and not line.lstrip().startswith(("#", "-"))
-    ]
+        if strip_requirement_comment(line) and not line.lstrip().startswith("#")
+    }
+    direct_specs.discard("")
     lock_text = lock.read_text(encoding="utf-8")
-    resolved_specs = locked_requirement_specs(lock_text)
+    locked_specs = locked_requirement_specs(lock_text)
 
     if "--hash=sha256:" not in lock_text:
         findings.append(Finding(
@@ -115,12 +111,79 @@ def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
             path=rel(lock, root),
         ))
 
-    for spec in direct_specs:
-        if normalize_requirement(spec) not in resolved_specs:
+    for spec in sorted(direct_specs):
+        if spec not in locked_specs:
             findings.append(Finding(
                 "DEPENDENCY_LOCK_OUT_OF_SYNC",
                 f"Direct dependency is not represented exactly in requirements.lock: {spec}",
                 path=rel(lock, root),
+            ))
+
+
+def iter_mapping_values(value: Any, target_key: str) -> Iterable[Any]:
+    """Walk a parsed YAML structure and yield values assigned to target_key."""
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == target_key:
+                yield child
+            yield from iter_mapping_values(child, target_key)
+    elif isinstance(value, list):
+        for child in value:
+            yield from iter_mapping_values(child, target_key)
+
+
+def iter_scalar_strings(value: Any) -> Iterable[str]:
+    """Yield scalar strings from a string/list/mapping value."""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for child in value.values():
+            yield from iter_scalar_strings(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from iter_scalar_strings(child)
+
+
+def validate_action_reference(raw: Any, path: Path, root: Path, findings: list[Finding]) -> None:
+    if not isinstance(raw, str):
+        findings.append(Finding(
+            "WORKFLOW_ACTION_INVALID",
+            "Workflow uses values must be strings.",
+            path=rel(path, root),
+        ))
+        return
+
+    value = raw.strip()
+    if value.startswith("./"):
+        return
+
+    if value.startswith("docker://"):
+        _, separator, digest = value.rpartition("@")
+        if not separator or not OCI_SHA256.fullmatch(digest):
+            findings.append(Finding(
+                "WORKFLOW_DOCKER_NOT_PINNED",
+                f"Docker action must be pinned to an immutable sha256 OCI digest: {value}",
+                path=rel(path, root),
+            ))
+        return
+
+    action, separator, ref = value.rpartition("@")
+    if not separator or not action or not FULL_SHA.fullmatch(ref):
+        findings.append(Finding(
+            "WORKFLOW_ACTION_NOT_PINNED",
+            f"Third-party action must be pinned to a full 40-character commit SHA: {value}",
+            path=rel(path, root),
+        ))
+
+
+def validate_runner_reference(raw: Any, path: Path, root: Path, findings: list[Finding]) -> None:
+    for value in iter_scalar_strings(raw):
+        stripped = value.strip()
+        if "${{" not in stripped and stripped.endswith("-latest"):
+            findings.append(Finding(
+                "WORKFLOW_RUNNER_FLOATING",
+                f"Hosted runner must use an explicit image family rather than {stripped}.",
+                path=rel(path, root),
             ))
 
 
@@ -130,39 +193,20 @@ def validate_workflow_pins(root: Path, findings: list[Finding]) -> None:
         return
 
     for path in sorted(list(workflows.glob("*.yml")) + list(workflows.glob("*.yaml"))):
-        for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-            use = WORKFLOW_USE.match(line)
-            if use:
-                value = yaml_scalar_value(use.group(1))
-                if "@" not in value:
-                    findings.append(Finding(
-                        "WORKFLOW_ACTION_NOT_PINNED",
-                        f"Third-party action reference is missing an immutable commit SHA: {value}",
-                        path=rel(path, root),
-                        line=line_number,
-                    ))
-                else:
-                    action, ref = value.rsplit("@", 1)
-                    if action.startswith("./"):
-                        continue
-                    if not FULL_SHA.fullmatch(ref):
-                        findings.append(Finding(
-                            "WORKFLOW_ACTION_NOT_PINNED",
-                            f"Third-party action must be pinned to a full 40-character commit SHA: {action}@{ref}",
-                            path=rel(path, root),
-                            line=line_number,
-                        ))
+        try:
+            document = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, yaml.YAMLError) as exc:
+            findings.append(Finding(
+                "WORKFLOW_YAML_INVALID",
+                f"Workflow is not valid YAML: {exc}",
+                path=rel(path, root),
+            ))
+            continue
 
-            runner = WORKFLOW_RUNNER.match(line)
-            if runner:
-                value = yaml_scalar_value(runner.group(1))
-                if "${{" not in value and value.endswith("-latest"):
-                    findings.append(Finding(
-                        "WORKFLOW_RUNNER_FLOATING",
-                        f"Hosted runner must use an explicit image family rather than {value}.",
-                        path=rel(path, root),
-                        line=line_number,
-                    ))
+        for action in iter_mapping_values(document, "uses"):
+            validate_action_reference(action, path, root, findings)
+        for runner in iter_mapping_values(document, "runs-on"):
+            validate_runner_reference(runner, path, root, findings)
 
 
 def run(args: argparse.Namespace) -> ToolResult:
