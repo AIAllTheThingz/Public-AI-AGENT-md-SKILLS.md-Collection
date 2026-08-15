@@ -16,7 +16,7 @@ It applies to repository administration and maintenance. It does not replace the
 
 The repository currently has one active maintainer.
 
-The active maintainer may self-review and self-merge low- and moderate-risk repository changes after permanent CI passes when no independent-review gate below applies and no unresolved external objection remains. External specialist input is encouraged for material technical changes, but it is not automatically a merge blocker.
+The active maintainer may self-review and self-merge low- and moderate-risk repository changes after permanent CI passes when no independent-review gate below applies, no independent approval requirement imposed by another applicable repository policy applies, and no unresolved external objection remains. External specialist input is encouraged for material technical changes, but it is not automatically a merge blocker.
 
 When this policy requires independent specialist review, one person cannot provide that review for their own change. That limitation must remain visible until additional maintainers or qualified specialist reviewers are available.
 
@@ -88,6 +88,8 @@ The Security Maintainer coordinates private vulnerability handling, security-sen
 This repository is a public standards and reference library maintained by one active maintainer. The previous policy made independent external review mandatory for broad classes of low- and moderate-risk governance, security-hardening, schema, tooling, dependency, workflow, and release-maintenance changes. That rule was not consistently achievable and created a gap between documented policy and actual repository operation.
 
 The lightweight model narrows mandatory independent review to decisions where an independent party materially changes the risk boundary: high or critical changes, any breaking repository change as defined by `RELEASE_POLICY.md`, final `1.0.0` approval, and stable-maturity commitments. For ordinary low- and moderate-risk maintenance, requiring an external reviewer by category alone would often leave safe corrections blocked indefinitely without materially improving assurance.
+
+This narrowing applies only to independent specialist review under this maintainer policy. It does not waive separate approval requirements imposed by other governance policies; for example, `governance/EXCEPTION_PROCESS.md` requires the requester not to be the sole approver for moderate, high, or critical exceptions.
 
 This change accepts the risk that a sole maintainer can miss defects in moderate-risk work. That risk is reduced by retaining these compensating controls:
 
@@ -161,7 +163,7 @@ A person may merge into the default branch only when all of the following are tr
 - they are listed as an active maintainer in this document
 - they have the required GitHub repository permission
 - permanent CI has passed for the final head commit
-- any review gate explicitly required by this policy has been satisfied
+- any review or approval gate required by this policy or another applicable repository policy has been satisfied
 - requested changes and unresolved review findings have been addressed
 - compatibility, security, validation, and remaining limitations are documented
 - the pull request scope is coherent and contains no unrelated changes
@@ -169,14 +171,14 @@ A person may merge into the default branch only when all of the following are tr
 
 Normal changes must use pull requests. Direct pushes to the protected default branch are prohibited except where GitHub administrative recovery makes a pull request technically impossible and the emergency process is followed.
 
-CODEOWNERS identifies relevant owners and reviewers. It does not itself grant merge authority, prove specialist competence, or require an independent approval when this policy does not call for one.
+CODEOWNERS identifies relevant owners and reviewers. It does not itself grant merge authority, prove specialist competence, or create an independent approval requirement. Independent review or approval remains mandatory wherever this policy or another applicable repository policy requires it.
 
 ## Author self-merge
 
 Until a second active maintainer is appointed, the Lead Maintainer may self-merge when:
 
 - the change is low or moderate risk
-- no independent specialist-review gate applies
+- no independent specialist-review gate or other applicable independent-approval requirement applies
 - permanent CI passes on the final commit
 - the pull request contains an explicit self-review record
 - compatibility, security impact, validation, and limitations are stated
@@ -184,7 +186,7 @@ Until a second active maintainer is appointed, the Lead Maintainer may self-merg
 
 This may include routine normative, security-hardening, schema, executable-tool, dependency, CI, or release-automation maintenance when it remains low or moderate risk, is not classified as breaking under `RELEASE_POLICY.md`, and does not alter a stable compatibility commitment.
 
-Self-merge is prohibited when independent specialist review is required by this policy, including high/critical risk, any breaking repository change, the final `1.0.0` compatibility approval, or promotion to `stable`, unless the emergency-change process applies.
+Self-merge is prohibited when independent specialist review is required by this policy, including high/critical risk, any breaking repository change, the final `1.0.0` compatibility approval, or promotion to `stable`. Self-merge is also prohibited when another applicable repository policy requires an independent approver, including moderate, high, or critical exception requests or renewals under `governance/EXCEPTION_PROCESS.md`. Any emergency or exception-specific override must come from the policy that defines that gate; this maintainer policy does not waive it.
 
 ## Emergency changes
 
@@ -352,7 +354,7 @@ Repository rules should require, where supported:
 - prevention of force pushes and branch deletion
 - restricted bypass authority
 
-CODEOWNERS should route relevant review requests, but while the repository has one active maintainer it should not be configured as a mandatory approval gate for routine low- and moderate-risk changes. Independent approval is required only when this policy's independent-review gate applies.
+CODEOWNERS should route relevant review requests, but while the repository has one active maintainer it should not be configured as a mandatory approval gate for routine low- and moderate-risk changes. Independent specialist review is required when this policy's independent-review gate applies. Separate independent approval requirements imposed by other applicable governance policies remain mandatory; for example, `governance/EXCEPTION_PROCESS.md` requires an independent approver for moderate, high, or critical exceptions.
 
 This document defines policy. GitHub rulesets and permissions provide enforcement. A mismatch between policy and configuration must be treated as a repository administration defect.
 
