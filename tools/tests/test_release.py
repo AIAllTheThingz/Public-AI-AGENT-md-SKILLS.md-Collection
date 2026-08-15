@@ -131,6 +131,14 @@ class ReleaseToolTests(unittest.TestCase):
             codes = {item["code"] for item in json_result(completed)["findings"]}
             self.assertIn("RELEASE_POLICY_SECTION_MISSING", codes)
 
+    def test_publish_workflow_sets_repository_context_for_gh(self):
+        workflow = (REPO_ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
+        self.assertIn("gh release create", workflow)
+        self.assertTrue(
+            "GH_REPO: ${{ github.repository }}" in workflow or "--repo" in workflow,
+            "Release publication must provide explicit repository context to gh when the publish job has no checkout.",
+        )
+
     def test_dirty_tracked_tree_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

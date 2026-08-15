@@ -39,6 +39,11 @@ Release notes distinguish:
 
 ### Tooling changes
 
+- Hardened permanent validation and release workflows with immutable GitHub Action commit pins, Ubuntu 24.04 hosted-runner boundaries, an explicit Python 3.13 runtime, and SHA-256 hash-locked validation dependencies.
+- Split release validation/artifact construction from GitHub Release publication so write permission is held only by the publication job; transferred built artifacts between jobs and re-verified `SHA256SUMS.txt` before publication.
+- Added Dependabot maintenance for GitHub Actions and the direct Python validation dependencies.
+- Updated `validate-tools` to version `1.3.2` so it structurally parses workflow YAML, validates full Git commit pins and immutable Docker OCI digests, rejects floating hosted runner images, and verifies exact direct-dependency/hash-lock synchronization while accepting ordinary inline requirement comments.
+- Added regression coverage for dependency-lock drift, inline requirement comments, quoted YAML scalars, legal YAML key-spacing variants, immutable Docker digests, floating action refs, and floating hosted runners.
 - Extended skill-validation regression expectations for the registered C# direct skill and the eleventh language-package route.
 - Updated `generate-manifest` and `compose-agents` to version `1.1.0` so they validate, emit, compose, and report selected virtualization, operating-system, and networking packages; added backward-compatibility, positive, and negative tests.
 - Added a permanent read-only skill validator for metadata, progressive disclosure, package-routing coverage, root-manifest registration, safe local links, and optional agent UI metadata.
@@ -49,6 +54,9 @@ Release notes distinguish:
 
 ### Security
 
+- Reduced workflow supply-chain mutability by pinning third-party actions to immutable references and installing CI/release Python dependencies exclusively from a SHA-256-hashed lock.
+- Reduced release-token exposure by keeping `contents: write` out of the validation/build job and granting it only to the publication job.
+- Added workflow validation that detects floating repository-action refs, floating `*-latest` hosted runners, mutable Docker action references, invalid workflow YAML, and validation dependency-lock drift.
 - Added C# safeguards for trust-boundary validation, secret and diagnostic disclosure, unsafe deserialization, command and path injection, certificate bypass, unbounded concurrency and resource growth, broad analyzer suppression, floating build-time code, unsafe/native lifetime errors, and attacker-selected reflection or runtime code generation.
 - Added PowerCLI safeguards against certificate-validation bypass, ambiguous ambient connections, persistent configuration weakening, automatic operational module changes, name-only targeting, leaked authenticated sessions, unbounded tasks, unsafe retries, unrelated session cleanup, and success claims without actual-state verification.
 - Made infrastructure-control boundaries explicit in manifests and generated composition indexes so material hypervisor, host operating-system, and network standards are less likely to be silently omitted from review.
@@ -63,6 +71,7 @@ Release notes distinguish:
 ### Migration notes
 
 - Repository maintainers following the prepared `0.9.0` maintenance policy should update local review expectations: low- and moderate-risk repository maintenance may be self-reviewed after permanent CI only when no independent-review gate applies; any breaking repository change still requires independent specialist review. Existing adopter-facing package requirements, security controls, and project human-review requirements are unchanged by this repository-maintenance policy update.
+- Maintainers changing validation dependencies must update `tools/validate-schemas/requirements.txt`, regenerate `requirements.lock` with the documented Python 3.13 boundary, and commit the resulting SHA-256 hashes; CI intentionally rejects direct-dependency/lock drift.
 - Existing `languages/dotnet` adopters remain valid. Repositories with C# source should add `languages/csharp` at their next standards update; modern C# projects normally compose `csharp` for language semantics and `dotnet` for SDK, target framework, CLR, MSBuild, NuGet, hosting, and publishing behavior.
 - Existing `VMware.PowerCLI` adopters are not required to perform an immediate or blind rename. They should inventory the distribution and child modules, verify the current Broadcom-supported migration and compatibility path, test the selected `VCF.PowerCLI` constraint, and update dependency records separately from operational execution.
 - Existing project-manifest version `1.0.0` instances remain valid. Producers using the new package arrays must emit `schemaVersion: "1.1.0"`; consumers that depend on those arrays must use schema and composition tooling version `1.1.0` or later.
@@ -70,6 +79,8 @@ Release notes distinguish:
 
 ### Known limitations
 
+- The release publication job is tag-triggered and was not exercised by pull-request validation; publication remains `NotRun` until a reconciled release tag is deliberately created.
+- Immutable action and dependency references reduce mutation risk but do not by themselves establish third-party provenance or vulnerability-free dependencies.
 - The C# package and templates were validated as repository content only because a .NET SDK/compiler was unavailable in the authoring environment. No C# compilation, NuGet restore, analyzer execution, runtime test, benchmark, native-platform validation, or framework integration test was performed.
 - The PowerCLI standard was validated as repository content only. No live vCenter or ESXi connection, module installation, product compatibility certification, or integration test was performed.
 - Project-manifest package arrays record reviewed selection intent only. Schema validity and generated composition bundles do not prove that every applicable infrastructure boundary was identified, tailored, authorized, or operationally validated.

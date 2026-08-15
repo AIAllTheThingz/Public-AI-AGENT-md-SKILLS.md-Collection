@@ -1,15 +1,431 @@
 from __future__ import annotations
 
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
 import unittest
+from pathlib import Path
 
-from helpers import json_result, run_tool
+from helpers import REPO_ROOT, json_result, run_tool
 
 
 class ValidateToolsTests(unittest.TestCase):
+    def copy_repo(self, temp: str) -> Path:
+        root = Path(temp) / "repo"
+        shutil.copytree(
+            REPO_ROOT,
+            root,
+            ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"),
+        )
+        return root
+
     def test_tool_packages_pass(self):
         completed = run_tool("tools/validate-tools/validate_tools.py", "--format", "json")
         self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
         self.assertEqual(json_result(completed)["status"], "passed")
+
+    def test_help_and_dependency_error_work_without_pyyaml(self):
+        script = REPO_ROOT / "tools" / "validate-tools" / "validate_tools.py"
+
+        help_completed = subprocess.run(
+            [sys.executable, "-S", str(script), "--help"],
+            cwd=REPO_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(help_completed.returncode, 0, help_completed.stdout + help_completed.stderr)
+
+        completed = subprocess.run(
+            [sys.executable, "-S", str(script), "--format", "json"],
+            cwd=REPO_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        payload = json.loads(completed.stdout)
+
+        self.assertEqual(completed.returncode, 2, completed.stdout + completed.stderr)
+        self.assertEqual(payload["status"], "error")
+        self.assertEqual(payload["findings"][0]["code"], "INPUT_ERROR")
+        self.assertIn("PyYAML", payload["findings"][0]["message"])
+
+    def test_dependency_lock_requires_exact_direct_requirement(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            (root / "tools" / "validate-schemas" / "requirements.txt").write_text(
+                "jsonschema[format]==4.2\nPyYAML==6.0.3\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            payload = json_result(completed)
+            codes = {finding["code"] for finding in payload["findings"]}
+
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertIn("DEPENDENCY_LOCK_OUT_OF_SYNC", codes)
+
+    def test_dependency_lock_detects_removed_direct_requirement(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            (root / "tools" / "validate-schemas" / "requirements.txt").write_text(
+                "jsonschema[format]==4.26.0\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            payload = json_result(completed)
+            codes = {finding["code"] for finding in payload["findings"]}
+
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertIn("DEPENDENCY_LOCK_OUT_OF_SYNC", codes)
+            self.assertTrue(
+                any("pyyaml==6.0.3" in finding["message"] for finding in payload["findings"]),
+                payload["findings"],
+            )
+
+    def test_dependency_lock_requires_hash_for_each_resolved_requirement(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            lock = root / "tools" / "validate-schemas" / "requirements.lock"
+            lines = lock.read_text(encoding="utf-8").splitlines()
+            rewritten: list[str] = []
+            strip_arrow_hashes = False
+
+            for line in lines:
+                if line.startswith("arrow=="):
+                    rewritten.append(line.rstrip(" \\"))
+                    strip_arrow_hashes = True
+                    continue
+                if strip_arrow_hashes and line.startswith("    --hash=sha256:"):
+                    continue
+                if strip_arrow_hashes and line and not line[0].isspace():
+                    strip_arrow_hashes = False
+                rewritten.append(line)
+
+            lock.write_text("\n".join(rewritten) + "\n", encoding="utf-8")
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            payload = json_result(completed)
+
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertTrue(
+                any(
+                    finding["code"] == "DEPENDENCY_LOCK_UNHASHED"
+                    and "arrow==" in finding["message"]
+                    for finding in payload["findings"]
+                ),
+                payload["findings"],
+            )
+
+    def test_dependency_lock_accepts_inline_comment_on_direct_requirement(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            (root / "tools" / "validate-schemas" / "requirements.txt").write_text(
+                "jsonschema[format]==4.26.0  # schema validation\n"
+                "PyYAML==6.0.3  # workflow parsing\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertEqual(json_result(completed)["status"], "passed")
+
+    def test_quoted_workflow_action_sha_is_accepted(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            workflow = root / ".github" / "workflows" / "quoted-action.yml"
+            workflow.write_text(
+                "name: Quoted action pin test\n"
+                "on: workflow_dispatch\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  test:\n"
+                "    runs-on: 'ubuntu-24.04'\n"
+                "    steps:\n"
+                "      - uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertEqual(json_result(completed)["status"], "passed")
+
+    def test_workflow_yaml_key_spacing_cannot_bypass_pin_checks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            workflow = root / ".github" / "workflows" / "spaced-keys.yml"
+            workflow.write_text(
+                "name: Spaced key test\n"
+                "on: workflow_dispatch\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  test:\n"
+                "    runs-on : ubuntu-latest\n"
+                "    steps:\n"
+                "      - uses : actions/checkout@v7\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            payload = json_result(completed)
+            codes = {finding["code"] for finding in payload["findings"]}
+
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertIn("WORKFLOW_ACTION_NOT_PINNED", codes)
+            self.assertIn("WORKFLOW_RUNNER_FLOATING", codes)
+
+    def test_matrix_runner_expression_checks_declared_values(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            workflow = root / ".github" / "workflows" / "matrix-runner.yml"
+            workflow.write_text(
+                "name: Matrix runner pin test\n"
+                "on: workflow_dispatch\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  test:\n"
+                "    strategy:\n"
+                "      matrix:\n"
+                "        os: [ubuntu-24.04, ubuntu-latest]\n"
+                "    runs-on: ${{ matrix.os }}\n"
+                "    steps:\n"
+                "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            payload = json_result(completed)
+            codes = {finding["code"] for finding in payload["findings"]}
+
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertIn("WORKFLOW_RUNNER_FLOATING", codes)
+
+    def test_matrix_runner_expression_respects_exclude(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            workflow = root / ".github" / "workflows" / "matrix-runner-exclude.yml"
+            workflow.write_text(
+                "name: Matrix runner exclude test\n"
+                "on: workflow_dispatch\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  test:\n"
+                "    strategy:\n"
+                "      matrix:\n"
+                "        os: [ubuntu-24.04, ubuntu-latest]\n"
+                "        python: ['3.12', '3.13']\n"
+                "        exclude:\n"
+                "          - os: ubuntu-latest\n"
+                "    runs-on: ${{ matrix.os }}\n"
+                "    steps:\n"
+                "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertEqual(json_result(completed)["status"], "passed")
+
+    def test_unresolved_runner_expression_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            workflow = root / ".github" / "workflows" / "dynamic-runner.yml"
+            workflow.write_text(
+                "name: Dynamic runner test\n"
+                "on:\n"
+                "  workflow_dispatch:\n"
+                "    inputs:\n"
+                "      runner:\n"
+                "        required: true\n"
+                "        type: string\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  test:\n"
+                "    runs-on: ${{ inputs.runner }}\n"
+                "    steps:\n"
+                "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            payload = json_result(completed)
+            codes = {finding["code"] for finding in payload["findings"]}
+
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertIn("WORKFLOW_RUNNER_UNRESOLVED", codes)
+
+    def test_non_action_uses_key_is_ignored(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            workflow = root / ".github" / "workflows" / "input-named-uses.yml"
+            workflow.write_text(
+                "name: Non-action uses key test\n"
+                "on:\n"
+                "  workflow_dispatch:\n"
+                "    inputs:\n"
+                "      uses:\n"
+                "        description: Not an action reference\n"
+                "        required: false\n"
+                "        type: string\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  test:\n"
+                "    runs-on: ubuntu-24.04\n"
+                "    steps:\n"
+                "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertEqual(json_result(completed)["status"], "passed")
+
+    def test_local_composite_action_dependencies_are_pinned(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            action = root / ".github" / "actions" / "floating-dependency"
+            action.mkdir(parents=True)
+            (action / "action.yml").write_text(
+                "name: Floating dependency composite\n"
+                "description: Regression fixture\n"
+                "runs:\n"
+                "  using: composite\n"
+                "  steps:\n"
+                "    - uses: owner/action@v1\n",
+                encoding="utf-8",
+            )
+            workflow = root / ".github" / "workflows" / "local-composite.yml"
+            workflow.write_text(
+                "name: Local composite pin test\n"
+                "on: workflow_dispatch\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  test:\n"
+                "    runs-on: ubuntu-24.04\n"
+                "    steps:\n"
+                "      - uses: ./.github/actions/floating-dependency\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            payload = json_result(completed)
+
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertTrue(
+                any(
+                    finding["code"] == "WORKFLOW_ACTION_NOT_PINNED"
+                    and finding["path"] == ".github/actions/floating-dependency/action.yml"
+                    for finding in payload["findings"]
+                ),
+                payload["findings"],
+            )
+
+    def test_docker_action_sha256_digest_is_accepted(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            workflow = root / ".github" / "workflows" / "docker-action.yml"
+            digest = "a" * 64
+            workflow.write_text(
+                "name: Docker digest test\n"
+                "on: workflow_dispatch\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  test:\n"
+                "    runs-on: ubuntu-24.04\n"
+                "    steps:\n"
+                f"      - uses: docker://alpine@sha256:{digest}\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertEqual(json_result(completed)["status"], "passed")
+
+    def test_validate_tools_readme_retains_operational_sections(self):
+        readme = (REPO_ROOT / "tools" / "validate-tools" / "README.md").read_text(encoding="utf-8")
+        for heading in (
+            "## Limitations",
+            "## Review checklist",
+            "## Maintenance",
+            "## Completion boundary",
+        ):
+            self.assertIn(heading, readme)
 
 
 if __name__ == "__main__":
