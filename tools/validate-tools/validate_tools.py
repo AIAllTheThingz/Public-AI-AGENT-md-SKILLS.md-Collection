@@ -43,7 +43,9 @@ FULL_SHA = re.compile(r"^[A-Fa-f0-9]{40}$")
 OCI_SHA256 = re.compile(r"^sha256:[A-Fa-f0-9]{64}$")
 LOCK_SHA256 = re.compile(r"--hash=sha256:([A-Fa-f0-9]{64})(?=\s|\\|$)")
 MATRIX_RUNNER_EXPRESSION = re.compile(r"^\$\{\{\s*matrix\.([A-Za-z_][A-Za-z0-9_-]*)\s*\}\}$")
+REQUIREMENT_PROJECT_NAME = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)(.*)$")
 DIRECT_REQUIREMENTS_PATH = "tools/validate-schemas/requirements.txt"
+FLOATING_HOSTED_RUNNERS = {"ubuntu-latest", "windows-latest", "macos-latest"}
 
 
 def rel(path: Path, root: Path) -> str:
@@ -68,12 +70,33 @@ def strip_requirement_comment(value: str) -> str:
     return re.split(r"\s+#", value, maxsplit=1)[0].strip()
 
 
+def canonicalize_project_name(value: str) -> str:
+    """Canonicalize a Python distribution or extra name using PEP 503/685 separators."""
+    return re.sub(r"[-_.]+", "-", value).casefold()
+
+
 def normalize_requirement(value: str) -> str:
-    """Normalize one requirement declaration for exact input/lock comparison."""
+    """Normalize one requirement declaration for exact semantic input/lock comparison."""
     cleaned = strip_requirement_comment(value)
     if cleaned.endswith("\\"):
         cleaned = cleaned[:-1].rstrip()
-    return re.sub(r"\s+", "", cleaned).casefold()
+    compact = re.sub(r"\s+", "", cleaned)
+    match = REQUIREMENT_PROJECT_NAME.match(compact)
+    if not match:
+        return compact.casefold()
+
+    name, suffix = match.groups()
+    if suffix.startswith("["):
+        close = suffix.find("]")
+        if close != -1:
+            extras = [
+                canonicalize_project_name(extra)
+                for extra in suffix[1:close].split(",")
+                if extra
+            ]
+            suffix = f"[{','.join(sorted(extras))}]{suffix[close + 1:]}"
+
+    return canonicalize_project_name(name) + suffix.casefold()
 
 
 def locked_direct_requirement_specs(lock_text: str) -> set[str]:
@@ -240,10 +263,31 @@ def iter_workflow_runner_references(document: Any) -> Iterable[tuple[Any, Any]]:
 
 
 def load_yaml_document(path: Path, root: Path, findings: list[Finding]) -> Any | None:
-    """Load repository YAML and report parse failures through the workflow finding contract."""
+    """Load repository YAML without following a file target outside the repository root."""
     yaml = require_yaml()
+    repository_root = root.resolve()
     try:
-        return yaml.safe_load(path.read_text(encoding="utf-8"))
+        resolved_path = path.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        findings.append(Finding(
+            "WORKFLOW_YAML_INVALID",
+            f"Workflow or local action metadata could not be resolved: {exc}",
+            path=rel(path, root),
+        ))
+        return None
+
+    try:
+        resolved_path.relative_to(repository_root)
+    except ValueError:
+        findings.append(Finding(
+            "WORKFLOW_YAML_OUTSIDE_ROOT",
+            "Workflow or local action metadata resolves outside the declared repository root.",
+            path=rel(path, root),
+        ))
+        return None
+
+    try:
+        return yaml.safe_load(resolved_path.read_text(encoding="utf-8"))
     except (UnicodeDecodeError, yaml.YAMLError) as exc:
         findings.append(Finding(
             "WORKFLOW_YAML_INVALID",
@@ -352,7 +396,7 @@ def validate_runner_literal(value: str, path: Path, root: Path, findings: list[F
             f"Runner expression could not be statically resolved for pin validation: {stripped}",
             path=rel(path, root),
         ))
-    elif stripped.endswith("-latest"):
+    elif stripped.casefold() in FLOATING_HOSTED_RUNNERS:
         findings.append(Finding(
             "WORKFLOW_RUNNER_FLOATING",
             f"Hosted runner must use an explicit image family rather than {stripped}.",
