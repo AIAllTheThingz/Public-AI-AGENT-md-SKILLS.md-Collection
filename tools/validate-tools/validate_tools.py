@@ -17,7 +17,7 @@ sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
 
 TOOL = "validate-tools"
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 TOOL_PACKAGES = {
     "validate-standards": "validate_repository.py",
@@ -37,13 +37,48 @@ REQUIRED_COLLECTION = [
     "RELEASE_AND_COMPATIBILITY.md", "TROUBLESHOOTING.md",
 ]
 FRONTMATTER_ID = re.compile(r"^id:\s*(\S+)\s*$", re.MULTILINE)
-WORKFLOW_USE = re.compile(r"^\s*-?\s*uses:\s*([^@\s]+)@([^\s#]+)")
-WORKFLOW_RUNNER = re.compile(r"^\s*runs-on:\s*([^\s#]+)")
+WORKFLOW_USE = re.compile(r"^\s*-?\s*uses:\s*(.+?)\s*$")
+WORKFLOW_RUNNER = re.compile(r"^\s*runs-on:\s*(.+?)\s*$")
 FULL_SHA = re.compile(r"^[A-Fa-f0-9]{40}$")
 
 
 def rel(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
+
+
+def normalize_requirement(value: str) -> str:
+    """Normalize one requirement declaration for exact input/lock comparison."""
+    cleaned = value.strip()
+    if cleaned.endswith("\\"):
+        cleaned = cleaned[:-1].rstrip()
+    return re.sub(r"\s+", "", cleaned).casefold()
+
+
+def locked_requirement_specs(lock_text: str) -> set[str]:
+    """Return top-level resolved requirement declarations from a pip-compile lock."""
+    specs: set[str] = set()
+    for line in lock_text.splitlines():
+        if not line or line[0].isspace():
+            continue
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", "-")):
+            continue
+        specs.add(normalize_requirement(stripped))
+    return specs
+
+
+def yaml_scalar_value(raw: str) -> str:
+    """Extract a simple YAML scalar while accepting ordinary single/double quoting."""
+    value = raw.strip()
+    if not value:
+        return value
+    if value[0] in {"'", '"'}:
+        quote = value[0]
+        end = value.find(quote, 1)
+        if end == -1:
+            return value
+        return value[1:end].strip()
+    return value.split(" #", 1)[0].strip()
 
 
 def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
@@ -68,9 +103,10 @@ def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
     direct_specs = [
         line.strip()
         for line in direct.read_text(encoding="utf-8").splitlines()
-        if line.strip() and not line.lstrip().startswith("#")
+        if line.strip() and not line.lstrip().startswith(("#", "-"))
     ]
     lock_text = lock.read_text(encoding="utf-8")
+    resolved_specs = locked_requirement_specs(lock_text)
 
     if "--hash=sha256:" not in lock_text:
         findings.append(Finding(
@@ -80,7 +116,7 @@ def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
         ))
 
     for spec in direct_specs:
-        if spec not in lock_text:
+        if normalize_requirement(spec) not in resolved_specs:
             findings.append(Finding(
                 "DEPENDENCY_LOCK_OUT_OF_SYNC",
                 f"Direct dependency is not represented exactly in requirements.lock: {spec}",
@@ -97,20 +133,29 @@ def validate_workflow_pins(root: Path, findings: list[Finding]) -> None:
         for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
             use = WORKFLOW_USE.match(line)
             if use:
-                action, ref = use.groups()
-                if action.startswith("./"):
-                    continue
-                if not FULL_SHA.fullmatch(ref):
+                value = yaml_scalar_value(use.group(1))
+                if "@" not in value:
                     findings.append(Finding(
                         "WORKFLOW_ACTION_NOT_PINNED",
-                        f"Third-party action must be pinned to a full 40-character commit SHA: {action}@{ref}",
+                        f"Third-party action reference is missing an immutable commit SHA: {value}",
                         path=rel(path, root),
                         line=line_number,
                     ))
+                else:
+                    action, ref = value.rsplit("@", 1)
+                    if action.startswith("./"):
+                        continue
+                    if not FULL_SHA.fullmatch(ref):
+                        findings.append(Finding(
+                            "WORKFLOW_ACTION_NOT_PINNED",
+                            f"Third-party action must be pinned to a full 40-character commit SHA: {action}@{ref}",
+                            path=rel(path, root),
+                            line=line_number,
+                        ))
 
             runner = WORKFLOW_RUNNER.match(line)
             if runner:
-                value = runner.group(1)
+                value = yaml_scalar_value(runner.group(1))
                 if "${{" not in value and value.endswith("-latest"):
                     findings.append(Finding(
                         "WORKFLOW_RUNNER_FLOATING",
