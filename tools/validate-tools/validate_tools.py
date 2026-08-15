@@ -42,6 +42,7 @@ REQUIRED_COLLECTION = [
 FRONTMATTER_ID = re.compile(r"^id:\s*(\S+)\s*$", re.MULTILINE)
 FULL_SHA = re.compile(r"^[A-Fa-f0-9]{40}$")
 OCI_SHA256 = re.compile(r"^sha256:[A-Fa-f0-9]{64}$")
+LOCK_SHA256 = re.compile(r"--hash=sha256:([A-Fa-f0-9]{64})(?=\s|\\|$)")
 MATRIX_RUNNER_EXPRESSION = re.compile(r"^\$\{\{\s*matrix\.([A-Za-z_][A-Za-z0-9_-]*)\s*\}\}$")
 DIRECT_REQUIREMENTS_PATH = "tools/validate-schemas/requirements.txt"
 
@@ -88,6 +89,36 @@ def locked_direct_requirement_specs(lock_text: str) -> set[str]:
     return direct_specs
 
 
+def locked_requirement_hashes(lock_text: str) -> list[tuple[str, set[str]]]:
+    """Return every resolved lock requirement with its valid SHA-256 hashes."""
+    requirements: list[tuple[str, set[str]]] = []
+    current_spec: str | None = None
+    current_hashes: set[str] = set()
+
+    for line in lock_text.splitlines():
+        if line and not line[0].isspace():
+            if current_spec is not None:
+                requirements.append((current_spec, current_hashes))
+
+            stripped = line.strip()
+            if not stripped or stripped.startswith(("#", "-")):
+                current_spec = None
+                current_hashes = set()
+                continue
+
+            current_spec = normalize_requirement(stripped)
+            current_hashes = {match.casefold() for match in LOCK_SHA256.findall(line)}
+            continue
+
+        if current_spec is not None:
+            current_hashes.update(match.casefold() for match in LOCK_SHA256.findall(line))
+
+    if current_spec is not None:
+        requirements.append((current_spec, current_hashes))
+
+    return requirements
+
+
 def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
     direct = root / "tools" / "validate-schemas" / "requirements.txt"
     lock = root / "tools" / "validate-schemas" / "requirements.lock"
@@ -116,12 +147,13 @@ def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
     lock_text = lock.read_text(encoding="utf-8")
     locked_direct_specs = locked_direct_requirement_specs(lock_text)
 
-    if "--hash=sha256:" not in lock_text:
-        findings.append(Finding(
-            "DEPENDENCY_LOCK_UNHASHED",
-            "requirements.lock must contain SHA-256 hashes for resolved dependencies.",
-            path=rel(lock, root),
-        ))
+    for spec, hashes in locked_requirement_hashes(lock_text):
+        if not hashes:
+            findings.append(Finding(
+                "DEPENDENCY_LOCK_UNHASHED",
+                f"Resolved dependency must include at least one valid SHA-256 hash: {spec}",
+                path=rel(lock, root),
+            ))
 
     for spec in sorted(direct_specs - locked_direct_specs):
         findings.append(Finding(
@@ -195,7 +227,73 @@ def iter_workflow_runner_references(document: Any) -> Iterable[tuple[Any, Any]]:
         yield job["runs-on"], matrix
 
 
-def validate_action_reference(raw: Any, path: Path, root: Path, findings: list[Finding]) -> None:
+def load_yaml_document(path: Path, root: Path, findings: list[Finding]) -> Any | None:
+    """Load repository YAML and report parse failures through the workflow finding contract."""
+    try:
+        return yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, yaml.YAMLError) as exc:
+        findings.append(Finding(
+            "WORKFLOW_YAML_INVALID",
+            f"Workflow or local action metadata is not valid YAML: {exc}",
+            path=rel(path, root),
+        ))
+        return None
+
+
+def validate_local_action_reference(
+    value: str,
+    root: Path,
+    findings: list[Finding],
+    visited_local_actions: set[Path],
+) -> None:
+    """Follow a referenced local composite action and validate nested uses entries."""
+    repository_root = root.resolve()
+    action_dir = (repository_root / value[2:]).resolve()
+    try:
+        action_dir.relative_to(repository_root)
+    except ValueError:
+        return
+
+    metadata: Path | None = None
+    for name in ("action.yml", "action.yaml"):
+        candidate = action_dir / name
+        if candidate.is_file():
+            metadata = candidate
+            break
+    if metadata is None or metadata in visited_local_actions:
+        return
+
+    visited_local_actions.add(metadata)
+    document = load_yaml_document(metadata, root, findings)
+    if not isinstance(document, dict):
+        return
+
+    runs = document.get("runs")
+    if not isinstance(runs, dict) or runs.get("using") != "composite":
+        return
+
+    steps = runs.get("steps")
+    if not isinstance(steps, list):
+        return
+
+    for step in steps:
+        if isinstance(step, dict) and "uses" in step:
+            validate_action_reference(
+                step["uses"],
+                metadata,
+                root,
+                findings,
+                visited_local_actions,
+            )
+
+
+def validate_action_reference(
+    raw: Any,
+    path: Path,
+    root: Path,
+    findings: list[Finding],
+    visited_local_actions: set[Path] | None = None,
+) -> None:
     if not isinstance(raw, str):
         findings.append(Finding(
             "WORKFLOW_ACTION_INVALID",
@@ -206,6 +304,12 @@ def validate_action_reference(raw: Any, path: Path, root: Path, findings: list[F
 
     value = raw.strip()
     if value.startswith("./"):
+        validate_local_action_reference(
+            value,
+            root,
+            findings,
+            visited_local_actions if visited_local_actions is not None else set(),
+        )
         return
 
     if value.startswith("docker://"):
@@ -292,19 +396,14 @@ def validate_workflow_pins(root: Path, findings: list[Finding]) -> None:
     if not workflows.is_dir():
         return
 
+    visited_local_actions: set[Path] = set()
     for path in sorted(list(workflows.glob("*.yml")) + list(workflows.glob("*.yaml"))):
-        try:
-            document = yaml.safe_load(path.read_text(encoding="utf-8"))
-        except (UnicodeDecodeError, yaml.YAMLError) as exc:
-            findings.append(Finding(
-                "WORKFLOW_YAML_INVALID",
-                f"Workflow is not valid YAML: {exc}",
-                path=rel(path, root),
-            ))
+        document = load_yaml_document(path, root, findings)
+        if document is None:
             continue
 
         for action in iter_workflow_action_references(document):
-            validate_action_reference(action, path, root, findings)
+            validate_action_reference(action, path, root, findings, visited_local_actions)
         for runner, matrix in iter_workflow_runner_references(document):
             validate_runner_reference(runner, matrix, path, root, findings)
 
