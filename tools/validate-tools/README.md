@@ -43,6 +43,8 @@ Tool-specific options are shown by:
 python tools/validate-tools/validate_tools.py --help
 ```
 
+`--help` remains available before PyYAML is installed. A real validation run without PyYAML reports a structured dependency/input error through the common CLI contract and exits with code `2`.
+
 ## Tool packages checked
 
 The validator requires these packages:
@@ -79,6 +81,7 @@ The release package contains both `validate_release.py` and `build_release.py`. 
 - `docker://` actions pinned to immutable `sha256:<64-hex>` OCI digests
 - referenced local composite actions recursively checked for nested external `uses` dependencies
 - hosted runners using explicit image families rather than `*-latest`
+- statically declared matrix runner values evaluated after `exclude`; later `include` entries are also inspected because GitHub can add combinations back after exclusion
 
 Local workflow action references such as `./path/to/action` do not require a Git commit pin themselves. When they resolve to composite-action metadata, external `uses` references inside that metadata are inspected recursively and must satisfy the same immutable-pin rules.
 
@@ -130,7 +133,7 @@ Workflow/dependency findings include:
 
 ## Failure behavior
 
-Input and configuration failures produce status `error`. Validation findings produce status `failed`. Unexpected exceptions produce status `error` and exit code `3`.
+Input, configuration, and required-dependency failures produce status `error` and exit code `2`. Validation findings produce status `failed`. Unexpected exceptions produce status `error` and exit code `3`.
 
 Do not catch and discard failures merely to keep CI green. Green output created by suppressing errors is not validation. It is interior decoration.
 
@@ -140,7 +143,7 @@ Central tests live under [`../tests/`](../tests/).
 
 The repository requires at least one test module per declared tool package. The release package is covered by `test_release.py`.
 
-Regression coverage includes exact direct-dependency/lock comparison, per-resolved-dependency hash enforcement, inline requirement comments, quoted YAML action values, YAML key-spacing variants, immutable Docker digests, local composite-action dependency traversal, and floating action/runner rejection.
+Regression coverage includes exact direct-dependency/lock comparison, per-resolved-dependency hash enforcement, inline requirement comments, missing-PyYAML CLI behavior, quoted YAML action values, YAML key-spacing variants, immutable Docker digests, local composite-action dependency traversal, effective matrix runner exclusions, and floating action/runner rejection.
 
 Run focused tests:
 
@@ -170,3 +173,42 @@ Breaking changes include:
 - silently narrowing accepted input
 
 Changes to the required package set or validation dependency contract must be classified under [`../../RELEASE_POLICY.md`](../../RELEASE_POLICY.md).
+
+## Limitations
+
+- compilation is not runtime correctness
+- unit tests run only when requested
+- package presence does not prove every secondary script is fully exercised
+- dependency hashes establish lock integrity, not package provenance, vulnerability status, or trustworthiness
+- action pinning establishes immutable references, not third-party provenance or vulnerability status
+- local composite-action traversal follows actions referenced by repository workflows; unreferenced local metadata is not treated as an executed CI dependency
+- dynamic runner expressions that cannot be resolved from a static matrix are rejected as unresolved rather than guessed
+- static matrix evaluation covers declared axes, partial-match `exclude`, and runner values supplied by later `include` entries; it does not execute arbitrary expressions to discover dynamically generated matrices
+- does not inspect private GitHub workflow permissions, environment protection rules, or repository rulesets
+
+## Review checklist
+
+Reviewers should confirm:
+
+- documented behavior matches code
+- the declared package list is complete
+- release scripts are compiled and tested
+- positive, negative, and error-path tests exist
+- `--help` remains usable before optional/runtime validation dependencies are installed
+- dependency failures preserve structured output and exit code `2`
+- every resolved lock entry has a valid SHA-256 hash and direct dependency drift is detected in both directions
+- workflow action checks are limited to semantic action positions and recursively inspect referenced local composite actions
+- matrix runner validation respects effective exclusions and rejects unresolved dynamic values
+- output and exit codes are stable
+- filesystem and subprocess handling are safe
+- dependency changes are pinned and justified
+- compatibility and release impact are documented
+- the complete pipeline passes
+
+## Maintenance
+
+Update the script, README, manifest, examples, tests, catalog, changelog, release notes, and CI together when behavior changes. Regenerate the validation lock whenever the direct dependency set or hosted Python boundary changes.
+
+## Completion boundary
+
+A successful execution establishes only that the declared tool package structure, dependency-lock checks, workflow pinning checks, compilation checks, and other implemented structural validations passed. It does not prove runtime correctness, third-party provenance, vulnerability absence, release authority, repository-host configuration, compliance, or production readiness.
