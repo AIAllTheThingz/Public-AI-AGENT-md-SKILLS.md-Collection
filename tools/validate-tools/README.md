@@ -1,7 +1,7 @@
 ---
 id: TOOL-PKG-VALIDATE-TOOLS-001
 title: Validate Tools Tool
-version: 1.2.0
+version: 1.3.2
 status: baseline
 ---
 
@@ -9,7 +9,7 @@ status: baseline
 
 ## Purpose
 
-Validate tool package structure, stable entry points, Python compilation, contracts, documentation, and unit-test coverage.
+Validate tool package structure, stable entry points, Python compilation, contracts, dependency-lock integrity, GitHub Actions workflow pinning, documentation, and unit-test coverage.
 
 Status: **baseline**
 
@@ -21,9 +21,10 @@ The stable path is part of the repository tooling contract. Moving or renaming i
 
 ## Operating mode
 
-- Reads: the tools collection and tests
+- Reads: the tools collection, tests, validation dependency files, and `.github/workflows/*.yml|*.yaml`
 - Writes: only an optional result file
 - Network: none
+- External dependency: `PyYAML` for structural workflow parsing
 - Default behavior: safe and non-destructive
 
 ## Common options
@@ -70,6 +71,15 @@ The release package contains both `validate_release.py` and `build_release.py`. 
 - test-module count
 - JSON result contract
 - release-package presence
+- SHA-256-hashed validation dependency lock presence
+- exact normalized representation of each direct validation dependency in the resolved lock
+- ordinary inline comments in direct requirement files without treating comments as requirement text
+- structural parsing of GitHub Actions YAML rather than line-oriented pattern matching
+- third-party repository actions pinned to full 40-character Git commit SHAs
+- `docker://` actions pinned to immutable `sha256:<64-hex>` OCI digests
+- hosted runners using explicit image families rather than `*-latest`
+
+Local actions such as `./path/to/action` are not third-party references and do not require a Git commit pin.
 
 ## Examples
 
@@ -87,6 +97,18 @@ Text output is for interactive use. JSON output conforms to [`../contracts/tool-
 
 Finding codes are intended for automation. Message wording may improve, but a finding code must not silently change meaning.
 
+Workflow/dependency findings include:
+
+- `DEPENDENCY_INPUT_MISSING`
+- `DEPENDENCY_LOCK_MISSING`
+- `DEPENDENCY_LOCK_UNHASHED`
+- `DEPENDENCY_LOCK_OUT_OF_SYNC`
+- `WORKFLOW_YAML_INVALID`
+- `WORKFLOW_ACTION_INVALID`
+- `WORKFLOW_ACTION_NOT_PINNED`
+- `WORKFLOW_DOCKER_NOT_PINNED`
+- `WORKFLOW_RUNNER_FLOATING`
+
 ## Exit codes
 
 - `0`: completed and passed
@@ -98,6 +120,7 @@ Finding codes are intended for automation. Message wording may improve, but a fi
 
 - Repository paths are resolved from `--root`.
 - The tool does not fetch external content.
+- Workflow YAML is parsed locally; parsed content is inspected but never executed.
 - Compilation checks must not execute the target scripts.
 - Sensitive values must not be included in findings.
 - A passed result must not be described as proof beyond the implemented checks.
@@ -114,6 +137,8 @@ Do not catch and discard failures merely to keep CI green. Green output created 
 Central tests live under [`../tests/`](../tests/).
 
 The repository requires at least one test module per declared tool package. The release package is covered by `test_release.py`.
+
+Regression coverage includes exact direct-dependency/lock comparison, inline requirement comments, quoted YAML action values, YAML key-spacing variants, immutable Docker digests, and floating action/runner rejection.
 
 Run focused tests:
 
@@ -142,15 +167,17 @@ Breaking changes include:
 - changing generated file semantics
 - silently narrowing accepted input
 
-Changes to the required package set must be classified under [`../../RELEASE_POLICY.md`](../../RELEASE_POLICY.md).
+Changes to the required package set or validation dependency contract must be classified under [`../../RELEASE_POLICY.md`](../../RELEASE_POLICY.md).
 
 ## Limitations
 
 - compilation is not runtime correctness
-- unit tests run only when requested
+- unit tests run only when requested by the caller; the complete repository pipeline requests them
 - package presence does not prove every secondary script is fully exercised
-- does not inspect third-party package vulnerabilities
-- does not verify private GitHub workflow permissions or rulesets
+- action pin validation establishes immutable reference shape, not the trustworthiness of the referenced action implementation
+- Docker digest validation establishes immutable digest shape, not image provenance or vulnerability status
+- dependency-lock validation establishes input/lock consistency and hashes, not third-party package vulnerability status
+- does not verify private GitHub workflow permissions, environments, repository rulesets, or branch protection
 
 ## Review checklist
 
@@ -162,14 +189,15 @@ Reviewers should confirm:
 - positive and negative tests exist
 - output and exit codes are stable
 - filesystem and subprocess handling are safe
-- dependency changes are pinned and justified
+- dependency changes are pinned, hash-locked, and justified
+- workflow action and runner references satisfy the documented immutable-reference rules
 - compatibility and release impact are documented
 - the complete pipeline passes
 
 ## Maintenance
 
-Update the script, README, manifest, examples, tests, catalog, changelog, release notes, and CI together when behavior changes.
+Update the script, README, manifest, examples, tests, catalog, changelog, release notes, dependency input/lock, and CI together when behavior changes.
 
 ## Completion boundary
 
-A successful execution establishes only that the declared tool package structure and compilation checks passed. It does not prove runtime correctness, release authority, compliance, or production readiness.
+A successful execution establishes only that the declared tool package, dependency-lock, workflow-reference, and compilation checks passed. It does not prove runtime correctness, third-party provenance, release authority, compliance, or production readiness.
