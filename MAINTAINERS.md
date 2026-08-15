@@ -83,6 +83,25 @@ The Security Maintainer coordinates private vulnerability handling, security-sen
 | Templates and examples | `templates/`, `examples/` | @AIAllTheThingz | Affected contract or governance owner |
 | Catalog and repository documentation | `README.md`, `CATALOG.md`, `MANIFEST.md`, `ROADMAP.md`, `SOURCES.md` | @AIAllTheThingz | Affected area owner |
 
+## Review model rationale and risk controls
+
+This repository is a public standards and reference library maintained by one active maintainer. The previous policy made independent external review mandatory for broad classes of low- and moderate-risk governance, security-hardening, schema, tooling, dependency, workflow, and release-maintenance changes. That rule was not consistently achievable and created a gap between documented policy and actual repository operation.
+
+The lightweight model narrows mandatory independent review to decisions where an independent party materially changes the risk boundary: high or critical changes, breaking published compatibility commitments, final `1.0.0` approval, and stable-maturity commitments. For ordinary low- and moderate-risk maintenance, requiring an external reviewer by category alone would often leave safe corrections blocked indefinitely without materially improving assurance.
+
+This change accepts the risk that a sole maintainer can miss defects in moderate-risk work. That risk is reduced by retaining these compensating controls:
+
+- normal changes use pull requests rather than direct default-branch pushes
+- permanent CI must pass on the final head
+- compatibility, security, validation, and limitations must be documented
+- CODEOWNERS continues to identify affected ownership and specialist areas
+- specialist review remains recommended when it would materially improve confidence
+- requested changes and review conversations must be addressed before merge
+- high/critical risk and published/stable compatibility commitments still require independent review
+- emergency changes remain narrowly scoped and require follow-up appropriate to the risk
+
+The lighter review rule is not permission to downgrade a change's risk classification to avoid review. If uncertainty, blast radius, irreversibility, security impact, or compatibility impact raises the change to high or critical risk, the independent-review gate applies.
+
 ## Review classes
 
 ### Editorial review
