@@ -16,14 +16,14 @@ status: baseline
 | Validate Skills | Skill files, package routes, manifests, local links, and optional UI metadata | Optional result file | None | Tooling and standards maintainers |
 | Validate Schemas | Schemas and JSON instances | None | `jsonschema[format]` | Schema maintainers |
 | Validate Templates | Templates, examples, schemas | None | `jsonschema[format]` | Template maintainers |
-| Validate Tools | Tool packages, tests, validation dependency input/lock, and GitHub Actions workflow YAML | Optional result file | `PyYAML` | Tool maintainers |
+| Validate Tools | Tool packages, tests, validation dependency input/lock, GitHub Actions workflow YAML, and referenced local composite actions | Optional result file | `PyYAML` | Tool maintainers |
 | Validate Release | Version, changelog, release notes, migration notes, release and maturity policies, tag state | Optional result file | None | Release Manager and Tooling Maintainer |
 | Build Release | Git-tracked repository files and versioned notes | Release distribution directory | None | Release Manager and Tooling Maintainer |
 | Generate Manifest | Profiles; language, discipline, framework, platform, virtualization, operating-system, and networking package directories; schema | Manifest file | `jsonschema[format]` | Project adopter |
 | Compose Agents | Project manifest and selected governance, profile, language, discipline, framework, platform, virtualization, operating-system, and networking standards | Bundle directory | `jsonschema[format]` | Project adopter |
 | Validate All | Validator entry points and tests | Optional result file | Validator dependencies | Repository maintainers |
 
-`Validate Tools` structurally parses workflow YAML, checks immutable third-party action references (full Git commit SHAs or OCI `sha256` digests for `docker://` actions), rejects floating hosted runner images, and verifies that direct validation dependencies are represented exactly in the SHA-256-hashed resolved lock.
+`Validate Tools` structurally parses workflow and referenced local composite-action YAML, recursively checks immutable third-party action references (full Git commit SHAs or OCI `sha256` digests for `docker://` actions), rejects floating hosted runner images, verifies exact direct-dependency/lock synchronization, and requires at least one valid SHA-256 hash on every resolved lock entry.
 
 ## Stable entry points
 
