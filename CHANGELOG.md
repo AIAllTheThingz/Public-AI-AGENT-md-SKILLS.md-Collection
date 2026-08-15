@@ -20,6 +20,7 @@ Release notes distinguish:
 
 ### Normative changes
 
+- Simplified repository-maintenance review policy so low- and moderate-risk changes may be maintainer self-reviewed after permanent CI when no independent-review gate applies, while preserving independent review for high/critical risk, breaking repository releases, the final `1.0.0` compatibility approval, and stable-maturity commitments.
 - Added a complete C# language package and direct `csharp` skill covering compiler/language boundaries, nullable types, API compatibility, async and concurrency, resource ownership, performance, security, reproducible builds and dependencies, testing, documentation, observability, scripting, source generation, reflection, native interop, unsafe code, and completion evidence.
 - Separated C# language responsibility from the existing .NET SDK/runtime/application package and updated ASP.NET Core plus representative C# examples to compose both packages.
 - Added a VCF PowerCLI automation standard under the VMware vSphere and ESXi package, composed it with the general PowerShell package, and added adoption, review, and completion-evidence requirements for dependency provenance, endpoint and certificate identity, explicit connections, stable inventory targeting, confirmation, asynchronous tasks, cleanup, structured results, and isolated testing.
@@ -35,7 +36,7 @@ Release notes distinguish:
 
 ### Editorial changes
 
-- None.
+- Added a concise pull request template for summary, impact, validation, limitations, and maintainer self-review without introducing heavyweight governance records.
 
 ### Tooling changes
 
@@ -50,7 +51,7 @@ Release notes distinguish:
 ### Security
 
 - Added C# safeguards for trust-boundary validation, secret and diagnostic disclosure, unsafe deserialization, command and path injection, certificate bypass, unbounded concurrency and resource growth, broad analyzer suppression, floating build-time code, unsafe/native lifetime errors, and attacker-selected reflection or runtime code generation.
-- Added PowerCLI safeguards against certificate-validation bypass, ambiguous ambient connections, persistent configuration weakening, automatic operational module changes, name-only targeting, leaked authenticated sessions, unbounded tasks, unsafe retries, unrelated session cleanup, and success claims without actual-state verification.
+- Added PowerCLI safeguards against certificate-validation bypass, ambiguous ambient connections, persistent configuration weakening, automatic operational module changes, name-only targeting, leaked authenticated sessions, unbounded tasks, unsafe retries, unrelated-session cleanup, and success claims without actual-state verification.
 - Made infrastructure-control boundaries explicit in manifests and generated composition indexes so material hypervisor, host operating-system, and network standards are less likely to be silently omitted from review.
 - Added virtualization safeguards for privileged control planes, ambiguous object selection, bulk or destructive actions, management-plane exposure, network and storage changes, snapshots and checkpoints, backup and restore, device passthrough, unsupported lifecycle states, and cross-platform migration.
 - Added OS safeguards for privileged fleet actions, ambiguous target selection, repository and package trust, security-control bypass, identity and remote-access loss, restart and partial-fleet failure, encryption and recovery material, destructive endpoint actions, unsupported lifecycle states, and user-data privacy.
