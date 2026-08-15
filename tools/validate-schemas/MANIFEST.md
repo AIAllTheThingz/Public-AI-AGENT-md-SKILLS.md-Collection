@@ -1,7 +1,7 @@
 ---
 id: TOOL-PKG-VALIDATE-SCHEMAS-001-MANIFEST
 title: Validate Schemas Tool Manifest
-version: 1.0.0
+version: 1.1.0
 status: baseline
 ---
 
@@ -10,6 +10,8 @@ status: baseline
 ## Required files
 
 - `validate_schemas.py`
+- `requirements.txt`
+- `requirements.lock`
 - `README.md`
 - `MANIFEST.md`
 - `examples/README.md`
@@ -27,6 +29,8 @@ status: baseline
 - text output is readable
 - JSON output conforms to the result contract
 - exit codes match the common contract
+- direct dependencies are represented in the SHA-256-hashed lock
+- hosted workflows use the checked-in lock with hash enforcement
 - positive and negative tests pass
 - stable path remains unchanged
 - documentation and examples match behavior
