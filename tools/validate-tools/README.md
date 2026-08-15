@@ -21,10 +21,10 @@ The stable path is part of the repository tooling contract. Moving or renaming i
 
 ## Operating mode
 
-- Reads: the tools collection, tests, validation dependency files, and `.github/workflows/*.yml|*.yaml`
+- Reads: the tools collection, tests, validation dependency files, GitHub Actions workflows, and referenced local composite-action metadata
 - Writes: only an optional result file
 - Network: none
-- External dependency: `PyYAML` for structural workflow parsing
+- External dependency: `PyYAML` for structural workflow and local action metadata parsing
 - Default behavior: safe and non-destructive
 
 ## Common options
@@ -71,15 +71,16 @@ The release package contains both `validate_release.py` and `build_release.py`. 
 - test-module count
 - JSON result contract
 - release-package presence
-- SHA-256-hashed validation dependency lock presence
+- at least one valid SHA-256 hash for every resolved dependency in the validation lock
 - exact normalized representation of each direct validation dependency in the resolved lock
 - ordinary inline comments in direct requirement files without treating comments as requirement text
 - structural parsing of GitHub Actions YAML rather than line-oriented pattern matching
 - third-party repository actions pinned to full 40-character Git commit SHAs
 - `docker://` actions pinned to immutable `sha256:<64-hex>` OCI digests
+- referenced local composite actions recursively checked for nested external `uses` dependencies
 - hosted runners using explicit image families rather than `*-latest`
 
-Local actions such as `./path/to/action` are not third-party references and do not require a Git commit pin.
+Local workflow action references such as `./path/to/action` do not require a Git commit pin themselves. When they resolve to composite-action metadata, external `uses` references inside that metadata are inspected recursively and must satisfy the same immutable-pin rules.
 
 ## Examples
 
@@ -120,7 +121,7 @@ Workflow/dependency findings include:
 
 - Repository paths are resolved from `--root`.
 - The tool does not fetch external content.
-- Workflow YAML is parsed locally; parsed content is inspected but never executed.
+- Workflow YAML and referenced local action metadata are parsed locally; parsed content is inspected but never executed.
 - Compilation checks must not execute the target scripts.
 - Sensitive values must not be included in findings.
 - A passed result must not be described as proof beyond the implemented checks.
@@ -138,7 +139,7 @@ Central tests live under [`../tests/`](../tests/).
 
 The repository requires at least one test module per declared tool package. The release package is covered by `test_release.py`.
 
-Regression coverage includes exact direct-dependency/lock comparison, inline requirement comments, quoted YAML action values, YAML key-spacing variants, immutable Docker digests, and floating action/runner rejection.
+Regression coverage includes exact direct-dependency/lock comparison, per-resolved-dependency hash enforcement, inline requirement comments, quoted YAML action values, YAML key-spacing variants, immutable Docker digests, local composite-action dependency traversal, and floating action/runner rejection.
 
 Run focused tests:
 
@@ -168,36 +169,3 @@ Breaking changes include:
 - silently narrowing accepted input
 
 Changes to the required package set or validation dependency contract must be classified under [`../../RELEASE_POLICY.md`](../../RELEASE_POLICY.md).
-
-## Limitations
-
-- compilation is not runtime correctness
-- unit tests run only when requested by the caller; the complete repository pipeline requests them
-- package presence does not prove every secondary script is fully exercised
-- action pin validation establishes immutable reference shape, not the trustworthiness of the referenced action implementation
-- Docker digest validation establishes immutable digest shape, not image provenance or vulnerability status
-- dependency-lock validation establishes input/lock consistency and hashes, not third-party package vulnerability status
-- does not verify private GitHub workflow permissions, environments, repository rulesets, or branch protection
-
-## Review checklist
-
-Reviewers should confirm:
-
-- documented behavior matches code
-- the declared package list is complete
-- release scripts are compiled and tested
-- positive and negative tests exist
-- output and exit codes are stable
-- filesystem and subprocess handling are safe
-- dependency changes are pinned, hash-locked, and justified
-- workflow action and runner references satisfy the documented immutable-reference rules
-- compatibility and release impact are documented
-- the complete pipeline passes
-
-## Maintenance
-
-Update the script, README, manifest, examples, tests, catalog, changelog, release notes, dependency input/lock, and CI together when behavior changes.
-
-## Completion boundary
-
-A successful execution establishes only that the declared tool package, dependency-lock, workflow-reference, and compilation checks passed. It does not prove runtime correctness, third-party provenance, release authority, compliance, or production readiness.
