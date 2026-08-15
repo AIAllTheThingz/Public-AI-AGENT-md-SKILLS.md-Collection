@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,6 +25,32 @@ class ValidateToolsTests(unittest.TestCase):
         completed = run_tool("tools/validate-tools/validate_tools.py", "--format", "json")
         self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
         self.assertEqual(json_result(completed)["status"], "passed")
+
+    def test_help_and_dependency_error_work_without_pyyaml(self):
+        script = REPO_ROOT / "tools" / "validate-tools" / "validate_tools.py"
+
+        help_completed = subprocess.run(
+            [sys.executable, "-S", str(script), "--help"],
+            cwd=REPO_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(help_completed.returncode, 0, help_completed.stdout + help_completed.stderr)
+
+        completed = subprocess.run(
+            [sys.executable, "-S", str(script), "--format", "json"],
+            cwd=REPO_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        payload = json.loads(completed.stdout)
+
+        self.assertEqual(completed.returncode, 2, completed.stdout + completed.stderr)
+        self.assertEqual(payload["status"], "error")
+        self.assertEqual(payload["findings"][0]["code"], "INPUT_ERROR")
+        self.assertIn("PyYAML", payload["findings"][0]["message"])
 
     def test_dependency_lock_requires_exact_direct_requirement(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -214,6 +243,39 @@ class ValidateToolsTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
             self.assertIn("WORKFLOW_RUNNER_FLOATING", codes)
 
+    def test_matrix_runner_expression_respects_exclude(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            workflow = root / ".github" / "workflows" / "matrix-runner-exclude.yml"
+            workflow.write_text(
+                "name: Matrix runner exclude test\n"
+                "on: workflow_dispatch\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  test:\n"
+                "    strategy:\n"
+                "      matrix:\n"
+                "        os: [ubuntu-24.04, ubuntu-latest]\n"
+                "        python: ['3.12', '3.13']\n"
+                "        exclude:\n"
+                "          - os: ubuntu-latest\n"
+                "    runs-on: ${{ matrix.os }}\n"
+                "    steps:\n"
+                "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertEqual(json_result(completed)["status"], "passed")
+
     def test_unresolved_runner_expression_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp:
             root = self.copy_repo(temp)
@@ -354,6 +416,16 @@ class ValidateToolsTests(unittest.TestCase):
 
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
             self.assertEqual(json_result(completed)["status"], "passed")
+
+    def test_validate_tools_readme_retains_operational_sections(self):
+        readme = (REPO_ROOT / "tools" / "validate-tools" / "README.md").read_text(encoding="utf-8")
+        for heading in (
+            "## Limitations",
+            "## Review checklist",
+            "## Maintenance",
+            "## Completion boundary",
+        ):
+            self.assertIn(heading, readme)
 
 
 if __name__ == "__main__":
