@@ -67,6 +67,45 @@ class ValidateToolsTests(unittest.TestCase):
                 payload["findings"],
             )
 
+    def test_dependency_lock_requires_hash_for_each_resolved_requirement(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            lock = root / "tools" / "validate-schemas" / "requirements.lock"
+            lines = lock.read_text(encoding="utf-8").splitlines()
+            rewritten: list[str] = []
+            strip_arrow_hashes = False
+
+            for line in lines:
+                if line.startswith("arrow=="):
+                    rewritten.append(line.rstrip(" \\"))
+                    strip_arrow_hashes = True
+                    continue
+                if strip_arrow_hashes and line.startswith("    --hash=sha256:"):
+                    continue
+                if strip_arrow_hashes and line and not line[0].isspace():
+                    strip_arrow_hashes = False
+                rewritten.append(line)
+
+            lock.write_text("\n".join(rewritten) + "\n", encoding="utf-8")
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            payload = json_result(completed)
+
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertTrue(
+                any(
+                    finding["code"] == "DEPENDENCY_LOCK_UNHASHED"
+                    and "arrow==" in finding["message"]
+                    for finding in payload["findings"]
+                ),
+                payload["findings"],
+            )
+
     def test_dependency_lock_accepts_inline_comment_on_direct_requirement(self):
         with tempfile.TemporaryDirectory() as temp:
             root = self.copy_repo(temp)
@@ -241,6 +280,52 @@ class ValidateToolsTests(unittest.TestCase):
 
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
             self.assertEqual(json_result(completed)["status"], "passed")
+
+    def test_local_composite_action_dependencies_are_pinned(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = self.copy_repo(temp)
+            action = root / ".github" / "actions" / "floating-dependency"
+            action.mkdir(parents=True)
+            (action / "action.yml").write_text(
+                "name: Floating dependency composite\n"
+                "description: Regression fixture\n"
+                "runs:\n"
+                "  using: composite\n"
+                "  steps:\n"
+                "    - uses: owner/action@v1\n",
+                encoding="utf-8",
+            )
+            workflow = root / ".github" / "workflows" / "local-composite.yml"
+            workflow.write_text(
+                "name: Local composite pin test\n"
+                "on: workflow_dispatch\n"
+                "permissions:\n"
+                "  contents: read\n"
+                "jobs:\n"
+                "  test:\n"
+                "    runs-on: ubuntu-24.04\n"
+                "    steps:\n"
+                "      - uses: ./.github/actions/floating-dependency\n",
+                encoding="utf-8",
+            )
+
+            completed = run_tool(
+                "tools/validate-tools/validate_tools.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            payload = json_result(completed)
+
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertTrue(
+                any(
+                    finding["code"] == "WORKFLOW_ACTION_NOT_PINNED"
+                    and finding["path"] == ".github/actions/floating-dependency/action.yml"
+                    for finding in payload["findings"]
+                ),
+                payload["findings"],
+            )
 
     def test_docker_action_sha256_digest_is_accepted(self):
         with tempfile.TemporaryDirectory() as temp:
