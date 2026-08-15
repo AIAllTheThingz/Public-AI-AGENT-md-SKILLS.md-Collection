@@ -8,6 +8,8 @@ Describe the focused change and why it is needed.
 - Risk: Low / Moderate / High / Critical
 - Release impact: None / Patch / Minor / Major / Prerelease
 
+A change classified as **Breaking** requires independent specialist review under `MAINTAINERS.md`, including during the pre-1.0 period.
+
 ## Ownership and review routing
 
 - Applicable CODEOWNER:
