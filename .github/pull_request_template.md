@@ -4,7 +4,7 @@ Describe the focused change and why it is needed.
 
 ## Change classification and risk
 
-- Classification: Editorial / Normative / Tooling / Security / Release / Breaking
+- Classification (select all that apply): Editorial / Normative / Compatibility / Tooling / Security / Release / Breaking
 - Risk: Low / Moderate / High / Critical
 - Risk rationale: Briefly explain why the selected level is appropriate, considering data sensitivity, privilege, blast radius, reversibility, external exposure, availability, and safety as applicable.
 - Release impact: None / Patch / Minor / Major / Prerelease
