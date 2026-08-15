@@ -6,6 +6,7 @@ Describe the focused change and why it is needed.
 
 - Classification: Editorial / Normative / Tooling / Security / Release / Breaking
 - Risk: Low / Moderate / High / Critical
+- Risk rationale: Briefly explain why the selected level is appropriate, considering data sensitivity, privilege, blast radius, reversibility, external exposure, availability, and safety as applicable.
 - Release impact: None / Patch / Minor / Major / Prerelease
 
 A change classified as **Breaking** requires independent specialist review under `MAINTAINERS.md`, including during the pre-1.0 period.
