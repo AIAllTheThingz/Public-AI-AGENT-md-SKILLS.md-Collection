@@ -8,12 +8,21 @@ Describe the focused change and why it is needed.
 - Risk: Low / Moderate / High / Critical
 - Release impact: None / Patch / Minor / Major / Prerelease
 
+## Ownership and review routing
+
+- Applicable CODEOWNER:
+- Area owner:
+- Specialist review: Not needed / Recommended / Independently required
+
 ## Impact
 
 - Compatibility:
 - Security:
 - Affected packages, schemas, tools, or stable paths:
-- Specialist review: Not needed / Recommended / Independently required
+- Changelog impact: None / Unreleased updated / Target release updated
+- Release-note impact: None / Required / Updated
+- Deprecation impact: None / Required / Updated
+- Migration impact: None / Required / Updated
 
 ## Validation performed
 
