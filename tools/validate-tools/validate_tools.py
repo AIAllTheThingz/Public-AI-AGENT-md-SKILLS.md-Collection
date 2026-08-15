@@ -9,10 +9,9 @@ import py_compile
 import re
 import subprocess
 import sys
+from itertools import product
 from pathlib import Path
 from typing import Any, Iterable
-
-import yaml
 
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
@@ -49,6 +48,19 @@ DIRECT_REQUIREMENTS_PATH = "tools/validate-schemas/requirements.txt"
 
 def rel(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
+
+
+def require_yaml() -> Any:
+    """Load PyYAML inside the CLI boundary so missing dependencies follow the tool contract."""
+    try:
+        import yaml
+    except ModuleNotFoundError as exc:
+        if exc.name != "yaml":
+            raise
+        raise FileNotFoundError(
+            "Required dependency PyYAML is not installed. Install the hash-locked validation dependencies before running validation."
+        ) from exc
+    return yaml
 
 
 def strip_requirement_comment(value: str) -> str:
@@ -229,6 +241,7 @@ def iter_workflow_runner_references(document: Any) -> Iterable[tuple[Any, Any]]:
 
 def load_yaml_document(path: Path, root: Path, findings: list[Finding]) -> Any | None:
     """Load repository YAML and report parse failures through the workflow finding contract."""
+    yaml = require_yaml()
     try:
         return yaml.safe_load(path.read_text(encoding="utf-8"))
     except (UnicodeDecodeError, yaml.YAMLError) as exc:
@@ -347,14 +360,57 @@ def validate_runner_literal(value: str, path: Path, root: Path, findings: list[F
         ))
 
 
-def matrix_values_for_key(matrix: Any, key: str) -> list[str]:
-    """Return statically declared values for a matrix key, including include entries."""
+def static_matrix_combinations(matrix: Any) -> list[dict[str, Any]] | None:
+    """Expand statically declared matrix axes and apply partial-match exclusions."""
     if not isinstance(matrix, dict):
+        return None
+
+    axes = [
+        (name, values)
+        for name, values in matrix.items()
+        if name not in {"include", "exclude"}
+    ]
+    if any(not isinstance(values, list) or not values for _, values in axes):
+        return None
+
+    if axes:
+        names = [name for name, _ in axes]
+        combinations = [
+            dict(zip(names, values, strict=True))
+            for values in product(*(values for _, values in axes))
+        ]
+    else:
+        combinations = [{}]
+
+    excluded = matrix.get("exclude", [])
+    if excluded is None:
+        excluded = []
+    if not isinstance(excluded, list) or any(not isinstance(entry, dict) for entry in excluded):
+        return None
+
+    for entry in excluded:
+        combinations = [
+            combination
+            for combination in combinations
+            if not all(
+                name in combination and combination[name] == expected
+                for name, expected in entry.items()
+            )
+        ]
+
+    return combinations
+
+
+def matrix_values_for_key(matrix: Any, key: str) -> list[str]:
+    """Return effective static values for a matrix key after exclude, then include."""
+    combinations = static_matrix_combinations(matrix)
+    if combinations is None:
         return []
 
     values: list[str] = []
-    if key in matrix and key not in {"include", "exclude"}:
-        values.extend(iter_scalar_strings(matrix[key]))
+    for combination in combinations:
+        if key in combination:
+            values.extend(iter_scalar_strings(combination[key]))
 
     include = matrix.get("include")
     if isinstance(include, list):
@@ -362,7 +418,7 @@ def matrix_values_for_key(matrix: Any, key: str) -> list[str]:
             if isinstance(entry, dict) and key in entry:
                 values.extend(iter_scalar_strings(entry[key]))
 
-    return values
+    return list(dict.fromkeys(values))
 
 
 def validate_runner_reference(
@@ -409,6 +465,7 @@ def validate_workflow_pins(root: Path, findings: list[Finding]) -> None:
 
 
 def run(args: argparse.Namespace) -> ToolResult:
+    require_yaml()
     root = args.root.resolve()
     tools = root / "tools"
     findings: list[Finding] = []
