@@ -42,6 +42,8 @@ REQUIRED_COLLECTION = [
 FRONTMATTER_ID = re.compile(r"^id:\s*(\S+)\s*$", re.MULTILINE)
 FULL_SHA = re.compile(r"^[A-Fa-f0-9]{40}$")
 OCI_SHA256 = re.compile(r"^sha256:[A-Fa-f0-9]{64}$")
+MATRIX_RUNNER_EXPRESSION = re.compile(r"^\$\{\{\s*matrix\.([A-Za-z_][A-Za-z0-9_-]*)\s*\}\}$")
+DIRECT_REQUIREMENTS_PATH = "tools/validate-schemas/requirements.txt"
 
 
 def rel(path: Path, root: Path) -> str:
@@ -61,19 +63,29 @@ def normalize_requirement(value: str) -> str:
     return re.sub(r"\s+", "", cleaned).casefold()
 
 
-def locked_requirement_specs(lock_text: str) -> set[str]:
-    """Return top-level resolved requirement declarations from a pip-compile lock."""
-    specs: set[str] = set()
+def locked_direct_requirement_specs(lock_text: str) -> set[str]:
+    """Return lock entries annotated by pip-compile as direct requirements."""
+    direct_specs: set[str] = set()
+    current_spec: str | None = None
+
     for line in lock_text.splitlines():
-        if not line or line[0].isspace():
+        if line and not line[0].isspace():
+            stripped = line.strip()
+            if not stripped or stripped.startswith(("#", "-")):
+                current_spec = None
+                continue
+            current_spec = normalize_requirement(stripped)
             continue
+
         stripped = line.strip()
-        if not stripped or stripped.startswith(("#", "-")):
-            continue
-        normalized = normalize_requirement(stripped)
-        if normalized:
-            specs.add(normalized)
-    return specs
+        if (
+            current_spec
+            and stripped.startswith("#")
+            and f"-r {DIRECT_REQUIREMENTS_PATH}" in stripped
+        ):
+            direct_specs.add(current_spec)
+
+    return direct_specs
 
 
 def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
@@ -102,7 +114,7 @@ def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
     }
     direct_specs.discard("")
     lock_text = lock.read_text(encoding="utf-8")
-    locked_specs = locked_requirement_specs(lock_text)
+    locked_direct_specs = locked_direct_requirement_specs(lock_text)
 
     if "--hash=sha256:" not in lock_text:
         findings.append(Finding(
@@ -111,25 +123,19 @@ def validate_dependency_lock(root: Path, findings: list[Finding]) -> None:
             path=rel(lock, root),
         ))
 
-    for spec in sorted(direct_specs):
-        if spec not in locked_specs:
-            findings.append(Finding(
-                "DEPENDENCY_LOCK_OUT_OF_SYNC",
-                f"Direct dependency is not represented exactly in requirements.lock: {spec}",
-                path=rel(lock, root),
-            ))
+    for spec in sorted(direct_specs - locked_direct_specs):
+        findings.append(Finding(
+            "DEPENDENCY_LOCK_OUT_OF_SYNC",
+            f"Direct dependency is not represented exactly in requirements.lock: {spec}",
+            path=rel(lock, root),
+        ))
 
-
-def iter_mapping_values(value: Any, target_key: str) -> Iterable[Any]:
-    """Walk a parsed YAML structure and yield values assigned to target_key."""
-    if isinstance(value, dict):
-        for key, child in value.items():
-            if key == target_key:
-                yield child
-            yield from iter_mapping_values(child, target_key)
-    elif isinstance(value, list):
-        for child in value:
-            yield from iter_mapping_values(child, target_key)
+    for spec in sorted(locked_direct_specs - direct_specs):
+        findings.append(Finding(
+            "DEPENDENCY_LOCK_OUT_OF_SYNC",
+            f"requirements.lock still marks a dependency as direct that is absent from requirements.txt: {spec}",
+            path=rel(lock, root),
+        ))
 
 
 def iter_scalar_strings(value: Any) -> Iterable[str]:
@@ -142,6 +148,51 @@ def iter_scalar_strings(value: Any) -> Iterable[str]:
     elif isinstance(value, list):
         for child in value:
             yield from iter_scalar_strings(child)
+
+
+def iter_workflow_action_references(document: Any) -> Iterable[Any]:
+    """Yield only semantic GitHub Actions/reusable-workflow uses values."""
+    if not isinstance(document, dict):
+        return
+
+    jobs = document.get("jobs")
+    if not isinstance(jobs, dict):
+        return
+
+    for job in jobs.values():
+        if not isinstance(job, dict):
+            continue
+
+        if "uses" in job:
+            yield job["uses"]
+
+        steps = job.get("steps")
+        if not isinstance(steps, list):
+            continue
+        for step in steps:
+            if isinstance(step, dict) and "uses" in step:
+                yield step["uses"]
+
+
+def iter_workflow_runner_references(document: Any) -> Iterable[tuple[Any, Any]]:
+    """Yield job runs-on values paired with their statically declared matrix."""
+    if not isinstance(document, dict):
+        return
+
+    jobs = document.get("jobs")
+    if not isinstance(jobs, dict):
+        return
+
+    for job in jobs.values():
+        if not isinstance(job, dict) or "runs-on" not in job:
+            continue
+
+        matrix: Any = None
+        strategy = job.get("strategy")
+        if isinstance(strategy, dict):
+            matrix = strategy.get("matrix")
+
+        yield job["runs-on"], matrix
 
 
 def validate_action_reference(raw: Any, path: Path, root: Path, findings: list[Finding]) -> None:
@@ -176,15 +227,64 @@ def validate_action_reference(raw: Any, path: Path, root: Path, findings: list[F
         ))
 
 
-def validate_runner_reference(raw: Any, path: Path, root: Path, findings: list[Finding]) -> None:
+def validate_runner_literal(value: str, path: Path, root: Path, findings: list[Finding]) -> None:
+    stripped = value.strip()
+    if "${{" in stripped:
+        findings.append(Finding(
+            "WORKFLOW_RUNNER_UNRESOLVED",
+            f"Runner expression could not be statically resolved for pin validation: {stripped}",
+            path=rel(path, root),
+        ))
+    elif stripped.endswith("-latest"):
+        findings.append(Finding(
+            "WORKFLOW_RUNNER_FLOATING",
+            f"Hosted runner must use an explicit image family rather than {stripped}.",
+            path=rel(path, root),
+        ))
+
+
+def matrix_values_for_key(matrix: Any, key: str) -> list[str]:
+    """Return statically declared values for a matrix key, including include entries."""
+    if not isinstance(matrix, dict):
+        return []
+
+    values: list[str] = []
+    if key in matrix and key not in {"include", "exclude"}:
+        values.extend(iter_scalar_strings(matrix[key]))
+
+    include = matrix.get("include")
+    if isinstance(include, list):
+        for entry in include:
+            if isinstance(entry, dict) and key in entry:
+                values.extend(iter_scalar_strings(entry[key]))
+
+    return values
+
+
+def validate_runner_reference(
+    raw: Any,
+    matrix: Any,
+    path: Path,
+    root: Path,
+    findings: list[Finding],
+) -> None:
     for value in iter_scalar_strings(raw):
         stripped = value.strip()
-        if "${{" not in stripped and stripped.endswith("-latest"):
-            findings.append(Finding(
-                "WORKFLOW_RUNNER_FLOATING",
-                f"Hosted runner must use an explicit image family rather than {stripped}.",
-                path=rel(path, root),
-            ))
+        match = MATRIX_RUNNER_EXPRESSION.fullmatch(stripped)
+        if match:
+            resolved_values = matrix_values_for_key(matrix, match.group(1))
+            if not resolved_values:
+                findings.append(Finding(
+                    "WORKFLOW_RUNNER_UNRESOLVED",
+                    f"Runner matrix expression has no statically declared values: {stripped}",
+                    path=rel(path, root),
+                ))
+                continue
+            for resolved in resolved_values:
+                validate_runner_literal(resolved, path, root, findings)
+            continue
+
+        validate_runner_literal(stripped, path, root, findings)
 
 
 def validate_workflow_pins(root: Path, findings: list[Finding]) -> None:
@@ -203,10 +303,10 @@ def validate_workflow_pins(root: Path, findings: list[Finding]) -> None:
             ))
             continue
 
-        for action in iter_mapping_values(document, "uses"):
+        for action in iter_workflow_action_references(document):
             validate_action_reference(action, path, root, findings)
-        for runner in iter_mapping_values(document, "runs-on"):
-            validate_runner_reference(runner, path, root, findings)
+        for runner, matrix in iter_workflow_runner_references(document):
+            validate_runner_reference(runner, matrix, path, root, findings)
 
 
 def run(args: argparse.Namespace) -> ToolResult:
