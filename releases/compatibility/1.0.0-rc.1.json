@@ -8,7 +8,7 @@
   },
   "publishedCheckpointInventory": {
     "path": "releases/compatibility/0.10.0-checkpoint.json",
-    "sha256": "6f5fc00dc21772b3df05d797f86b2650c8c0bf4fca2125e7fe21f88031d78103"
+    "sha256": "a8e3d3c68e4040cb4b6b8b878f4ac46f6a55bfe66e8b080f97ee57c860a81921"
   },
   "publishedToolBehaviorContract": {
     "path": "releases/compatibility/0.10.0-tool-behavior.json",
@@ -82,18 +82,31 @@
   ],
   "stableProfileEntryPaths": [
     "profiles/WEB_API.md",
+    "profiles/web-api",
     "profiles/WEB_APPLICATION.md",
+    "profiles/web-application",
     "profiles/WORKER_SERVICE.md",
+    "profiles/worker-service",
     "profiles/CLI_TOOL.md",
+    "profiles/cli-tool",
     "profiles/DESKTOP_APPLICATION.md",
+    "profiles/desktop-application",
     "profiles/MOBILE_APPLICATION.md",
+    "profiles/mobile-application",
     "profiles/SERVERLESS_FUNCTION.md",
+    "profiles/serverless-function",
     "profiles/DATA_PIPELINE.md",
+    "profiles/data-pipeline",
     "profiles/PUBLIC_LIBRARY.md",
+    "profiles/public-library",
     "profiles/INTERNAL_AUTOMATION.md",
+    "profiles/internal-automation",
     "profiles/MULTI_TENANT_SAAS.md",
+    "profiles/multi-tenant-saas",
     "profiles/SECURITY_TOOL.md",
-    "profiles/AI_AGENT_APPLICATION.md"
+    "profiles/security-tool",
+    "profiles/AI_AGENT_APPLICATION.md",
+    "profiles/ai-agent-application"
   ],
   "stableToolContracts": {
     "resultSchema": "tools/contracts/tool-result.schema.json",
@@ -189,7 +202,7 @@
       "seven original stable template paths",
       "published v0.10.0 governance/profile/schema identifiers plus the complete published numbered normative-rule surface and C# rule meanings promoted stable in this RC",
       "published v0.10.0 CLI/result/exit-code, finding-code, and safe-overwrite tool behavior",
-      "canonical uppercase project-profile compatibility entry points",
+      "canonical profile files and their complete package-directory stable entry points",
       "release artifact naming and checksum contract",
       "repository governance and exception authority after the v0.10.0 policy transition"
     ]
