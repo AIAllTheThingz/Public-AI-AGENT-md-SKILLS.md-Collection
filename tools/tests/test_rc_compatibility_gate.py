@@ -4,17 +4,27 @@ import copy
 import hashlib
 import json
 import re
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 from helpers import REPO_ROOT, json_result, run_tool
 
+TOOLS_LIB = REPO_ROOT / "tools" / "lib"
+if str(TOOLS_LIB) not in sys.path:
+    sys.path.insert(0, str(TOOLS_LIB))
+
+from standards_tools import Finding, ToolResult  # noqa: E402
+
 CANDIDATE = "1.0.0-rc.1"
 CHECKPOINT = "0.10.0"
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
 CHECKPOINT_INVENTORY_SHA256 = "38605392a558e02178cab08aea51c9df14c634b1866cb687f646ce476e69b622"
+TOOL_BEHAVIOR_SHA256 = "120f9869f67bb9dc900e05cd41c8bbee08bf96bd516f0a6ce527d1a43bc809a3"
 INVENTORY_PATH = REPO_ROOT / "releases" / "compatibility" / f"{CANDIDATE}.json"
 CHECKPOINT_PATH = REPO_ROOT / "releases" / "compatibility" / f"{CHECKPOINT}-checkpoint.json"
+TOOL_BEHAVIOR_PATH = REPO_ROOT / "releases" / "compatibility" / f"{CHECKPOINT}-tool-behavior.json"
 
 CHECKPOINT_GROUP_TO_CANDIDATE_KEY = {
     "root": "stableRootPaths",
@@ -50,6 +60,8 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         cls.inventory = json.loads(INVENTORY_PATH.read_text(encoding="utf-8"))
         cls.checkpoint_bytes = CHECKPOINT_PATH.read_bytes()
         cls.checkpoint = json.loads(cls.checkpoint_bytes.decode("utf-8"))
+        cls.tool_behavior_bytes = TOOL_BEHAVIOR_PATH.read_bytes()
+        cls.tool_behavior = json.loads(cls.tool_behavior_bytes.decode("utf-8"))
 
     def test_candidate_and_release_state_are_forward_only(self):
         self.assertEqual((REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip(), CANDIDATE)
@@ -73,6 +85,13 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(self.checkpoint_bytes).hexdigest(), CHECKPOINT_INVENTORY_SHA256)
         self.assertEqual(self.checkpoint["sourceCommit"], CHECKPOINT_COMMIT)
         self.assertEqual(self.checkpoint["tag"], "v0.10.0")
+
+        behavior_pin = self.inventory["publishedToolBehaviorContract"]
+        self.assertEqual(behavior_pin["path"], "releases/compatibility/0.10.0-tool-behavior.json")
+        self.assertEqual(behavior_pin["sha256"], TOOL_BEHAVIOR_SHA256)
+        self.assertEqual(hashlib.sha256(self.tool_behavior_bytes).hexdigest(), TOOL_BEHAVIOR_SHA256)
+        self.assertEqual(self.tool_behavior["sourceCommit"], CHECKPOINT_COMMIT)
+        self.assertEqual(self.tool_behavior["tag"], "v0.10.0")
 
     def test_candidate_preserves_every_published_checkpoint_contract(self):
         self.assertEqual(checkpoint_compatibility_findings(self.checkpoint, self.inventory), [])
@@ -135,6 +154,123 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
             self.assertIn(relative, catalog)
         self.assertIn("SHA256SUMS.txt", self.inventory["stableToolContracts"]["releaseArtifacts"])
         self.assertIn("release-manifest.json", self.inventory["stableToolContracts"]["releaseArtifacts"])
+
+    def test_published_tool_contract_and_result_schema_remain_compatible(self):
+        source_documents = self.tool_behavior["sourceDocuments"]
+        contract_path = REPO_ROOT / source_documents["toolContract"]["path"]
+        result_schema_path = REPO_ROOT / source_documents["toolResultSchema"]["path"]
+
+        self.assertEqual(
+            hashlib.sha256(contract_path.read_bytes()).hexdigest(),
+            source_documents["toolContract"]["sha256"],
+        )
+        self.assertEqual(
+            hashlib.sha256(result_schema_path.read_bytes()).hexdigest(),
+            source_documents["toolResultSchema"]["sha256"],
+        )
+
+        schema = json.loads(result_schema_path.read_text(encoding="utf-8"))
+        result_contract = self.tool_behavior["resultContract"]
+        self.assertEqual(schema["required"], result_contract["requiredTopLevelFields"])
+        self.assertEqual(schema["properties"]["status"]["enum"], result_contract["statusValues"])
+        finding_schema = schema["properties"]["findings"]["items"]
+        self.assertEqual(finding_schema["required"], result_contract["requiredFindingFields"])
+        self.assertEqual(
+            finding_schema["properties"]["severity"]["enum"],
+            result_contract["findingSeverityValues"],
+        )
+
+    def test_published_cli_options_remain_available(self):
+        for relative in self.tool_behavior["commonCliToolPaths"]:
+            completed = run_tool(relative, "--help")
+            with self.subTest(tool=relative):
+                self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+                for option in self.tool_behavior["commonCliOptions"]:
+                    self.assertIn(option, completed.stdout)
+
+        for relative, options in self.tool_behavior["legacyCliExceptions"].items():
+            completed = run_tool(relative, "--help")
+            with self.subTest(tool=relative):
+                self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+                for option in options:
+                    self.assertIn(option, completed.stdout)
+
+        writer = self.tool_behavior["representativeWriterContract"]
+        completed = run_tool(writer["toolPath"], "--help")
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+        for option in writer["requiredOptions"]:
+            self.assertIn(option, completed.stdout)
+
+    def test_published_exit_code_meanings_remain_executable(self):
+        expected = self.tool_behavior["exitCodeContract"]
+        self.assertEqual(
+            ToolResult.from_findings(tool="compat", version="1", findings=[]).exit_code(),
+            expected["success"],
+        )
+        self.assertEqual(
+            ToolResult.from_findings(
+                tool="compat",
+                version="1",
+                findings=[Finding(code="COMPAT_FAIL", message="failure")],
+            ).exit_code(),
+            expected["validationFailure"],
+        )
+        self.assertEqual(
+            ToolResult.error(tool="compat", version="1", message="internal").exit_code(),
+            expected["internalError"],
+        )
+
+        completed = run_tool(
+            "tools/generate-manifest/generate_manifest.py",
+            "--format",
+            "json",
+            "--name",
+            "compat-input-error",
+            "--profile",
+            "NOT_A_PROFILE",
+            "--language",
+            "csharp",
+            "--dry-run",
+        )
+        self.assertEqual(completed.returncode, expected["inputOrConfigurationError"])
+        payload = json_result(completed)
+        self.assertEqual(payload["status"], "error")
+        self.assertEqual(payload["findings"][0]["code"], "INPUT_ERROR")
+
+    def test_published_safe_overwrite_behavior_is_exercised(self):
+        writer = self.tool_behavior["representativeWriterContract"]
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "project-manifest.json"
+            sentinel = "do-not-overwrite\n"
+            output.write_text(sentinel, encoding="utf-8")
+            base_args = (
+                "--format",
+                "json",
+                "--name",
+                "compat-writer",
+                "--profile",
+                "CLI_TOOL",
+                "--language",
+                "csharp",
+                "--manifest-output",
+                str(output),
+            )
+
+            blocked = run_tool(writer["toolPath"], *base_args)
+            self.assertEqual(blocked.returncode, self.tool_behavior["exitCodeContract"]["inputOrConfigurationError"])
+            self.assertEqual(output.read_text(encoding="utf-8"), sentinel)
+
+            dry_run = run_tool(writer["toolPath"], *base_args, "--dry-run")
+            self.assertEqual(dry_run.returncode, self.tool_behavior["exitCodeContract"]["success"])
+            self.assertEqual(output.read_text(encoding="utf-8"), sentinel)
+
+            forced = run_tool(writer["toolPath"], *base_args, "--force")
+            self.assertEqual(forced.returncode, self.tool_behavior["exitCodeContract"]["success"])
+            self.assertNotEqual(output.read_text(encoding="utf-8"), sentinel)
+            generated = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(generated["name"], "compat-writer")
+            self.assertEqual(generated["profile"], "CLI_TOOL")
+            self.assertIn("csharp", generated["languages"])
 
     def test_stable_package_promise_is_narrow_and_csharp_is_stable(self):
         packages = self.inventory["stablePackages"]
