@@ -120,6 +120,29 @@ class ReleaseToolTests(unittest.TestCase):
                     findings,
                 )
 
+    def test_release_state_rejects_blocked_next_intended_version(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            make_release_root(root, "1.0.0")
+            (root / "releases" / "release-state.json").write_text(
+                json.dumps({
+                    "preparedUnpublishedVersions": ["1.0.0"],
+                    "nextIntendedVersion": "1.0.0",
+                }) + "\n",
+                encoding="utf-8",
+            )
+            completed = run_tool("tools/release/validate_release.py", "--format", "json", root=root)
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            findings = json_result(completed)["findings"]
+            self.assertTrue(
+                any(
+                    item["code"] == "RELEASE_STATE_INVALID"
+                    and "must not also appear" in item["message"]
+                    for item in findings
+                ),
+                findings,
+            )
+
     def test_valid_semver_prerelease_release_state_passes(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -139,6 +162,7 @@ class ReleaseToolTests(unittest.TestCase):
             {"preparedUnpublishedVersions": [], "nextIntendedVersion": "1.2.3-01"},
             {"preparedUnpublishedVersions": [], "nextIntendedVersion": "1٢.2.3"},
             {"preparedUnpublishedVersions": []},
+            {"preparedUnpublishedVersions": ["1.0.0"], "nextIntendedVersion": "1.0.0"},
         )
         for state in invalid_states:
             with self.subTest(state=state), tempfile.TemporaryDirectory() as temp:

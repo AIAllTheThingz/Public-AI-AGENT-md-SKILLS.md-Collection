@@ -20,7 +20,7 @@ SEMVER = (
     r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
 )
 NEXT_PUBLICATION = re.compile(
-    rf"next intended publication(?:\s+is|:)?\s+`(?P<version>{SEMVER})`",
+    rf"(?:(?:next intended|intended next) publication)(?:\s+is|:)?\s+(?:the\s+forward-only\s+)?`(?P<version>{SEMVER})`",
     re.IGNORECASE,
 )
 
@@ -68,12 +68,22 @@ class RepositoryIdentityTests(unittest.TestCase):
         self.assertEqual(next_version, "0.10.0")
         self.assertIn("0.9.0", prepared)
 
-        roadmap = (REPO_ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-        manifest = (REPO_ROOT / "MANIFEST.md").read_text(encoding="utf-8")
-        catalog = (REPO_ROOT / "CATALOG.md").read_text(encoding="utf-8")
-        release_policy = (REPO_ROOT / "RELEASE_POLICY.md").read_text(encoding="utf-8")
+        durable_docs = {
+            "README.md": (REPO_ROOT / "README.md").read_text(encoding="utf-8"),
+            "ROADMAP.md": (REPO_ROOT / "ROADMAP.md").read_text(encoding="utf-8"),
+            "MANIFEST.md": (REPO_ROOT / "MANIFEST.md").read_text(encoding="utf-8"),
+            "CATALOG.md": (REPO_ROOT / "CATALOG.md").read_text(encoding="utf-8"),
+            "RELEASE_POLICY.md": (REPO_ROOT / "RELEASE_POLICY.md").read_text(encoding="utf-8"),
+            "releases/README.md": (REPO_ROOT / "releases" / "README.md").read_text(encoding="utf-8"),
+            "tools/release/README.md": (REPO_ROOT / "tools" / "release" / "README.md").read_text(encoding="utf-8"),
+        }
+        roadmap = durable_docs["ROADMAP.md"]
+        manifest = durable_docs["MANIFEST.md"]
+        catalog = durable_docs["CATALOG.md"]
+        release_policy = durable_docs["RELEASE_POLICY.md"]
 
         expected_direction = {
+            "README.md": f"Next intended publication: `{next_version}`.",
             "ROADMAP.md": (
                 f"- The next intended publication is `{next_version}` after source-currency review, "
                 "final release preparation, and the independent specialist review required for its breaking changes."
@@ -81,12 +91,8 @@ class RepositoryIdentityTests(unittest.TestCase):
             "MANIFEST.md": f"Next intended publication: `{next_version}`.",
             "CATALOG.md": f"The next intended publication is `{next_version}`.",
             "RELEASE_POLICY.md": f"The forward-only next intended publication is `{next_version}`, as recorded in",
-        }
-        durable_docs = {
-            "ROADMAP.md": roadmap,
-            "MANIFEST.md": manifest,
-            "CATALOG.md": catalog,
-            "RELEASE_POLICY.md": release_policy,
+            "releases/README.md": f"The next intended publication is `{next_version}` and is forward-only.",
+            "tools/release/README.md": f"The next intended publication is `{next_version}` after the repository `VERSION`",
         }
         for name, text in durable_docs.items():
             with self.subTest(document=name):
@@ -98,6 +104,23 @@ class RepositoryIdentityTests(unittest.TestCase):
                     [next_version],
                     f"{name} must contain exactly one next-intended-publication declaration and it must match release-state.json.",
                 )
+
+        discovered_declarations = {}
+        for candidate in REPO_ROOT.rglob("*.md"):
+            if ".git" in candidate.parts:
+                continue
+            candidate_text = candidate.read_text(encoding="utf-8")
+            versions = NEXT_PUBLICATION.findall(candidate_text)
+            if versions:
+                relative = candidate.relative_to(REPO_ROOT).as_posix()
+                discovered_declarations[relative] = versions
+                with self.subTest(discovered_document=relative):
+                    self.assertTrue(
+                        all(version == next_version for version in versions),
+                        f"{relative} contains stale next-publication declarations: {versions!r}; expected {next_version!r}.",
+                    )
+
+        self.assertTrue(set(durable_docs).issubset(discovered_declarations))
 
         self.assertIn("prepared, unpublished", manifest.lower())
         self.assertIn("check-freshness", manifest)

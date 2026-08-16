@@ -116,6 +116,14 @@ def read_release_state(root: Path, findings: list[Finding]) -> dict[str, Any]:
             details={"value": next_intended},
         ))
         return {}
+    if next_intended in blocked:
+        findings.append(Finding(
+            "RELEASE_STATE_INVALID",
+            "nextIntendedVersion must not also appear in preparedUnpublishedVersions.",
+            path=RELEASE_STATE_PATH.as_posix(),
+            details={"value": next_intended},
+        ))
+        return {}
     return state
 
 
