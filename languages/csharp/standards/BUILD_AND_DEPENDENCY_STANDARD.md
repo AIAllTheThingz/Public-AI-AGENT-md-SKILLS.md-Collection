@@ -2,7 +2,7 @@
 id: CSHARP-BUILD-001
 title: C# Build and Dependency Standard
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Build and Dependency Standard

@@ -2,7 +2,7 @@
 id: CSHARP-MANIFEST-001
 title: C# Package Manifest
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Package Manifest

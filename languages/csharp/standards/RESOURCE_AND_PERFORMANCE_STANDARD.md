@@ -2,7 +2,7 @@
 id: CSHARP-RESOURCE-001
 title: C# Resource and Performance Standard
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Resource and Performance Standard

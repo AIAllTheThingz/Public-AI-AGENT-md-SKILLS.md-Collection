@@ -22,6 +22,7 @@ Post-release maintenance after `0.10.0` publication:
 - Corrected `generate-manifest --include-profile-required` so selected secondary profiles contribute their discipline links as well as the primary profile; the change is additive and preserves the published `0.10.0` primary-profile expansion behavior.
 - Added shared package-level adoption tests for the initial C#, PowerShell, and Terraform/OpenTofu maturity candidates, covering positive composition, accountable source evidence, incomplete adoption, invalid selection, and overwrite failure behavior.
 - Completed three representative real downstream `v0.10.0` adoption pilots across application/service, internal automation, and mixed-system repositories; recorded exact command outcomes and limitations, fixed the Windows PowerShell 5.1 and secondary-profile adoption defects found by the pilots, and added durable downstream evidence under `adoption-pilots/`.
+- Completed the first evidence-backed maturity review cohort: proposed C# `baseline` → `stable` based on package tests, two real downstream adoptions, current source review, compatibility inventory, and independent specialist merge gating; deferred PowerShell and Terraform/OpenTofu without changing their `baseline` maturity because their evidence sets remain incomplete.
 
 ## [0.10.0] - 2026-08-16
 

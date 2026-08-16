@@ -2,7 +2,7 @@
 id: CSHARP-AGENT-001
 title: C# Agent Standard
 version: 0.1.0
-status: baseline
+status: stable
 applies_to:
   - csharp
 depends_on:

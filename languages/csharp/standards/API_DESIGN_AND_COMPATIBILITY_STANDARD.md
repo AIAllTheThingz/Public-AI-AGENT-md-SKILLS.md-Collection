@@ -2,7 +2,7 @@
 id: CSHARP-API-001
 title: C# API Design and Compatibility Standard
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# API Design and Compatibility Standard

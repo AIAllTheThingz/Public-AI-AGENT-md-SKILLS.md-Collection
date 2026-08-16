@@ -28,6 +28,14 @@ For every candidate, the shared test harness exercises:
 6. **Failure behavior**: composing into an existing output directory without `--force` is rejected for every candidate.
 7. **Source currency**: every candidate's accountable `SOURCE_REVIEWS.json` record must have an actual review date and durable evidence.
 
+### Full-package surface binding for stable promotion
+
+The shared `compose-agents` exercise above intentionally validates package entry-point selection and composition. Stable promotion requires a stronger package-level check when the proposed stable compatibility surface includes transitive standards, templates, examples, skills, or agent registration files.
+
+For the C# promotion review, `tools/tests/test_csharp_full_package_adoption.py` derives the complete required C# surface from `languages/csharp/MANIFEST.md`, copies every manifest-required file into a temporary adopter-bound package, records SHA-256 identity for every copied file, and verifies the binding. The exercised surface includes the direct `SKILL.md`, `agents/openai.yaml`, all normative standards, all manifest-required templates, the adoption example, and package entry points. Negative tests delete a required security standard and tamper with a unit-test template to prove missing and hash-mismatched content fail the binding check.
+
+This full-surface exercise is additive to the entry-point composition test; it does not change `compose-agents` semantics for unrelated packages.
+
 ## Fixtures
 
 Fixtures under `fixtures/` are intentionally fictitious. They contain no credentials, production identifiers, endpoints, account IDs, secrets, or claims that live infrastructure was exercised.

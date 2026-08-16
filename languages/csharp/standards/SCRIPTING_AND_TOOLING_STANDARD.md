@@ -2,7 +2,7 @@
 id: CSHARP-SCRIPT-001
 title: C# Scripting and Tooling Standard
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Scripting and Tooling Standard

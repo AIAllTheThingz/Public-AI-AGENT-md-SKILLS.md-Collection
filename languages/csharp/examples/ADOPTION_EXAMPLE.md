@@ -2,7 +2,7 @@
 id: CSHARP-EXAMPLE-001
 title: C# Adoption Example
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Adoption Example

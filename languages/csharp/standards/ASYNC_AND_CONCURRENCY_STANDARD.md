@@ -2,7 +2,7 @@
 id: CSHARP-ASYNC-001
 title: C# Async and Concurrency Standard
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Async and Concurrency Standard

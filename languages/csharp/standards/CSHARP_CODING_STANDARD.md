@@ -2,7 +2,7 @@
 id: CSHARP-CODE-001
 title: C# Coding Standard
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Coding Standard

@@ -2,7 +2,7 @@
 id: CSHARP-INTEROP-001
 title: C# Interop, Reflection, and Generation Standard
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Interop, Reflection, and Generation Standard

@@ -67,6 +67,8 @@ See the [governance policy map](governance/POLICY_MAP.md), [adoption guide](gove
 - [SQL](languages/sql/)
 - [Terraform and OpenTofu](languages/terraform-opentofu/)
 
+C# is the first language package promoted from `baseline` to `stable` through the evidence-backed maturity process. Other language-package maturity remains as declared in the package metadata, language index, source-review registry, and maturity-review records.
+
 ## Platforms
 
 Platform packages are complete, independently adoptable overlays for execution, deployment, identity, network, data, state, policy, observability, resilience, recovery, cost, capacity, quota, and operational ownership.

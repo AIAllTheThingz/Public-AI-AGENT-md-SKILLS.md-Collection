@@ -2,7 +2,7 @@
 id: CSHARP-EVIDENCE-001
 title: C# Completion Evidence Standard
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Completion Evidence Standard
