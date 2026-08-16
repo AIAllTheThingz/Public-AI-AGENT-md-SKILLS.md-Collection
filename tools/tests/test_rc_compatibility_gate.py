@@ -20,7 +20,7 @@ from standards_tools import Finding, ToolResult  # noqa: E402
 CANDIDATE = "1.0.0-rc.1"
 CHECKPOINT = "0.10.0"
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
-CHECKPOINT_INVENTORY_SHA256 = "6f5fc00dc21772b3df05d797f86b2650c8c0bf4fca2125e7fe21f88031d78103"
+CHECKPOINT_INVENTORY_SHA256 = "a8e3d3c68e4040cb4b6b8b878f4ac46f6a55bfe66e8b080f97ee57c860a81921"
 TOOL_BEHAVIOR_SHA256 = "120f9869f67bb9dc900e05cd41c8bbee08bf96bd516f0a6ce527d1a43bc809a3"
 INVENTORY_PATH = REPO_ROOT / "releases" / "compatibility" / f"{CANDIDATE}.json"
 CHECKPOINT_PATH = REPO_ROOT / "releases" / "compatibility" / f"{CHECKPOINT}-checkpoint.json"
@@ -157,6 +157,21 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
             checkpoint_compatibility_findings(self.checkpoint, candidate),
         )
 
+    def test_profile_checkpoint_preserves_both_published_entry_points(self):
+        entries = set(self.checkpoint["stablePathGroups"]["profiles"])
+        canonical_files = {entry for entry in entries if entry.endswith(".md")}
+        package_directories = entries - canonical_files
+        self.assertEqual(len(canonical_files), 13)
+        self.assertEqual(len(package_directories), 13)
+
+        for canonical in canonical_files:
+            slug = Path(canonical).stem.lower().replace("_", "-")
+            package = f"profiles/{slug}"
+            with self.subTest(canonical=canonical, package=package):
+                self.assertIn(package, package_directories)
+                self.assertTrue((REPO_ROOT / canonical).is_file(), canonical)
+                self.assertTrue((REPO_ROOT / package).is_dir(), package)
+
     def test_published_identifier_checkpoint_matches_candidate_tree(self):
         expected = self.checkpoint["stableIdentifiers"]
         observed = observed_checkpoint_identifiers(self.checkpoint)
@@ -208,8 +223,12 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
             self.assertTrue(entries, group)
             self.assertEqual(len(entries), len(set(entries)), group)
             for relative in entries:
+                path = REPO_ROOT / relative
                 with self.subTest(group=group, path=relative):
-                    self.assertTrue((REPO_ROOT / relative).is_file(), relative)
+                    if group == "stableProfileEntryPaths" and not relative.endswith(".md"):
+                        self.assertTrue(path.is_dir(), relative)
+                    else:
+                        self.assertTrue(path.is_file(), relative)
 
         result_schema = self.inventory["stableToolContracts"]["resultSchema"]
         self.assertTrue((REPO_ROOT / result_schema).is_file(), result_schema)
