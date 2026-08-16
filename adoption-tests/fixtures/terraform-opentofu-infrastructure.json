@@ -1,0 +1,11 @@
+{
+  "candidate": "terraform-opentofu-infrastructure",
+  "engine": "terraform",
+  "engineVersion": "1.15.x example constraint",
+  "stateBackendBoundary": "fictitious remote backend with locking, encryption, backup, and recovery defined",
+  "validationCommands": [
+    "terraform fmt -check -recursive",
+    "terraform init -backend=false",
+    "terraform validate"
+  ]
+}

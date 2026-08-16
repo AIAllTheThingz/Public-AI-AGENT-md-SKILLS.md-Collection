@@ -1,0 +1,84 @@
+{
+  "formatVersion": "1.0.0",
+  "publishedRelease": "v0.10.0",
+  "publishedSourceCommit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c",
+  "candidates": [
+    {
+      "id": "csharp-modern-dotnet",
+      "package": "languages/csharp",
+      "profile": "WEB_API",
+      "languages": [
+        "csharp",
+        "dotnet"
+      ],
+      "requiredCompanionLanguages": [
+        "dotnet"
+      ],
+      "sourceReviewIds": [
+        "languages-csharp",
+        "languages-dotnet"
+      ],
+      "requiredSourcePaths": [
+        "languages/csharp/AGENTS.md",
+        "languages/csharp/README.md",
+        "languages/csharp/MANIFEST.md",
+        "languages/dotnet/AGENTS.md",
+        "languages/dotnet/README.md",
+        "languages/dotnet/MANIFEST.md"
+      ],
+      "requiredEvidence": [
+        "compilerBoundary",
+        "runtimeBoundary",
+        "validationCommands"
+      ]
+    },
+    {
+      "id": "powershell-internal-automation",
+      "package": "languages/powershell",
+      "profile": "INTERNAL_AUTOMATION",
+      "languages": [
+        "powershell"
+      ],
+      "sourceReviewIds": [
+        "languages-powershell"
+      ],
+      "requiredSourcePaths": [
+        "languages/powershell/AGENTS.md",
+        "languages/powershell/README.md"
+      ],
+      "requiredEvidence": [
+        "runtimeBoundary",
+        "targetScope",
+        "validationCommands"
+      ]
+    },
+    {
+      "id": "terraform-opentofu-infrastructure",
+      "package": "languages/terraform-opentofu",
+      "profile": "INTERNAL_AUTOMATION",
+      "languages": [
+        "terraform-opentofu"
+      ],
+      "sourceReviewIds": [
+        "languages-terraform-opentofu"
+      ],
+      "requiredSourcePaths": [
+        "languages/terraform-opentofu/AGENTS.md",
+        "languages/terraform-opentofu/README.md",
+        "languages/terraform-opentofu/MANIFEST.md"
+      ],
+      "requiredEvidence": [
+        "engine",
+        "engineVersion",
+        "stateBackendBoundary",
+        "validationCommands"
+      ],
+      "allowedEvidenceValues": {
+        "engine": [
+          "terraform",
+          "opentofu"
+        ]
+      }
+    }
+  ]
+}

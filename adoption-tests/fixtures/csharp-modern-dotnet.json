@@ -1,0 +1,10 @@
+{
+  "candidate": "csharp-modern-dotnet",
+  "compilerBoundary": "C# 14 with repository-selected SDK/compiler boundary",
+  "runtimeBoundary": ".NET 10 LTS",
+  "validationCommands": [
+    "dotnet --info",
+    "dotnet build --no-restore",
+    "dotnet test --no-build"
+  ]
+}
