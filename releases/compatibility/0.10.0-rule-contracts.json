@@ -1,0 +1,100 @@
+{
+  "formatVersion": "1.0.0",
+  "releaseVersion": "0.10.0",
+  "tag": "v0.10.0",
+  "sourceCommit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c",
+  "governancePolicyRules": [
+    {
+      "path": "governance/ORGANIZATION_CONTRACT.md",
+      "blobSha": "a43a9f66ff83aa7c2945b61419a48c609e29ff8e",
+      "rulePrefix": "GOV-CONTRACT",
+      "first": 1,
+      "last": 8
+    },
+    {
+      "path": "governance/AGENT_WORKING_METHOD.md",
+      "blobSha": "cf223edc9cc8c1305bdd18a0a79a3488bda6f258",
+      "rulePrefix": "GOV-WORK",
+      "first": 1,
+      "last": 10
+    },
+    {
+      "path": "governance/RISK_CLASSIFICATION.md",
+      "blobSha": "114c3ef305d19c68208b8586b291b2f8a3b8e060",
+      "rulePrefix": "GOV-RISK",
+      "first": 1,
+      "last": 8
+    },
+    {
+      "path": "governance/COMPLETION_EVIDENCE.md",
+      "blobSha": "62e49ba734df5246eb71b45423bc6a9d94affa8e",
+      "rulePrefix": "GOV-EVIDENCE",
+      "first": 1,
+      "last": 9
+    },
+    {
+      "path": "governance/EXCEPTION_PROCESS.md",
+      "blobSha": "a4dee56703137cd5ba5be968a4a9b729856968ee",
+      "rulePrefix": "GOV-EXCEPTION",
+      "first": 1,
+      "last": 8
+    },
+    {
+      "path": "governance/AI_GENERATED_CODE_POLICY.md",
+      "blobSha": "b920ea6450967bbccc0b70d8cf356c6e2974002d",
+      "rulePrefix": "GOV-AI",
+      "first": 1,
+      "last": 9
+    },
+    {
+      "path": "governance/HUMAN_REVIEW_POLICY.md",
+      "blobSha": "a795770be0eb5f03b908f71bde389ef000e131f2",
+      "rulePrefix": "GOV-REVIEW",
+      "first": 1,
+      "last": 8
+    },
+    {
+      "path": "governance/PRODUCTION_READINESS.md",
+      "blobSha": "c96ce6ca547e22e6f4639166a61667a09d5c7cb5",
+      "rulePrefix": "GOV-PROD",
+      "first": 1,
+      "last": 9
+    },
+    {
+      "path": "governance/SECURE_DEVELOPMENT_POLICY.md",
+      "blobSha": "b2625c6ed6a972535fb903e940ec3d3e122b69b4",
+      "rulePrefix": "GOV-SECDEV",
+      "first": 1,
+      "last": 10
+    },
+    {
+      "path": "governance/THREAT_MODELING_POLICY.md",
+      "blobSha": "1f29043b75cf73301b09800823eeabb3e9bf1920",
+      "rulePrefix": "GOV-THREAT",
+      "first": 1,
+      "last": 8
+    },
+    {
+      "path": "governance/VULNERABILITY_RESPONSE.md",
+      "blobSha": "0dcaad72a6bfca106d304c87c36dc05725595f45",
+      "rulePrefix": "GOV-VULN",
+      "first": 1,
+      "last": 10
+    }
+  ],
+  "csharpProductRules": {
+    "sourcePath": "languages/csharp/AGENTS.md",
+    "rules": {
+      "CSHARP-LANG-001": "Resolve the selected SDK/compiler and use a stable language version supported by the declared target; `latest` and unapproved preview settings are prohibited.",
+      "CSHARP-NULL-002": "Nullable annotations and flow analysis must express the real contract; suppression requires a narrow, reviewable invariant.",
+      "CSHARP-ASYNC-003": "Asynchronous and concurrent code must propagate cancellation, avoid sync-over-async, bound concurrency, and define ownership of started work.",
+      "CSHARP-API-004": "Public APIs, serialized shapes, generic constraints, default values, exception behavior, and binary/source compatibility must change only through reviewed versioning and migration decisions.",
+      "CSHARP-RESOURCE-005": "Code must distinguish owned from borrowed resources and deterministically release owned synchronous and asynchronous resources on success, failure, and cancellation.",
+      "CSHARP-SEC-006": "C# code must validate trust boundaries and must not use insecure deserialization, command construction, path handling, cryptography, certificate bypass, or secret exposure as implementation shortcuts.",
+      "CSHARP-TOOL-007": "Build, analyzer, formatter, generator, scripting-host, and dependency versions must be reproducible and reviewed; operational execution must not silently acquire floating code.",
+      "CSHARP-TEST-008": "Tests must cover externally meaningful normal, boundary, invalid, cancellation, failure, concurrency, cleanup, and compatibility behavior appropriate to the change.",
+      "CSHARP-INTEROP-009": "Reflection, `dynamic`, expression compilation, source generation, native interop, and unsafe code require a documented boundary, minimized scope, validation, and fallback or failure behavior.",
+      "CSHARP-EVIDENCE-010": "Completion claims must identify the exact source and contracts changed, resolved compiler boundary, validation results, unavailable checks, and remaining limitations."
+    }
+  }
+}
