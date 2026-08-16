@@ -7,7 +7,7 @@ from pathlib import Path
 
 from helpers import REPO_ROOT
 
-REVIEW_COMMIT = "ba4901c72f4c1fccda517280946f1fb1b6d2824c"
+PROMOTION_EVIDENCE_COMMIT = "2f6d39288e5c1a7d416e62cd75651b3d6da48dfe"
 
 
 class MaturityDecisionTests(unittest.TestCase):
@@ -36,7 +36,11 @@ class MaturityDecisionTests(unittest.TestCase):
 
     def test_csharp_review_pins_evidence_and_independent_gate(self):
         review = (REPO_ROOT / "maturity-reviews" / "csharp-baseline-to-stable-2026-08-16.md").read_text(encoding="utf-8")
-        self.assertIn(REVIEW_COMMIT, review)
+        self.assertIn(
+            f"Promotion evidence candidate reviewed: `{PROMOTION_EVIDENCE_COMMIT}`",
+            review,
+        )
+        self.assertIn("31970186120", review)
         self.assertIn("31962412526", review)
         self.assertIn("test_csharp_full_package_adoption.py", review)
         self.assertIn("31969012948", review)
