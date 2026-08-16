@@ -185,7 +185,7 @@ The seven original template paths remain stable. Every template package now incl
 
 ## Repository versioning, releases, and maturity
 
-The repository has a pre-1.0 versioned compatibility baseline and an evidence-based release program.
+The repository has a versioned compatibility baseline and an evidence-based release program moving through the first stable release candidate.
 
 - [Repository version](VERSION)
 - [Changelog](CHANGELOG.md)
@@ -197,7 +197,7 @@ The repository has a pre-1.0 versioned compatibility baseline and an evidence-ba
 - [Package-level adoption tests](adoption-tests/README.md)
 - [Release validation and artifact tooling](tools/release/)
 
-The current `0.10.0` release is **published as `v0.10.0`**. The `0.9.0` baseline remains **prepared, unpublished** and must not be retroactively tagged. The next intended publication is `1.0.0-rc.1`.
+The current `1.0.0-rc.1` release candidate is **prepared, unpublished**. The published migration checkpoint remains `v0.10.0`; the `0.9.0` baseline remains **prepared, unpublished** and must not be retroactively tagged.
 
 The release program defines Semantic Versioning for standards, schemas, templates, tools, governance, and stable paths; 90-day and 180-day deprecation windows; migration notes; tag and GitHub Release rules; deterministic archives; SHA-256 checksums; and the `1.0.0` compatibility gate.
 
