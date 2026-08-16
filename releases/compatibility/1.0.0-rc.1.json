@@ -6,6 +6,10 @@
     "tag": "v0.10.0",
     "commit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
   },
+  "publishedCheckpointInventory": {
+    "path": "releases/compatibility/0.10.0-checkpoint.json",
+    "sha256": "38605392a558e02178cab08aea51c9df14c634b1866cb687f646ce476e69b622"
+  },
   "compatibilityClassification": "compatible",
   "stableRootPaths": [
     "AGENTS.md",
@@ -64,6 +68,21 @@
     "tools/compose-agents/compose_agents.py",
     "tools/validate-all/run_all.py"
   ],
+  "stableProfileEntryPaths": [
+    "profiles/WEB_API.md",
+    "profiles/WEB_APPLICATION.md",
+    "profiles/WORKER_SERVICE.md",
+    "profiles/CLI_TOOL.md",
+    "profiles/DESKTOP_APPLICATION.md",
+    "profiles/MOBILE_APPLICATION.md",
+    "profiles/SERVERLESS_FUNCTION.md",
+    "profiles/DATA_PIPELINE.md",
+    "profiles/PUBLIC_LIBRARY.md",
+    "profiles/INTERNAL_AUTOMATION.md",
+    "profiles/MULTI_TENANT_SAAS.md",
+    "profiles/SECURITY_TOOL.md",
+    "profiles/AI_AGENT_APPLICATION.md"
+  ],
   "stableToolContracts": {
     "resultSchema": "tools/contracts/tool-result.schema.json",
     "exitCodeMeaning": "documented existing meanings remain compatible",
@@ -117,10 +136,12 @@
       "Mixed-profile adopters using --include-profile-required should review the additive secondary-profile discipline expansion."
     ],
     "preservedContracts": [
-      "published v0.10.0 schema major-version paths",
+      "published v0.10.0 root stable entry paths",
+      "published v0.10.0 stable rolling schema filenames",
       "seven original stable template paths",
-      "documented stable tool entry paths",
-      "release artifact naming prefix",
+      "documented stable tool entry paths and result contract",
+      "canonical uppercase project-profile compatibility entry points",
+      "release artifact naming and checksum contract",
       "repository governance and exception authority after the v0.10.0 policy transition"
     ]
   },
