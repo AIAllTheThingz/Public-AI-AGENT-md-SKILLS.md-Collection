@@ -96,7 +96,7 @@ class ReleaseToolTests(unittest.TestCase):
             self.assertIn("RELEASE_VERSION_INVALID", codes)
 
     def test_release_state_rejects_invalid_next_intended_semver(self):
-        invalid_versions = ("01.2.3", "1.2.3-01")
+        invalid_versions = ("01.2.3", "1.2.3-01", "1٢.2.3", "1.2.3-1٢")
         for next_version in invalid_versions:
             with self.subTest(next_version=next_version), tempfile.TemporaryDirectory() as temp:
                 root = Path(temp)
@@ -133,6 +133,40 @@ class ReleaseToolTests(unittest.TestCase):
             )
             completed = run_tool("tools/release/validate_release.py", "--format", "json", root=root)
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+
+    def test_builder_rejects_invalid_release_state(self):
+        invalid_states = (
+            {"preparedUnpublishedVersions": [], "nextIntendedVersion": "1.2.3-01"},
+            {"preparedUnpublishedVersions": [], "nextIntendedVersion": "1٢.2.3"},
+            {"preparedUnpublishedVersions": []},
+        )
+        for state in invalid_states:
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                make_release_root(root, "1.0.0")
+                (root / "releases" / "release-state.json").write_text(
+                    json.dumps(state) + "\n",
+                    encoding="utf-8",
+                )
+                completed = subprocess.run(
+                    [
+                        sys.executable,
+                        str(REPO_ROOT / "tools/release/build_release.py"),
+                        "--root",
+                        str(root),
+                        "--tag",
+                        "v1.0.0",
+                        "--output-dir",
+                        "dist",
+                    ],
+                    cwd=REPO_ROOT,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                self.assertEqual(completed.returncode, 2, completed.stdout + completed.stderr)
+                self.assertIn("Release-state metadata is invalid", completed.stderr)
+                self.assertFalse((root / "dist").exists())
 
     def test_missing_release_notes_fails(self):
         with tempfile.TemporaryDirectory() as temp:

@@ -12,8 +12,8 @@ CANONICAL_REPOSITORY = "AIAllTheThingz/Public-AI-Governance"
 STALE_REPOSITORY = "AIAllTheThingz/Public-Access-Agents"
 CANONICAL_RAW_PREFIX = f"https://raw.githubusercontent.com/{CANONICAL_REPOSITORY}/"
 STALE_RAW_PREFIX = f"https://raw.githubusercontent.com/{STALE_REPOSITORY}/"
-SEMVER_CORE = r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
-SEMVER_PRERELEASE_ID = r"(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
+SEMVER_CORE = r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+SEMVER_PRERELEASE_ID = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
 SEMVER = (
     rf"{SEMVER_CORE}"
     rf"(?:-{SEMVER_PRERELEASE_ID}(?:\.{SEMVER_PRERELEASE_ID})*)?"
@@ -118,6 +118,8 @@ class RepositoryIdentityTests(unittest.TestCase):
             "1.2.03",
             "1.2.3-01",
             "1.2.3-alpha.01",
+            "1٢.2.3",
+            "1.2.3-1٢",
         )
         for version in invalid:
             with self.subTest(version=version):
