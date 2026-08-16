@@ -21,13 +21,13 @@ Repository release requirements are defined by [`../RELEASE_POLICY.md`](../RELEA
 |---|---|---|---|
 | `0.9.0` | Prepared compatibility baseline | **Not published** | **Not published** |
 | `0.10.0` | Published pre-1.0 adoption and compatibility checkpoint | `v0.10.0` | Published 2026-08-16 |
-| `1.0.0-rc.1` | Prepared and permanently validated source candidate | **Not published** | **Not published** |
+| `1.0.0-rc.1` | Prepared source candidate; functional compatibility candidate validated; exact record/document tree remains `NotRun` in the source readiness record | **Not published** | **Not published** |
 
 The `0.9.0` materials were prepared on 2026-07-13, but no `v0.9.0` tag and no GitHub Release were created. Current `main` must not be retroactively tagged as `v0.9.0`, because it contains substantial work accumulated after that prepared baseline.
 
 The machine-readable [`release-state.json`](release-state.json) records this publication exception. Release validation rejects a tag for a version listed under `preparedUnpublishedVersions`, and the release builder refuses to construct publication artifacts for it. This prevents the tag-triggered workflow from turning the prepared `0.9.0` documents into an accidental GitHub Release.
 
-The `0.10.0` release is published and verified and remains the published migration checkpoint. The `1.0.0-rc.1` source candidate has passed the compatibility gate and permanent validation; its exact evidence is recorded in [`rc-readiness/1.0.0-rc.1.md`](rc-readiness/1.0.0-rc.1.md).
+The `0.10.0` release is published and verified and remains the published migration checkpoint. For `1.0.0-rc.1`, the functional compatibility candidate has passed the compatibility gate and permanent validation; that immutable functional evidence is recorded in [`rc-readiness/1.0.0-rc.1.md`](rc-readiness/1.0.0-rc.1.md). The readiness record intentionally keeps validation of the exact record/document tree as `NotRun`, because updating the record to embed a later run would create a different tree. PR #71 therefore requires a fresh exact-head permanent CI run after any record or documentation update, with that result carried in PR metadata rather than written back into the source record.
 
 The next intended publication is `1.0.0-rc.1` and is forward-only; independent specialist approval and deliberate tag-driven publication remain required before the prepared source candidate becomes a published release.
 
