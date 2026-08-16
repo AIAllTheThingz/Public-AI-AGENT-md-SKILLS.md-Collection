@@ -1,7 +1,7 @@
 ---
 id: RELEASE-INDEX-001
 title: Repository Releases
-version: 0.10.0
+version: 1.0.0-rc.1
 status: baseline
 ---
 
@@ -21,12 +21,15 @@ Repository release requirements are defined by [`../RELEASE_POLICY.md`](../RELEA
 |---|---|---|---|
 | `0.9.0` | Prepared compatibility baseline | **Not published** | **Not published** |
 | `0.10.0` | Published pre-1.0 adoption and compatibility checkpoint | `v0.10.0` | Published 2026-08-16 |
+| `1.0.0-rc.1` | Prepared and permanently validated source candidate | **Not published** | **Not published** |
 
 The `0.9.0` materials were prepared on 2026-07-13, but no `v0.9.0` tag and no GitHub Release were created. Current `main` must not be retroactively tagged as `v0.9.0`, because it contains substantial work accumulated after that prepared baseline.
 
 The machine-readable [`release-state.json`](release-state.json) records this publication exception. Release validation rejects a tag for a version listed under `preparedUnpublishedVersions`, and the release builder refuses to construct publication artifacts for it. This prevents the tag-triggered workflow from turning the prepared `0.9.0` documents into an accidental GitHub Release.
 
-The `0.10.0` release is published and verified. The next intended publication is `1.0.0-rc.1` and is forward-only; adoption tests, downstream pilots, maturity evidence, and the compatibility gate must precede that release candidate.
+The `0.10.0` release is published and verified and remains the published migration checkpoint. The `1.0.0-rc.1` source candidate has passed the compatibility gate and permanent validation; its exact evidence is recorded in [`rc-readiness/1.0.0-rc.1.md`](rc-readiness/1.0.0-rc.1.md).
+
+The next intended publication is `1.0.0-rc.1` and is forward-only; independent specialist approval and deliberate tag-driven publication remain required before the prepared source candidate becomes a published release.
 
 ## Structure
 
@@ -35,13 +38,20 @@ releases/
 ├── README.md
 ├── release-state.json
 ├── <VERSION>.md
+├── compatibility/
+│   ├── 0.10.0-checkpoint.json
+│   └── 1.0.0-rc.1.json
 ├── migrations/
+│   └── <VERSION>.md
+├── rc-readiness/
 │   └── <VERSION>.md
 └── verification/
     └── <VERSION>.md
 ```
 
 `release-state.json` records repository-specific publication-state facts that release tooling must enforce. It is not a substitute for GitHub tag/release verification and must remain synchronized with release documentation.
+
+Compatibility inventories record the published checkpoint and candidate compatibility surfaces used by the RC gate. RC readiness records pin source-candidate validation evidence while explicitly separating that evidence from publication and final-release approval.
 
 ## Release notes
 
@@ -81,4 +91,4 @@ Archive filenames use the project-compatible `Public-Access-Agents-<VERSION>` pr
 
 ## Boundary
 
-A GitHub Release identifies a reviewed source and compatibility boundary. A prepared release document without the corresponding tag and GitHub Release does not establish a published boundary. Repository releases do not certify adopting systems or prove that every baseline package has reached stable maturity.
+A GitHub Release identifies a reviewed source and compatibility boundary. A prepared release document or validated source candidate without the corresponding tag and GitHub Release does not establish a published boundary. Repository releases do not certify adopting systems or prove that every baseline package has reached stable maturity.
