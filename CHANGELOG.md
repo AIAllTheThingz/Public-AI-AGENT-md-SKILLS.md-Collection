@@ -14,9 +14,12 @@ Release notes distinguish:
 
 ## [Unreleased]
 
+The accumulated changes in this section are intended for the forward-only `0.10.0` release. The prepared `0.9.0` baseline was never published, and current `main` must not be retroactively tagged as `v0.9.0`.
+
 ### Breaking changes
 
 - Changed repository-maintenance approval behavior relative to the prepared `0.9.0` governance contract: low- and moderate-risk repository changes may now be maintainer self-reviewed after permanent CI when no independent-review gate applies. Independent review remains mandatory for high/critical risk, any breaking repository change, the final `1.0.0` compatibility approval, and stable-maturity commitments. This change affects repository maintenance governance only; it does not weaken adopter-facing engineering or security standards.
+- Changed canonical schema and tool-result `$id` identifiers from raw GitHub URLs under `AIAllTheThingz/Public-Access-Agents` to `AIAllTheThingz/Public-AI-Governance`. Schema validation structure is unchanged, but consumers that persist or compare exact `$id` strings must migrate those identifiers. This is an explicit pre-1.0 breaking machine-readable contract change.
 
 ### Normative changes
 
@@ -25,7 +28,7 @@ Release notes distinguish:
 - Added a VCF PowerCLI automation standard under the VMware vSphere and ESXi package, composed it with the general PowerShell package, and added adoption, review, and completion-evidence requirements for dependency provenance, endpoint and certificate identity, explicit connections, stable inventory targeting, confirmation, asynchronous tasks, cleanup, structured results, and isolated testing.
 - Extended the project-manifest version 1 contract with version `1.1.0` and optional `virtualization`, `operatingSystems`, and `networking` package arrays while retaining validation of existing version `1.0.0` manifests.
 - Synchronized profile, language, discipline, framework, platform, governance, template, and example composition guidance so adopters must explicitly select or justify omission of virtualization, operating-system, and networking standards.
-- Added collection-level language, framework, and platform skills that route agent work to the applicable standards packages and require advanced, version-compatible implementation, layered validation, and explicit completion evidence.
+- Added collection-level language, framework, and platform skills that route agent work to the applicable language packages and require advanced, version-compatible implementation, layered validation, and explicit completion evidence.
 - Added a virtualization engineering skill and complete baseline packages for VMware vSphere/ESXi, XenServer/Citrix Hypervisor, Proxmox VE, XCP-ng, KVM/libvirt, Nutanix AHV, Microsoft Hyper-V, Red Hat Virtualization, and Oracle Linux KVM/OLVM.
 - Added shared virtualization requirements for target identity, supported automation interfaces, discovery, validation, dry-run or planning, authorization, bounded execution, actual-state verification, backup, recovery, lifecycle, and migration.
 - Added an operating-system engineering skill and complete baseline packages for Windows Server 2016/2019/2022/2025, Windows 10/11 clients, the RHEL family, Ubuntu Server/Desktop, Debian, SUSE Linux Enterprise, Oracle Linux, macOS, and FreeBSD.
@@ -36,6 +39,7 @@ Release notes distinguish:
 ### Editorial changes
 
 - Added a concise pull request template for summary, impact, validation, limitations, and maintainer self-review without introducing heavyweight governance records.
+- Reconciled the project/library identity (`Public Access Agents`) with the canonical GitHub repository (`AIAllTheThingz/Public-AI-Governance`) and documented the prepared-but-unpublished `0.9.0` state plus the forward-only `0.10.0` release plan.
 
 ### Tooling changes
 
@@ -51,6 +55,7 @@ Release notes distinguish:
 - Extended the repository skill-collection regression test to cover the virtualization router and its nine package routes.
 - Extended the repository skill-collection regression test to cover the operating-system router and its nine package routes.
 - Extended the repository skill-collection regression test to cover the networking router and its four package routes.
+- Reconciled canonical repository URLs used by release documentation and machine-readable identifiers with `AIAllTheThingz/Public-AI-Governance`; artifact filenames retain the stable `Public-Access-Agents-<VERSION>` project prefix.
 
 ### Security
 
@@ -71,6 +76,8 @@ Release notes distinguish:
 ### Migration notes
 
 - Repository maintainers following the prepared `0.9.0` maintenance policy should update local review expectations: low- and moderate-risk repository maintenance may be self-reviewed after permanent CI only when no independent-review gate applies; any breaking repository change still requires independent specialist review. Existing adopter-facing package requirements, security controls, and project human-review requirements are unchanged by this repository-maintenance policy update.
+- `0.9.0` was prepared but never published. Adopters must record the actual source commit they consumed and must not claim a `v0.9.0` source tag. Current `main` must not be retroactively tagged as `v0.9.0`; the intended next publication is `0.10.0`.
+- Consumers that persist exact schema or tool-result `$id` values from the former raw `Public-Access-Agents` GitHub path must migrate them to the corresponding `Public-AI-Governance` identifiers and re-run integration/schema tests.
 - Maintainers changing validation dependencies must update `tools/validate-schemas/requirements.txt`, regenerate `requirements.lock` with the documented Python 3.13 boundary, and commit the resulting SHA-256 hashes; CI intentionally rejects direct-dependency/lock drift.
 - Existing `languages/dotnet` adopters remain valid. Repositories with C# source should add `languages/csharp` at their next standards update; modern C# projects normally compose `csharp` for language semantics and `dotnet` for SDK, target framework, CLR, MSBuild, NuGet, hosting, and publishing behavior.
 - Existing `VMware.PowerCLI` adopters are not required to perform an immediate or blind rename. They should inventory the distribution and child modules, verify the current Broadcom-supported migration and compatibility path, test the selected `VCF.PowerCLI` constraint, and update dependency records separately from operational execution.
@@ -79,6 +86,7 @@ Release notes distinguish:
 
 ### Known limitations
 
+- No repository release has been published yet. The prepared `0.9.0` tag/release does not exist, and the next intended publication is `0.10.0` after final release-state preparation.
 - The release publication job is tag-triggered and was not exercised by pull-request validation; publication remains `NotRun` until a reconciled release tag is deliberately created.
 - Immutable action and dependency references reduce mutation risk but do not by themselves establish third-party provenance or vulnerability-free dependencies.
 - The C# package and templates were validated as repository content only because a .NET SDK/compiler was unavailable in the authoring environment. No C# compilation, NuGet restore, analyzer execution, runtime test, benchmark, native-platform validation, or framework integration test was performed.
@@ -87,9 +95,11 @@ Release notes distinguish:
 
 ## [0.9.0] - 2026-07-13
 
+**Prepared baseline only.** No `v0.9.0` Git tag and no `0.9.0` GitHub Release were ever published. This entry records the repository release program that was prepared on 2026-07-13; it does not identify a published immutable source boundary.
+
 ### Breaking changes
 
-- None. This is the first repository-level release contract. Existing public paths are treated as the initial pre-1.0 compatibility baseline.
+- None. This was prepared as the first repository-level release contract. Existing public paths are treated as the initial pre-1.0 compatibility baseline.
 
 ### Normative changes
 
@@ -126,5 +136,5 @@ Release notes distinguish:
 
 - See [`releases/migrations/0.9.0.md`](releases/migrations/0.9.0.md).
 
-[Unreleased]: https://github.com/AIAllTheThingz/Public-Access-Agents/compare/v0.9.0...HEAD
-[0.9.0]: https://github.com/AIAllTheThingz/Public-Access-Agents/releases/tag/v0.9.0
+[Unreleased]: https://github.com/AIAllTheThingz/Public-AI-Governance/commits/main
+[0.9.0]: releases/0.9.0.md

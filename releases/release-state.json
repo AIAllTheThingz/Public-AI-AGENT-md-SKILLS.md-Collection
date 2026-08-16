@@ -1,0 +1,10 @@
+{
+  "formatVersion": "1.0.0",
+  "project": "Public Access Agents",
+  "canonicalRepository": "AIAllTheThingz/Public-AI-Governance",
+  "artifactPrefix": "Public-Access-Agents",
+  "preparedUnpublishedVersions": [
+    "0.9.0"
+  ],
+  "nextIntendedVersion": "0.10.0"
+}

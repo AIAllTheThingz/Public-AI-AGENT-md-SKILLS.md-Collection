@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/AIAllTheThingz/Public-Access-Agents/main/schemas/v1/risk-classification.schema.json",
+  "$id": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/v1/risk-classification.schema.json",
   "title": "Risk Classification",
   "description": "Records a change risk level, rationale, evaluated factors, required reviewers, rollback requirement, ownership, and reassessment triggers.",
   "type": "object",

@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
@@ -17,6 +19,7 @@ from standards_tools import Finding, ToolResult, add_common_arguments, execute_t
 TOOL = "validate-release"
 VERSION = "1.0.0"
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
+RELEASE_STATE_PATH = Path("releases/release-state.json")
 SEMVER = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
     r"(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
@@ -72,6 +75,38 @@ def read_version(root: Path, findings: list[Finding]) -> str | None:
     return version
 
 
+def read_release_state(root: Path, findings: list[Finding]) -> dict[str, Any]:
+    """Read optional repository publication-state metadata."""
+    path = root / RELEASE_STATE_PATH
+    if not path.is_file():
+        return {}
+    try:
+        state = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        findings.append(Finding(
+            "RELEASE_STATE_INVALID",
+            f"Release-state metadata is not valid JSON: {exc}",
+            path=RELEASE_STATE_PATH.as_posix(),
+        ))
+        return {}
+    if not isinstance(state, dict):
+        findings.append(Finding(
+            "RELEASE_STATE_INVALID",
+            "Release-state metadata must be a JSON object.",
+            path=RELEASE_STATE_PATH.as_posix(),
+        ))
+        return {}
+    blocked = state.get("preparedUnpublishedVersions", [])
+    if not isinstance(blocked, list) or any(not isinstance(item, str) or not SEMVER.fullmatch(item) for item in blocked):
+        findings.append(Finding(
+            "RELEASE_STATE_INVALID",
+            "preparedUnpublishedVersions must be an array of Semantic Version strings.",
+            path=RELEASE_STATE_PATH.as_posix(),
+        ))
+        return {}
+    return state
+
+
 def git_output(root: Path, *args: str) -> str | None:
     completed = subprocess.run(
         ["git", "-C", str(root), *args],
@@ -91,6 +126,8 @@ def run(args: argparse.Namespace) -> ToolResult:
             findings.append(Finding("RELEASE_FILE_MISSING", "Missing release-program file.", path=name))
 
     version = read_version(root, findings)
+    release_state = read_release_state(root, findings)
+    blocked_versions = set(release_state.get("preparedUnpublishedVersions", []))
     changelog = root / "CHANGELOG.md"
     release_notes = root / "releases" / f"{version}.md" if version else None
     migration = root / "releases" / "migrations" / f"{version}.md" if version else None
@@ -202,6 +239,14 @@ def run(args: argparse.Namespace) -> ToolResult:
             path="VERSION",
         ))
 
+    if version and version in blocked_versions and (args.tag or args.require_head_tag):
+        findings.append(Finding(
+            "RELEASE_PUBLICATION_BLOCKED",
+            f"Version {version} is explicitly recorded as prepared but unpublished and must not be tagged or published from this repository state.",
+            path=RELEASE_STATE_PATH.as_posix(),
+            details={"version": version, "tag": args.tag or expected_tag},
+        ))
+
     if args.require_head_tag and expected_tag:
         tags = set((git_output(root, "tag", "--points-at", "HEAD") or "").splitlines())
         if expected_tag not in tags:
@@ -220,6 +265,7 @@ def run(args: argparse.Namespace) -> ToolResult:
             "expectedTag": expected_tag or "",
             "releaseNotes": bool(release_notes and release_notes.is_file()),
             "migrationNotes": bool(migration and migration.is_file()),
+            "publicationBlocked": bool(version and version in blocked_versions),
             "findings": len(findings),
         },
         metadata={
@@ -233,7 +279,7 @@ def run(args: argparse.Namespace) -> ToolResult:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     add_common_arguments(parser, default_root=DEFAULT_ROOT)
-    parser.add_argument("--tag", help="Validate an explicit release tag such as v0.9.0.")
+    parser.add_argument("--tag", help="Validate an explicit release tag such as v<VERSION>.")
     parser.add_argument("--require-head-tag", action="store_true")
     parser.add_argument("--debug", action="store_true", help=argparse.SUPPRESS)
     return parser

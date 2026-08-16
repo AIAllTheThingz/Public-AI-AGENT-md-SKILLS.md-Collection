@@ -15,11 +15,13 @@ import tarfile
 import tempfile
 import zipfile
 from pathlib import Path
+from typing import Any
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 BUILDER_VERSION = "1.0.0"
 FIXED_ZIP_TIME = (1980, 1, 1, 0, 0, 0)
 ARCHIVE_PREFIX = "Public-Access-Agents"
+RELEASE_STATE_PATH = Path("releases/release-state.json")
 
 
 def run_git(root: Path, *args: str) -> str:
@@ -32,6 +34,23 @@ def run_git(root: Path, *args: str) -> str:
     if completed.returncode != 0:
         raise RuntimeError(completed.stderr.strip() or f"git {' '.join(args)} failed")
     return completed.stdout.strip()
+
+
+def read_release_state(root: Path) -> dict[str, Any]:
+    """Read optional repository publication-state metadata."""
+    path = root / RELEASE_STATE_PATH
+    if not path.is_file():
+        return {}
+    try:
+        state = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Release-state metadata is invalid: {exc}") from exc
+    if not isinstance(state, dict):
+        raise ValueError("Release-state metadata must be a JSON object.")
+    blocked = state.get("preparedUnpublishedVersions", [])
+    if not isinstance(blocked, list) or any(not isinstance(item, str) for item in blocked):
+        raise ValueError("preparedUnpublishedVersions must be an array of version strings.")
+    return state
 
 
 def ensure_clean_tracked_tree(root: Path) -> None:
@@ -115,6 +134,14 @@ def write_tar_gz(root: Path, files: list[Path], output: Path, top: str) -> None:
 def build(root: Path, output_dir: Path, tag: str | None, force: bool) -> dict:
     version = (root / "VERSION").read_text(encoding="utf-8").strip()
     expected_tag = f"v{version}"
+    release_state = read_release_state(root)
+    blocked_versions = set(release_state.get("preparedUnpublishedVersions", []))
+
+    if version in blocked_versions:
+        raise ValueError(
+            f"Release build is blocked for version {version}: it is explicitly recorded as prepared but unpublished. "
+            "Select and prepare the intended forward release version before building publication artifacts."
+        )
     if tag and tag != expected_tag:
         raise ValueError(f"Tag {tag!r} does not match VERSION; expected {expected_tag!r}.")
 
