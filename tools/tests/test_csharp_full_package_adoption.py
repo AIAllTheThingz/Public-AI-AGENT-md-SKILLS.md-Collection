@@ -6,13 +6,29 @@ import re
 import shutil
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from helpers import REPO_ROOT
 
 PACKAGE_ROOT = REPO_ROOT / "languages" / "csharp"
 MANIFEST_PATH = PACKAGE_ROOT / "MANIFEST.md"
 HEX_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+
+
+def validated_manifest_relative_path(entry: str) -> Path:
+    posix_path = PurePosixPath(entry)
+    windows_path = PureWindowsPath(entry)
+    if (
+        not entry
+        or posix_path.is_absolute()
+        or windows_path.is_absolute()
+        or windows_path.drive
+        or ".." in posix_path.parts
+        or "\\" in entry
+        or not posix_path.parts
+    ):
+        raise AssertionError(f"C# package manifest contains unsafe required-file path: {entry!r}")
+    return Path(*posix_path.parts)
 
 
 def required_surface_paths() -> list[Path]:
@@ -23,7 +39,7 @@ def required_surface_paths() -> list[Path]:
     entries = re.findall(r"^- `([^`]+)`\s*$", section, flags=re.MULTILINE)
     if not entries:
         raise AssertionError("C# package manifest declares no required files")
-    return [Path(entry) for entry in dict.fromkeys(entries)]
+    return [validated_manifest_relative_path(entry) for entry in dict.fromkeys(entries)]
 
 
 def sha256_file(path: Path) -> str:
@@ -69,6 +85,25 @@ def validate_bound_surface(destination: Path, records: list[dict[str, str]]) -> 
 
 
 class CSharpFullPackageAdoptionTests(unittest.TestCase):
+    def test_manifest_required_paths_reject_package_escape(self):
+        unsafe_entries = (
+            "../README.md",
+            "standards/../../README.md",
+            "/tmp/escape.md",
+            "C:/Windows/System32/escape.txt",
+            r"C:\Windows\System32\escape.txt",
+            r"standards\..\..\README.md",
+        )
+        for entry in unsafe_entries:
+            with self.subTest(entry=entry):
+                with self.assertRaises(AssertionError):
+                    validated_manifest_relative_path(entry)
+
+        self.assertEqual(
+            validated_manifest_relative_path("standards/SECURITY_STANDARD.md"),
+            Path("standards/SECURITY_STANDARD.md"),
+        )
+
     def test_complete_csharp_package_surface_is_bound_and_hash_verified(self):
         required = {path.as_posix() for path in required_surface_paths()}
         self.assertTrue({
