@@ -22,7 +22,7 @@ The current repository baseline is defined in [`VERSION`](VERSION).
 
 Current baseline: **0.9.0 (prepared, unpublished)**
 
-Next intended release: **0.10.0**
+Next intended publication: `0.10.0`.
 
 This is a pre-1.0 compatibility baseline. It is usable and versioned as repository content, but it does not represent a published GitHub release or the final stable compatibility commitment.
 

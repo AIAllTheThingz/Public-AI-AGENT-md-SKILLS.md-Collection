@@ -20,11 +20,14 @@ TOOL = "validate-release"
 VERSION = "1.0.0"
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 RELEASE_STATE_PATH = Path("releases/release-state.json")
-SEMVER = re.compile(
-    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
-    r"(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
-    r"(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
+SEMVER_CORE = r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+SEMVER_PRERELEASE_ID = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
+SEMVER_PATTERN = (
+    rf"{SEMVER_CORE}"
+    rf"(?:-{SEMVER_PRERELEASE_ID}(?:\.{SEMVER_PRERELEASE_ID})*)?"
+    r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
 )
+SEMVER = re.compile(rf"^{SEMVER_PATTERN}$")
 REQUIRED_ROOT = ("VERSION", "CHANGELOG.md", "RELEASE_POLICY.md", "MATURITY_POLICY.md")
 REQUIRED_RELEASE_HEADINGS = (
     "## Breaking changes",
@@ -104,6 +107,23 @@ def read_release_state(root: Path, findings: list[Finding]) -> dict[str, Any]:
             path=RELEASE_STATE_PATH.as_posix(),
         ))
         return {}
+    next_intended = state.get("nextIntendedVersion")
+    if not isinstance(next_intended, str) or not SEMVER.fullmatch(next_intended):
+        findings.append(Finding(
+            "RELEASE_STATE_INVALID",
+            "nextIntendedVersion must be a Semantic Version 2.0.0 string.",
+            path=RELEASE_STATE_PATH.as_posix(),
+            details={"value": next_intended},
+        ))
+        return {}
+    if next_intended in blocked:
+        findings.append(Finding(
+            "RELEASE_STATE_INVALID",
+            "nextIntendedVersion must not also appear in preparedUnpublishedVersions.",
+            path=RELEASE_STATE_PATH.as_posix(),
+            details={"value": next_intended},
+        ))
+        return {}
     return state
 
 
@@ -128,6 +148,7 @@ def run(args: argparse.Namespace) -> ToolResult:
     version = read_version(root, findings)
     release_state = read_release_state(root, findings)
     blocked_versions = set(release_state.get("preparedUnpublishedVersions", []))
+    next_intended_version = release_state.get("nextIntendedVersion")
     changelog = root / "CHANGELOG.md"
     release_notes = root / "releases" / f"{version}.md" if version else None
     migration = root / "releases" / "migrations" / f"{version}.md" if version else None
@@ -245,6 +266,19 @@ def run(args: argparse.Namespace) -> ToolResult:
             f"Version {version} is explicitly recorded as prepared but unpublished and must not be tagged or published from this repository state.",
             path=RELEASE_STATE_PATH.as_posix(),
             details={"version": version, "tag": args.tag or expected_tag},
+        ))
+
+    if (
+        version
+        and isinstance(next_intended_version, str)
+        and (args.tag or args.require_head_tag)
+        and version != next_intended_version
+    ):
+        findings.append(Finding(
+            "RELEASE_PUBLICATION_VERSION_MISMATCH",
+            f"Publication version {version} does not match nextIntendedVersion {next_intended_version}.",
+            path=RELEASE_STATE_PATH.as_posix(),
+            details={"version": version, "nextIntendedVersion": next_intended_version},
         ))
 
     if args.require_head_tag and expected_tag:

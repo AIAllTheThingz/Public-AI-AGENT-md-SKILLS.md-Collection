@@ -26,7 +26,7 @@ The `0.9.0` materials were prepared on 2026-07-13, but no `v0.9.0` tag and no Gi
 
 The machine-readable [`release-state.json`](release-state.json) records this publication exception. Release validation rejects a tag for a version listed under `preparedUnpublishedVersions`, and the release builder refuses to construct publication artifacts for it. This prevents the tag-triggered workflow from turning the prepared `0.9.0` documents into an accidental GitHub Release.
 
-The next publication is intended to be forward-only as `0.10.0`. Before that tag is created, `VERSION`, changelog, release notes, migration guidance, release artifacts, and validation evidence must all describe `0.10.0` consistently.
+The next intended publication is `0.10.0` and is forward-only. Before that tag is created, `VERSION`, changelog, release notes, migration guidance, release artifacts, and validation evidence must all describe `0.10.0` consistently.
 
 ## Structure
 

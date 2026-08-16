@@ -17,6 +17,8 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+from validate_release import read_release_state as validate_release_state
+
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 BUILDER_VERSION = "1.0.0"
 FIXED_ZIP_TIME = (1980, 1, 1, 0, 0, 0)
@@ -37,19 +39,12 @@ def run_git(root: Path, *args: str) -> str:
 
 
 def read_release_state(root: Path) -> dict[str, Any]:
-    """Read optional repository publication-state metadata."""
-    path = root / RELEASE_STATE_PATH
-    if not path.is_file():
-        return {}
-    try:
-        state = json.loads(path.read_text(encoding="utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ValueError(f"Release-state metadata is invalid: {exc}") from exc
-    if not isinstance(state, dict):
-        raise ValueError("Release-state metadata must be a JSON object.")
-    blocked = state.get("preparedUnpublishedVersions", [])
-    if not isinstance(blocked, list) or any(not isinstance(item, str) for item in blocked):
-        raise ValueError("preparedUnpublishedVersions must be an array of version strings.")
+    """Read release-state metadata through the canonical validator contract."""
+    findings = []
+    state = validate_release_state(root, findings)
+    if findings:
+        message = "; ".join(f"{item.code}: {item.message}" for item in findings)
+        raise ValueError(f"Release-state metadata is invalid: {message}")
     return state
 
 
@@ -141,6 +136,11 @@ def build(root: Path, output_dir: Path, tag: str | None, force: bool) -> dict:
         raise ValueError(
             f"Release build is blocked for version {version}: it is explicitly recorded as prepared but unpublished. "
             "Select and prepare the intended forward release version before building publication artifacts."
+        )
+    next_intended_version = release_state.get("nextIntendedVersion")
+    if isinstance(next_intended_version, str) and version != next_intended_version:
+        raise ValueError(
+            f"Release build version {version} does not match nextIntendedVersion {next_intended_version}."
         )
     if tag and tag != expected_tag:
         raise ValueError(f"Tag {tag!r} does not match VERSION; expected {expected_tag!r}.")
