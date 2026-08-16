@@ -31,6 +31,9 @@ The accumulated changes in this section are intended for the forward-only `0.10.
 - Added collection-level language, framework, and platform skills that route agent work to the applicable language packages and require advanced, version-compatible implementation, layered validation, and explicit completion evidence.
 - Added a virtualization engineering skill and complete baseline packages for VMware vSphere/ESXi, XenServer/Citrix Hypervisor, Proxmox VE, XCP-ng, KVM/libvirt, Nutanix AHV, Microsoft Hyper-V, Red Hat Virtualization, and Oracle Linux KVM/OLVM.
 - Added shared virtualization requirements for target identity, supported automation interfaces, discovery, validation, dry-run or planning, authorization, bounded execution, actual-state verification, backup, recovery, lifecycle, and migration.
+- Updated XenServer lifecycle guidance across package and operations standards so XenServer 9 is the current GA family while XenServer 8/Citrix Hypervisor references are treated as installed-estate, compatibility, or migration boundaries rather than greenfield defaults.
+- Updated Red Hat Virtualization guidance across README, agent, and operations standards to the current Extended Life Phase boundary: limited support, no new bug/security fixes or hardware enablement, and OpenShift Virtualization as the continuity roadmap. Removed the unsupported repository claim that attached an exact August 31, 2026 software-fix date.
+- Updated Oracle Linux KVM guidance across README, agent, and operations standards so current Oracle Linux 9/10 KVM is separated from OLVM, which current Oracle guidance ties to an Oracle Linux 8 legacy managed boundary. OLVM must not be inferred as the current Oracle Linux 9/10 management plane.
 - Added an operating-system engineering skill and complete baseline packages for Windows Server 2016/2019/2022/2025, Windows 10/11 clients, the RHEL family, Ubuntu Server/Desktop, Debian, SUSE Linux Enterprise, Oracle Linux, macOS, and FreeBSD.
 - Added shared OS requirements for authoritative target and policy identity, current lifecycle verification, trusted repositories and artifacts, staged/canary rollout, access preservation, bounded automation and restarts, actual-state verification, recovery, upgrades, migrations, destructive actions, and decommissioning.
 - Added a network engineering skill and complete baseline packages for HPE Aruba Networking, Cisco, Juniper Networks, and Broadcom Brocade Fabric OS/SANnav, including explicit ownership triage for legacy Brocade Ethernet/IP product lines.
@@ -41,6 +44,7 @@ The accumulated changes in this section are intended for the forward-only `0.10.
 - Added a concise pull request template for summary, impact, validation, limitations, and maintainer self-review without introducing heavyweight governance records.
 - Reconciled the project/library identity (`Public Access Agents`) with the canonical GitHub repository (`AIAllTheThingz/Public-AI-Governance`) and documented the prepared-but-unpublished `0.9.0` state plus the forward-only `0.10.0` release plan.
 - Documented a lightweight authoritative-source maintenance model that separates accountable source-review dates from ordinary repository modification dates and treats missing review evidence as explicit `NotRun` rather than inferred success.
+- Replaced coarse collection-level source-review entries with package/scoped records and made `SOURCE_REVIEWS.json` plus durable `source-reviews/` evidence the accountable source-review date authority, removing duplicated hard-coded dates from affected package READMEs.
 
 ### Tooling changes
 
@@ -62,6 +66,7 @@ The accumulated changes in this section are intended for the forward-only `0.10.
 - Added a weekly and manually dispatchable source-freshness workflow with immutable action pins, an explicit Ubuntu 24.04/Python 3.13 boundary, GitHub Actions summaries, warning annotations, and no live vendor-source fetches.
 - Added a standards-correction/stale-source issue form and positive, warning, `NotRun`, strict, invalid-date, path-containment, registry, and workflow regression coverage for the freshness model.
 - Updated `validate-tools` to version `1.3.3`, `validate-all` to version `1.3.0`, and the toolchain manifests/catalog to include the new freshness package and workflow.
+- Added source-review evidence regressions that require package/scoped records, preserve explicit `NotRun` coverage for unreviewed packages, pin reviewed evidence to an immutable repository revision, retain current lifecycle corrections in normative files, and prevent duplicated package review-date drift.
 
 ### Security
 
@@ -90,14 +95,17 @@ The accumulated changes in this section are intended for the forward-only `0.10.
 - Existing `VMware.PowerCLI` adopters are not required to perform an immediate or blind rename. They should inventory the distribution and child modules, verify the current Broadcom-supported migration and compatibility path, test the selected `VCF.PowerCLI` constraint, and update dependency records separately from operational execution.
 - Existing project-manifest version `1.0.0` instances remain valid. Producers using the new package arrays must emit `schemaVersion: "1.1.0"`; consumers that depend on those arrays must use schema and composition tooling version `1.1.0` or later.
 - Existing adopters may continue using `AGENTS.md` and package entry points directly. Agents that support skills may additionally use `languages/SKILL.md`, `frameworks/SKILL.md`, `platforms/SKILL.md`, `virtualization/SKILL.md`, `operating-systems/SKILL.md`, and `networking/SKILL.md` without changing existing package paths.
-- Source-review metadata is additive and begins with `lastReviewed: null` where no accountable source review has been documented. Maintainers should populate a date only after actually reviewing the listed authoritative sources; no adopter-facing package behavior changes solely because the freshness registry exists.
+- XenServer adopters should treat XenServer 9 as the current GA family and explicitly classify older XenServer/Citrix Hypervisor estates as compatibility/migration boundaries before lifecycle work.
+- RHV adopters should treat the platform as Extended Life legacy scope, verify exact entitlement/support, protect recovery, and prioritize a supported migration path rather than assuming normal bug/security-fix delivery continues.
+- Oracle Linux KVM adopters should distinguish current Oracle Linux KVM from OLVM. Existing OLVM estates must verify the exact OLVM/Oracle Linux 8 support boundary and should not infer OLVM support for Oracle Linux 9 or 10.
+- Source-review metadata is additive. Maintainers should populate a date only after actually reviewing the listed authoritative sources; unreviewed package records remain `lastReviewed: null` and must not be inferred current.
 
 ### Known limitations
 
 - No repository release has been published yet. The prepared `0.9.0` tag/release does not exist, and the next intended publication is `0.10.0` after final release-state preparation.
 - The release publication job is tag-triggered and was not exercised by pull-request validation; publication remains `NotRun` until a reconciled release tag is deliberately created.
 - Immutable action and dependency references reduce mutation risk but do not by themselves establish third-party provenance or vulnerability-free dependencies.
-- The source-freshness checker evaluates recorded review dates and metadata only. It does not fetch or compare external vendor content, so live source verification remains `NotRun`; the initial production registry also remains `NotRun` until accountable reviews are performed and recorded.
+- The source-freshness checker evaluates recorded review dates and metadata only; it does not fetch or compare external vendor content. The 2026-08-15 accountable source review covered the records dated that day, while JavaScript/TypeScript, Python, Java, Go, Rust, Bash, SQL, and the vSphere product boundary remain explicitly `NotRun`. Manual `source-freshness` workflow dispatch is `Blocked` through the connected GitHub tool surface.
 - The C# package and templates were validated as repository content only because a .NET SDK/compiler was unavailable in the authoring environment. No C# compilation, NuGet restore, analyzer execution, runtime test, benchmark, native-platform validation, or framework integration test was performed.
 - The PowerCLI standard was validated as repository content only. No live vCenter or ESXi connection, module installation, product compatibility certification, or integration test was performed.
 - Project-manifest package arrays record reviewed selection intent only. Schema validity and generated composition bundles do not prove that every applicable infrastructure boundary was identified, tailored, authorized, or operationally validated.

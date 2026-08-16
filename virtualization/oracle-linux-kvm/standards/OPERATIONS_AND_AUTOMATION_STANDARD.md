@@ -13,23 +13,27 @@ Define the detailed operating and automation contract for Oracle Linux KVM work.
 
 ## Applicability
 
-This standard applies to Oracle Linux KVM/QEMU/libvirt hosts, domains, storage pools, virtual networks, migration, Oracle VirtIO drivers, and Oracle Linux Virtualization Manager data centers, clusters, hosts, storage domains, networks, and VMs.
+This standard applies to Oracle Linux KVM/QEMU/libvirt hosts, domains, storage pools, virtual networks, migration, Oracle VirtIO drivers, and explicitly supported legacy Oracle Linux Virtualization Manager estates.
+
+Current Oracle guidance identifies OLVM availability with Oracle Linux 8. OLVM is therefore a separate legacy managed boundary, not a current management plane for Oracle Linux 9 or 10.
 
 ## Authority and identity
 
-- Connect only to the exact Oracle Linux libvirt host for standalone KVM or the authoritative Oracle Linux Virtualization Manager for managed environments.
-- Record endpoint class, environment, stable object IDs, and acting identity.
+- For current KVM work, connect only to the exact Oracle Linux libvirt host.
+- For an OLVM-managed estate, treat OLVM as authoritative only after verifying the exact OLVM release, Oracle Linux 8 boundary, entitlement, and support state.
+- Record endpoint class, environment, stable object IDs, Oracle Linux/OLVM versions, and acting identity.
 - Verify certificate and endpoint identity before credential use.
 - Use least privilege and separate read-only discovery from state-changing execution.
 - Do not let automation approve its own consequential action.
-- Reject ambiguous selection.
+- Reject ambiguous selection or conflicting direct-libvirt/OLVM ownership.
 
 ## Discovery
 
 Collect:
 
-- product, edition, version, build, hardware, firmware, drivers, guest tools, API, SDK, module, and lifecycle
-- management, cluster or pool, host, VM, network, and storage topology
+- Oracle Linux, kernel, KVM/QEMU/libvirt, OLVM when present, hardware, firmware, drivers, guest tools, API, SDK, module, and lifecycle/support state
+- management, host, VM, network, and storage topology
+- for a supported OLVM estate, manager, cluster, storage-domain, network, and VM relationships
 - health, alarms, events, active tasks, maintenance state, backup, replication, and monitoring
 - owners, dependencies, maintenance windows, recovery objectives, and acceptance tests
 - CPU, memory, storage, network, admission-control, and temporary migration capacity
@@ -43,7 +47,8 @@ Validate:
 
 - target and identity
 - permissions
-- manager and cluster health
+- lifecycle and support state
+- host or supported manager health
 - compatibility and support
 - capacity and evacuation
 - network and storage paths
@@ -88,13 +93,13 @@ The plan must show:
 
 Verify:
 
-- manager and inventory state
-- cluster or pool and host health
+- host or supported manager and inventory state
+- host or cluster health where applicable
 - VM configuration and power state
 - guest OS, tools, devices, time, and application health
 - required and denied network paths
 - storage accessibility, capacity, performance, and integrity
-- HA, replication, backup, and restore coverage
+- HA, replication, backup, and restore coverage where applicable
 - monitoring, alerts, events, and audit
 - absence of unexpected snapshots, orphaned disks, duplicate identities, or stale state
 
@@ -102,9 +107,9 @@ Verify:
 
 ### VIRT-OLKVM-MODE-001
 
-**Requirement:** Identify standalone libvirt versus OLVM management before mutation and reject conflicting ownership.
+**Requirement:** Identify standalone libvirt versus an explicitly supported legacy OLVM boundary before mutation and reject conflicting ownership.
 
-**Expected evidence:** Manager mode, URI or OLVM scope, stable object IDs, and identity evidence.
+**Expected evidence:** Management mode, Oracle Linux/OLVM versions, support state, URI or OLVM scope, stable object IDs, and identity evidence.
 
 ### VIRT-OLKVM-KERNEL-002
 
@@ -114,9 +119,9 @@ Verify:
 
 ### VIRT-OLKVM-ENGINE-003
 
-**Requirement:** Protect and test OLVM engine backup and recovery before managed-environment lifecycle work.
+**Requirement:** For a supported legacy OLVM estate, protect and test OLVM engine backup and recovery before managed-environment lifecycle work.
 
-**Expected evidence:** Engine backup, restore procedure, and recovery evidence.
+**Expected evidence:** Verified OLVM support boundary, engine backup, restore procedure, and recovery evidence.
 
 ### VIRT-OLKVM-STOR-004
 
@@ -126,15 +131,17 @@ Verify:
 
 ### VIRT-OLKVM-API-005
 
-**Requirement:** Use supported Oracle Linux or OLVM interfaces and verify actual state after tasks.
+**Requirement:** Use supported Oracle Linux interfaces or, only within a verified supported legacy estate, OLVM interfaces and verify actual state after tasks.
 
-**Expected evidence:** Interface version, task/event records, and post-change state.
+**Expected evidence:** Interface version, support boundary, task/event records, and post-change state.
 
 ## Product-specific cautions
 
-- Do not mix direct libvirt ownership with OLVM-managed objects unless Oracle documents the operation.
+- Do not mix direct libvirt ownership with OLVM-managed objects unless Oracle documents the operation for the exact supported estate.
 - Do not assume upstream oVirt or generic KVM procedures are supported unchanged by Oracle.
-- Protect OLVM engine backup and recovery before manager, cluster, or storage changes.
+- Do not deploy or expand OLVM as if it were the current management plane for Oracle Linux 9 or 10.
+- Protect OLVM engine backup and recovery before manager, cluster, or storage changes in a supported legacy OLVM estate.
+- Treat migration away from OLVM as a lifecycle project with source retention and recovery evidence.
 
 ## Automation implementation
 
@@ -143,11 +150,11 @@ Automation must:
 - use structured configuration and input validation
 - separate discovery, validation, plan, report, execute, and verify code paths
 - provide preview semantics when supported
-- confirm target identity again immediately before mutation
+- confirm target identity and support boundary again immediately before mutation
 - use stable IDs and expected parent scope
 - redact sensitive values
 - use structured logs and reports
-- preserve correlation with manager tasks
+- preserve correlation with host/manager tasks
 - handle stale inventory and disappearing objects
 - classify retryable, terminal, and operator-required failures
 - use bounded exponential polling rather than unbounded loops
@@ -166,7 +173,8 @@ Test:
 - missing and duplicate targets
 - wrong parent scope
 - access denied
-- disconnected or unhealthy manager/host
+- disconnected or unhealthy host/manager
+- unsupported OLVM or Oracle Linux generation
 - compatibility failure
 - capacity failure
 - active conflicting task
@@ -190,8 +198,9 @@ Capture:
 - tool and dependency versions
 - endpoint and object scope in redacted form
 - acting identity class
+- lifecycle/support boundary
 - change or approval reference
-- manager task/job/event identifiers
+- host/manager task, job, or event identifiers
 - per-object outcomes
 - retries, timeouts, cancellations, and interventions
 - before and after state
@@ -201,7 +210,7 @@ Capture:
 
 ## Recovery
 
-Recovery must be independent from the path being changed where practical. Define what happens if the manager, host, network, storage, VM, guest, automation runner, or backup system fails mid-change.
+Recovery must be independent from the path being changed where practical. Define what happens if the host, supported manager, network, storage, VM, guest, automation runner, or backup system fails mid-change.
 
 Do not remove the source, disk, snapshot, checkpoint, or recovery copy until the authorized acceptance and retention boundary is satisfied.
 
@@ -211,6 +220,6 @@ Completion requires exact evidence, owner acceptance where applicable, operation
 
 ## Current source boundary
 
-Verify Oracle Linux release, UEK or RHCK kernel boundary, KVM/QEMU/libvirt, OLVM release, hardware certification, Oracle VirtIO drivers, guest support, storage, networking, migration, API, and support entitlement.
+Oracle publishes current KVM guidance for Oracle Linux 9 and 10. Current Oracle Linux KVM documentation identifies Oracle Linux Virtualization Manager availability with Oracle Linux 8, so OLVM must be treated as a separate legacy managed boundary.
 
-Verify current behavior with [Oracle Linux KVM User's Guide](https://docs.oracle.com/en/operating-systems/oracle-linux/kvm-user/) and other official compatibility, security, lifecycle, and release documentation before execution.
+Verify exact Oracle Linux release, UEK/RHCK, KVM/QEMU/libvirt, hardware certification, VirtIO, guest, storage, networking, migration, API, entitlement, and any OLVM support boundary using [Oracle Linux KVM User's Guide](https://docs.oracle.com/en/operating-systems/oracle-linux/kvm-user/) and current official lifecycle, compatibility, security, and release documentation before execution.

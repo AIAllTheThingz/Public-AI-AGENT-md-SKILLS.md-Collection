@@ -82,19 +82,20 @@ Verify current product and client compatibility. Prefer read-only queries before
 
 ## Lifecycle and compatibility
 
-Red Hat documents RHV 4.4 in Extended Life Phase, with no additional software fixes through August 31, 2026. Treat this package as legacy-operation and migration guidance. Verify current entitlement and support before any work, and do not select RHV for a new deployment without an explicit supported exception.
+Red Hat Virtualization is in Extended Life Phase and must be treated as legacy-operation and migration scope, not as the default platform for a new deployment. Current Red Hat lifecycle policy states that Extended Life Phase provides limited support and does not include new bug fixes, security fixes, hardware enablement, or root-cause analysis.
 
-Last repository source review: 2026-07-14.
+Red Hat identifies OpenShift Virtualization as the continuity and roadmap platform. Inventory current RHV estates, verify entitlement and available support for the exact installed release, protect engine and workload recovery, and prioritize a supported migration path where continued operation carries unacceptable lifecycle risk.
 
-Authoritative starting point: [Red Hat Virtualization 4.4 documentation](https://docs.redhat.com/en/documentation/red_hat_virtualization/4.4).
+Authoritative lifecycle source: [Red Hat Virtualization Life Cycle](https://access.redhat.com/support/policy/updates/rhev).
 
-The adopting project must revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
+The repository source-review record is maintained in [`../../SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json) with durable evidence under [`../../source-reviews/`](../../source-reviews/). The adopting project must revalidate current support entitlement, compatibility, migration guidance, and security implications before product-specific work.
 
 ## Product cautions
 
 - Prioritize inventory, containment, backup, and migration planning over feature expansion.
 - Do not perform a greenfield RHV deployment based only on historical documentation.
 - Do not change self-hosted engine, storage domains, or manager state without tested engine recovery.
+- Do not interpret Extended Life Phase as normal maintenance coverage or continued security-fix delivery.
 
 ## Automation guidance
 
@@ -161,6 +162,7 @@ Plan for:
 - partial migration
 - automation interruption and safe rerun
 - licensing or support mismatch
+- unavailable security or bug fixes because the product is in Extended Life Phase
 
 ## Composition
 
@@ -185,4 +187,4 @@ This package does not know the adopting environment's topology, workload depende
 
 ## Maintenance
 
-Review this package when the product's management model, lifecycle, security guidance, compatibility, licensing, API behavior, or support policy changes.
+Review this package when Red Hat changes lifecycle, support, migration, security, or OpenShift Virtualization guidance, or when the adopting estate's entitlement or migration plan changes.

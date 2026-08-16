@@ -83,11 +83,9 @@ Verify current product and client compatibility. Prefer read-only queries before
 
 Verify XCP-ng release support, pool version compatibility, hardware support, guest tools, Xen Orchestra compatibility, backup behavior, XOSTOR requirements, and supported update path.
 
-Last repository source review: 2026-07-14.
+Authoritative starting point: [XCP-ng release documentation](https://docs.xcp-ng.org/releases/).
 
-Authoritative starting point: [XCP-ng documentation](https://docs.xcp-ng.org/).
-
-The adopting project must revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
+The accountable repository source-review date and evidence are maintained in [`../../SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json) and [`../../source-reviews/`](../../source-reviews/). Do not duplicate that date here. The adopting project must still revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
 
 ## Product cautions
 

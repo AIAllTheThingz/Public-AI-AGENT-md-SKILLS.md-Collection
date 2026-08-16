@@ -1,0 +1,163 @@
+from __future__ import annotations
+
+import json
+import unittest
+from pathlib import Path
+
+from helpers import REPO_ROOT
+
+
+class SourceReviewEvidenceTests(unittest.TestCase):
+    def test_production_registry_is_granular_and_evidence_backed(self):
+        registry = json.loads((REPO_ROOT / "SOURCE_REVIEWS.json").read_text(encoding="utf-8"))
+        records = registry["records"]
+
+        self.assertGreaterEqual(len(records), 37)
+        ids = {record["id"] for record in records}
+        self.assertEqual(len(ids), len(records))
+
+        coarse_scopes = {"languages", "platforms", "virtualization", "operating-systems", "networking"}
+        self.assertFalse(
+            any(record["scope"] in coarse_scopes for record in records),
+            "Source-review records must remain package/scoped rather than collection-wide.",
+        )
+
+        expected_language_scopes = {
+            "languages/powershell",
+            "languages/csharp",
+            "languages/dotnet",
+            "languages/javascript-typescript",
+            "languages/python",
+            "languages/java",
+            "languages/go",
+            "languages/rust",
+            "languages/bash",
+            "languages/sql",
+            "languages/terraform-opentofu",
+        }
+        actual_language_scopes = {
+            record["scope"]
+            for record in records
+            if record["scope"].startswith("languages/")
+        }
+        self.assertEqual(actual_language_scopes, expected_language_scopes)
+
+        for record in records:
+            with self.subTest(record=record["id"]):
+                evidence = record.get("reviewEvidence")
+                self.assertIsInstance(evidence, str)
+                self.assertTrue(evidence)
+                evidence_path = (REPO_ROOT / evidence).resolve()
+                evidence_path.relative_to(REPO_ROOT.resolve())
+                self.assertTrue(evidence_path.is_file(), evidence)
+
+                for source in record["authoritativeSources"]:
+                    self.assertTrue(source["url"].startswith("https://"), source)
+
+                if record["lastReviewed"] is not None:
+                    self.assertEqual(
+                        evidence,
+                        f"source-reviews/{record['lastReviewed']}.md",
+                        "Reviewed records must point to a durable record named for the review date.",
+                    )
+
+        expected_not_run = {
+            "languages-javascript-typescript",
+            "languages-python",
+            "languages-java",
+            "languages-go",
+            "languages-rust",
+            "languages-bash",
+            "languages-sql",
+            "virtualization-vsphere",
+        }
+        actual_not_run = {
+            record["id"] for record in records if record["lastReviewed"] is None
+        }
+        self.assertEqual(actual_not_run, expected_not_run)
+        for record in records:
+            if record["id"] in expected_not_run:
+                self.assertIn("NotRun", record["notes"])
+
+        reviewed = [record for record in records if record["lastReviewed"] is not None]
+        self.assertGreaterEqual(len(reviewed), 25)
+
+    def test_material_lifecycle_corrections_are_retained(self):
+        xen_root = REPO_ROOT / "virtualization" / "xenserver-citrix-hypervisor"
+        xenserver = (xen_root / "README.md").read_text(encoding="utf-8")
+        xen_ops = (xen_root / "standards" / "OPERATIONS_AND_AUTOMATION_STANDARD.md").read_text(encoding="utf-8")
+
+        rhv_root = REPO_ROOT / "virtualization" / "red-hat-virtualization"
+        rhv = (rhv_root / "README.md").read_text(encoding="utf-8")
+        rhv_agents = (rhv_root / "AGENTS.md").read_text(encoding="utf-8")
+        rhv_ops = (rhv_root / "standards" / "OPERATIONS_AND_AUTOMATION_STANDARD.md").read_text(encoding="utf-8")
+
+        oracle_root = REPO_ROOT / "virtualization" / "oracle-linux-kvm"
+        oracle_readme = (oracle_root / "README.md").read_text(encoding="utf-8")
+        oracle_agents = (oracle_root / "AGENTS.md").read_text(encoding="utf-8")
+        oracle_ops = (oracle_root / "standards" / "OPERATIONS_AND_AUTOMATION_STANDARD.md").read_text(encoding="utf-8")
+
+        evidence = (REPO_ROOT / "source-reviews" / "2026-08-15.md").read_text(encoding="utf-8")
+
+        self.assertIn("XenServer 9 is the current GA family", xenserver)
+        self.assertIn("XenServer 9 is the current GA family", xen_ops)
+        self.assertNotIn("docs.xenserver.com/en-us/xenserver/8/", xenserver)
+        self.assertNotIn("docs.xenserver.com/en-us/xenserver/8/", xen_ops)
+        self.assertIn("docs.xenserver.com/en-us/xenserver/9/", xen_ops)
+
+        for name, text in (("README", rhv), ("AGENTS", rhv_agents), ("operations", rhv_ops)):
+            with self.subTest(rhv_document=name):
+                self.assertIn("does not include new bug fixes, security fixes, hardware enablement, or root-cause analysis", text)
+                self.assertNotIn("through August 31, 2026", text)
+                self.assertIn("OpenShift Virtualization", text)
+
+        for name, text in (("README", oracle_readme), ("AGENTS", oracle_agents), ("operations", oracle_ops)):
+            with self.subTest(oracle_document=name):
+                self.assertIn("Oracle Linux 8", text)
+                self.assertIn("legacy managed boundary", text)
+                self.assertNotIn("OLVM for Oracle Linux 9/10", text)
+                self.assertNotIn("OLVM into current 9/10", text)
+
+        self.assertIn("Manual GitHub Actions `source-freshness` dispatch: **Blocked**", evidence)
+        self.assertIn("vSphere product documentation review: **NotRun/Blocked**", evidence)
+        self.assertIn("Repository source revision reviewed: `90784f344e7920d594de4837b0bfecdcdea514e2`", evidence)
+        self.assertNotIn("Repository source revision reviewed: `main`", evidence)
+        self.assertIn("JavaScript/TypeScript, Python, Java, Go, Rust, Bash, and SQL were not reviewed", evidence)
+
+    def test_reviewed_virtualization_packages_do_not_duplicate_review_dates(self):
+        paths = [
+            "virtualization/proxmox-ve/README.md",
+            "virtualization/xcp-ng/README.md",
+            "virtualization/kvm-libvirt/README.md",
+            "virtualization/nutanix-ahv/README.md",
+            "virtualization/microsoft-hyper-v/README.md",
+        ]
+        for path in paths:
+            text = (REPO_ROOT / path).read_text(encoding="utf-8")
+            with self.subTest(path=path):
+                self.assertNotIn("Last repository source review:", text)
+                self.assertIn("SOURCE_REVIEWS.json", text)
+                self.assertIn("source-reviews/", text)
+
+    def test_changelog_discloses_lifecycle_corrections(self):
+        changelog = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+
+        self.assertIn("XenServer 9 is the current GA family", changelog)
+        self.assertIn("Red Hat Virtualization guidance", changelog)
+        self.assertIn("no new bug/security fixes", changelog)
+        self.assertIn("Oracle Linux KVM guidance", changelog)
+        self.assertIn("OLVM", changelog)
+        self.assertIn("unreviewed package records remain `lastReviewed: null`", changelog)
+
+    def test_source_catalog_points_to_current_review_boundaries(self):
+        sources = (REPO_ROOT / "SOURCES.md").read_text(encoding="utf-8")
+
+        self.assertIn("XenServer 9 product documentation", sources)
+        self.assertIn("Cisco IOS XE lifecycle support statement", sources)
+        self.assertIn("Red Hat Virtualization lifecycle policy", sources)
+        self.assertIn("Nutanix support policies and FAQs", sources)
+        self.assertIn("source-reviews/", sources)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -135,6 +135,7 @@ Verify:
 - Prioritize inventory, containment, backup, and migration planning over feature expansion.
 - Do not perform a greenfield RHV deployment based only on historical documentation.
 - Do not change self-hosted engine, storage domains, or manager state without tested engine recovery.
+- Do not interpret Extended Life Phase as normal maintenance coverage or continued security-fix delivery.
 
 ## Automation implementation
 
@@ -211,6 +212,6 @@ Completion requires exact evidence, owner acceptance where applicable, operation
 
 ## Current source boundary
 
-Red Hat documents RHV 4.4 in Extended Life Phase, with no additional software fixes through August 31, 2026. Treat this package as legacy-operation and migration guidance. Verify current entitlement and support before any work, and do not select RHV for a new deployment without an explicit supported exception.
+Red Hat Virtualization is in Extended Life Phase. Current Red Hat lifecycle policy describes limited support and does not include new bug fixes, security fixes, hardware enablement, or root-cause analysis. Treat this package as legacy-operation and migration guidance, verify the exact installed release and entitlement before work, and do not select RHV for a new deployment without an explicit supported exception.
 
-Verify current behavior with [Red Hat Virtualization 4.4 documentation](https://docs.redhat.com/en/documentation/red_hat_virtualization/4.4) and other official compatibility, security, lifecycle, and release documentation before execution.
+Red Hat identifies OpenShift Virtualization as the continuity roadmap. Verify current behavior with [Red Hat Virtualization lifecycle policy](https://access.redhat.com/support/policy/updates/rhev), [Red Hat Virtualization 4.4 documentation](https://docs.redhat.com/en/documentation/red_hat_virtualization/4.4), and current official migration, compatibility, and security guidance before execution.

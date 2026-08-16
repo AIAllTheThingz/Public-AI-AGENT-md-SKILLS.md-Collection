@@ -85,11 +85,9 @@ Verify current product and client compatibility. Prefer read-only queries before
 
 Verify PVE release and repository support, Debian base compatibility, Corosync, Ceph, QEMU, LXC, kernel, firmware, guest support, backup compatibility, subscription repository, and upgrade path.
 
-Last repository source review: 2026-07-14.
-
 Authoritative starting point: [Proxmox VE administration documentation](https://pve.proxmox.com/pve-docs/pve-admin-guide.html).
 
-The adopting project must revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
+The accountable repository source-review date and evidence are maintained in [`../../SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json) and [`../../source-reviews/`](../../source-reviews/). Do not duplicate that date here. The adopting project must still revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
 
 ## Product cautions
 

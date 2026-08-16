@@ -23,11 +23,14 @@ These sources inform the repository. The repository summarizes and operationaliz
 
 ## Containers and Kubernetes
 
+- Docker Engine release notes: https://docs.docker.com/engine/release-notes/
+- Kubernetes releases: https://kubernetes.io/releases/
 - Kubernetes Security Checklist: https://kubernetes.io/docs/concepts/security/security-checklist/
 - Kubernetes Pod Security Standards: https://kubernetes.io/docs/concepts/security/pod-security-standards/
 
 ## Languages and runtimes
 
+- Microsoft PowerShell support lifecycle: https://learn.microsoft.com/en-us/powershell/scripting/install/powershell-support-lifecycle
 - Microsoft C# documentation: https://learn.microsoft.com/en-us/dotnet/csharp/
 - Microsoft C# language-version history: https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-version-history
 - Microsoft C# language-version configuration: https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version
@@ -35,6 +38,17 @@ These sources inform the repository. The repository summarizes and operationaliz
 - Microsoft asynchronous programming with C#: https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/
 - Microsoft .NET code analysis: https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview
 - Microsoft .NET releases and support: https://learn.microsoft.com/en-us/dotnet/core/releases-and-support
+- HashiCorp Terraform CLI documentation: https://developer.hashicorp.com/terraform/cli
+- HashiCorp Terraform v1.x compatibility promises: https://developer.hashicorp.com/terraform/language/v1-compatibility-promises
+- OpenTofu releases: https://opentofu.org/blog/
+
+## Cloud platforms
+
+- Azure Well-Architected Framework: https://learn.microsoft.com/en-us/azure/well-architected/
+- Azure Architecture Center: https://learn.microsoft.com/en-us/azure/architecture/
+- AWS Well-Architected Framework: https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html
+- AWS Well-Architected Tool: https://docs.aws.amazon.com/wellarchitected/latest/userguide/intro.html
+- Google Cloud Well-Architected Framework: https://docs.cloud.google.com/architecture/framework
 
 ## Virtualization
 
@@ -42,19 +56,22 @@ These sources inform the repository. The repository summarizes and operationaliz
 - Broadcom VCF PowerCLI portal: https://developer.broadcom.com/powercli
 - Broadcom Connect-VIServer command reference: https://developer.broadcom.com/powercli/latest/vmware.vimautomation.core/commands/connect-viserver
 - Broadcom Set-PowerCLIConfiguration command reference: https://developer.broadcom.com/powercli/latest/vmware.vimautomation.core/commands/set-powercliconfiguration
-- XenServer product documentation: https://docs.xenserver.com/en-us/xenserver/8/
+- XenServer 9 product documentation: https://docs.xenserver.com/en-us/xenserver/9/
 - Proxmox VE administration guide: https://pve.proxmox.com/pve-docs/pve-admin-guide.html
-- XCP-ng documentation: https://docs.xcp-ng.org/
+- XCP-ng release documentation: https://docs.xcp-ng.org/releases/
 - Linux kernel KVM documentation: https://docs.kernel.org/virt/kvm/index.html
+- Nutanix support policies and FAQs: https://www.nutanix.com/support-services/support-policies-and-faqs
 - Nutanix product documentation portal: https://portal.nutanix.com/page/documents/list?type=software
 - Microsoft Hyper-V documentation: https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/overview
-- Red Hat Virtualization 4.4 documentation and lifecycle notice: https://docs.redhat.com/en/documentation/red_hat_virtualization/4.4
+- Red Hat Virtualization lifecycle policy: https://access.redhat.com/support/policy/updates/rhev
+- Red Hat Virtualization 4.4 documentation: https://docs.redhat.com/en/documentation/red_hat_virtualization/4.4
 - Oracle Linux KVM User's Guide: https://docs.oracle.com/en/operating-systems/oracle-linux/kvm-user/
 - Oracle Linux Virtualization Manager documentation: https://docs.oracle.com/en/virtualization/oracle-linux-virtualization-manager/
 
 ## Operating systems
 
 - Microsoft Windows Server documentation: https://learn.microsoft.com/en-us/windows-server/
+- Microsoft Windows Server release information: https://learn.microsoft.com/en-us/windows/release-health/windows-server-release-info
 - Microsoft Windows Server 2016 lifecycle: https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2016
 - Microsoft Windows Server 2019 lifecycle: https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2019
 - Microsoft Windows Server 2022 lifecycle: https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2022
@@ -88,6 +105,8 @@ These sources inform the repository. The repository summarizes and operationaliz
 - HPE Networking Support Portal: https://networkingsupport.hpe.com/
 - HPE security bulletin library: https://support.hpe.com/connect/s/securitybulletinlibrary?language=en_US
 - Cisco IOS and NX-OS software support: https://www.cisco.com/c/en/us/support/ios-nx-os-software/index.html
+- Cisco IOS XE lifecycle support statement: https://www.cisco.com/c/en/us/products/collateral/ios-nx-os-software/ios-xe-26/bulletin-c25-2378701.html
+- Cisco IOS XE 26 support: https://www.cisco.com/c/en/us/support/ios-nx-os-software/ios-xe-26/series.html
 - Cisco IOS XE programmability: https://developer.cisco.com/iosxe/
 - Cisco security advisories: https://sec.cloudapps.cisco.com/security/center/publicationListing.x
 - Juniper documentation: https://www.juniper.net/documentation/
@@ -110,7 +129,7 @@ These sources inform the repository. The repository summarizes and operationaliz
 
 ## Source review metadata
 
-Time-sensitive source-review metadata is recorded in [`SOURCE_REVIEWS.json`](SOURCE_REVIEWS.json).
+Time-sensitive source-review metadata is recorded in [`SOURCE_REVIEWS.json`](SOURCE_REVIEWS.json). Durable source-review records are stored under [`source-reviews/`](source-reviews/).
 
 The registry tracks an accountable review interval and `lastReviewed` date for selected repository scopes. `lastReviewed: null` means the authoritative-source review is explicitly **NotRun**. Repository modification dates, merge dates, and source-list edits must not be substituted for an actual source-currency review.
 
@@ -129,7 +148,7 @@ The checker is intentionally offline. It distinguishes recorded review-date stat
 
 A stale or missing review date creates visible maintenance work; it does not by itself prove that repository content is incorrect. Use `--strict` only when the review-date state is intended to be a blocking gate.
 
-When completing a source review, update only records actually reviewed, keep authoritative URLs current, and record content changes separately when source facts materially changed.
+When completing a source review, update only records actually reviewed, keep authoritative URLs current, link the durable review record, and record content changes separately when source facts materially changed.
 
 ## Use of external sources
 

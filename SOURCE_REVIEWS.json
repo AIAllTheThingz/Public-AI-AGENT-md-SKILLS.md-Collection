@@ -3,119 +3,724 @@
   "defaultReviewIntervalDays": 180,
   "records": [
     {
-      "id": "languages-runtimes",
-      "scope": "languages",
+      "id": "languages-powershell",
+      "scope": "languages/powershell",
+      "maturity": "baseline",
+      "owner": "Language standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Microsoft PowerShell support lifecycle",
+          "url": "https://learn.microsoft.com/en-us/powershell/scripting/install/powershell-support-lifecycle"
+        }
+      ],
+      "notes": "PowerShell 7.6 is the current LTS family; 7.5 and 7.4 remain supported only within their published lifecycle windows."
+    },
+    {
+      "id": "languages-csharp",
+      "scope": "languages/csharp",
       "maturity": "baseline",
       "owner": "Language standards maintainers",
       "reviewIntervalDays": 180,
-      "lastReviewed": null,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
       "authoritativeSources": [
         {
           "name": "Microsoft C# documentation",
           "url": "https://learn.microsoft.com/en-us/dotnet/csharp/"
         },
         {
+          "name": "Microsoft C# language version history",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-version-history"
+        }
+      ],
+      "notes": "C# 14 remains the current released language boundary for .NET 10."
+    },
+    {
+      "id": "languages-dotnet",
+      "scope": "languages/dotnet",
+      "maturity": "baseline",
+      "owner": "Language standards maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
           "name": "Microsoft .NET releases and support",
           "url": "https://learn.microsoft.com/en-us/dotnet/core/releases-and-support"
         }
       ],
-      "notes": "Initial source-currency review is intentionally NotRun until an accountable maintainer records a review date."
+      "notes": ".NET 10 remains the current LTS boundary and is supported through November 2028."
     },
     {
-      "id": "platforms",
-      "scope": "platforms",
+      "id": "languages-javascript-typescript",
+      "scope": "languages/javascript-typescript",
       "maturity": "baseline",
-      "owner": "Platform standards maintainers",
-      "reviewIntervalDays": 180,
+      "owner": "Language standards maintainers",
+      "reviewIntervalDays": 90,
       "lastReviewed": null,
+      "reviewEvidence": "source-reviews/2026-08-15.md",
       "authoritativeSources": [
         {
-          "name": "Kubernetes Security Checklist",
-          "url": "https://kubernetes.io/docs/concepts/security/security-checklist/"
+          "name": "Node.js release schedule",
+          "url": "https://nodejs.org/en/about/previous-releases"
         },
         {
-          "name": "Kubernetes Pod Security Standards",
-          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+          "name": "TypeScript documentation",
+          "url": "https://www.typescriptlang.org/docs/"
         }
       ],
-      "notes": "Initial source-currency review is intentionally NotRun until an accountable maintainer records a review date."
+      "notes": "NotRun in the 2026-08-15 review. The package contains time-sensitive Node.js/ECMAScript/TypeScript boundaries and must remain visible to freshness monitoring."
     },
     {
-      "id": "virtualization",
-      "scope": "virtualization",
+      "id": "languages-python",
+      "scope": "languages/python",
+      "maturity": "baseline",
+      "owner": "Language standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": null,
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Python versions",
+          "url": "https://devguide.python.org/versions/"
+        }
+      ],
+      "notes": "NotRun in the 2026-08-15 review. Python runtime and support boundaries remain explicitly tracked for a later accountable review."
+    },
+    {
+      "id": "languages-java",
+      "scope": "languages/java",
+      "maturity": "baseline",
+      "owner": "Language standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": null,
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "OpenJDK JDK project",
+          "url": "https://openjdk.org/projects/jdk/"
+        },
+        {
+          "name": "Oracle Java SE support roadmap",
+          "url": "https://www.oracle.com/java/technologies/java-se-support-roadmap.html"
+        }
+      ],
+      "notes": "NotRun in the 2026-08-15 review. JDK release/support boundaries remain explicitly tracked."
+    },
+    {
+      "id": "languages-go",
+      "scope": "languages/go",
+      "maturity": "baseline",
+      "owner": "Language standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": null,
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Go release history",
+          "url": "https://go.dev/doc/devel/release"
+        }
+      ],
+      "notes": "NotRun in the 2026-08-15 review. Current Go release and compatibility claims remain tracked for a later review."
+    },
+    {
+      "id": "languages-rust",
+      "scope": "languages/rust",
+      "maturity": "baseline",
+      "owner": "Language standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": null,
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Rust release notes",
+          "url": "https://doc.rust-lang.org/stable/releases.html"
+        }
+      ],
+      "notes": "NotRun in the 2026-08-15 review. Rust compiler/toolchain release boundaries remain explicitly tracked."
+    },
+    {
+      "id": "languages-bash",
+      "scope": "languages/bash",
+      "maturity": "baseline",
+      "owner": "Language standards maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": null,
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "GNU Bash manual",
+          "url": "https://www.gnu.org/software/bash/manual/"
+        }
+      ],
+      "notes": "NotRun in the 2026-08-15 review. Bash behavior remains tracked even where the package avoids a single current-distribution claim."
+    },
+    {
+      "id": "languages-sql",
+      "scope": "languages/sql",
+      "maturity": "baseline",
+      "owner": "Language standards maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": null,
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "ISO SQL standard catalog entry",
+          "url": "https://www.iso.org/standard/76583.html"
+        }
+      ],
+      "notes": "NotRun in the 2026-08-15 review. Database-engine-specific SQL behavior must additionally follow the authoritative source for the selected engine."
+    },
+    {
+      "id": "languages-terraform-opentofu",
+      "scope": "languages/terraform-opentofu",
+      "maturity": "baseline",
+      "owner": "Language standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "HashiCorp Terraform CLI documentation",
+          "url": "https://developer.hashicorp.com/terraform/cli"
+        },
+        {
+          "name": "OpenTofu 1.12 release",
+          "url": "https://opentofu.org/blog/opentofu-1-12-0/"
+        }
+      ],
+      "notes": "Terraform documentation identifies v1.15.x as current; OpenTofu 1.12 is a current released OpenTofu line. Adopters must pin their exact supported CLI/provider boundaries."
+    },
+    {
+      "id": "platforms-containers",
+      "scope": "platforms/containers",
+      "maturity": "baseline",
+      "owner": "Platform standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Docker Engine 29 release notes",
+          "url": "https://docs.docker.com/engine/release-notes/29/"
+        }
+      ],
+      "notes": "Docker Engine 29 is an active release family with 2026 security and runtime updates. The package remains runtime-neutral and requires adopters to verify their exact engine/runtime."
+    },
+    {
+      "id": "platforms-kubernetes",
+      "scope": "platforms/kubernetes",
+      "maturity": "baseline",
+      "owner": "Platform standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Kubernetes releases",
+          "url": "https://kubernetes.io/releases/"
+        },
+        {
+          "name": "Kubernetes security checklist",
+          "url": "https://kubernetes.io/docs/concepts/security/security-checklist/"
+        }
+      ],
+      "notes": "Kubernetes 1.36 was released in April 2026; exact supported minor versions and provider distributions must be revalidated by adopters."
+    },
+    {
+      "id": "platforms-terraform",
+      "scope": "platforms/terraform",
+      "maturity": "baseline",
+      "owner": "Platform standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "HashiCorp Terraform CLI documentation",
+          "url": "https://developer.hashicorp.com/terraform/cli"
+        },
+        {
+          "name": "OpenTofu 1.12 release",
+          "url": "https://opentofu.org/blog/opentofu-1-12-0/"
+        }
+      ],
+      "notes": "Current upstream CLI lines were reviewed; provider, backend, and cloud-service compatibility remains deployment-specific."
+    },
+    {
+      "id": "platforms-azure",
+      "scope": "platforms/azure",
+      "maturity": "baseline",
+      "owner": "Platform standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Azure Well-Architected Framework",
+          "url": "https://learn.microsoft.com/en-us/azure/well-architected/"
+        },
+        {
+          "name": "Azure Architecture Center",
+          "url": "https://learn.microsoft.com/en-us/azure/architecture/"
+        }
+      ],
+      "notes": "Current Azure architecture and Well-Architected guidance was reviewed; service-specific compatibility remains intentionally dynamic."
+    },
+    {
+      "id": "platforms-aws",
+      "scope": "platforms/aws",
+      "maturity": "baseline",
+      "owner": "Platform standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "AWS Well-Architected Framework",
+          "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html"
+        },
+        {
+          "name": "AWS Well-Architected Tool",
+          "url": "https://docs.aws.amazon.com/wellarchitected/latest/userguide/intro.html"
+        }
+      ],
+      "notes": "Current six-pillar AWS Well-Architected guidance was reviewed; service-specific availability and compatibility remain deployment-specific."
+    },
+    {
+      "id": "platforms-gcp",
+      "scope": "platforms/gcp",
+      "maturity": "baseline",
+      "owner": "Platform standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Google Cloud Well-Architected Framework",
+          "url": "https://docs.cloud.google.com/architecture/framework"
+        }
+      ],
+      "notes": "Google Cloud Well-Architected guidance was current and had a 2026 review marker. Service-specific compatibility remains deployment-specific."
+    },
+    {
+      "id": "virtualization-vsphere",
+      "scope": "virtualization/vsphere-esxi",
       "maturity": "baseline",
       "owner": "Virtualization standards maintainers",
       "reviewIntervalDays": 90,
       "lastReviewed": null,
+      "reviewEvidence": "source-reviews/2026-08-15.md",
       "authoritativeSources": [
         {
           "name": "Broadcom VMware vSphere documentation",
           "url": "https://techdocs.broadcom.com/us/en/vmware-cis/vsphere.html"
-        },
+        }
+      ],
+      "notes": "NotRun for the vSphere product boundary: the current Broadcom techdocs endpoint could not be retrieved during this review. VCF PowerCLI is tracked separately."
+    },
+    {
+      "id": "virtualization-vsphere-powercli",
+      "scope": "virtualization/vsphere-esxi/standards/POWERCLI_AUTOMATION_STANDARD.md",
+      "maturity": "baseline",
+      "owner": "Virtualization standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
         {
-          "name": "Microsoft Hyper-V documentation",
-          "url": "https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/overview"
-        },
+          "name": "Broadcom VCF PowerCLI portal",
+          "url": "https://developer.broadcom.com/powercli"
+        }
+      ],
+      "notes": "VCF PowerCLI is the current continuation of VMware.PowerCLI; current Broadcom documentation advertises VCF PowerCLI 9.x and migration guidance."
+    },
+    {
+      "id": "virtualization-xenserver",
+      "scope": "virtualization/xenserver-citrix-hypervisor",
+      "maturity": "baseline",
+      "owner": "Virtualization standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "XenServer 9 documentation",
+          "url": "https://docs.xenserver.com/en-us/xenserver/9/"
+        }
+      ],
+      "notes": "XenServer 9 is the current GA family. Citrix Hypervisor and XenServer 8 references are legacy/installed-product boundaries, not current greenfield defaults."
+    },
+    {
+      "id": "virtualization-proxmox-ve",
+      "scope": "virtualization/proxmox-ve",
+      "maturity": "baseline",
+      "owner": "Virtualization standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Proxmox VE administration guide",
+          "url": "https://pve.proxmox.com/pve-docs/pve-admin-guide.html"
+        }
+      ],
+      "notes": "Proxmox VE 9.x is the current major family; Proxmox announced 9.2 in May 2026. Exact upgrade paths and Ceph compatibility remain release-specific."
+    },
+    {
+      "id": "virtualization-xcp-ng",
+      "scope": "virtualization/xcp-ng",
+      "maturity": "baseline",
+      "owner": "Virtualization standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "XCP-ng releases",
+          "url": "https://docs.xcp-ng.org/releases/"
+        }
+      ],
+      "notes": "XCP-ng 8.3 is the current LTS family with support published through November 2028."
+    },
+    {
+      "id": "virtualization-kvm-libvirt",
+      "scope": "virtualization/kvm-libvirt",
+      "maturity": "baseline",
+      "owner": "Virtualization standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
         {
           "name": "Linux kernel KVM documentation",
           "url": "https://docs.kernel.org/virt/kvm/index.html"
         }
       ],
-      "notes": "Vendor lifecycle and compatibility claims are time-sensitive; review dates are tracked separately from repository modification dates."
+      "notes": "Current upstream KVM documentation was reviewed; distribution kernel, QEMU, libvirt, and hardware support remain distribution-specific."
     },
     {
-      "id": "operating-systems",
-      "scope": "operating-systems",
+      "id": "virtualization-nutanix-ahv",
+      "scope": "virtualization/nutanix-ahv",
+      "maturity": "baseline",
+      "owner": "Virtualization standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Nutanix support policies and FAQs",
+          "url": "https://www.nutanix.com/support-services/support-policies-and-faqs"
+        },
+        {
+          "name": "Nutanix current platform updates",
+          "url": "https://www.nutanix.com/blog/multi-tenant-ai-workloads-on-a-modern-enterprise-ready-virtualization-platform"
+        }
+      ],
+      "notes": "Nutanix lifecycle policy generally includes AHV with AOS/NCI release families. Exact supported builds and interoperability still require the Nutanix Support Portal."
+    },
+    {
+      "id": "virtualization-hyper-v",
+      "scope": "virtualization/microsoft-hyper-v",
+      "maturity": "baseline",
+      "owner": "Virtualization standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Microsoft Hyper-V documentation",
+          "url": "https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/overview"
+        }
+      ],
+      "notes": "Current Hyper-V guidance covers supported Windows Server generations and Windows client/Azure Local boundaries; exact feature support remains host-version specific."
+    },
+    {
+      "id": "virtualization-rhv",
+      "scope": "virtualization/red-hat-virtualization",
+      "maturity": "baseline",
+      "owner": "Virtualization standards maintainers",
+      "reviewIntervalDays": 60,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Red Hat Virtualization lifecycle policy",
+          "url": "https://access.redhat.com/support/policy/updates/rhev"
+        }
+      ],
+      "notes": "RHV is in Extended Life Phase with limited support and no new bug/security fixes; OpenShift Virtualization is Red Hat's continuity roadmap. Treat RHV as legacy operation and migration scope."
+    },
+    {
+      "id": "virtualization-oracle-linux-kvm",
+      "scope": "virtualization/oracle-linux-kvm",
+      "maturity": "baseline",
+      "owner": "Virtualization standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Oracle Linux KVM User's Guide",
+          "url": "https://docs.oracle.com/en/operating-systems/oracle-linux/kvm-user/"
+        }
+      ],
+      "notes": "Current Oracle Linux 10 KVM guidance was reviewed. Current Oracle documentation limits OLVM availability to Oracle Linux 8, so OLVM must be treated as a separate legacy managed boundary."
+    },
+    {
+      "id": "os-windows-server",
+      "scope": "operating-systems/windows-server",
+      "maturity": "baseline",
+      "owner": "Operating-system standards maintainers",
+      "reviewIntervalDays": 60,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Windows Server release information",
+          "url": "https://learn.microsoft.com/en-us/windows/release-health/windows-server-release-info"
+        },
+        {
+          "name": "Windows Server 2016 lifecycle",
+          "url": "https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2016"
+        },
+        {
+          "name": "Windows Server 2019 lifecycle",
+          "url": "https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2019"
+        },
+        {
+          "name": "Windows Server 2022 lifecycle",
+          "url": "https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2022"
+        },
+        {
+          "name": "Windows Server 2025 lifecycle",
+          "url": "https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2025"
+        }
+      ],
+      "notes": "2016/2019 remain extended-support generations, 2022 approaches mainstream-support end in October 2026, and 2025 is the current LTSC generation."
+    },
+    {
+      "id": "os-windows-client",
+      "scope": "operating-systems/windows-client",
+      "maturity": "baseline",
+      "owner": "Operating-system standards maintainers",
+      "reviewIntervalDays": 60,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Windows 11 release information",
+          "url": "https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information"
+        },
+        {
+          "name": "Windows 10 Home and Pro lifecycle",
+          "url": "https://learn.microsoft.com/en-us/lifecycle/products/windows-10-home-and-pro"
+        }
+      ],
+      "notes": "General Windows 10 support ended October 14, 2025; Windows 10 use now requires an applicable LTSC/ESU or documented exception boundary. Windows 11 is the normal current client target."
+    },
+    {
+      "id": "os-rhel-family",
+      "scope": "operating-systems/rhel-family",
       "maturity": "baseline",
       "owner": "Operating-system standards maintainers",
       "reviewIntervalDays": 90,
-      "lastReviewed": null,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
       "authoritativeSources": [
-        {
-          "name": "Microsoft Windows Server lifecycle documentation",
-          "url": "https://learn.microsoft.com/en-us/windows-server/"
-        },
         {
           "name": "Red Hat Enterprise Linux lifecycle",
           "url": "https://access.redhat.com/support/policy/updates/errata"
-        },
+        }
+      ],
+      "notes": "RHEL 8, 9, and 10 lifecycle guidance remains current; rebuild distributions require their own release and support verification."
+    },
+    {
+      "id": "os-ubuntu",
+      "scope": "operating-systems/ubuntu",
+      "maturity": "baseline",
+      "owner": "Operating-system standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
         {
           "name": "Ubuntu release cycle",
           "url": "https://ubuntu.com/about/release-cycle"
+        }
+      ],
+      "notes": "Ubuntu 26.04 LTS is the current 2026 LTS generation; exact standard and expanded security maintenance windows must be checked by release."
+    },
+    {
+      "id": "os-debian",
+      "scope": "operating-systems/debian",
+      "maturity": "baseline",
+      "owner": "Operating-system standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Debian releases",
+          "url": "https://www.debian.org/releases/"
+        }
+      ],
+      "notes": "Debian 13 trixie is current stable and Debian 13.6 was published in July 2026."
+    },
+    {
+      "id": "os-suse-linux-enterprise",
+      "scope": "operating-systems/suse-linux-enterprise",
+      "maturity": "baseline",
+      "owner": "Operating-system standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "SUSE product support lifecycle",
+          "url": "https://www.suse.com/lifecycle/"
         },
+        {
+          "name": "SUSE Linux Enterprise Server documentation",
+          "url": "https://documentation.suse.com/sles/"
+        }
+      ],
+      "notes": "SLES 15 SP7 is a current supported service pack; exact lifecycle and LTSS boundaries remain subscription/release specific."
+    },
+    {
+      "id": "os-oracle-linux",
+      "scope": "operating-systems/oracle-linux",
+      "maturity": "baseline",
+      "owner": "Operating-system standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Oracle Linux documentation",
+          "url": "https://docs.oracle.com/en/operating-systems/oracle-linux/"
+        },
+        {
+          "name": "Oracle Open Source Lifetime Support Policy",
+          "url": "https://www.oracle.com/a/ocom/docs/elsp-lifetime-069338.pdf"
+        }
+      ],
+      "notes": "Oracle Linux 10 documentation and June 2026 lifecycle guidance were reviewed; UEK/RHCK and support tiers remain release-specific."
+    },
+    {
+      "id": "os-macos",
+      "scope": "operating-systems/macos",
+      "maturity": "baseline",
+      "owner": "Operating-system standards maintainers",
+      "reviewIntervalDays": 60,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Apple security releases",
+          "url": "https://support.apple.com/en-us/100100"
+        },
+        {
+          "name": "Apple Platform Security",
+          "url": "https://support.apple.com/guide/security/welcome/web"
+        }
+      ],
+      "notes": "Current macOS Tahoe 26 security releases and 2026 Platform Security guidance were reviewed; Apple support windows should be verified by exact OS/build."
+    },
+    {
+      "id": "os-freebsd",
+      "scope": "operating-systems/freebsd",
+      "maturity": "baseline",
+      "owner": "Operating-system standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
         {
           "name": "FreeBSD release information",
           "url": "https://www.freebsd.org/releases/"
+        },
+        {
+          "name": "FreeBSD security information",
+          "url": "https://www.freebsd.org/security/"
         }
       ],
-      "notes": "Lifecycle, support, and current-version claims require periodic authoritative review."
+      "notes": "FreeBSD 15.1 is a current production release as of June 2026; exact release security/support windows remain release-specific."
     },
     {
-      "id": "networking",
-      "scope": "networking",
+      "id": "networking-hpe-aruba",
+      "scope": "networking/hpe-aruba-networking",
       "maturity": "baseline",
       "owner": "Networking standards maintainers",
       "reviewIntervalDays": 90,
-      "lastReviewed": null,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
       "authoritativeSources": [
         {
           "name": "HPE Aruba Networking AOS-CX documentation",
           "url": "https://arubanetworking.hpe.com/techdocs/AOS-CX/help_portal/Content/home.htm"
+        }
+      ],
+      "notes": "Current AOS-CX 10.16 long-supported-release guidance and 2026 documentation were reviewed; model-specific firmware and feature support remain hardware-specific."
+    },
+    {
+      "id": "networking-cisco",
+      "scope": "networking/cisco-networking",
+      "maturity": "baseline",
+      "owner": "Networking standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Cisco IOS XE software lifecycle support statement",
+          "url": "https://www.cisco.com/c/en/us/products/collateral/ios-nx-os-software/ios-xe-26/bulletin-c25-2378701.html"
         },
         {
-          "name": "Cisco IOS and NX-OS software support",
-          "url": "https://www.cisco.com/c/en/us/support/ios-nx-os-software/index.html"
-        },
+          "name": "Cisco IOS XE 26 support",
+          "url": "https://www.cisco.com/c/en/us/support/ios-nx-os-software/ios-xe-26/series.html"
+        }
+      ],
+      "notes": "Cisco IOS XE moved to calendar-based 26.x naming in 2026; 17.x trains remain device/release-specific supported lines. Exact hardware and NX-OS/IOS XR lifecycle must still be verified per platform."
+    },
+    {
+      "id": "networking-juniper",
+      "scope": "networking/juniper-networks",
+      "maturity": "baseline",
+      "owner": "Networking standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
         {
           "name": "Juniper documentation",
           "url": "https://www.juniper.net/documentation/"
         },
         {
-          "name": "Broadcom Fabric OS technical documentation",
-          "url": "https://techdocs.broadcom.com/us/en/fibre-channel-networking/fabric-os.html"
+          "name": "Junos OS dates and milestones",
+          "url": "https://support.juniper.net/support/eol/software/junos/"
         }
       ],
-      "notes": "Firmware, lifecycle, controller, and interoperability claims require periodic authoritative review."
+      "notes": "Current Junos documentation and lifecycle milestones were reviewed; release selection remains platform and support-contract specific."
+    },
+    {
+      "id": "networking-brocade",
+      "scope": "networking/brocade-networking",
+      "maturity": "baseline",
+      "owner": "Networking standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-15",
+      "reviewEvidence": "source-reviews/2026-08-15.md",
+      "authoritativeSources": [
+        {
+          "name": "Broadcom Fabric Operating System catalog",
+          "url": "https://www.broadcom.com/products/fibre-channel-networking/software/fabric-operating-system"
+        }
+      ],
+      "notes": "Broadcom's public catalog includes Fabric OS 10.0.1 release notes and updated 2026 administration/compatibility documents. Exact switch/SANnav interoperability remains matrix-specific."
     }
   ]
 }
