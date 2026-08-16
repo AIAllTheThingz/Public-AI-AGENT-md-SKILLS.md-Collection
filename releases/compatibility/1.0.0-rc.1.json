@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.0.0",
+  "candidateVersion": "1.0.0-rc.1",
+  "sourceCheckpoint": {
+    "version": "0.10.0",
+    "tag": "v0.10.0",
+    "commit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
+  },
+  "compatibilityClassification": "compatible",
+  "stableRootPaths": [
+    "AGENTS.md",
+    "README.md",
+    "CATALOG.md",
+    "SOURCES.md",
+    "SOURCE_REVIEWS.json",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "MAINTAINERS.md",
+    ".github/CODEOWNERS",
+    ".github/pull_request_template.md",
+    "VERSION",
+    "CHANGELOG.md",
+    "RELEASE_POLICY.md",
+    "MATURITY_POLICY.md",
+    "ROADMAP.md",
+    "LICENSE",
+    "NOTICE",
+    "LICENSING.md"
+  ],
+  "stableSchemaPaths": [
+    "schemas/artifact-record.schema.json",
+    "schemas/completion-result.schema.json",
+    "schemas/exception-record.schema.json",
+    "schemas/project-manifest.schema.json",
+    "schemas/risk-classification.schema.json",
+    "schemas/test-evidence.schema.json",
+    "schemas/v1/artifact-record.schema.json",
+    "schemas/v1/completion-result.schema.json",
+    "schemas/v1/exception-record.schema.json",
+    "schemas/v1/project-manifest.schema.json",
+    "schemas/v1/risk-classification.schema.json",
+    "schemas/v1/test-evidence.schema.json"
+  ],
+  "stableTemplatePaths": [
+    "templates/root/AGENTS_TEMPLATE.md",
+    "templates/nested/AGENTS_TEMPLATE.md",
+    "templates/architecture-decision/ADR_TEMPLATE.md",
+    "templates/completion/COMPLETION_REPORT_TEMPLATE.md",
+    "templates/exception/EXCEPTION_RECORD_TEMPLATE.md",
+    "templates/risk/RISK_ASSESSMENT_TEMPLATE.md",
+    "templates/threat-model/THREAT_MODEL_TEMPLATE.md"
+  ],
+  "stableToolEntryPaths": [
+    "tools/validate-standards/validate_repository.py",
+    "tools/check-links/check_links.py",
+    "tools/check-freshness/check_freshness.py",
+    "tools/validate-skills/validate_skills.py",
+    "tools/validate-schemas/validate_schemas.py",
+    "tools/validate-templates/validate_templates.py",
+    "tools/validate-tools/validate_tools.py",
+    "tools/release/validate_release.py",
+    "tools/release/build_release.py",
+    "tools/generate-manifest/generate_manifest.py",
+    "tools/compose-agents/compose_agents.py",
+    "tools/validate-all/run_all.py"
+  ],
+  "stableToolContracts": {
+    "resultSchema": "tools/contracts/tool-result.schema.json",
+    "exitCodeMeaning": "documented existing meanings remain compatible",
+    "jsonOutput": "documented result fields remain compatible",
+    "overwriteBehavior": "writing tools retain documented safe overwrite behavior",
+    "releaseArtifacts": [
+      "Public-Access-Agents-<VERSION>.zip",
+      "Public-Access-Agents-<VERSION>.tar.gz",
+      "SHA256SUMS.txt",
+      "release-manifest.json",
+      "RELEASE_NOTES.md",
+      "MIGRATION_NOTES.md"
+    ]
+  },
+  "stableIdentifierContracts": [
+    "existing normative Markdown front-matter ids must not be reused or changed incompatibly",
+    "existing schema $id values must remain compatible within their versioned contract",
+    "existing tool result field names and meanings must remain compatible",
+    "existing C# package front-matter ids and direct skill name csharp are stable"
+  ],
+  "stablePackages": [
+    {
+      "path": "languages/csharp",
+      "maturity": "stable",
+      "requiredSurfaceSource": "languages/csharp/MANIFEST.md",
+      "directSkill": "csharp",
+      "agentRegistration": "languages/csharp/agents/openai.yaml"
+    }
+  ],
+  "baselineExclusionRule": "Every standards package not explicitly listed in stablePackages remains outside the 1.0.0 stable package promise for this release candidate, even when its paths remain repository compatibility surfaces.",
+  "baselineExcludedFamilies": [
+    "languages/* except languages/csharp",
+    "disciplines/*",
+    "frameworks/*",
+    "platforms/*",
+    "virtualization/*",
+    "operating-systems/*",
+    "networking/*",
+    "profiles/*"
+  ],
+  "migrationFrom0100": {
+    "breakingChanges": [],
+    "requiredActions": [
+      "Update the recorded repository source from v0.10.0 to the reviewed 1.0.0-rc.1 candidate when deliberately evaluating the release candidate.",
+      "Re-run repository or project validation after changing the pinned standards source.",
+      "Treat only languages/csharp as a stable package commitment; do not infer stable maturity for baseline packages."
+    ],
+    "reviewActions": [
+      "C# adopters should review the newly explicit stable compatibility commitment.",
+      "PowerShell adopters using Windows PowerShell 5.1 should review the additive legacy compatibility overlay.",
+      "Mixed-profile adopters using --include-profile-required should review the additive secondary-profile discipline expansion."
+    ],
+    "preservedContracts": [
+      "published v0.10.0 schema major-version paths",
+      "seven original stable template paths",
+      "documented stable tool entry paths",
+      "release artifact naming prefix",
+      "repository governance and exception authority after the v0.10.0 policy transition"
+    ]
+  },
+  "final100GateNotYetClaimed": [
+    "at least one 1.0.0-rc.N must be published and available for review before final 1.0.0",
+    "release artifacts and checksums for the final candidate must be independently verified",
+    "final 1.0.0 compatibility approval requires independent specialist review on the exact final release commit"
+  ]
+}
