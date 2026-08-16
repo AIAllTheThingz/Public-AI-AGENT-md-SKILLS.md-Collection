@@ -1,0 +1,103 @@
+{
+  "formatVersion": "1.0.0",
+  "releaseVersion": "0.10.0",
+  "tag": "v0.10.0",
+  "sourceCommit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c",
+  "sourceDocuments": {
+    "rootManifest": {
+      "path": "MANIFEST.md",
+      "blobSha": "f3adfd20d54e0d1d65e88fdebcbd310988d40645"
+    },
+    "schemaManifest": {
+      "path": "schemas/MANIFEST.md",
+      "blobSha": "3bbea4280c83a9d7b84dcf81f0b8efe8943af0bc"
+    },
+    "templateManifest": {
+      "path": "templates/MANIFEST.md",
+      "blobSha": "514267e2e39b2e3cdd07bd52853d37d1ac88a5ce"
+    },
+    "toolCatalog": {
+      "path": "tools/TOOL_CATALOG.md",
+      "blobSha": "bb28900528409f395589f2d91c229e12729e54ac"
+    }
+  },
+  "stablePathGroups": {
+    "root": [
+      "AGENTS.md",
+      "README.md",
+      "CATALOG.md",
+      "SOURCES.md",
+      "SOURCE_REVIEWS.json",
+      "CONTRIBUTING.md",
+      "SECURITY.md",
+      "MAINTAINERS.md",
+      ".github/CODEOWNERS",
+      ".github/pull_request_template.md",
+      "VERSION",
+      "CHANGELOG.md",
+      "RELEASE_POLICY.md",
+      "MATURITY_POLICY.md",
+      "ROADMAP.md",
+      "LICENSE",
+      "NOTICE",
+      "LICENSING.md"
+    ],
+    "schemas": [
+      "schemas/artifact-record.schema.json",
+      "schemas/completion-result.schema.json",
+      "schemas/exception-record.schema.json",
+      "schemas/project-manifest.schema.json",
+      "schemas/risk-classification.schema.json",
+      "schemas/test-evidence.schema.json"
+    ],
+    "templates": [
+      "templates/root/AGENTS_TEMPLATE.md",
+      "templates/nested/AGENTS_TEMPLATE.md",
+      "templates/architecture-decision/ADR_TEMPLATE.md",
+      "templates/completion/COMPLETION_REPORT_TEMPLATE.md",
+      "templates/exception/EXCEPTION_RECORD_TEMPLATE.md",
+      "templates/risk/RISK_ASSESSMENT_TEMPLATE.md",
+      "templates/threat-model/THREAT_MODEL_TEMPLATE.md"
+    ],
+    "tools": [
+      "tools/validate-standards/validate_repository.py",
+      "tools/check-links/check_links.py",
+      "tools/check-freshness/check_freshness.py",
+      "tools/validate-skills/validate_skills.py",
+      "tools/validate-schemas/validate_schemas.py",
+      "tools/validate-templates/validate_templates.py",
+      "tools/validate-tools/validate_tools.py",
+      "tools/release/validate_release.py",
+      "tools/release/build_release.py",
+      "tools/generate-manifest/generate_manifest.py",
+      "tools/compose-agents/compose_agents.py",
+      "tools/validate-all/run_all.py"
+    ],
+    "profiles": [
+      "profiles/WEB_API.md",
+      "profiles/WEB_APPLICATION.md",
+      "profiles/WORKER_SERVICE.md",
+      "profiles/CLI_TOOL.md",
+      "profiles/DESKTOP_APPLICATION.md",
+      "profiles/MOBILE_APPLICATION.md",
+      "profiles/SERVERLESS_FUNCTION.md",
+      "profiles/DATA_PIPELINE.md",
+      "profiles/PUBLIC_LIBRARY.md",
+      "profiles/INTERNAL_AUTOMATION.md",
+      "profiles/MULTI_TENANT_SAAS.md",
+      "profiles/SECURITY_TOOL.md",
+      "profiles/AI_AGENT_APPLICATION.md"
+    ]
+  },
+  "stableContractPaths": [
+    "tools/contracts/tool-result.schema.json"
+  ],
+  "releaseArtifactPatterns": [
+    "Public-Access-Agents-<VERSION>.zip",
+    "Public-Access-Agents-<VERSION>.tar.gz",
+    "SHA256SUMS.txt",
+    "release-manifest.json",
+    "RELEASE_NOTES.md",
+    "MIGRATION_NOTES.md"
+  ]
+}
