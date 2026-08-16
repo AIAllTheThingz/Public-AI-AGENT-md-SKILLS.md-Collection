@@ -85,11 +85,12 @@ After an accountable source review, update only the record that was actually rev
 {
   "id": "networking",
   "lastReviewed": "2026-08-15",
+  "reviewEvidence": "source-reviews/2026-08-15.md",
   "reviewIntervalDays": 90
 }
 ```
 
-Do not copy that date into unrelated records.
+Create or update `source-reviews/2026-08-15.md` with the accountable review evidence before recording that date. The `reviewEvidence` path must remain repository-contained, must exist, and for a reviewed record must exactly match `source-reviews/<lastReviewed>.md`. Do not copy that date into unrelated records.
 
 ## Network boundary
 

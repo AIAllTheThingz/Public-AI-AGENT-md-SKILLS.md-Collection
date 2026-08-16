@@ -54,6 +54,7 @@ Each record identifies:
 - accountable owner
 - review interval in days
 - last authoritative-source review date, or `null`
+- durable review evidence path under `source-reviews/`
 - one or more named authoritative HTTPS sources
 - optional notes
 
@@ -197,6 +198,8 @@ The checker rejects:
 - invalid review intervals
 - malformed review dates
 - review dates in the future
+- missing or invalid `reviewEvidence` for reviewed records
+- review-evidence paths that are absolute, escape the repository root, do not exist, or do not match `source-reviews/<lastReviewed>.md`
 - missing authoritative sources
 - non-HTTPS authoritative-source URLs
 
@@ -211,6 +214,11 @@ Stable finding codes include:
 - `SOURCE_REVIEW_SCOPE_INVALID`
 - `SOURCE_REVIEW_SCOPE_ESCAPES_ROOT`
 - `SOURCE_REVIEW_SCOPE_MISSING`
+- `SOURCE_REVIEW_EVIDENCE_MISSING`
+- `SOURCE_REVIEW_EVIDENCE_INVALID`
+- `SOURCE_REVIEW_EVIDENCE_ESCAPES_ROOT`
+- `SOURCE_REVIEW_EVIDENCE_DATE_MISMATCH`
+- `SOURCE_REVIEW_EVIDENCE_FILE_MISSING`
 - `SOURCE_REVIEW_ID_INVALID`
 - `SOURCE_REVIEW_ID_DUPLICATE`
 - `SOURCE_REVIEW_INTERVAL_INVALID`
@@ -257,14 +265,17 @@ Before changing `lastReviewed`:
 
 1. inspect the declared authoritative sources
 2. verify the repository claims affected by those sources
-3. record material changes separately if repository content must change
-4. update `lastReviewed` only after the review actually occurred
-5. keep the source list current
-6. preserve limitations when verification was incomplete
-7. run the freshness checker
-8. run the complete repository validation pipeline
+3. create or update the durable evidence record at `source-reviews/<YYYY-MM-DD>.md` for the actual review date
+4. record the reviewed repository revision, reviewed sources, findings, corrections, limitations, and any explicit `NotRun`/`Blocked` boundaries in that evidence file
+5. set the registry record's `reviewEvidence` to exactly `source-reviews/<lastReviewed>.md`
+6. record material changes separately if repository content must change
+7. update `lastReviewed` only after the review actually occurred
+8. keep the source list current
+9. preserve limitations when verification was incomplete
+10. run the freshness checker
+11. run the complete repository validation pipeline
 
-Do not backdate reviews or infer them from commit timestamps.
+A reviewed record without matching repository-contained `reviewEvidence` is invalid. Do not backdate reviews or infer them from commit timestamps.
 
 ## Adding a source-review scope
 

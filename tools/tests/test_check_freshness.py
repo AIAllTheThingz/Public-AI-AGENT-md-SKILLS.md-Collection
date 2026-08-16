@@ -343,6 +343,16 @@ class CheckFreshnessTests(unittest.TestCase):
         self.assertEqual(payload["summary"]["liveSourceVerification"], "NotRun")
         self.assertGreater(payload["summary"]["records"], 0)
 
+    def test_documentation_requires_durable_review_evidence(self):
+        readme = (REPO_ROOT / "tools" / "check-freshness" / "README.md").read_text(encoding="utf-8")
+        examples = (REPO_ROOT / "tools" / "check-freshness" / "examples" / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("reviewEvidence", readme)
+        self.assertIn("source-reviews/<YYYY-MM-DD>.md", readme)
+        self.assertIn("source-reviews/<lastReviewed>.md", readme)
+        self.assertIn('"reviewEvidence": "source-reviews/2026-08-15.md"', examples)
+        self.assertIn("source-reviews/<lastReviewed>.md", examples)
+
     def test_scheduled_workflow_uses_offline_checker_and_pinned_actions(self):
         workflow = (REPO_ROOT / ".github" / "workflows" / "source-freshness.yml").read_text(encoding="utf-8")
 
