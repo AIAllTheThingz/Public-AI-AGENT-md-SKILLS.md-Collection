@@ -91,31 +91,92 @@
       "notes": "Lifecycle, support, and current-version claims require periodic authoritative review."
     },
     {
-      "id": "networking",
-      "scope": "networking",
+      "id": "networking-hpe-aruba",
+      "scope": "networking/hpe-aruba-networking",
       "maturity": "baseline",
       "owner": "Networking standards maintainers",
       "reviewIntervalDays": 90,
-      "lastReviewed": null,
+      "lastReviewed": "2026-08-16",
       "authoritativeSources": [
         {
           "name": "HPE Aruba Networking AOS-CX documentation",
           "url": "https://arubanetworking.hpe.com/techdocs/AOS-CX/help_portal/Content/home.htm"
         },
         {
+          "name": "HPE Security Bulletin Library",
+          "url": "https://support.hpe.com/connect/s/securitybulletinlibrary?language=en_US"
+        }
+      ],
+      "notes": "Reviewed current AOS-CX release/documentation, REST automation guidance, and HPE Aruba security-bulletin paths on 2026-08-16. Exact device/version compatibility still requires target-specific verification."
+    },
+    {
+      "id": "networking-cisco",
+      "scope": "networking/cisco-networking",
+      "maturity": "baseline",
+      "owner": "Networking standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-16",
+      "authoritativeSources": [
+        {
           "name": "Cisco IOS and NX-OS software support",
           "url": "https://www.cisco.com/c/en/us/support/ios-nx-os-software/index.html"
         },
         {
-          "name": "Juniper documentation",
-          "url": "https://www.juniper.net/documentation/"
+          "name": "Cisco IOS XE programmability",
+          "url": "https://developer.cisco.com/iosxe/"
+        },
+        {
+          "name": "Cisco Security Advisories",
+          "url": "https://sec.cloudapps.cisco.com/security/center/publicationListing.x"
+        }
+      ],
+      "notes": "Reviewed current IOS XE/NX-OS support, programmability, and 2026 security-advisory publication paths on 2026-08-16. Exact platform/release applicability remains target-specific."
+    },
+    {
+      "id": "networking-juniper",
+      "scope": "networking/juniper-networks",
+      "maturity": "baseline",
+      "owner": "Networking standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-16",
+      "authoritativeSources": [
+        {
+          "name": "Junos OS documentation",
+          "url": "https://www.juniper.net/documentation/product/us/en/junos-os/"
+        },
+        {
+          "name": "Junos OS dates and milestones",
+          "url": "https://support.juniper.net/support/eol/software/junos/"
+        },
+        {
+          "name": "Junos PyEZ documentation",
+          "url": "https://www.juniper.net/documentation/product/us/en/junos-pyez/"
+        }
+      ],
+      "notes": "Reviewed current Junos documentation, release-lifecycle/milestone guidance, and Junos PyEZ/NETCONF automation documentation on 2026-08-16. Product-specific support status remains target-specific."
+    },
+    {
+      "id": "networking-brocade",
+      "scope": "networking/brocade-networking",
+      "maturity": "baseline",
+      "owner": "Networking standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": "2026-08-16",
+      "authoritativeSources": [
+        {
+          "name": "Broadcom Brocade Fabric Operating System",
+          "url": "https://www.broadcom.com/products/fibre-channel-networking/software/fabric-operating-system"
+        },
+        {
+          "name": "Broadcom Brocade SANnav Management Portal",
+          "url": "https://www.broadcom.com/products/fibre-channel-networking/software/sannav-management-portal"
         },
         {
           "name": "Broadcom Fabric OS technical documentation",
           "url": "https://techdocs.broadcom.com/us/en/fibre-channel-networking/fabric-os.html"
         }
       ],
-      "notes": "Firmware, lifecycle, controller, and interoperability claims require periodic authoritative review."
+      "notes": "Reviewed current Fabric OS 10.x documentation/release material and SANnav management/documentation paths on 2026-08-16. Exact switch, FOS, and SANnav interoperability remains target-specific."
     }
   ]
 }
