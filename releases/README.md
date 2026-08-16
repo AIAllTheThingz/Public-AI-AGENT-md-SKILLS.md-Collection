@@ -1,7 +1,7 @@
 ---
 id: RELEASE-INDEX-001
 title: Repository Releases
-version: 0.9.0
+version: 0.10.0
 status: baseline
 ---
 
@@ -20,13 +20,13 @@ Repository release requirements are defined by [`../RELEASE_POLICY.md`](../RELEA
 | Version | Repository state | Git tag | GitHub Release |
 |---|---|---|---|
 | `0.9.0` | Prepared compatibility baseline | **Not published** | **Not published** |
-| `0.10.0` | Intended next forward release for accumulated `Unreleased` work | Not created | Not created |
+| `0.10.0` | Prepared release candidate; publication pending final independent review and tag workflow | Not created | Not created |
 
 The `0.9.0` materials were prepared on 2026-07-13, but no `v0.9.0` tag and no GitHub Release were created. Current `main` must not be retroactively tagged as `v0.9.0`, because it contains substantial work accumulated after that prepared baseline.
 
 The machine-readable [`release-state.json`](release-state.json) records this publication exception. Release validation rejects a tag for a version listed under `preparedUnpublishedVersions`, and the release builder refuses to construct publication artifacts for it. This prevents the tag-triggered workflow from turning the prepared `0.9.0` documents into an accidental GitHub Release.
 
-The next intended publication is `0.10.0` and is forward-only. Before that tag is created, `VERSION`, changelog, release notes, migration guidance, release artifacts, and validation evidence must all describe `0.10.0` consistently.
+The next intended publication is `0.10.0` and is forward-only. The release-candidate source now sets `VERSION` to `0.10.0`; before the tag is created, changelog, release notes, migration guidance, release artifacts, independent review, and validation evidence must all describe the same exact candidate consistently.
 
 ## Structure
 

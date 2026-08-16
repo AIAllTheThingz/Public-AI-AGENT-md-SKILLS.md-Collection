@@ -149,6 +149,8 @@ def run(args: argparse.Namespace) -> ToolResult:
     release_state = read_release_state(root, findings)
     blocked_versions = set(release_state.get("preparedUnpublishedVersions", []))
     next_intended_version = release_state.get("nextIntendedVersion")
+    requested_tag_version = args.tag[1:] if args.tag and args.tag.startswith("v") else None
+    publication_version = requested_tag_version or (version if args.require_head_tag else None)
     changelog = root / "CHANGELOG.md"
     release_notes = root / "releases" / f"{version}.md" if version else None
     migration = root / "releases" / "migrations" / f"{version}.md" if version else None
@@ -260,12 +262,12 @@ def run(args: argparse.Namespace) -> ToolResult:
             path="VERSION",
         ))
 
-    if version and version in blocked_versions and (args.tag or args.require_head_tag):
+    if publication_version and publication_version in blocked_versions:
         findings.append(Finding(
             "RELEASE_PUBLICATION_BLOCKED",
-            f"Version {version} is explicitly recorded as prepared but unpublished and must not be tagged or published from this repository state.",
+            f"Version {publication_version} is explicitly recorded as prepared but unpublished and must not be tagged or published from this repository state.",
             path=RELEASE_STATE_PATH.as_posix(),
-            details={"version": version, "tag": args.tag or expected_tag},
+            details={"version": publication_version, "tag": args.tag or expected_tag},
         ))
 
     if (
@@ -299,7 +301,7 @@ def run(args: argparse.Namespace) -> ToolResult:
             "expectedTag": expected_tag or "",
             "releaseNotes": bool(release_notes and release_notes.is_file()),
             "migrationNotes": bool(migration and migration.is_file()),
-            "publicationBlocked": bool(version and version in blocked_versions),
+            "publicationBlocked": bool((version and version in blocked_versions) or (publication_version and publication_version in blocked_versions)),
             "findings": len(findings),
         },
         metadata={

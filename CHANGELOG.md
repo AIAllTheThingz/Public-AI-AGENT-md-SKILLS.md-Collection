@@ -14,7 +14,11 @@ Release notes distinguish:
 
 ## [Unreleased]
 
-The accumulated changes in this section are intended for the forward-only `0.10.0` release. The prepared `0.9.0` baseline was never published, and current `main` must not be retroactively tagged as `v0.9.0`.
+No changes recorded after the `0.10.0` release-candidate preparation.
+
+## [0.10.0] - 2026-08-16
+
+The `0.10.0` release is the first forward-only publication candidate after the prepared-but-unpublished `0.9.0` baseline. Current `main` must not be retroactively tagged as `v0.9.0`.
 
 ### Breaking changes
 
@@ -51,6 +55,7 @@ The accumulated changes in this section are intended for the forward-only `0.10.
 
 - Hardened permanent validation and release workflows with immutable GitHub Action commit pins, Ubuntu 24.04 hosted-runner boundaries, an explicit Python 3.13 runtime, and SHA-256 hash-locked validation dependencies.
 - Split release validation/artifact construction from GitHub Release publication so write permission is held only by the publication job; transferred built artifacts between jobs and re-verified `SHA256SUMS.txt` before publication.
+- Hardened historical prepared/unpublished release blocking so a forbidden requested tag remains explicitly blocked after the canonical repository `VERSION` advances to a later release candidate.
 - Added Dependabot maintenance for GitHub Actions and the direct Python validation dependencies.
 - Updated `validate-tools` to version `1.3.2` so it structurally parses workflow YAML, validates full Git commit pins and immutable Docker OCI digests, rejects floating hosted runner images, and verifies exact direct-dependency/hash-lock synchronization while accepting ordinary inline requirement comments.
 - Added regression coverage for dependency-lock drift, inline requirement comments, quoted YAML scalars, legal YAML key-spacing variants, immutable Docker digests, floating action refs, and floating hosted runners.
