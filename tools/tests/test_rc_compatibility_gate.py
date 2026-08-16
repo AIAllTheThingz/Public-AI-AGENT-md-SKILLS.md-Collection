@@ -3,10 +3,11 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import re
 import unittest
 from pathlib import Path
 
-from helpers import REPO_ROOT
+from helpers import REPO_ROOT, json_result, run_tool
 
 CANDIDATE = "1.0.0-rc.1"
 CHECKPOINT = "0.10.0"
@@ -119,8 +120,14 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertEqual(set(self.inventory["stableSchemaPaths"]), expected_schemas)
 
         templates_manifest = (REPO_ROOT / "templates" / "MANIFEST.md").read_text(encoding="utf-8")
-        for relative in self.inventory["stableTemplatePaths"]:
-            self.assertIn(relative.removeprefix("templates/"), templates_manifest)
+        stable_section = templates_manifest.split("## Stable compatibility paths", 1)[1].split(
+            "## Acceptance checks", 1
+        )[0]
+        manifest_stable_paths = {
+            f"templates/{match}"
+            for match in re.findall(r"^- `([^`]+)`\s*$", stable_section, flags=re.MULTILINE)
+        }
+        self.assertEqual(set(self.inventory["stableTemplatePaths"]), manifest_stable_paths)
 
     def test_tool_inventory_matches_catalog_stable_entry_points(self):
         catalog = (REPO_ROOT / "tools" / "TOOL_CATALOG.md").read_text(encoding="utf-8")
@@ -149,6 +156,20 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertIn("## Required actions", notes)
         self.assertIn("None relative to published `v0.10.0`", notes)
         self.assertIn("Final `1.0.0` has not yet been approved or published", notes)
+
+    def test_release_validator_accepts_rc_tag_contract(self):
+        completed = run_tool(
+            "tools/release/validate_release.py",
+            "--format",
+            "json",
+            "--tag",
+            f"v{CANDIDATE}",
+        )
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+        payload = json_result(completed)
+        self.assertEqual(payload["status"], "passed")
+        self.assertEqual(payload["summary"]["repositoryVersion"], CANDIDATE)
+        self.assertEqual(payload["summary"]["expectedTag"], f"v{CANDIDATE}")
 
     def test_final_100_gate_is_not_overclaimed(self):
         pending = "\n".join(self.inventory["final100GateNotYetClaimed"])
