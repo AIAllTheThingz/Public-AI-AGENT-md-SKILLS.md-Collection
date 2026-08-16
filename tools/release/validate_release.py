@@ -148,6 +148,7 @@ def run(args: argparse.Namespace) -> ToolResult:
     version = read_version(root, findings)
     release_state = read_release_state(root, findings)
     blocked_versions = set(release_state.get("preparedUnpublishedVersions", []))
+    next_intended_version = release_state.get("nextIntendedVersion")
     changelog = root / "CHANGELOG.md"
     release_notes = root / "releases" / f"{version}.md" if version else None
     migration = root / "releases" / "migrations" / f"{version}.md" if version else None
@@ -265,6 +266,19 @@ def run(args: argparse.Namespace) -> ToolResult:
             f"Version {version} is explicitly recorded as prepared but unpublished and must not be tagged or published from this repository state.",
             path=RELEASE_STATE_PATH.as_posix(),
             details={"version": version, "tag": args.tag or expected_tag},
+        ))
+
+    if (
+        version
+        and isinstance(next_intended_version, str)
+        and (args.tag or args.require_head_tag)
+        and version != next_intended_version
+    ):
+        findings.append(Finding(
+            "RELEASE_PUBLICATION_VERSION_MISMATCH",
+            f"Publication version {version} does not match nextIntendedVersion {next_intended_version}.",
+            path=RELEASE_STATE_PATH.as_posix(),
+            details={"version": version, "nextIntendedVersion": next_intended_version},
         ))
 
     if args.require_head_tag and expected_tag:

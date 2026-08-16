@@ -137,6 +137,11 @@ def build(root: Path, output_dir: Path, tag: str | None, force: bool) -> dict:
             f"Release build is blocked for version {version}: it is explicitly recorded as prepared but unpublished. "
             "Select and prepare the intended forward release version before building publication artifacts."
         )
+    next_intended_version = release_state.get("nextIntendedVersion")
+    if isinstance(next_intended_version, str) and version != next_intended_version:
+        raise ValueError(
+            f"Release build version {version} does not match nextIntendedVersion {next_intended_version}."
+        )
     if tag and tag != expected_tag:
         raise ValueError(f"Tag {tag!r} does not match VERSION; expected {expected_tag!r}.")
 

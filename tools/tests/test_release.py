@@ -143,6 +143,62 @@ class ReleaseToolTests(unittest.TestCase):
                 findings,
             )
 
+    def test_publication_attempt_must_match_next_intended_version(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            make_release_root(root, "0.11.0")
+            (root / "releases" / "release-state.json").write_text(
+                json.dumps({
+                    "preparedUnpublishedVersions": ["0.9.0"],
+                    "nextIntendedVersion": "0.10.0",
+                }) + "\n",
+                encoding="utf-8",
+            )
+            completed = run_tool(
+                "tools/release/validate_release.py",
+                "--format",
+                "json",
+                "--tag",
+                "v0.11.0",
+                root=root,
+            )
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertIn(
+                "RELEASE_PUBLICATION_VERSION_MISMATCH",
+                {item["code"] for item in json_result(completed)["findings"]},
+            )
+
+    def test_builder_requires_next_intended_version(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            make_release_root(root, "0.11.0")
+            (root / "releases" / "release-state.json").write_text(
+                json.dumps({
+                    "preparedUnpublishedVersions": ["0.9.0"],
+                    "nextIntendedVersion": "0.10.0",
+                }) + "\n",
+                encoding="utf-8",
+            )
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "tools/release/build_release.py"),
+                    "--root",
+                    str(root),
+                    "--tag",
+                    "v0.11.0",
+                    "--output-dir",
+                    "dist",
+                ],
+                cwd=REPO_ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 2, completed.stdout + completed.stderr)
+            self.assertIn("does not match nextIntendedVersion 0.10.0", completed.stderr)
+            self.assertFalse((root / "dist").exists())
+
     def test_valid_semver_prerelease_release_state_passes(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
