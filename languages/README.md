@@ -11,7 +11,7 @@ Each complete package defines how engineering work should be performed for a lan
 | Package | Primary scope | Maturity |
 |---|---|---|
 | [PowerShell 7.x](powershell/) | Administrative automation, modules, scripts, remoting, and operational tooling | Complete |
-| [C#](csharp/) | C# language semantics, scripting, nullability, async/concurrency, API design, performance, interop, generators, and unsafe code | Baseline |
+| [C#](csharp/) | C# language semantics, scripting, nullability, async/concurrency, API design, performance, interop, generators, and unsafe code | Stable |
 | [.NET](dotnet/) | .NET SDK/runtime, target frameworks, MSBuild, NuGet, ASP.NET Core, worker services, libraries, and data access | Complete |
 | [JavaScript and TypeScript](javascript-typescript/) | Node.js, browser applications, libraries, tooling, and TypeScript | Complete |
 | [Python](python/) | Packages, services, CLI tools, automation, and data processing | Baseline |

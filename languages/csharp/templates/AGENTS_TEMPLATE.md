@@ -2,7 +2,7 @@
 id: CSHARP-TEMPLATE-AGENT-001
 title: C# Project Agent Template
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Project Agent Instructions

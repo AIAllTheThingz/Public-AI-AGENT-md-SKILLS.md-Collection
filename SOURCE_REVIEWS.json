@@ -21,7 +21,7 @@
     {
       "id": "languages-csharp",
       "scope": "languages/csharp",
-      "maturity": "baseline",
+      "maturity": "stable",
       "owner": "Language standards maintainers",
       "reviewIntervalDays": 180,
       "lastReviewed": "2026-08-15",
@@ -36,7 +36,7 @@
           "url": "https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-version-history"
         }
       ],
-      "notes": "C# 14 remains the current released language boundary for .NET 10."
+      "notes": "C# 14 remains the current released language boundary for .NET 10. Stable maturity is supported by the 2026-08-16 package test and downstream-adoption review; the C# language package remains separate from the baseline .NET runtime package."
     },
     {
       "id": "languages-dotnet",

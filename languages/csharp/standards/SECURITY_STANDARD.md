@@ -2,7 +2,7 @@
 id: CSHARP-SECURITY-001
 title: C# Security Standard
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Security Standard

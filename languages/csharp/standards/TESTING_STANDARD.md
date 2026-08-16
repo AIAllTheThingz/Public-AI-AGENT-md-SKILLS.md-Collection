@@ -2,7 +2,7 @@
 id: CSHARP-TEST-001
 title: C# Testing Standard
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Testing Standard

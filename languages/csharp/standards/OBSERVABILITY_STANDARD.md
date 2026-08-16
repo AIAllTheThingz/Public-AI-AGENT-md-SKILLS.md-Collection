@@ -2,7 +2,7 @@
 id: CSHARP-OBS-001
 title: C# Observability Standard
 version: 0.1.0
-status: baseline
+status: stable
 ---
 
 # C# Observability Standard
