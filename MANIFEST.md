@@ -63,6 +63,8 @@ These progressive-disclosure routers and direct language skills select and compo
 - machine-readable release state in `releases/release-state.json`
 - versioned release notes under `releases/`
 - versioned migration notes under `releases/migrations/`
+- published-checkpoint and release-candidate compatibility inventories under `releases/compatibility/`
+- release-candidate readiness records under `releases/rc-readiness/`
 - maturity review records and template under `maturity-reviews/`
 - downstream adoption pilot records under `adoption-pilots/`
 - repeatable package-level adoption-test definitions and fixtures under `adoption-tests/`
@@ -73,7 +75,9 @@ These progressive-disclosure routers and direct language skills select and compo
 - machine-readable release manifest
 - explicit `1.0.0` compatibility gate
 
-Current repository version: `0.10.0` **published as `v0.10.0` on 2026-08-16**.
+Current repository version: `1.0.0-rc.1` **prepared and permanently validated; not yet published**.
+
+The published migration checkpoint remains `0.10.0`, published as `v0.10.0` on 2026-08-16 from commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`. The validated RC functional candidate is `89a0470a3be4902f0c70eb31d396655dde4c8d7c`, recorded in `releases/rc-readiness/1.0.0-rc.1.md`.
 
 The `0.9.0` baseline remains **prepared, unpublished** and must not be reconstructed or retroactively tagged.
 
@@ -272,6 +276,7 @@ Each complete example includes root and nested agent instructions, a project man
 - reusable template package validation
 - tool package and executable-entry validation
 - repository release validation
+- published-checkpoint-to-RC compatibility regression with deliberate-removal failure coverage
 - deterministic release artifact generation
 - deterministic project-manifest generation
 - traceable agent-standards composition
