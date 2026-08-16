@@ -19,6 +19,10 @@
     "toolCatalog": {
       "path": "tools/TOOL_CATALOG.md",
       "blobSha": "bb28900528409f395589f2d91c229e12729e54ac"
+    },
+    "profileIndex": {
+      "path": "profiles/README.md",
+      "blobSha": "91f37c5e2bbc49bd59b557463a388e1b14201d86"
     }
   },
   "stablePathGroups": {
@@ -75,18 +79,31 @@
     ],
     "profiles": [
       "profiles/WEB_API.md",
+      "profiles/web-api",
       "profiles/WEB_APPLICATION.md",
+      "profiles/web-application",
       "profiles/WORKER_SERVICE.md",
+      "profiles/worker-service",
       "profiles/CLI_TOOL.md",
+      "profiles/cli-tool",
       "profiles/DESKTOP_APPLICATION.md",
+      "profiles/desktop-application",
       "profiles/MOBILE_APPLICATION.md",
+      "profiles/mobile-application",
       "profiles/SERVERLESS_FUNCTION.md",
+      "profiles/serverless-function",
       "profiles/DATA_PIPELINE.md",
+      "profiles/data-pipeline",
       "profiles/PUBLIC_LIBRARY.md",
+      "profiles/public-library",
       "profiles/INTERNAL_AUTOMATION.md",
+      "profiles/internal-automation",
       "profiles/MULTI_TENANT_SAAS.md",
+      "profiles/multi-tenant-saas",
       "profiles/SECURITY_TOOL.md",
-      "profiles/AI_AGENT_APPLICATION.md"
+      "profiles/security-tool",
+      "profiles/AI_AGENT_APPLICATION.md",
+      "profiles/ai-agent-application"
     ]
   },
   "stableIdentifiers": {
