@@ -199,9 +199,11 @@ A repository release does not automatically promote every package to `stable`.
 
 ## Repository toolchain
 
-The executable toolchain validates repository structure, links, skill entry points and package routing, schemas, templates, tool packages, and the release program; generates project manifests; composes traceable standards bundles; builds deterministic release artifacts; and provides a unified validation runner.
+The executable toolchain validates repository structure, links, source-review freshness metadata, skill entry points and package routing, schemas, templates, tool packages, and the release program; generates project manifests; composes traceable standards bundles; builds deterministic release artifacts; and provides a unified validation runner.
 
 - [Toolchain index](tools/README.md)
+- [Source-review freshness registry](SOURCE_REVIEWS.json)
+- [Freshness validator](tools/check-freshness/)
 - [Tool catalog](tools/TOOL_CATALOG.md)
 - [Command and result contract](tools/TOOL_CONTRACT.md)
 - [Development guide](tools/DEVELOPMENT_GUIDE.md)

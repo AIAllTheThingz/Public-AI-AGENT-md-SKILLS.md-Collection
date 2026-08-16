@@ -112,13 +112,13 @@
 
 ## Next maturity work
 
-- Obtain independent specialist review for the release program
-- Publish and independently verify the `v0.9.0` GitHub Release
+- Complete accountable authoritative-source reviews and record real freshness evidence
+- Finalize, independently review, publish, and verify the forward-only `v0.10.0` GitHub Release
 - Add automated package-level adoption tests
 - Run representative external or independent adoption pilots
 - Complete package maturity reviews that promote qualified baseline packages to stable
 - Add additional active maintainers and independent specialist reviewers
-- Configure and verify branch rules against the maintainer policy
+- Configure and verify lightweight GitHub-host branch/tag rules and private vulnerability reporting against the maintainer policy
 - Add current provider-service compatibility matrices and migration guidance
 - Add executable validation templates for containers, Kubernetes, infrastructure as code, and cloud platforms
 - Add additional composition examples for data pipelines, internal automation, public libraries, security tools, and AI agent applications

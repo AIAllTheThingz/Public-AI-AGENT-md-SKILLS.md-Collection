@@ -6,6 +6,7 @@
 - `README.md`
 - `CATALOG.md`
 - `SOURCES.md`
+- `SOURCE_REVIEWS.json`
 - `CONTRIBUTING.md`
 - `SECURITY.md`
 - `MAINTAINERS.md`
@@ -248,6 +249,7 @@ Each complete example includes root and nested agent instructions, a project man
 
 - repository structure validation
 - relative Markdown link and anchor validation
+- offline authoritative-source review freshness validation
 - skill metadata, package-routing, registration, and local-link validation
 - Draft 2020-12 schema and instance validation
 - reusable template package validation
@@ -266,7 +268,7 @@ The stable validator entry paths remain present. Shared executable tools support
 ## Validation
 
 ```bash
-python -m pip install -r tools/validate-schemas/requirements.txt
+python -m pip install --require-hashes -r tools/validate-schemas/requirements.lock
 python tools/validate-all/run_all.py --include-tests
 python tools/release/validate_release.py
 ```
