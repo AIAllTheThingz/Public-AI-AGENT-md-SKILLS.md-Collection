@@ -192,7 +192,7 @@ The virtualization collection also includes selection, shared-responsibility, ch
 - `operating-systems/macos`
 - `operating-systems/freebsd`
 
-Each complete operating-system directory is independently adoptable and includes mandatory agent instructions, supporting standards, templates, examples, and a package manifest.
+Each complete operating-system package includes scoped agent instructions, an operations-and-automation standard, adoption and review templates, an evidence template, a fictitious adoption example, and a manifest.
 
 The operating-system collection also includes selection, shared-responsibility, change-lifecycle, current-release, and upgrade/migration guidance.
 
@@ -203,7 +203,7 @@ The operating-system collection also includes selection, shared-responsibility, 
 - `networking/juniper-networks`
 - `networking/brocade-networking`
 
-Each complete networking directory is independently adoptable and includes mandatory agent instructions, supporting standards, templates, examples, and a package manifest.
+Each complete networking package includes scoped agent instructions, an operations-and-automation standard, adoption and review templates, an evidence template, a fictitious adoption example, and a manifest.
 
 The networking collection also includes vendor/ownership selection, shared-responsibility, change-lifecycle, topology, firmware, recovery, and migration/refresh guidance.
 
