@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -9,13 +11,44 @@ from helpers import REPO_ROOT
 CANDIDATE = "1.0.0-rc.1"
 CHECKPOINT = "0.10.0"
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
+CHECKPOINT_INVENTORY_SHA256 = "38605392a558e02178cab08aea51c9df14c634b1866cb687f646ce476e69b622"
 INVENTORY_PATH = REPO_ROOT / "releases" / "compatibility" / f"{CANDIDATE}.json"
+CHECKPOINT_PATH = REPO_ROOT / "releases" / "compatibility" / f"{CHECKPOINT}-checkpoint.json"
+
+CHECKPOINT_GROUP_TO_CANDIDATE_KEY = {
+    "root": "stableRootPaths",
+    "schemas": "stableSchemaPaths",
+    "templates": "stableTemplatePaths",
+    "tools": "stableToolEntryPaths",
+    "profiles": "stableProfileEntryPaths",
+}
+
+
+def checkpoint_compatibility_findings(checkpoint: dict, candidate: dict) -> list[str]:
+    findings: list[str] = []
+    for checkpoint_group, candidate_key in CHECKPOINT_GROUP_TO_CANDIDATE_KEY.items():
+        published = set(checkpoint["stablePathGroups"][checkpoint_group])
+        proposed = set(candidate[candidate_key])
+        for missing in sorted(published - proposed):
+            findings.append(f"MISSING_STABLE_PATH:{checkpoint_group}:{missing}")
+
+    result_schema = candidate["stableToolContracts"]["resultSchema"]
+    for required_contract in checkpoint["stableContractPaths"]:
+        if required_contract != result_schema:
+            findings.append(f"MISSING_STABLE_CONTRACT:{required_contract}")
+
+    proposed_artifacts = set(candidate["stableToolContracts"]["releaseArtifacts"])
+    for missing in sorted(set(checkpoint["releaseArtifactPatterns"]) - proposed_artifacts):
+        findings.append(f"MISSING_RELEASE_ARTIFACT_CONTRACT:{missing}")
+    return findings
 
 
 class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.inventory = json.loads(INVENTORY_PATH.read_text(encoding="utf-8"))
+        cls.checkpoint_bytes = CHECKPOINT_PATH.read_bytes()
+        cls.checkpoint = json.loads(cls.checkpoint_bytes.decode("utf-8"))
 
     def test_candidate_and_release_state_are_forward_only(self):
         self.assertEqual((REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip(), CANDIDATE)
@@ -33,12 +66,32 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertEqual(self.inventory["candidateVersion"], CANDIDATE)
         self.assertEqual(self.inventory["compatibilityClassification"], "compatible")
 
+        pinned = self.inventory["publishedCheckpointInventory"]
+        self.assertEqual(pinned["path"], "releases/compatibility/0.10.0-checkpoint.json")
+        self.assertEqual(pinned["sha256"], CHECKPOINT_INVENTORY_SHA256)
+        self.assertEqual(hashlib.sha256(self.checkpoint_bytes).hexdigest(), CHECKPOINT_INVENTORY_SHA256)
+        self.assertEqual(self.checkpoint["sourceCommit"], CHECKPOINT_COMMIT)
+        self.assertEqual(self.checkpoint["tag"], "v0.10.0")
+
+    def test_candidate_preserves_every_published_checkpoint_contract(self):
+        self.assertEqual(checkpoint_compatibility_findings(self.checkpoint, self.inventory), [])
+
+    def test_checkpoint_comparison_detects_removed_published_stable_path(self):
+        candidate = copy.deepcopy(self.inventory)
+        removed = self.checkpoint["stablePathGroups"]["root"][0]
+        candidate["stableRootPaths"].remove(removed)
+        self.assertIn(
+            f"MISSING_STABLE_PATH:root:{removed}",
+            checkpoint_compatibility_findings(self.checkpoint, candidate),
+        )
+
     def test_all_enumerated_stable_paths_exist(self):
         path_groups = (
             "stableRootPaths",
             "stableSchemaPaths",
             "stableTemplatePaths",
             "stableToolEntryPaths",
+            "stableProfileEntryPaths",
         )
         for group in path_groups:
             entries = self.inventory[group]
@@ -90,7 +143,7 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         migration = self.inventory["migrationFrom0100"]
         self.assertEqual(migration["breakingChanges"], [])
         self.assertGreaterEqual(len(migration["requiredActions"]), 3)
-        self.assertGreaterEqual(len(migration["preservedContracts"]), 5)
+        self.assertGreaterEqual(len(migration["preservedContracts"]), 6)
         notes = (REPO_ROOT / "releases" / "migrations" / f"{CANDIDATE}.md").read_text(encoding="utf-8")
         self.assertIn("# Migration to 1.0.0-rc.1 from 0.10.0", notes)
         self.assertIn("## Required actions", notes)
