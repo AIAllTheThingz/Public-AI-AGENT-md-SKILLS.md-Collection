@@ -77,7 +77,7 @@ These progressive-disclosure routers and direct language skills select and compo
 
 Current repository version: `1.0.0-rc.1` **prepared and permanently validated; not yet published**.
 
-The published migration checkpoint remains `0.10.0`, published as `v0.10.0` on 2026-08-16 from commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`. The validated RC functional candidate is `d0708d974e4e08bd7acad6f93661034e71d2d4ee`, recorded in `releases/rc-readiness/1.0.0-rc.1.md`.
+The published migration checkpoint remains `0.10.0`, published as `v0.10.0` on 2026-08-16 from commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`. The exact validated RC functional candidate and permanent CI run are recorded in `releases/rc-readiness/1.0.0-rc.1.md`; this manifest intentionally does not duplicate that moving evidence pointer.
 
 The `0.9.0` baseline remains **prepared, unpublished** and must not be reconstructed or retroactively tagged.
 
@@ -192,7 +192,7 @@ The virtualization collection also includes selection, shared-responsibility, ch
 - `operating-systems/macos`
 - `operating-systems/freebsd`
 
-Each complete operating-system package includes scoped agent instructions, an operations-and-automation standard, adoption and review templates, an evidence template, a fictitious adoption example, and a manifest.
+Each complete operating-system directory is independently adoptable and includes mandatory agent instructions, supporting standards, templates, examples, and a package manifest.
 
 The operating-system collection also includes selection, shared-responsibility, change-lifecycle, current-release, and upgrade/migration guidance.
 
@@ -203,7 +203,7 @@ The operating-system collection also includes selection, shared-responsibility, 
 - `networking/juniper-networks`
 - `networking/brocade-networking`
 
-Each complete networking package includes scoped agent instructions, an operations-and-automation standard, adoption and review templates, an evidence template, a fictitious adoption example, and a manifest.
+Each complete networking directory is independently adoptable and includes mandatory agent instructions, supporting standards, templates, examples, and a package manifest.
 
 The networking collection also includes vendor/ownership selection, shared-responsibility, change-lifecycle, topology, firmware, recovery, and migration/refresh guidance.
 
@@ -276,7 +276,7 @@ Each complete example includes root and nested agent instructions, a project man
 - reusable template package validation
 - tool package and executable-entry validation
 - repository release validation
-- published-checkpoint-to-RC compatibility regression with deliberate path-removal and identifier-mutation/removal failure coverage
+- published-checkpoint-to-RC compatibility regression with deliberate path-removal, identifier, and normative-rule mutation/removal/reuse failure coverage
 - deterministic release artifact generation
 - deterministic project-manifest generation
 - traceable agent-standards composition
