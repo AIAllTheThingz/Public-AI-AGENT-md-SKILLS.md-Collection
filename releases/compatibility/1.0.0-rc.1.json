@@ -8,7 +8,7 @@
   },
   "publishedCheckpointInventory": {
     "path": "releases/compatibility/0.10.0-checkpoint.json",
-    "sha256": "38605392a558e02178cab08aea51c9df14c634b1866cb687f646ce476e69b622"
+    "sha256": "6f5fc00dc21772b3df05d797f86b2650c8c0bf4fca2125e7fe21f88031d78103"
   },
   "publishedToolBehaviorContract": {
     "path": "releases/compatibility/0.10.0-tool-behavior.json",
@@ -101,12 +101,40 @@
       "MIGRATION_NOTES.md"
     ]
   },
-  "stableIdentifierContracts": [
-    "existing normative Markdown front-matter ids must not be reused or changed incompatibly",
-    "existing schema $id values must remain compatible within their versioned contract",
-    "existing tool result field names and meanings must remain compatible",
-    "existing C# package front-matter ids and direct skill name csharp are stable"
-  ],
+  "stableIdentifierContracts": {
+    "publishedCheckpoint": {
+      "source": "releases/compatibility/0.10.0-checkpoint.json#stableIdentifiers",
+      "scope": [
+        "governance policy front-matter ids",
+        "canonical profile front-matter ids",
+        "stable schema and tool-result $id values"
+      ]
+    },
+    "rcStableAdditions": {
+      "csharpDirectSkillName": "csharp",
+      "csharpFrontMatterIds": {
+        "languages/csharp/AGENTS.md": "CSHARP-AGENT-001",
+        "languages/csharp/README.md": "CSHARP-README-001",
+        "languages/csharp/MANIFEST.md": "CSHARP-MANIFEST-001",
+        "languages/csharp/standards/API_DESIGN_AND_COMPATIBILITY_STANDARD.md": "CSHARP-API-001",
+        "languages/csharp/standards/ASYNC_AND_CONCURRENCY_STANDARD.md": "CSHARP-ASYNC-001",
+        "languages/csharp/standards/BUILD_AND_DEPENDENCY_STANDARD.md": "CSHARP-BUILD-001",
+        "languages/csharp/standards/COMPLETION_EVIDENCE.md": "CSHARP-EVIDENCE-001",
+        "languages/csharp/standards/CSHARP_CODING_STANDARD.md": "CSHARP-CODE-001",
+        "languages/csharp/standards/DOCUMENTATION_STANDARD.md": "CSHARP-DOC-001",
+        "languages/csharp/standards/INTEROP_REFLECTION_AND_GENERATION_STANDARD.md": "CSHARP-INTEROP-001",
+        "languages/csharp/standards/OBSERVABILITY_STANDARD.md": "CSHARP-OBS-001",
+        "languages/csharp/standards/RESOURCE_AND_PERFORMANCE_STANDARD.md": "CSHARP-RESOURCE-001",
+        "languages/csharp/standards/SCRIPTING_AND_TOOLING_STANDARD.md": "CSHARP-SCRIPT-001",
+        "languages/csharp/standards/SECURITY_STANDARD.md": "CSHARP-SECURITY-001",
+        "languages/csharp/standards/TESTING_STANDARD.md": "CSHARP-TEST-001",
+        "languages/csharp/standards/TYPE_SYSTEM_AND_NULLABILITY_STANDARD.md": "CSHARP-TYPE-001",
+        "languages/csharp/templates/AGENTS_TEMPLATE.md": "CSHARP-TEMPLATE-AGENT-001",
+        "languages/csharp/templates/ADOPTION_CHECKLIST.md": "CSHARP-TEMPLATE-ADOPT-001",
+        "languages/csharp/examples/ADOPTION_EXAMPLE.md": "CSHARP-EXAMPLE-001"
+      }
+    }
+  },
   "stablePackages": [
     {
       "path": "languages/csharp",
@@ -143,6 +171,7 @@
       "published v0.10.0 root stable entry paths",
       "published v0.10.0 stable rolling schema filenames",
       "seven original stable template paths",
+      "published v0.10.0 governance/profile/schema identifier checkpoint plus C# identifiers promoted stable in this RC",
       "published v0.10.0 CLI/result/exit-code and safe-overwrite tool behavior",
       "canonical uppercase project-profile compatibility entry points",
       "release artifact naming and checksum contract",
