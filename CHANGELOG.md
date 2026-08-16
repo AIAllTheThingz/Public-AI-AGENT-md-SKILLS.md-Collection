@@ -14,15 +14,55 @@ Release notes distinguish:
 
 ## [Unreleased]
 
-Post-release maintenance after `0.10.0` publication:
+- None.
+
+## [1.0.0-rc.1] - 2026-08-16
+
+Release candidate for the first stable repository compatibility contract. The candidate is compatible with published `v0.10.0` and does not claim final `1.0.0` readiness.
+
+### Breaking changes
+
+- None relative to published `v0.10.0`.
+
+### Normative changes
+
+- Promoted the C# language package from `baseline` to `stable` using evidence-backed maturity review, complete package-surface binding, two representative downstream adoptions, current source review, compatibility inventory, and independent specialist approval.
+- Defined the intended `1.0.0` stable compatibility surface for root paths, identifiers, schemas, original stable templates, executable tool entry points/output contracts, release artifacts, and the C# stable package boundary.
+- Explicitly kept every package not enumerated as stable outside the stable package promise while preserving ordinary compatibility and migration obligations for documented repository contracts.
+- Added the Windows PowerShell 5.1 legacy compatibility overlay while preserving PowerShell 7 as the default for new work.
+- Corrected secondary-profile discipline expansion for `generate-manifest --include-profile-required` without removing existing primary-profile selections.
+
+### Editorial changes
 
 - Recorded durable `0.10.0` publication verification and reconciled repository documentation with the published Git tag and GitHub Release.
-- Advanced the forward-only next intended publication to `1.0.0-rc.1` for the evidence-backed compatibility-gate program.
-- Added an explicit legacy Windows PowerShell 5.1 adoption overlay from downstream pilot evidence while preserving PowerShell 7 as the default for new work; `pwsh` validation is not accepted as proof of Windows PowerShell 5.1 runtime compatibility.
-- Corrected `generate-manifest --include-profile-required` so selected secondary profiles contribute their discipline links as well as the primary profile; the change is additive and preserves the published `0.10.0` primary-profile expansion behavior.
-- Added shared package-level adoption tests for the initial C#, PowerShell, and Terraform/OpenTofu maturity candidates, covering positive composition, accountable source evidence, incomplete adoption, invalid selection, and overwrite failure behavior.
-- Completed three representative real downstream `v0.10.0` adoption pilots across application/service, internal automation, and mixed-system repositories; recorded exact command outcomes and limitations, fixed the Windows PowerShell 5.1 and secondary-profile adoption defects found by the pilots, and added durable downstream evidence under `adoption-pilots/`.
-- Completed the first evidence-backed maturity review cohort: proposed C# `baseline` → `stable` based on package tests, two real downstream adoptions, current source review, compatibility inventory, and independent specialist merge gating; deferred PowerShell and Terraform/OpenTofu without changing their `baseline` maturity because their evidence sets remain incomplete.
+- Added representative downstream-adoption evidence and durable maturity-review records.
+- Added the machine-readable `1.0.0-rc.1` compatibility inventory and versioned migration guidance.
+
+### Tooling changes
+
+- Added package-level adoption tests for C#, PowerShell, and Terraform/OpenTofu and a complete-surface C# adoption regression.
+- Added permanent RC compatibility-gate regression coverage for version/release-state invariants, stable path/schema/template/tool inventory, package maturity boundaries, migration from `v0.10.0`, and fail-visible final-`1.0.0` prerequisites.
+- Preserved the existing prerelease-aware release validator and deterministic release builder rather than introducing a parallel RC mechanism.
+
+### Security
+
+- Added path-traversal and symlink-containment protection to the C# full-package adoption evidence path.
+- Preserved existing schema, template, tool, governance, security, release, and package-validation controls as part of permanent CI.
+
+### Deprecations
+
+- None.
+
+### Migration notes
+
+- See [`releases/migrations/1.0.0-rc.1.md`](releases/migrations/1.0.0-rc.1.md).
+- Existing `v0.10.0` consumers are not required to adopt this prerelease. Evaluators should pin the exact RC source, rerun project validation, and treat only `languages/csharp` as a stable package commitment.
+
+### Known limitations
+
+- A prepared source candidate is not proof that `v1.0.0-rc.1` has been published and available for review.
+- Final `1.0.0` remains blocked on a published RC, independently verified release artifacts/checksums, exact-final-commit independent compatibility approval, and absence of high/critical release blockers.
+- GitHub-host controls previously recorded as Blocked/manual remain limitations unless separately verified as configured.
 
 ## [0.10.0] - 2026-08-16
 
@@ -65,7 +105,7 @@ The `0.10.0` release is the first forward-only publication candidate after the p
 - Split release validation/artifact construction from GitHub Release publication so write permission is held only by the publication job; transferred built artifacts between jobs and re-verified `SHA256SUMS.txt` before publication.
 - Hardened historical prepared/unpublished release blocking so a forbidden requested tag remains explicitly blocked after the canonical repository `VERSION` advances to a later release candidate.
 - Added Dependabot maintenance for GitHub Actions and the direct Python validation dependencies.
-- Updated `validate-tools` to version `1.3.2` so it structurally parses workflow YAML, validates full Git commit pins and immutable Docker OCI digests, rejects floating hosted runner images, and verifies exact direct-dependency/hash-lock synchronization while accepting ordinary inline requirement comments.
+- Updated `validate-tools` to version `1.3.2` so it structurally parses workflow YAML, validates full Git commit pins and immutable Docker OCI digests, rejects floating hosted runner images, and verifies exact direct-dependency/lock synchronization while accepting ordinary inline requirement comments.
 - Added regression coverage for dependency-lock drift, inline requirement comments, quoted YAML scalars, legal YAML key-spacing variants, immutable Docker digests, floating action refs, and floating hosted runners.
 - Extended skill-validation regression expectations for the registered C# direct skill and the eleventh language-package route.
 - Updated `generate-manifest` and `compose-agents` to version `1.1.0` so they validate, emit, compose, and report selected virtualization, operating-system, and networking packages; added backward-compatibility, positive, and negative tests.
@@ -168,4 +208,6 @@ The `0.10.0` release is the first forward-only publication candidate after the p
 - See [`releases/migrations/0.9.0.md`](releases/migrations/0.9.0.md).
 
 [Unreleased]: https://github.com/AIAllTheThingz/Public-AI-Governance/commits/main
+[1.0.0-rc.1]: releases/1.0.0-rc.1.md
+[0.10.0]: releases/0.10.0.md
 [0.9.0]: releases/0.9.0.md
