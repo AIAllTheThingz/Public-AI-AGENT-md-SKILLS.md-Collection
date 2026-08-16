@@ -12,7 +12,11 @@
   },
   "publishedToolBehaviorContract": {
     "path": "releases/compatibility/0.10.0-tool-behavior.json",
-    "sha256": "2f731aa6f8c02fed0308fbcefc6937ea31fa02e5e42f5899582f56cd7b3c637a"
+    "sha256": "120f9869f67bb9dc900e05cd41c8bbee08bf96bd516f0a6ce527d1a43bc809a3"
+  },
+  "publishedFindingCodeContract": {
+    "path": "releases/compatibility/0.10.0-finding-codes.json",
+    "sha256": "8c3fb59522f2230d32e8a3675c9f9bbf5113c671b29e3a90bc6193b3b4244e4d"
   },
   "publishedRuleContractCheckpoint": {
     "path": "releases/compatibility/0.10.0-rule-contracts.json",
@@ -103,7 +107,8 @@
       "release-manifest.json",
       "RELEASE_NOTES.md",
       "MIGRATION_NOTES.md"
-    ]
+    ],
+    "findingCodes": "published finding-code values and meanings remain compatible"
   },
   "stableIdentifierContracts": {
     "publishedCheckpoint": {
