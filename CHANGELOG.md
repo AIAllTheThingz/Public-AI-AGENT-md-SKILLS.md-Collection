@@ -18,6 +18,7 @@ Post-release maintenance after `0.10.0` publication:
 
 - Recorded durable `0.10.0` publication verification and reconciled repository documentation with the published Git tag and GitHub Release.
 - Advanced the forward-only next intended publication to `1.0.0-rc.1` for the evidence-backed compatibility-gate program.
+- Added shared package-level adoption tests for the initial C#, PowerShell, and Terraform/OpenTofu maturity candidates, covering positive composition, accountable source evidence, incomplete adoption, invalid selection, and overwrite failure behavior.
 
 ## [0.10.0] - 2026-08-16
 

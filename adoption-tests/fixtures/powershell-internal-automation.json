@@ -1,0 +1,9 @@
+{
+  "candidate": "powershell-internal-automation",
+  "runtimeBoundary": "PowerShell 7.6 LTS",
+  "targetScope": "fictitious managed endpoints selected by stable identifiers",
+  "validationCommands": [
+    "pwsh -NoProfile -Command '$PSVersionTable.PSVersion'",
+    "Invoke-Pester"
+  ]
+}

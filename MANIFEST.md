@@ -64,6 +64,7 @@ These progressive-disclosure routers and direct language skills select and compo
 - versioned release notes under `releases/`
 - versioned migration notes under `releases/migrations/`
 - maturity review records and template under `maturity-reviews/`
+- repeatable package-level adoption-test definitions and fixtures under `adoption-tests/`
 - release validation and deterministic artifact generation under `tools/release/`
 - tag-driven GitHub Release publication in `.github/workflows/release.yml`
 - ZIP and TAR.GZ source archives
