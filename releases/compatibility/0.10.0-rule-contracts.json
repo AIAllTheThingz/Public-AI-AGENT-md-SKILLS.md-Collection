@@ -1,89 +1,38 @@
 {
-  "formatVersion": "1.0.0",
+  "formatVersion": "1.1.0",
   "releaseVersion": "0.10.0",
   "tag": "v0.10.0",
   "sourceCommit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c",
-  "governancePolicyRules": [
-    {
-      "path": "governance/ORGANIZATION_CONTRACT.md",
-      "blobSha": "a43a9f66ff83aa7c2945b61419a48c609e29ff8e",
-      "rulePrefix": "GOV-CONTRACT",
-      "first": 1,
-      "last": 8
-    },
-    {
-      "path": "governance/AGENT_WORKING_METHOD.md",
-      "blobSha": "cf223edc9cc8c1305bdd18a0a79a3488bda6f258",
-      "rulePrefix": "GOV-WORK",
-      "first": 1,
-      "last": 10
-    },
-    {
-      "path": "governance/RISK_CLASSIFICATION.md",
-      "blobSha": "114c3ef305d19c68208b8586b291b2f8a3b8e060",
-      "rulePrefix": "GOV-RISK",
-      "first": 1,
-      "last": 8
-    },
-    {
-      "path": "governance/COMPLETION_EVIDENCE.md",
-      "blobSha": "62e49ba734df5246eb71b45423bc6a9d94affa8e",
-      "rulePrefix": "GOV-EVIDENCE",
-      "first": 1,
-      "last": 9
-    },
-    {
-      "path": "governance/EXCEPTION_PROCESS.md",
-      "blobSha": "a4dee56703137cd5ba5be968a4a9b729856968ee",
-      "rulePrefix": "GOV-EXCEPTION",
-      "first": 1,
-      "last": 8
-    },
-    {
-      "path": "governance/AI_GENERATED_CODE_POLICY.md",
-      "blobSha": "b920ea6450967bbccc0b70d8cf356c6e2974002d",
-      "rulePrefix": "GOV-AI",
-      "first": 1,
-      "last": 9
-    },
-    {
-      "path": "governance/HUMAN_REVIEW_POLICY.md",
-      "blobSha": "a795770be0eb5f03b908f71bde389ef000e131f2",
-      "rulePrefix": "GOV-REVIEW",
-      "first": 1,
-      "last": 8
-    },
-    {
-      "path": "governance/PRODUCTION_READINESS.md",
-      "blobSha": "c96ce6ca547e22e6f4639166a61667a09d5c7cb5",
-      "rulePrefix": "GOV-PROD",
-      "first": 1,
-      "last": 9
-    },
-    {
-      "path": "governance/SECURE_DEVELOPMENT_POLICY.md",
-      "blobSha": "b2625c6ed6a972535fb903e940ec3d3e122b69b4",
-      "rulePrefix": "GOV-SECDEV",
-      "first": 1,
-      "last": 10
-    },
-    {
-      "path": "governance/THREAT_MODELING_POLICY.md",
-      "blobSha": "1f29043b75cf73301b09800823eeabb3e9bf1920",
-      "rulePrefix": "GOV-THREAT",
-      "first": 1,
-      "last": 8
-    },
-    {
-      "path": "governance/VULNERABILITY_RESPONSE.md",
-      "blobSha": "0dcaad72a6bfca106d304c87c36dc05725595f45",
-      "rulePrefix": "GOV-VULN",
-      "first": 1,
-      "last": 10
+  "publishedUnchangedRuleTrees": {
+    "disciplines": "e1d4c2766637f5507535e5b21b9a5b028c438982",
+    "frameworks": "fd8cf745aad5dea28ec2dbb86531247d5b0b71a1",
+    "networking": "ad389a87df2fac7786ce9fba7d89932b8f159343",
+    "operating-systems": "c16cf4d1a8037dd22ef60fcac9cc0e30b38850ef",
+    "platforms": "b359f3bde990413b553da275884e386a6c1159a4",
+    "profiles": "b7b268acb1a5ba286ff98e04608a70810474f123",
+    "virtualization": "98aff55ff7c7eb151c2e0cef779ba90a33e175c5",
+    "governance": "e169bac6cd666d2ab7e38587be9268e53302a1c6"
+  },
+  "publishedUnchangedLanguagePackageTrees": {
+    "languages/bash": "0ee7ba859a44199524bebfac2de25c2dea25eef6",
+    "languages/dotnet": "5fb38e2ca9f0756488c8a89f5b646115abf0b77f",
+    "languages/go": "f3d189c8d6497f672e438b2792a1b738d037499e",
+    "languages/java": "f7c56c38c846fe2eb99c6d5e1c184386870ca430",
+    "languages/javascript-typescript": "4a9d34241afa0ba24d6d0c60dedd64659d3b1e1e",
+    "languages/python": "7cdba7118760d554a8b219c99c6c76983232204b",
+    "languages/rust": "b132a422973ed823c1fb659a406f334646c5ba98",
+    "languages/sql": "ada274c456c70e6c733772f566d2a933042126f1",
+    "languages/terraform-opentofu": "730f62ecee06362fed2eb803509f98748fd2efb6"
+  },
+  "changedPublishedRuleSources": {
+    "languages/powershell": {
+      "publishedTreeSha": "7f1b68ff66b18108454b22b98e3528736d42e615",
+      "ruleContract": "no numbered normative rule headings matching <PREFIX>-NNN were published in v0.10.0; additive candidate changes must not create a claim that a removed published numbered rule existed"
     }
-  ],
+  },
   "csharpProductRules": {
     "sourcePath": "languages/csharp/AGENTS.md",
+    "publishedTreeSha": "3934b00f6de542052afc37ead17dc9c1700a717c",
     "rules": {
       "CSHARP-LANG-001": "Resolve the selected SDK/compiler and use a stable language version supported by the declared target; `latest` and unapproved preview settings are prohibited.",
       "CSHARP-NULL-002": "Nullable annotations and flow analysis must express the real contract; suppression requires a narrow, reviewable invariant.",
@@ -96,5 +45,6 @@
       "CSHARP-INTEROP-009": "Reflection, `dynamic`, expression compilation, source generation, native interop, and unsafe code require a documented boundary, minimized scope, validation, and fallback or failure behavior.",
       "CSHARP-EVIDENCE-010": "Completion claims must identify the exact source and contracts changed, resolved compiler boundary, validation results, unavailable checks, and remaining limitations."
     }
-  }
+  },
+  "coverageRule": "Every candidate Markdown heading matching ^### [A-Z][A-Z0-9-]*-[0-9]{3}$ must be inside an unchanged published v0.10.0 rule tree or an explicitly versioned changed-source contract above."
 }
