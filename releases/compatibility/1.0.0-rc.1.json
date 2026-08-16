@@ -12,11 +12,11 @@
   },
   "publishedToolBehaviorContract": {
     "path": "releases/compatibility/0.10.0-tool-behavior.json",
-    "sha256": "120f9869f67bb9dc900e05cd41c8bbee08bf96bd516f0a6ce527d1a43bc809a3"
+    "sha256": "2f731aa6f8c02fed0308fbcefc6937ea31fa02e5e42f5899582f56cd7b3c637a"
   },
   "publishedRuleContractCheckpoint": {
     "path": "releases/compatibility/0.10.0-rule-contracts.json",
-    "sha256": "ce7708ab32b8bf6a7fbaf0bd12020388f2069470aaf2fc2e890a3778e003029c"
+    "sha256": "eba5b25f4036bbd62c3265579ec450c6c44f36da7a69c2a62559ae017de2efa4"
   },
   "compatibilityClassification": "compatible",
   "stableRootPaths": [
@@ -117,8 +117,8 @@
     "publishedNormativeRules": {
       "source": "releases/compatibility/0.10.0-rule-contracts.json",
       "scope": [
-        "published governance normative rule ids and meanings",
-        "published C# product rule ids and meanings promoted stable in this RC"
+        "every published v0.10.0 numbered normative rule in governance, disciplines, languages, frameworks, platforms, virtualization, operating systems, networking, and profiles is anchored by an immutable published tree or explicit changed-source contract",
+        "C# product rule ids and exact requirement meanings promoted stable in this RC"
       ]
     },
     "rcStableAdditions": {
@@ -182,8 +182,8 @@
       "published v0.10.0 root stable entry paths",
       "published v0.10.0 stable rolling schema filenames",
       "seven original stable template paths",
-      "published v0.10.0 governance/profile/schema identifier checkpoint plus normative governance/C# rule ids and meanings",
-      "published v0.10.0 CLI/result/exit-code and safe-overwrite tool behavior",
+      "published v0.10.0 governance/profile/schema identifiers plus the complete published numbered normative-rule surface and C# rule meanings promoted stable in this RC",
+      "published v0.10.0 CLI/result/exit-code, finding-code, and safe-overwrite tool behavior",
       "canonical uppercase project-profile compatibility entry points",
       "release artifact naming and checksum contract",
       "repository governance and exception authority after the v0.10.0 policy transition"
