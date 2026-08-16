@@ -1,0 +1,65 @@
+name: Standards correction or stale source
+description: Report a stale authoritative source, lifecycle claim, compatibility statement, or source-review gap.
+title: "[Source freshness] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for public-source maintenance only. Do not include credentials, private support data, customer identifiers, or non-public vulnerability details.
+
+  - type: input
+    id: scope
+    attributes:
+      label: Affected repository scope
+      description: Repository path or package affected by the source or claim.
+      placeholder: operating-systems/windows-server
+    validations:
+      required: true
+
+  - type: input
+    id: source
+    attributes:
+      label: Authoritative source
+      description: Public authoritative URL that should be reviewed or updated.
+      placeholder: https://learn.microsoft.com/...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: problem
+    attributes:
+      label: Problem type
+      options:
+        - Stale source-review date
+        - Moved or unavailable authoritative source
+        - Lifecycle or support claim may have changed
+        - Current-version or compatibility claim may have changed
+        - Missing source-review metadata
+        - Other standards correction
+    validations:
+      required: true
+
+  - type: textarea
+    id: observed
+    attributes:
+      label: What changed or appears stale?
+      description: Describe the repository claim and the current authoritative evidence. Distinguish verified facts from suspicions.
+    validations:
+      required: true
+
+  - type: textarea
+    id: action
+    attributes:
+      label: Suggested maintenance action
+      description: Optional proposed source, wording, review-date update, or affected files.
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Submission checks
+      options:
+        - label: I have not included credentials, private support content, customer identifiers, or other sensitive data.
+          required: true
+        - label: I understand that opening this issue does not establish that the reported claim is already verified.
+          required: true

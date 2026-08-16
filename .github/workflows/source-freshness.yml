@@ -1,0 +1,101 @@
+name: Check source freshness
+
+on:
+  schedule:
+    - cron: "17 13 * * 1"
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Fail when any source review is stale or NotRun"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: source-freshness
+  cancel-in-progress: false
+
+jobs:
+  freshness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Evaluate recorded source-review freshness
+        id: freshness
+        continue-on-error: true
+        shell: bash
+        env:
+          STRICT_MODE: ${{ inputs.strict || 'false' }}
+        run: |
+          args=()
+          if [[ "$STRICT_MODE" == "true" ]]; then
+            args+=(--strict)
+          fi
+          python tools/check-freshness/check_freshness.py \
+            --format json \
+            --output source-freshness-result.json \
+            --quiet \
+            "${args[@]}"
+
+      - name: Publish maintenance summary
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          result_path = Path("source-freshness-result.json")
+          summary_path = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          if not result_path.is_file():
+              summary_path.write_text(
+                  "## Source freshness\n\nResult: **NotRun**\n\nThe checker did not produce a result file.\n",
+                  encoding="utf-8",
+              )
+              raise SystemExit(0)
+
+          payload = json.loads(result_path.read_text(encoding="utf-8"))
+          summary = payload.get("summary", {})
+          state = summary.get("freshnessState", "NotRun")
+          live_state = summary.get("liveSourceVerification", "NotRun")
+          lines = [
+              "## Source freshness",
+              "",
+              f"Recorded review state: **{state}**",
+              f"Live source verification: **{live_state}**",
+              f"Records: {summary.get('records', 0)}",
+              f"Passed: {summary.get('passed', 0)}",
+              f"Warnings: {summary.get('warnings', 0)}",
+              f"NotRun: {summary.get('notRun', 0)}",
+              f"Invalid: {summary.get('invalid', 0)}",
+              "",
+              "The checker is intentionally offline; this result does not claim live vendor-source verification.",
+          ]
+          with summary_path.open("a", encoding="utf-8") as handle:
+              handle.write("\n".join(lines) + "\n")
+
+          for finding in payload.get("findings", []):
+              if finding.get("severity") == "warning":
+                  code = str(finding.get("code", "SOURCE_FRESHNESS_WARNING")).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+                  message = str(finding.get("message", "Source freshness warning")).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+                  print(f"::warning title={code}::{message}")
+          PY
+
+      - name: Preserve strict or invalid failure
+        if: always() && steps.freshness.outcome == 'failure'
+        shell: bash
+        run: exit 1

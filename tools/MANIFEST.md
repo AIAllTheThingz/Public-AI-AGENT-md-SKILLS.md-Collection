@@ -1,7 +1,7 @@
 ---
 id: TOOL-MANIFEST-001
 title: Toolchain Manifest
-version: 1.2.0
+version: 1.3.0
 status: baseline
 ---
 
@@ -24,6 +24,7 @@ status: baseline
 
 - `validate-standards`
 - `check-links`
+- `check-freshness`
 - `validate-skills`
 - `validate-schemas`
 - `validate-templates`
@@ -44,6 +45,8 @@ Each package requires:
 - documented exit codes
 - documented limitations
 
+The `check-freshness` package additionally requires `SOURCE_REVIEWS.json`, explicit offline behavior, `Passed`/`Warning`/`NotRun` maintenance-state reporting, and truthful `NotRun` reporting for live source verification.
+
 The release package additionally contains a deterministic artifact builder and tag-driven publication workflow.
 
 ## Shared support
@@ -59,7 +62,8 @@ The release package additionally contains a deterministic artifact builder and t
 - all package READMEs meet minimum depth
 - no tool remains documentation-only or marked planned
 - unit tests pass
-- repository, link, skill, schema, template, tool, and release validators pass
+- repository, link, freshness, skill, schema, template, tool, and release validators pass
+- source-review metadata is structurally valid and never treats missing review dates as live verification success
 - generation tools support dry-run or overwrite protection as appropriate
 - release tooling validates tags and builds deterministic archives
 - release checksums and manifests are produced

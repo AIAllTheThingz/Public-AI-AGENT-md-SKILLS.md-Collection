@@ -108,6 +108,29 @@ These sources inform the repository. The repository summarizes and operationaliz
 - Python jsonschema documentation: https://python-jsonschema.readthedocs.io/
 - Python jsonschema package releases: https://pypi.org/project/jsonschema/
 
+## Source review metadata
+
+Time-sensitive source-review metadata is recorded in [`SOURCE_REVIEWS.json`](SOURCE_REVIEWS.json).
+
+The registry tracks an accountable review interval and `lastReviewed` date for selected repository scopes. `lastReviewed: null` means the authoritative-source review is explicitly **NotRun**. Repository modification dates, merge dates, and source-list edits must not be substituted for an actual source-currency review.
+
+Evaluate the registry with:
+
+```bash
+python tools/check-freshness/check_freshness.py
+```
+
+The checker is intentionally offline. It distinguishes recorded review-date state from live external verification:
+
+- **Passed**: recorded source-review dates are within their configured interval
+- **Warning**: at least one recorded review date is stale
+- **NotRun**: at least one accountable source review has no recorded date
+- live source verification: **NotRun** for this offline checker
+
+A stale or missing review date creates visible maintenance work; it does not by itself prove that repository content is incorrect. Use `--strict` only when the review-date state is intended to be a blocking gate.
+
+When completing a source review, update only records actually reviewed, keep authoritative URLs current, and record content changes separately when source facts materially changed.
+
 ## Use of external sources
 
 When adding a requirement derived from an external source:
@@ -116,3 +139,4 @@ When adding a requirement derived from an external source:
 2. Summarize rather than copy substantial text.
 3. State whether the rule is mandatory in this repository or merely guidance.
 4. Avoid implying certification or compliance.
+5. Add or update source-review metadata when the requirement introduces material time-sensitive lifecycle, compatibility, support, or current-version claims.

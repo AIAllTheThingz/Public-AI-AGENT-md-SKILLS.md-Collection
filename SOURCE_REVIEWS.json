@@ -1,0 +1,121 @@
+{
+  "formatVersion": "1.0.0",
+  "defaultReviewIntervalDays": 180,
+  "records": [
+    {
+      "id": "languages-runtimes",
+      "scope": "languages",
+      "maturity": "baseline",
+      "owner": "Language standards maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": null,
+      "authoritativeSources": [
+        {
+          "name": "Microsoft C# documentation",
+          "url": "https://learn.microsoft.com/en-us/dotnet/csharp/"
+        },
+        {
+          "name": "Microsoft .NET releases and support",
+          "url": "https://learn.microsoft.com/en-us/dotnet/core/releases-and-support"
+        }
+      ],
+      "notes": "Initial source-currency review is intentionally NotRun until an accountable maintainer records a review date."
+    },
+    {
+      "id": "platforms",
+      "scope": "platforms",
+      "maturity": "baseline",
+      "owner": "Platform standards maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": null,
+      "authoritativeSources": [
+        {
+          "name": "Kubernetes Security Checklist",
+          "url": "https://kubernetes.io/docs/concepts/security/security-checklist/"
+        },
+        {
+          "name": "Kubernetes Pod Security Standards",
+          "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+        }
+      ],
+      "notes": "Initial source-currency review is intentionally NotRun until an accountable maintainer records a review date."
+    },
+    {
+      "id": "virtualization",
+      "scope": "virtualization",
+      "maturity": "baseline",
+      "owner": "Virtualization standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": null,
+      "authoritativeSources": [
+        {
+          "name": "Broadcom VMware vSphere documentation",
+          "url": "https://techdocs.broadcom.com/us/en/vmware-cis/vsphere.html"
+        },
+        {
+          "name": "Microsoft Hyper-V documentation",
+          "url": "https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/overview"
+        },
+        {
+          "name": "Linux kernel KVM documentation",
+          "url": "https://docs.kernel.org/virt/kvm/index.html"
+        }
+      ],
+      "notes": "Vendor lifecycle and compatibility claims are time-sensitive; review dates are tracked separately from repository modification dates."
+    },
+    {
+      "id": "operating-systems",
+      "scope": "operating-systems",
+      "maturity": "baseline",
+      "owner": "Operating-system standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": null,
+      "authoritativeSources": [
+        {
+          "name": "Microsoft Windows Server lifecycle documentation",
+          "url": "https://learn.microsoft.com/en-us/windows-server/"
+        },
+        {
+          "name": "Red Hat Enterprise Linux lifecycle",
+          "url": "https://access.redhat.com/support/policy/updates/errata"
+        },
+        {
+          "name": "Ubuntu release cycle",
+          "url": "https://ubuntu.com/about/release-cycle"
+        },
+        {
+          "name": "FreeBSD release information",
+          "url": "https://www.freebsd.org/releases/"
+        }
+      ],
+      "notes": "Lifecycle, support, and current-version claims require periodic authoritative review."
+    },
+    {
+      "id": "networking",
+      "scope": "networking",
+      "maturity": "baseline",
+      "owner": "Networking standards maintainers",
+      "reviewIntervalDays": 90,
+      "lastReviewed": null,
+      "authoritativeSources": [
+        {
+          "name": "HPE Aruba Networking AOS-CX documentation",
+          "url": "https://arubanetworking.hpe.com/techdocs/AOS-CX/help_portal/Content/home.htm"
+        },
+        {
+          "name": "Cisco IOS and NX-OS software support",
+          "url": "https://www.cisco.com/c/en/us/support/ios-nx-os-software/index.html"
+        },
+        {
+          "name": "Juniper documentation",
+          "url": "https://www.juniper.net/documentation/"
+        },
+        {
+          "name": "Broadcom Fabric OS technical documentation",
+          "url": "https://techdocs.broadcom.com/us/en/fibre-channel-networking/fabric-os.html"
+        }
+      ],
+      "notes": "Firmware, lifecycle, controller, and interoperability claims require periodic authoritative review."
+    }
+  ]
+}

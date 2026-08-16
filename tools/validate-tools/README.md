@@ -1,7 +1,7 @@
 ---
 id: TOOL-PKG-VALIDATE-TOOLS-001
 title: Validate Tools Tool
-version: 1.3.2
+version: 1.3.3
 status: baseline
 ---
 
@@ -51,6 +51,7 @@ The validator requires these packages:
 
 - `validate-standards`
 - `check-links`
+- `check-freshness`
 - `validate-skills`
 - `validate-schemas`
 - `validate-templates`
@@ -59,6 +60,8 @@ The validator requires these packages:
 - `compose-agents`
 - `validate-all`
 - `release`
+
+`check-freshness` is a first-class read-only package. Its presence, documentation, executable entry point, examples, compilation, and central test coverage are enforced just like the other tool packages.
 
 The release package contains both `validate_release.py` and `build_release.py`. Every Python entry point in a package is compiled, not merely the primary validator path.
 
@@ -70,7 +73,7 @@ The release package contains both `validate_release.py` and `build_release.py`. 
 - README depth
 - planned-tool remnants
 - Python compilation for package entry points
-- test-module count
+- test-module count against the complete declared package set, including `check-freshness`
 - JSON result contract
 - release-package presence
 - at least one valid SHA-256 hash for every resolved dependency in the validation lock
@@ -82,6 +85,7 @@ The release package contains both `validate_release.py` and `build_release.py`. 
 - referenced local composite actions recursively checked for nested external `uses` dependencies
 - hosted runners using explicit image families rather than `*-latest`
 - statically declared matrix runner values evaluated after `exclude`; later `include` entries are also inspected because GitHub can add combinations back after exclusion
+- scheduled source-freshness workflow subject to the same workflow YAML, action-pin, and runner checks as every other repository workflow
 
 Local workflow action references such as `./path/to/action` do not require a Git commit pin themselves. When they resolve to composite-action metadata, external `uses` references inside that metadata are inspected recursively and must satisfy the same immutable-pin rules.
 
@@ -114,6 +118,8 @@ Workflow/dependency findings include:
 - `WORKFLOW_RUNNER_FLOATING`
 - `WORKFLOW_RUNNER_UNRESOLVED`
 
+The source-freshness tool has its own maintenance-state findings. `validate-tools` does not reinterpret them; it verifies that the tool package and its workflow remain structurally part of the maintained toolchain.
+
 ## Exit codes
 
 - `0`: completed and passed
@@ -141,14 +147,22 @@ Do not catch and discard failures merely to keep CI green. Green output created 
 
 Central tests live under [`../tests/`](../tests/).
 
-The repository requires at least one test module per declared tool package. The release package is covered by `test_release.py`.
+The repository requires at least one test module per declared tool package. `check-freshness` is covered by `test_check_freshness.py`; the release package is covered by `test_release.py`.
 
-Regression coverage includes exact direct-dependency/lock comparison, per-resolved-dependency hash enforcement, inline requirement comments, missing-PyYAML CLI behavior, quoted YAML action values, YAML key-spacing variants, immutable Docker digests, local composite-action dependency traversal, effective matrix runner exclusions, and floating action/runner rejection.
+Freshness coverage includes fresh, stale-warning, NotRun, strict blocking, invalid future-date, scope-containment, repository-registry, and scheduled-workflow behavior.
+
+Existing workflow/dependency regression coverage includes exact direct-dependency/lock comparison, per-resolved-dependency hash enforcement, inline requirement comments, missing-PyYAML CLI behavior, quoted YAML action values, YAML key-spacing variants, immutable Docker digests, local composite-action dependency traversal, effective matrix runner exclusions, and floating action/runner rejection.
 
 Run focused tests:
 
 ```bash
 python -m unittest discover -s tools/tests -p "test_validate_tools*.py"
+```
+
+Run freshness-specific tests:
+
+```bash
+python -m unittest discover -s tools/tests -p "test_check_freshness.py"
 ```
 
 Run the complete suite:
@@ -161,6 +175,8 @@ python tools/validate-all/run_all.py --include-tests
 
 Backward-compatible changes may add optional flags, summary fields, metadata, package checks, or new finding codes.
 
+Adding `check-freshness` is an additive tool-package and aggregate-validator change. It exposes source-review maintenance state but does not convert warning-only freshness findings into ordinary aggregate failure.
+
 Breaking changes include:
 
 - changing the stable entry path
@@ -171,6 +187,7 @@ Breaking changes include:
 - changing default write or overwrite behavior
 - changing generated file semantics
 - silently narrowing accepted input
+- silently removing the freshness package after it becomes part of the declared toolchain
 
 Changes to the required package set or validation dependency contract must be classified under [`../../RELEASE_POLICY.md`](../../RELEASE_POLICY.md).
 
@@ -184,6 +201,7 @@ Changes to the required package set or validation dependency contract must be cl
 - local composite-action traversal follows actions referenced by repository workflows; unreferenced local metadata is not treated as an executed CI dependency
 - dynamic runner expressions that cannot be resolved from a static matrix are rejected as unresolved rather than guessed
 - static matrix evaluation covers declared axes, partial-match `exclude`, and runner values supplied by later `include` entries; it does not execute arbitrary expressions to discover dynamically generated matrices
+- source freshness remains a separate offline semantic whose warning state does not prove external content changed
 - does not inspect private GitHub workflow permissions, environment protection rules, or repository rulesets
 
 ## Review checklist
@@ -191,9 +209,11 @@ Changes to the required package set or validation dependency contract must be cl
 Reviewers should confirm:
 
 - documented behavior matches code
-- the declared package list is complete
+- the declared package list is complete and includes `check-freshness`
+- freshness package structure and central tests are enforced
+- scheduled freshness workflow uses immutable actions and an explicit hosted runner
 - release scripts are compiled and tested
-- positive, negative, and error-path tests exist
+- positive, warning, NotRun, negative, and error-path tests exist where applicable
 - `--help` remains usable before optional/runtime validation dependencies are installed
 - dependency failures preserve structured output and exit code `2`
 - every resolved lock entry has a valid SHA-256 hash and direct dependency drift is detected in both directions
@@ -207,8 +227,8 @@ Reviewers should confirm:
 
 ## Maintenance
 
-Update the script, README, manifest, examples, tests, catalog, changelog, release notes, and CI together when behavior changes. Regenerate the validation lock whenever the direct dependency set or hosted Python boundary changes.
+Update the script, README, manifest, examples, tests, catalog, changelog, release notes, source-review metadata, and CI together when behavior changes. Regenerate the validation lock whenever the direct dependency set or hosted Python boundary changes.
 
 ## Completion boundary
 
-A successful execution establishes only that the declared tool package structure, dependency-lock checks, workflow pinning checks, compilation checks, and other implemented structural validations passed. It does not prove runtime correctness, third-party provenance, vulnerability absence, release authority, repository-host configuration, compliance, or production readiness.
+A successful execution establishes only that the declared tool package structure, dependency-lock checks, workflow pinning checks, compilation checks, and other implemented structural validations passed. It does not prove runtime correctness, source currency, live vendor verification, third-party provenance, vulnerability absence, release authority, repository-host configuration, compliance, or production readiness.

@@ -1,7 +1,7 @@
 ---
 id: TOOL-PKG-VALIDATE-ALL-001-MANIFEST
 title: Validate All Tool Manifest
-version: 1.2.0
+version: 1.3.0
 status: baseline
 ---
 
@@ -20,11 +20,13 @@ status: baseline
 - `../contracts/tool-result.schema.json`
 - `../tests/`
 - `../../RELEASE_POLICY.md`
+- `../../SOURCE_REVIEWS.json`
 
 ## Required validators
 
 - `validate-standards`
 - `check-links`
+- `check-freshness`
 - `validate-skills`
 - `validate-schemas`
 - `validate-templates`
@@ -39,9 +41,11 @@ status: baseline
 - text output is readable
 - JSON output conforms to the result contract
 - child results and exit codes are preserved
+- warning-only source freshness state remains visible without becoming an aggregate failure
+- live source verification remains explicitly `NotRun` for the offline freshness checker
 - release validation remains in the complete pipeline
 - exit codes match the common contract
-- positive and negative tests pass
+- positive, warning, NotRun, negative, and error-path tests pass
 - stable path remains unchanged
 - documentation and examples match behavior
 - permanent CI invokes this runner with unit tests

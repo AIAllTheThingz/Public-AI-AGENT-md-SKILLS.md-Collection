@@ -40,6 +40,7 @@ The accumulated changes in this section are intended for the forward-only `0.10.
 
 - Added a concise pull request template for summary, impact, validation, limitations, and maintainer self-review without introducing heavyweight governance records.
 - Reconciled the project/library identity (`Public Access Agents`) with the canonical GitHub repository (`AIAllTheThingz/Public-AI-Governance`) and documented the prepared-but-unpublished `0.9.0` state plus the forward-only `0.10.0` release plan.
+- Documented a lightweight authoritative-source maintenance model that separates accountable source-review dates from ordinary repository modification dates and treats missing review evidence as explicit `NotRun` rather than inferred success.
 
 ### Tooling changes
 
@@ -56,6 +57,11 @@ The accumulated changes in this section are intended for the forward-only `0.10.
 - Extended the repository skill-collection regression test to cover the operating-system router and its nine package routes.
 - Extended the repository skill-collection regression test to cover the networking router and its four package routes.
 - Reconciled canonical repository URLs used by release documentation and machine-readable identifiers with `AIAllTheThingz/Public-AI-Governance`; artifact filenames retain the stable `Public-Access-Agents-<VERSION>` project prefix.
+- Added `SOURCE_REVIEWS.json` and the offline `check-freshness` tool to track authoritative-source review intervals and report recorded review-date state as `Passed`, `Warning`, or `NotRun` while explicitly reporting live external-source verification as `NotRun`.
+- Added `check-freshness` to the permanent aggregate validation pipeline without converting warning-only maintenance state into ordinary CI failure; strict mode remains available for deliberate blocking checks.
+- Added a weekly and manually dispatchable source-freshness workflow with immutable action pins, an explicit Ubuntu 24.04/Python 3.13 boundary, GitHub Actions summaries, warning annotations, and no live vendor-source fetches.
+- Added a standards-correction/stale-source issue form and positive, warning, `NotRun`, strict, invalid-date, path-containment, registry, and workflow regression coverage for the freshness model.
+- Updated `validate-tools` to version `1.3.3`, `validate-all` to version `1.3.0`, and the toolchain manifests/catalog to include the new freshness package and workflow.
 
 ### Security
 
@@ -68,6 +74,7 @@ The accumulated changes in this section are intended for the forward-only `0.10.
 - Added virtualization safeguards for privileged control planes, ambiguous object selection, bulk or destructive actions, management-plane exposure, network and storage changes, snapshots and checkpoints, backup and restore, device passthrough, unsupported lifecycle states, and cross-platform migration.
 - Added OS safeguards for privileged fleet actions, ambiguous target selection, repository and package trust, security-control bypass, identity and remote-access loss, restart and partial-fleet failure, encryption and recovery material, destructive endpoint actions, unsupported lifecycle states, and user-data privacy.
 - Added networking safeguards for high-blast-radius control planes, ambiguous device/controller/fabric scope, conflicting configuration owners, management loss, loops and convergence failure, redundancy sequencing, policy exposure, unsupported firmware/hardware, Fibre Channel zoning and multipath changes, and sensitive topology or support data.
+- Restricted source-freshness metadata to public HTTPS source references and repository-contained scopes; the default checker performs no network access and does not accept commit timestamps as source-review evidence.
 
 ### Deprecations
 
@@ -83,12 +90,14 @@ The accumulated changes in this section are intended for the forward-only `0.10.
 - Existing `VMware.PowerCLI` adopters are not required to perform an immediate or blind rename. They should inventory the distribution and child modules, verify the current Broadcom-supported migration and compatibility path, test the selected `VCF.PowerCLI` constraint, and update dependency records separately from operational execution.
 - Existing project-manifest version `1.0.0` instances remain valid. Producers using the new package arrays must emit `schemaVersion: "1.1.0"`; consumers that depend on those arrays must use schema and composition tooling version `1.1.0` or later.
 - Existing adopters may continue using `AGENTS.md` and package entry points directly. Agents that support skills may additionally use `languages/SKILL.md`, `frameworks/SKILL.md`, `platforms/SKILL.md`, `virtualization/SKILL.md`, `operating-systems/SKILL.md`, and `networking/SKILL.md` without changing existing package paths.
+- Source-review metadata is additive and begins with `lastReviewed: null` where no accountable source review has been documented. Maintainers should populate a date only after actually reviewing the listed authoritative sources; no adopter-facing package behavior changes solely because the freshness registry exists.
 
 ### Known limitations
 
 - No repository release has been published yet. The prepared `0.9.0` tag/release does not exist, and the next intended publication is `0.10.0` after final release-state preparation.
 - The release publication job is tag-triggered and was not exercised by pull-request validation; publication remains `NotRun` until a reconciled release tag is deliberately created.
 - Immutable action and dependency references reduce mutation risk but do not by themselves establish third-party provenance or vulnerability-free dependencies.
+- The source-freshness checker evaluates recorded review dates and metadata only. It does not fetch or compare external vendor content, so live source verification remains `NotRun`; the initial production registry also remains `NotRun` until accountable reviews are performed and recorded.
 - The C# package and templates were validated as repository content only because a .NET SDK/compiler was unavailable in the authoring environment. No C# compilation, NuGet restore, analyzer execution, runtime test, benchmark, native-platform validation, or framework integration test was performed.
 - The PowerCLI standard was validated as repository content only. No live vCenter or ESXi connection, module installation, product compatibility certification, or integration test was performed.
 - Project-manifest package arrays record reviewed selection intent only. Schema validity and generated composition bundles do not prove that every applicable infrastructure boundary was identified, tailored, authorized, or operationally validated.
