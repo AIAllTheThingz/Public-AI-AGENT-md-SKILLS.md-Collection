@@ -30,6 +30,24 @@ class GenerateManifestTests(unittest.TestCase):
         self.assertEqual(payload["metadata"]["manifest"]["operatingSystems"], ["ubuntu"])
         self.assertEqual(payload["metadata"]["manifest"]["networking"], ["cisco-networking"])
 
+    def test_secondary_profiles_expand_profile_disciplines(self):
+        completed = run_tool(
+            "tools/generate-manifest/generate_manifest.py",
+            "--name", "mixed-automation-web",
+            "--profile", "INTERNAL_AUTOMATION",
+            "--secondary-profile", "WEB_APPLICATION",
+            "--language", "csharp",
+            "--include-profile-required",
+            "--dry-run",
+            "--format", "json",
+        )
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+        manifest = json_result(completed)["metadata"]["manifest"]
+        self.assertEqual(manifest["secondaryProfiles"], ["WEB_APPLICATION"])
+        self.assertIn("testing", manifest["disciplines"])
+        self.assertIn("accessibility", manifest["disciplines"])
+        self.assertEqual(len(manifest["disciplines"]), len(set(manifest["disciplines"])))
+
     def test_legacy_selections_preserve_schema_version(self):
         completed = run_tool(
             "tools/generate-manifest/generate_manifest.py",

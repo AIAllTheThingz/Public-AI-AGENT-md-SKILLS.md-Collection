@@ -96,12 +96,18 @@ def run(args: argparse.Namespace) -> ToolResult:
         raise ValueError("Project profile is required through --profile or --config.")
 
     profile, profile_path = resolve_profile(str(profile_input), root)
+    secondary_inputs = select(args.secondary_profile, config, "secondaryProfiles")
+    secondary_resolved = [resolve_profile(value, root) for value in secondary_inputs]
+    secondary_profiles = [item[0] for item in secondary_resolved]
+    secondary_profile_paths = [item[1] for item in secondary_resolved]
+
     languages = ensure_selection(root, "languages", select(args.language, config, "languages"))
     if not languages:
         raise ValueError("At least one language selection is required.")
     disciplines = select(args.discipline, config, "disciplines")
     if args.include_profile_required:
-        disciplines.extend(DISCIPLINE_LINK.findall(profile_path.read_text(encoding="utf-8")))
+        for selected_profile_path in (profile_path, *secondary_profile_paths):
+            disciplines.extend(DISCIPLINE_LINK.findall(selected_profile_path.read_text(encoding="utf-8")))
     disciplines = ensure_selection(root, "disciplines", unique(disciplines))
     platforms = ensure_selection(root, "platforms", select(args.platform, config, "platforms"))
     frameworks = ensure_selection(root, "frameworks", select(args.framework, config, "frameworks"))
@@ -112,9 +118,6 @@ def run(args: argparse.Namespace) -> ToolResult:
         root, "operating-systems", select(args.operating_system, config, "operatingSystems")
     )
     networking = ensure_selection(root, "networking", select(args.networking, config, "networking"))
-
-    secondary_inputs = select(args.secondary_profile, config, "secondaryProfiles")
-    secondary_profiles = [resolve_profile(value, root)[0] for value in secondary_inputs]
 
     infrastructure_selections = virtualization or operating_systems or networking
     manifest: dict[str, Any] = {
