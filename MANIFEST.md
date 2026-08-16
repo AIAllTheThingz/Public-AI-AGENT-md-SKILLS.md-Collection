@@ -71,7 +71,9 @@ These progressive-disclosure routers and direct language skills select and compo
 - machine-readable release manifest
 - explicit `1.0.0` compatibility gate
 
-Current repository version: `0.9.0` **prepared, unpublished**.
+Current repository version: `0.10.0` **release candidate, not yet published**.
+
+The `0.9.0` baseline remains **prepared, unpublished** and must not be reconstructed or retroactively tagged.
 
 Next intended publication: `0.10.0`.
 

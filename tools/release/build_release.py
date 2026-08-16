@@ -131,6 +131,13 @@ def build(root: Path, output_dir: Path, tag: str | None, force: bool) -> dict:
     expected_tag = f"v{version}"
     release_state = read_release_state(root)
     blocked_versions = set(release_state.get("preparedUnpublishedVersions", []))
+    requested_tag_version = tag[1:] if tag and tag.startswith("v") else None
+
+    if requested_tag_version in blocked_versions:
+        raise ValueError(
+            f"Release build is blocked for version {requested_tag_version}: it is explicitly recorded as prepared but unpublished. "
+            "Select and prepare the intended forward release version before building publication artifacts."
+        )
 
     if version in blocked_versions:
         raise ValueError(

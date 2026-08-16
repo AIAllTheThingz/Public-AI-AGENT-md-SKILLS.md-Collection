@@ -26,7 +26,7 @@ The prepared `0.9.0` release program was never published. There is no `v0.9.0` t
 
 This boundary is executable, not advisory. [`../../releases/release-state.json`](../../releases/release-state.json) records `0.9.0` under `preparedUnpublishedVersions`. A tag-validation invocation for an explicitly unpublished version returns `RELEASE_PUBLICATION_BLOCKED`, and the release builder refuses to construct publication artifacts for that version. The tag-driven workflow validates before building and publishing, so `v0.9.0` cannot reach `gh release create` from the current repository state.
 
-The next intended publication is `0.10.0` after the repository `VERSION`, changelog entry, release notes, migration notes, and validation evidence have been deliberately prepared for that version.
+The next intended publication is `0.10.0` after the repository `VERSION`, changelog entry, release notes, migration notes, and validation evidence have been deliberately prepared for that version. The issue #40 release-candidate source deliberately sets `VERSION` to `0.10.0`; tag creation and GitHub Release publication remain separate authorized actions.
 
 ## Stable entry points
 
