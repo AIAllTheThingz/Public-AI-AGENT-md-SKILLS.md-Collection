@@ -31,6 +31,30 @@ def validated_manifest_relative_path(entry: str) -> Path:
     return Path(*posix_path.parts)
 
 
+def validated_package_source(package_root: Path, relative: Path) -> Path:
+    root_resolved = package_root.resolve(strict=True)
+    source = package_root / relative
+    try:
+        source_resolved = source.resolve(strict=True)
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(
+            f"Manifest-required C# package file is missing: {relative.as_posix()}"
+        ) from exc
+
+    try:
+        source_resolved.relative_to(root_resolved)
+    except ValueError as exc:
+        raise AssertionError(
+            f"Manifest-required C# package path resolves outside package root: {relative.as_posix()}"
+        ) from exc
+
+    if not source_resolved.is_file():
+        raise FileNotFoundError(
+            f"Manifest-required C# package file is missing: {relative.as_posix()}"
+        )
+    return source
+
+
 def required_surface_paths() -> list[Path]:
     text = MANIFEST_PATH.read_text(encoding="utf-8")
     if "## Required files" not in text or "## Acceptance checks" not in text:
@@ -53,9 +77,7 @@ def sha256_file(path: Path) -> str:
 def bind_full_package_surface(destination: Path) -> list[dict[str, str]]:
     records: list[dict[str, str]] = []
     for relative in required_surface_paths():
-        source = PACKAGE_ROOT / relative
-        if not source.is_file():
-            raise FileNotFoundError(f"Manifest-required C# package file is missing: {relative.as_posix()}")
+        source = validated_package_source(PACKAGE_ROOT, relative)
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
@@ -103,6 +125,29 @@ class CSharpFullPackageAdoptionTests(unittest.TestCase):
             validated_manifest_relative_path("standards/SECURITY_STANDARD.md"),
             Path("standards/SECURITY_STANDARD.md"),
         )
+
+    def test_manifest_required_source_rejects_symlink_escape(self):
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
+            temp_root = Path(temp)
+            package_root = temp_root / "package"
+            package_root.mkdir()
+            inside = package_root / "inside.txt"
+            inside.write_text("inside\n", encoding="utf-8")
+            outside = temp_root / "outside.txt"
+            outside.write_text("outside\n", encoding="utf-8")
+
+            escape_link = package_root / "escape.txt"
+            try:
+                escape_link.symlink_to(outside)
+            except (OSError, NotImplementedError) as exc:
+                self.skipTest(f"symlinks unavailable in test environment: {exc}")
+
+            self.assertEqual(
+                validated_package_source(package_root, Path("inside.txt")),
+                inside,
+            )
+            with self.assertRaises(AssertionError):
+                validated_package_source(package_root, Path("escape.txt"))
 
     def test_complete_csharp_package_surface_is_bound_and_hash_verified(self):
         required = {path.as_posix() for path in required_surface_paths()}
