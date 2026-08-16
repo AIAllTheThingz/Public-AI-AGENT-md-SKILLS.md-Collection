@@ -20,11 +20,14 @@ TOOL = "validate-release"
 VERSION = "1.0.0"
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 RELEASE_STATE_PATH = Path("releases/release-state.json")
-SEMVER = re.compile(
-    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
-    r"(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
-    r"(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
+SEMVER_CORE = r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
+SEMVER_PRERELEASE_ID = r"(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
+SEMVER_PATTERN = (
+    rf"{SEMVER_CORE}"
+    rf"(?:-{SEMVER_PRERELEASE_ID}(?:\.{SEMVER_PRERELEASE_ID})*)?"
+    r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
 )
+SEMVER = re.compile(rf"^{SEMVER_PATTERN}$")
 REQUIRED_ROOT = ("VERSION", "CHANGELOG.md", "RELEASE_POLICY.md", "MATURITY_POLICY.md")
 REQUIRED_RELEASE_HEADINGS = (
     "## Breaking changes",
@@ -102,6 +105,15 @@ def read_release_state(root: Path, findings: list[Finding]) -> dict[str, Any]:
             "RELEASE_STATE_INVALID",
             "preparedUnpublishedVersions must be an array of Semantic Version strings.",
             path=RELEASE_STATE_PATH.as_posix(),
+        ))
+        return {}
+    next_intended = state.get("nextIntendedVersion")
+    if not isinstance(next_intended, str) or not SEMVER.fullmatch(next_intended):
+        findings.append(Finding(
+            "RELEASE_STATE_INVALID",
+            "nextIntendedVersion must be a Semantic Version 2.0.0 string.",
+            path=RELEASE_STATE_PATH.as_posix(),
+            details={"value": next_intended},
         ))
         return {}
     return state

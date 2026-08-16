@@ -95,6 +95,45 @@ class ReleaseToolTests(unittest.TestCase):
             codes = {item["code"] for item in json_result(completed)["findings"]}
             self.assertIn("RELEASE_VERSION_INVALID", codes)
 
+    def test_release_state_rejects_invalid_next_intended_semver(self):
+        invalid_versions = ("01.2.3", "1.2.3-01")
+        for next_version in invalid_versions:
+            with self.subTest(next_version=next_version), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                make_release_root(root)
+                (root / "releases" / "release-state.json").write_text(
+                    json.dumps({
+                        "preparedUnpublishedVersions": ["0.9.0"],
+                        "nextIntendedVersion": next_version,
+                    }) + "\n",
+                    encoding="utf-8",
+                )
+                completed = run_tool("tools/release/validate_release.py", "--format", "json", root=root)
+                self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+                findings = json_result(completed)["findings"]
+                self.assertTrue(
+                    any(
+                        item["code"] == "RELEASE_STATE_INVALID"
+                        and "nextIntendedVersion" in item["message"]
+                        for item in findings
+                    ),
+                    findings,
+                )
+
+    def test_valid_semver_prerelease_release_state_passes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            make_release_root(root)
+            (root / "releases" / "release-state.json").write_text(
+                json.dumps({
+                    "preparedUnpublishedVersions": ["0.9.0"],
+                    "nextIntendedVersion": "1.0.0-rc.1+build.001",
+                }) + "\n",
+                encoding="utf-8",
+            )
+            completed = run_tool("tools/release/validate_release.py", "--format", "json", root=root)
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+
     def test_missing_release_notes_fails(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

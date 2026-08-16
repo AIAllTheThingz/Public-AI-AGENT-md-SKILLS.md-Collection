@@ -12,9 +12,11 @@ CANONICAL_REPOSITORY = "AIAllTheThingz/Public-AI-Governance"
 STALE_REPOSITORY = "AIAllTheThingz/Public-Access-Agents"
 CANONICAL_RAW_PREFIX = f"https://raw.githubusercontent.com/{CANONICAL_REPOSITORY}/"
 STALE_RAW_PREFIX = f"https://raw.githubusercontent.com/{STALE_REPOSITORY}/"
+SEMVER_CORE = r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
+SEMVER_PRERELEASE_ID = r"(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)"
 SEMVER = (
-    r"\d+\.\d+\.\d+"
-    r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
+    rf"{SEMVER_CORE}"
+    rf"(?:-{SEMVER_PRERELEASE_ID}(?:\.{SEMVER_PRERELEASE_ID})*)?"
     r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
 )
 NEXT_PUBLICATION = re.compile(
@@ -108,6 +110,25 @@ class RepositoryIdentityTests(unittest.TestCase):
         self.assertIn("must not be reconstructed or retroactively tagged", release_policy)
         self.assertIn("releases/release-state.json", release_policy)
         self.assertNotIn("The initial repository release target is `0.9.0`", release_policy)
+
+    def test_next_publication_pattern_rejects_invalid_numeric_identifiers(self):
+        invalid = (
+            "01.2.3",
+            "1.02.3",
+            "1.2.03",
+            "1.2.3-01",
+            "1.2.3-alpha.01",
+        )
+        for version in invalid:
+            with self.subTest(version=version):
+                self.assertIsNone(NEXT_PUBLICATION.search(f"Next intended publication: `{version}`"))
+
+        valid = ("0.10.0", "1.0.0-rc.1", "1.0.0-rc.1+build.001")
+        for version in valid:
+            with self.subTest(version=version):
+                match = NEXT_PUBLICATION.search(f"Next intended publication: `{version}`")
+                self.assertIsNotNone(match)
+                self.assertEqual(match.group("version"), version)
 
     def test_roadmap_retains_package_level_adoption_testing_before_stable_promotion(self):
         roadmap = (REPO_ROOT / "ROADMAP.md").read_text(encoding="utf-8")
