@@ -1,7 +1,7 @@
 ---
 id: TOOL-CATALOG-001
 title: Tool Catalog
-version: 1.3.0
+version: 1.4.0
 status: baseline
 ---
 
@@ -13,6 +13,7 @@ status: baseline
 |---|---|---|---|---|
 | Validate Standards | Repository tree | None | None | Repository maintainers |
 | Check Links | Markdown files | None | None | Documentation maintainers |
+| Check Freshness | `SOURCE_REVIEWS.json` and referenced repository scopes | Optional result file | None | Standards and source-maintenance owners |
 | Validate Skills | Skill files, package routes, manifests, local links, and optional UI metadata | Optional result file | None | Tooling and standards maintainers |
 | Validate Schemas | Schemas and JSON instances | None | `jsonschema[format]` | Schema maintainers |
 | Validate Templates | Templates, examples, schemas | None | `jsonschema[format]` | Template maintainers |
@@ -23,6 +24,8 @@ status: baseline
 | Compose Agents | Project manifest and selected governance, profile, language, discipline, framework, platform, virtualization, operating-system, and networking standards | Bundle directory | `jsonschema[format]` | Project adopter |
 | Validate All | Validator entry points and tests | Optional result file | Validator dependencies | Repository maintainers |
 
+`Check Freshness` is offline by default. It validates source-review metadata and review-date age, reports human-facing `Passed`, `Warning`, or `NotRun` freshness state, and separately records live source verification as `NotRun`. It does not fetch vendor documentation or infer source currency from network availability.
+
 `Validate Tools` structurally parses workflow and referenced local composite-action YAML, recursively checks immutable third-party action references (full Git commit SHAs or OCI `sha256` digests for `docker://` actions), rejects floating hosted runner images, verifies exact direct-dependency/lock synchronization, and requires at least one valid SHA-256 hash on every resolved lock entry.
 
 ## Stable entry points
@@ -31,6 +34,7 @@ Stable Python entry paths include:
 
 - `tools/validate-standards/validate_repository.py`
 - `tools/check-links/check_links.py`
+- `tools/check-freshness/check_freshness.py`
 - `tools/validate-skills/validate_skills.py`
 - `tools/validate-schemas/validate_schemas.py`
 - `tools/validate-templates/validate_templates.py`
@@ -46,6 +50,8 @@ Moving or renaming a stable entry point requires migration guidance and the rele
 ## Selection
 
 Use a specific validator during focused development. Use `validate-all` before review or merge.
+
+Use `check-freshness` when reviewing source currency, lifecycle references, compatibility claims, or source-review cadence. Default execution is warning-oriented; use `--strict` only when stale or not-run review state should block the caller.
 
 Use `validate-release` when changing VERSION, changelog, maturity, deprecation, migration, release notes, tags, release tooling, or release workflows.
 
@@ -79,6 +85,15 @@ A tool execution record should capture:
 - JSON result where practical
 - checks not run
 - limitations
+
+A source-freshness record should additionally identify:
+
+- repository scope
+- authoritative sources
+- accountable owner
+- configured review interval
+- actual source-review date, or explicit `NotRun`
+- whether live external verification was performed
 
 A release-tool execution should additionally capture:
 
