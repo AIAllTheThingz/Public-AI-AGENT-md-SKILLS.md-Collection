@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -10,17 +11,25 @@ from helpers import REPO_ROOT
 
 CANDIDATE_INVENTORY = REPO_ROOT / "releases" / "compatibility" / "1.0.0-rc.1.json"
 RULE_CHECKPOINT = REPO_ROOT / "releases" / "compatibility" / "0.10.0-rule-contracts.json"
-RULE_CHECKPOINT_SHA256 = "ce7708ab32b8bf6a7fbaf0bd12020388f2069470aaf2fc2e890a3778e003029c"
+RULE_CHECKPOINT_SHA256 = "eba5b25f4036bbd62c3265579ec450c6c44f36da7a69c2a62559ae017de2efa4"
 RULE_PATTERN = re.compile(
     r"^### (?P<id>[A-Z][A-Z0-9-]*-\d{3})\s*$\n\n"
     r"\*\*Requirement:\*\* (?P<requirement>[^\n]+)$",
     re.MULTILINE,
 )
+RULE_HEADING_PATTERN = re.compile(r"(?m)^### ([A-Z][A-Z0-9-]*-\d{3})\s*$")
 
 
-def git_blob_sha(data: bytes) -> str:
-    header = f"blob {len(data)}\0".encode("ascii")
-    return hashlib.sha1(header + data).hexdigest()
+def git_object_sha(relative: str) -> str:
+    completed = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "rev-parse", f"HEAD:{relative}"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise AssertionError(completed.stderr.strip() or f"cannot resolve HEAD:{relative}")
+    return completed.stdout.strip()
 
 
 def extract_rule_contracts(text: str) -> list[tuple[str, str]]:
@@ -76,24 +85,38 @@ class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
             "releases/compatibility/0.10.0-rule-contracts.json",
         )
 
-    def test_published_governance_rule_ids_and_meaning_are_preserved(self):
-        total_rules = 0
-        for record in self.checkpoint["governancePolicyRules"]:
-            path = REPO_ROOT / record["path"]
-            data = path.read_bytes()
-            contracts = extract_rule_contracts(data.decode("utf-8"))
-            actual_ids = [rule_id for rule_id, _ in contracts]
-            expected_ids = [
-                f"{record['rulePrefix']}-{number:03d}"
-                for number in range(record["first"], record["last"] + 1)
-            ]
-            with self.subTest(path=record["path"]):
-                self.assertEqual(git_blob_sha(data), record["blobSha"])
-                self.assertEqual(actual_ids, expected_ids)
-                self.assertEqual(len(actual_ids), len(set(actual_ids)))
-                self.assertTrue(all(requirement for _, requirement in contracts))
-            total_rules += len(expected_ids)
-        self.assertEqual(total_rules, 97)
+    def test_every_published_numbered_rule_surface_is_anchored(self):
+        protected = {}
+        protected.update(self.checkpoint["publishedUnchangedRuleTrees"])
+        protected.update(self.checkpoint["publishedUnchangedLanguagePackageTrees"])
+
+        for relative, expected_tree in protected.items():
+            with self.subTest(tree=relative):
+                self.assertEqual(git_object_sha(relative), expected_tree)
+
+        csharp_source = self.checkpoint["csharpProductRules"]["sourcePath"]
+        power_shell_root = "languages/powershell"
+        rule_paths: dict[str, list[str]] = {}
+        for path in sorted(REPO_ROOT.rglob("*.md")):
+            relative = path.relative_to(REPO_ROOT).as_posix()
+            ids = RULE_HEADING_PATTERN.findall(path.read_text(encoding="utf-8"))
+            if ids:
+                rule_paths[relative] = ids
+
+        def covered(relative: str) -> bool:
+            if relative == csharp_source:
+                return True
+            if relative == power_shell_root or relative.startswith(power_shell_root + "/"):
+                return True
+            return any(
+                relative == root or relative.startswith(root + "/")
+                for root in protected
+            )
+
+        uncovered = {path: ids for path, ids in rule_paths.items() if not covered(path)}
+        self.assertEqual(uncovered, {})
+        self.assertIn("disciplines/application-security/AGENTS.md", rule_paths)
+        self.assertIn("SEC-INPUT-001", rule_paths["disciplines/application-security/AGENTS.md"])
 
     def test_csharp_product_rule_ids_and_meaning_are_preserved(self):
         source = self.checkpoint["csharpProductRules"]
@@ -104,6 +127,11 @@ class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
         self.assertEqual(len(expected), 10)
         self.assertIn("CSHARP-LANG-001", expected)
         self.assertIn("CSHARP-EVIDENCE-010", expected)
+
+    def test_powershell_published_source_had_no_numbered_rule_contract(self):
+        source = self.checkpoint["changedPublishedRuleSources"]["languages/powershell"]
+        self.assertEqual(source["publishedTreeSha"], "7f1b68ff66b18108454b22b98e3528736d42e615")
+        self.assertIn("no numbered normative rule headings", source["ruleContract"])
 
     def test_rule_contract_checker_detects_removal_meaning_change_and_reuse(self):
         expected = {
