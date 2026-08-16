@@ -10,6 +10,10 @@
     "path": "releases/compatibility/0.10.0-checkpoint.json",
     "sha256": "38605392a558e02178cab08aea51c9df14c634b1866cb687f646ce476e69b622"
   },
+  "publishedToolBehaviorContract": {
+    "path": "releases/compatibility/0.10.0-tool-behavior.json",
+    "sha256": "120f9869f67bb9dc900e05cd41c8bbee08bf96bd516f0a6ce527d1a43bc809a3"
+  },
   "compatibilityClassification": "compatible",
   "stableRootPaths": [
     "AGENTS.md",
@@ -139,7 +143,7 @@
       "published v0.10.0 root stable entry paths",
       "published v0.10.0 stable rolling schema filenames",
       "seven original stable template paths",
-      "documented stable tool entry paths and result contract",
+      "published v0.10.0 CLI/result/exit-code and safe-overwrite tool behavior",
       "canonical uppercase project-profile compatibility entry points",
       "release artifact naming and checksum contract",
       "repository governance and exception authority after the v0.10.0 policy transition"
