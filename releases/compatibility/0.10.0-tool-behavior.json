@@ -1,5 +1,5 @@
 {
-  "formatVersion": "1.0.0",
+  "formatVersion": "1.1.0",
   "releaseVersion": "0.10.0",
   "tag": "v0.10.0",
   "sourceCommit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c",
@@ -77,6 +77,69 @@
       "error",
       "warning",
       "info"
+    ]
+  },
+  "findingCodeContract": {
+    "publicInterfaceStatement": "Finding code values are public automation interfaces; values and meanings published in v0.10.0 must not be removed, renamed, reused, or changed incompatibly.",
+    "unchangedPublishedSourceTrees": {
+      "tools/check-freshness": "c597779a67854cbf4d302769abeb3649a955286b",
+      "tools/check-links": "7e6eabf0156ff58c68f54996d269269103b1a5d1",
+      "tools/compose-agents": "852db9d2746bec4163b4fa85c8f14c3f5bb1b940",
+      "tools/lib": "d93b47fd880cd9eec653509557c227c9defa8016",
+      "tools/validate-all": "5314e1a7e82a1b71e9757aa09fb6b5e929aed727",
+      "tools/validate-schemas": "26d79394a8a7cdb4b7ea53a70b257f319c7bad66",
+      "tools/validate-skills": "3a51fde1860ffa99a63e40fcf079e156fd382449",
+      "tools/validate-standards": "6fa748dee6fce634af20cf34cf3207e32cd4a952",
+      "tools/validate-templates": "8a3ddb7893d8bf068284a1c5ee9c06af0e6ee9ba",
+      "tools/validate-tools": "7cea9197df62ae5c060faf28a69cd58715147f62"
+    },
+    "changedSourceCodes": {
+      "tools/generate-manifest/generate_manifest.py": {
+        "MANIFEST_NO_DISCIPLINES": "generated manifest selected no disciplines; schema-valid but usually incomplete"
+      },
+      "tools/release/validate_release.py": {
+        "RELEASE_FILE_MISSING": "required release-program file is missing",
+        "RELEASE_VERSION_INVALID": "VERSION is not exactly one valid Semantic Version",
+        "RELEASE_STATE_INVALID": "release-state metadata is structurally or semantically invalid",
+        "CHANGELOG_VERSION_MISSING": "dated changelog entry for VERSION is missing",
+        "CHANGELOG_UNRELEASED_MISSING": "changelog lacks the Unreleased section",
+        "RELEASE_NOTES_MISSING": "versioned release notes are missing",
+        "RELEASE_NOTES_SECTION_MISSING": "release notes lack a required section",
+        "RELEASE_NOTES_VERSION_MISMATCH": "release-notes title does not match VERSION",
+        "MIGRATION_NOTES_MISSING": "versioned migration notes are missing",
+        "MIGRATION_NOTES_INCOMPLETE": "migration notes lack required actions",
+        "RELEASE_POLICY_SECTION_MISSING": "release policy lacks a required section",
+        "RELEASE_POLICY_MARKER_MISSING": "release policy lacks a required compatibility marker",
+        "MATURITY_POLICY_SECTION_MISSING": "maturity policy lacks a required section",
+        "RELEASE_WORKFLOW_MISSING": "tag-driven release workflow is missing",
+        "RELEASE_WORKFLOW_INCOMPLETE": "release workflow lacks a required publication marker",
+        "RELEASE_TAG_MISMATCH": "requested tag does not match VERSION",
+        "RELEASE_PUBLICATION_BLOCKED": "prepared-unpublished version is not eligible for tag/publication",
+        "RELEASE_PUBLICATION_VERSION_MISMATCH": "publication VERSION differs from nextIntendedVersion",
+        "RELEASE_HEAD_TAG_MISSING": "HEAD lacks the expected release tag"
+      }
+    },
+    "representativeEmittedFindings": [
+      {
+        "toolPath": "tools/validate-templates/validate_templates.py",
+        "code": "TEMPLATE_STABLE_PATH_MISSING",
+        "meaning": "Missing stable template path."
+      },
+      {
+        "toolPath": "tools/generate-manifest/generate_manifest.py",
+        "code": "MANIFEST_NO_DISCIPLINES",
+        "meaning": "No disciplines were selected."
+      },
+      {
+        "toolPath": "tools/release/validate_release.py",
+        "code": "RELEASE_TAG_MISMATCH",
+        "meaning": "requested tag does not match VERSION"
+      },
+      {
+        "toolPath": "tools/generate-manifest/generate_manifest.py",
+        "code": "INPUT_ERROR",
+        "meaning": "invalid tool input/configuration is reported by the shared execution contract"
+      }
     ]
   },
   "representativeWriterContract": {
