@@ -89,6 +89,49 @@
       "profiles/AI_AGENT_APPLICATION.md"
     ]
   },
+  "stableIdentifiers": {
+    "markdownFrontMatterIds": {
+      "governance/ORGANIZATION_CONTRACT.md": "GOV-CONTRACT",
+      "governance/AGENT_WORKING_METHOD.md": "GOV-WORK",
+      "governance/RISK_CLASSIFICATION.md": "GOV-RISK",
+      "governance/COMPLETION_EVIDENCE.md": "GOV-EVIDENCE",
+      "governance/EXCEPTION_PROCESS.md": "GOV-EXCEPTION",
+      "governance/AI_GENERATED_CODE_POLICY.md": "GOV-AI",
+      "governance/HUMAN_REVIEW_POLICY.md": "GOV-REVIEW",
+      "governance/PRODUCTION_READINESS.md": "GOV-PROD",
+      "governance/SECURE_DEVELOPMENT_POLICY.md": "GOV-SECDEV",
+      "governance/THREAT_MODELING_POLICY.md": "GOV-THREAT",
+      "governance/VULNERABILITY_RESPONSE.md": "GOV-VULN",
+      "profiles/WEB_API.md": "PROFILE-WEB-API",
+      "profiles/WEB_APPLICATION.md": "PROFILE-WEB-APP",
+      "profiles/WORKER_SERVICE.md": "PROFILE-WORKER",
+      "profiles/CLI_TOOL.md": "PROFILE-CLI",
+      "profiles/DESKTOP_APPLICATION.md": "PROFILE-DESKTOP",
+      "profiles/MOBILE_APPLICATION.md": "PROFILE-MOBILE",
+      "profiles/SERVERLESS_FUNCTION.md": "PROFILE-SERVERLESS",
+      "profiles/DATA_PIPELINE.md": "PROFILE-DATA-PIPELINE",
+      "profiles/PUBLIC_LIBRARY.md": "PROFILE-LIB",
+      "profiles/INTERNAL_AUTOMATION.md": "PROFILE-AUTOMATION",
+      "profiles/MULTI_TENANT_SAAS.md": "PROFILE-SAAS",
+      "profiles/SECURITY_TOOL.md": "PROFILE-SECTOOL",
+      "profiles/AI_AGENT_APPLICATION.md": "PROFILE-AI-AGENT"
+    },
+    "schemaIds": {
+      "schemas/artifact-record.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/artifact-record.schema.json",
+      "schemas/completion-result.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/completion-result.schema.json",
+      "schemas/exception-record.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/exception-record.schema.json",
+      "schemas/project-manifest.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/project-manifest.schema.json",
+      "schemas/risk-classification.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/risk-classification.schema.json",
+      "schemas/test-evidence.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/test-evidence.schema.json",
+      "schemas/v1/artifact-record.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/v1/artifact-record.schema.json",
+      "schemas/v1/completion-result.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/v1/completion-result.schema.json",
+      "schemas/v1/exception-record.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/v1/exception-record.schema.json",
+      "schemas/v1/project-manifest.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/v1/project-manifest.schema.json",
+      "schemas/v1/risk-classification.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/v1/risk-classification.schema.json",
+      "schemas/v1/test-evidence.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/v1/test-evidence.schema.json",
+      "tools/contracts/tool-result.schema.json": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/tools/contracts/tool-result.schema.json"
+    }
+  },
   "stableContractPaths": [
     "tools/contracts/tool-result.schema.json"
   ],
