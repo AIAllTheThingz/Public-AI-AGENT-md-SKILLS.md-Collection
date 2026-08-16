@@ -20,6 +20,7 @@ The accumulated changes in this section are intended for the forward-only `0.10.
 
 - Changed repository-maintenance approval behavior relative to the prepared `0.9.0` governance contract: low- and moderate-risk repository changes may now be maintainer self-reviewed after permanent CI when no independent-review gate applies. Independent review remains mandatory for high/critical risk, any breaking repository change, the final `1.0.0` compatibility approval, and stable-maturity commitments. This change affects repository maintenance governance only; it does not weaken adopter-facing engineering or security standards.
 - Changed canonical schema and tool-result `$id` identifiers from raw GitHub URLs under `AIAllTheThingz/Public-Access-Agents` to `AIAllTheThingz/Public-AI-Governance`. Schema validation structure is unchanged, but consumers that persist or compare exact `$id` strings must migrate those identifiers. This is an explicit pre-1.0 breaking machine-readable contract change.
+- Narrowed the supported Oracle Linux Virtualization Manager (OLVM) boundary: OLVM is treated as a legacy managed boundary tied to supported Oracle Linux 8 estates and must not be inferred as the management plane for Oracle Linux 9/10. Adopters that previously applied the prepared 0.9 guidance to OLVM-managed Oracle Linux 9/10 environments must migrate or re-scope that adoption.
 
 ### Normative changes
 

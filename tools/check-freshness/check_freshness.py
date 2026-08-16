@@ -148,6 +148,68 @@ def validate_sources(
     return valid
 
 
+def validate_review_evidence(
+    root: Path,
+    raw: Any,
+    *,
+    record_id: str,
+    reviewed: date | None,
+    registry: str,
+    findings: list[Finding],
+) -> str | None:
+    if raw is None:
+        if reviewed is not None:
+            findings.append(Finding(
+                "SOURCE_REVIEW_EVIDENCE_MISSING",
+                f"Record {record_id!r} with lastReviewed must declare reviewEvidence.",
+                path=registry,
+            ))
+        return None
+    if not isinstance(raw, str) or not raw.strip():
+        findings.append(Finding(
+            "SOURCE_REVIEW_EVIDENCE_INVALID",
+            f"Record {record_id!r} reviewEvidence must be a non-empty repository-relative path.",
+            path=registry,
+        ))
+        return None
+    relative = Path(raw.strip())
+    if relative.is_absolute():
+        findings.append(Finding(
+            "SOURCE_REVIEW_EVIDENCE_INVALID",
+            f"Record {record_id!r} reviewEvidence must be repository-relative: {raw}",
+            path=registry,
+        ))
+        return None
+    repository_root = root.resolve()
+    resolved = (repository_root / relative).resolve()
+    try:
+        resolved.relative_to(repository_root)
+    except ValueError:
+        findings.append(Finding(
+            "SOURCE_REVIEW_EVIDENCE_ESCAPES_ROOT",
+            f"Record {record_id!r} reviewEvidence resolves outside the repository root: {raw}",
+            path=registry,
+        ))
+        return None
+    valid = True
+    if reviewed is not None:
+        expected = Path("source-reviews") / f"{reviewed.isoformat()}.md"
+        if relative.as_posix() != expected.as_posix():
+            findings.append(Finding(
+                "SOURCE_REVIEW_EVIDENCE_DATE_MISMATCH",
+                f"Record {record_id!r} reviewEvidence must be {expected.as_posix()!r} for lastReviewed {reviewed.isoformat()}.",
+                path=registry,
+            ))
+            valid = False
+    if not resolved.is_file():
+        findings.append(Finding(
+            "SOURCE_REVIEW_EVIDENCE_FILE_MISSING",
+            f"Record {record_id!r} reviewEvidence file does not exist: {raw}",
+            path=registry,
+        ))
+        valid = False
+    return relative.as_posix() if valid else None
+
 def review_date_state(
     raw: Any,
     *,
@@ -309,6 +371,17 @@ def run(args: argparse.Namespace) -> ToolResult:
             registry=registry,
             findings=findings,
         )
+        evidence_findings_before = len(findings)
+        review_evidence = validate_review_evidence(
+            root,
+            record.get("reviewEvidence"),
+            record_id=record_id,
+            reviewed=reviewed,
+            registry=registry,
+            findings=findings,
+        )
+        if len(findings) > evidence_findings_before:
+            state = "Invalid"
         counts[state] = counts.get(state, 0) + 1
         evaluated.append({
             "id": record_id,
@@ -316,6 +389,7 @@ def run(args: argparse.Namespace) -> ToolResult:
             "maturity": maturity,
             "state": state,
             "lastReviewed": reviewed.isoformat() if reviewed else None,
+            "reviewEvidence": review_evidence,
             "dueOn": due.isoformat() if due else None,
             "ageDays": age_days,
             "reviewIntervalDays": interval,

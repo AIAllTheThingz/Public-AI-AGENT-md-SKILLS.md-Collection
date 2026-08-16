@@ -27,7 +27,7 @@ It applies to read-only automation as well as mutation because connecting to the
 - Record the distribution package, imported child modules, resolved versions, source repository, PowerShell version, operating system, target product version, and validation date.
 - Verify the supported installation, migration, and compatibility path against current Broadcom documentation before changing dependencies.
 
-The repository source review on 2026-07-15 found the current Broadcom portal advertising VCF PowerCLI 9.1. This observation is not a version pin or a compatibility certification. Adopters must revalidate the current release and its support boundary.
+The accountable VCF PowerCLI source-review state is maintained in [`../../../SOURCE_REVIEWS.json`](../../../SOURCE_REVIEWS.json) with durable evidence under [`../../../source-reviews/`](../../../source-reviews/). The 2026-08-15 accountable review found the current Broadcom portal advertising VCF PowerCLI 9.1. This observation is not a version pin or a compatibility certification. Adopters must revalidate the current release and its support boundary.
 
 ## Dependency and runtime management
 

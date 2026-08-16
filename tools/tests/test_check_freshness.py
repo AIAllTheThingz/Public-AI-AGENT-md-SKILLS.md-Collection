@@ -39,6 +39,13 @@ class CheckFreshnessTests(unittest.TestCase):
                 }
             ],
         }
+        if last_reviewed is not None:
+            evidence = f"source-reviews/{last_reviewed}.md"
+            payload["records"][0]["reviewEvidence"] = evidence
+            evidence_path = root / evidence
+            evidence_path.parent.mkdir(parents=True, exist_ok=True)
+            evidence_path.write_text("# Review evidence\n", encoding="utf-8")
+
         path = root / registry
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -193,6 +200,56 @@ class CheckFreshnessTests(unittest.TestCase):
                 "SOURCE_REVIEW_DATE_FUTURE",
                 {item["code"] for item in payload["findings"]},
             )
+
+    def test_reviewed_record_requires_review_evidence(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            registry = self.write_registry(root, last_reviewed="2026-08-01")
+            payload = json.loads(registry.read_text(encoding="utf-8"))
+            payload["records"][0].pop("reviewEvidence")
+            registry.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+            completed = run_tool("tools/check-freshness/check_freshness.py", "--format", "json", "--as-of", "2026-08-15", root=root)
+            result = json_result(completed)
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertEqual(result["summary"]["freshnessState"], "Invalid")
+            self.assertIn("SOURCE_REVIEW_EVIDENCE_MISSING", {item["code"] for item in result["findings"]})
+
+    def test_review_evidence_must_stay_in_repository(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "repo"
+            root.mkdir()
+            registry = self.write_registry(root, last_reviewed="2026-08-01")
+            payload = json.loads(registry.read_text(encoding="utf-8"))
+            payload["records"][0]["reviewEvidence"] = "../outside.md"
+            registry.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+            completed = run_tool("tools/check-freshness/check_freshness.py", "--format", "json", "--as-of", "2026-08-15", root=root)
+            result = json_result(completed)
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertIn("SOURCE_REVIEW_EVIDENCE_ESCAPES_ROOT", {item["code"] for item in result["findings"]})
+
+    def test_review_evidence_date_must_match_review_date(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            registry = self.write_registry(root, last_reviewed="2026-08-01")
+            wrong = root / "source-reviews" / "2026-07-31.md"
+            wrong.write_text("# Wrong date\n", encoding="utf-8")
+            payload = json.loads(registry.read_text(encoding="utf-8"))
+            payload["records"][0]["reviewEvidence"] = "source-reviews/2026-07-31.md"
+            registry.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+            completed = run_tool("tools/check-freshness/check_freshness.py", "--format", "json", "--as-of", "2026-08-15", root=root)
+            result = json_result(completed)
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertIn("SOURCE_REVIEW_EVIDENCE_DATE_MISMATCH", {item["code"] for item in result["findings"]})
+
+    def test_review_evidence_file_must_exist(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            registry = self.write_registry(root, last_reviewed="2026-08-01")
+            (root / "source-reviews" / "2026-08-01.md").unlink()
+            completed = run_tool("tools/check-freshness/check_freshness.py", "--format", "json", "--as-of", "2026-08-15", root=root)
+            result = json_result(completed)
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            self.assertIn("SOURCE_REVIEW_EVIDENCE_FILE_MISSING", {item["code"] for item in result["findings"]})
 
     def test_scope_escape_is_rejected_and_state_is_invalid(self):
         with tempfile.TemporaryDirectory() as temp:

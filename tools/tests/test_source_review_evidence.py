@@ -152,6 +152,22 @@ class SourceReviewEvidenceTests(unittest.TestCase):
                 self.assertIn("source-reviews/", text)
                 self.assertIn("2026-08-15", text)
 
+    def test_powercli_standard_uses_accountable_review_evidence(self):
+        powercli = (REPO_ROOT / "virtualization" / "vsphere-esxi" / "standards" / "POWERCLI_AUTOMATION_STANDARD.md").read_text(encoding="utf-8")
+        self.assertNotIn("2026-07-15", powercli)
+        self.assertIn("SOURCE_REVIEWS.json", powercli)
+        self.assertIn("source-reviews/", powercli)
+        self.assertIn("2026-08-15", powercli)
+
+    def test_olvm_scope_narrowing_is_classified_as_breaking(self):
+        changelog = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+        release = (REPO_ROOT / "releases" / "0.10.0.md").read_text(encoding="utf-8")
+        for name, text in (("CHANGELOG.md", changelog), ("releases/0.10.0.md", release)):
+            breaking = text.split("### Breaking changes", 1)[1].split("### Normative changes", 1)[0] if name == "CHANGELOG.md" else text.split("## Breaking changes", 1)[1].split("## Normative changes", 1)[0]
+            with self.subTest(document=name):
+                self.assertIn("Oracle Linux Virtualization Manager (OLVM)", breaking)
+                self.assertIn("Oracle Linux 9/10", breaking)
+
     def test_migration_notes_disclose_lifecycle_and_source_review_boundaries(self):
         migration = (REPO_ROOT / "releases" / "migrations" / "0.10.0.md").read_text(encoding="utf-8")
 
