@@ -199,6 +199,8 @@ The repository has a versioned compatibility baseline and an evidence-based rele
 
 The current `1.0.0-rc.1` release candidate is **prepared, unpublished**. The published migration checkpoint remains `v0.10.0`; the `0.9.0` baseline remains **prepared, unpublished** and must not be retroactively tagged.
 
+The next intended publication is `1.0.0-rc.1`.
+
 The release program defines Semantic Versioning for standards, schemas, templates, tools, governance, and stable paths; 90-day and 180-day deprecation windows; migration notes; tag and GitHub Release rules; deterministic archives; SHA-256 checksums; and the `1.0.0` compatibility gate.
 
 A repository release does not automatically promote every package to `stable`.
