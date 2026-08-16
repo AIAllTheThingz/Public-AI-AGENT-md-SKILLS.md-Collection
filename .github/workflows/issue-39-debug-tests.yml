@@ -1,0 +1,39 @@
+name: Issue 39 Debug Tests
+
+on:
+  push:
+    branches:
+      - maintenance/issue-39-source-currency-review
+    paths:
+      - .github/workflows/issue-39-debug-tests.yml
+      - tools/tests/test_source_review_evidence.py
+      - tools/tests/test_release.py
+      - releases/**
+      - virtualization/**
+      - SOURCE_REVIEWS.json
+      - source-reviews/**
+
+permissions:
+  contents: read
+
+jobs:
+  focused-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.13'
+
+      - name: Install validation dependencies
+        run: python -m pip install --require-hashes -r tools/validate-schemas/requirements.lock
+
+      - name: Run source-review tests verbosely
+        run: python -m unittest discover -s tools/tests -p 'test_source_review_evidence.py' -v
+
+      - name: Run release tests verbosely
+        run: python -m unittest discover -s tools/tests -p 'test_release.py' -v
