@@ -12,8 +12,13 @@ CANONICAL_REPOSITORY = "AIAllTheThingz/Public-AI-Governance"
 STALE_REPOSITORY = "AIAllTheThingz/Public-Access-Agents"
 CANONICAL_RAW_PREFIX = f"https://raw.githubusercontent.com/{CANONICAL_REPOSITORY}/"
 STALE_RAW_PREFIX = f"https://raw.githubusercontent.com/{STALE_REPOSITORY}/"
+SEMVER = (
+    r"\d+\.\d+\.\d+"
+    r"(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
+    r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?"
+)
 NEXT_PUBLICATION = re.compile(
-    r"next intended publication(?:\s+is|:)?\s+`(?P<version>\d+\.\d+\.\d+)`",
+    rf"next intended publication(?:\s+is|:)?\s+`(?P<version>{SEMVER})`",
     re.IGNORECASE,
 )
 
