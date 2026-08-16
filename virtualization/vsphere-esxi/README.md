@@ -93,11 +93,11 @@ Bind commands to an explicitly validated VIServer connection, reject ambiguous d
 
 Verify vCenter/ESXi interoperability, hardware compatibility, firmware, drivers, add-ons, image profiles, guest OS support, VMware Tools, virtual hardware, backup integrations, licensing, and Broadcom support entitlements.
 
-Last repository source review: 2026-07-15.
-
 Authoritative starting points: [Broadcom VMware vSphere documentation](https://techdocs.broadcom.com/us/en/vmware-cis/vsphere.html) and the [Broadcom VCF PowerCLI portal](https://developer.broadcom.com/powercli).
 
-The adopting project must revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
+The accountable vSphere product source-review state is maintained in [`../../SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json) with durable evidence under [`../../source-reviews/`](../../source-reviews/). The 2026-08-15 review records the vSphere **product** boundary as `NotRun/Blocked` because the Broadcom vSphere techdocs endpoint could not be retrieved. VCF PowerCLI was reviewed separately through Broadcom Developer documentation. Do not substitute the PowerCLI review for a current vSphere product compatibility review.
+
+The adopting project must revalidate current vSphere release notes, interoperability, compatibility guides, security guidance, licensing, support entitlement, and exact hardware/software combinations before product-specific work.
 
 ## Product cautions
 

@@ -82,13 +82,13 @@ Verify current product and client compatibility. Prefer read-only queries before
 
 ## Lifecycle and compatibility
 
-Use current XenServer branding and documentation while recording Citrix Hypervisor or older XenServer names when they identify the installed product. Verify upgrade paths, pool compatibility, hardware compatibility, guest support, tools, licensing, and support lifecycle.
+XenServer 9 is the current GA family. Treat Citrix Hypervisor and XenServer 8 or older references as installed-estate, compatibility, or migration boundaries rather than the default greenfield target.
 
-Last repository source review: 2026-07-14.
+Verify the exact XenServer update channel, update age, upgrade path, pool compatibility, hardware compatibility, guest support, tools, licensing, and support status before work. Current XenServer 9 support guidance requires supported installations to remain within the vendor's published update window; do not infer support from the major version alone.
 
-Authoritative starting point: [XenServer product documentation](https://docs.xenserver.com/en-us/xenserver/8/).
+Authoritative starting point: [XenServer 9 documentation](https://docs.xenserver.com/en-us/xenserver/9/).
 
-The adopting project must revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
+The repository source-review record is maintained in [`../../SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json) with durable evidence under [`../../source-reviews/`](../../source-reviews/). The adopting project must still revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
 
 ## Product cautions
 

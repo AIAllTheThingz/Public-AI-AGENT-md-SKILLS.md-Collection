@@ -52,7 +52,7 @@ This package owns C# source semantics. The existing [.NET package](../dotnet/) o
 
 ## Language and runtime boundary
 
-Microsoft documentation reviewed on 2026-07-16 identifies C# 14 as the stable language associated with .NET 10. This package does not require every existing repository to migrate.
+The accountable C# source-review state is maintained in [`../../SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json) with durable evidence under [`../../source-reviews/`](../../source-reviews/). The 2026-08-15 accountable review identifies C# 14 as the stable language associated with .NET 10. This package does not require every existing repository to migrate.
 
 - New modern .NET work should use the stable language version associated with the selected supported target framework.
 - Existing projects preserve their declared compiler, target, runtime, and consumer boundary unless migration is in scope.

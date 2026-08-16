@@ -19,12 +19,7 @@ Provide project-agnostic standards for safe, testable, reviewable, recoverable, 
 - virtual networks
 - migration
 - Oracle VirtIO drivers
-- and Oracle Linux Virtualization Manager data centers
-- clusters
-- hosts
-- storage domains
-- networks
-- VMs
+- legacy Oracle Linux Virtualization Manager estates that are explicitly within their supported Oracle Linux 8 boundary
 
 Do not select this package merely because a dependency shares an underlying hypervisor. Select it when this product's control plane owns or materially controls the target boundary.
 
@@ -42,13 +37,15 @@ Do not select this package merely because a dependency shares an underlying hype
 
 ## Authority
 
-The authoritative boundary is the exact Oracle Linux libvirt host for standalone KVM or the authoritative Oracle Linux Virtualization Manager for managed environments.
+The authoritative boundary is the exact Oracle Linux libvirt host for standalone KVM. For an existing OLVM-managed estate, the OLVM Manager is authoritative only when that deployment is within the exact Oracle-supported OLVM and Oracle Linux 8 boundary.
 
 Record the endpoint class and stable object identifiers without committing production details. If multiple managers can see the same objects, determine which one owns desired state before proceeding.
 
 ## Interfaces
 
-Use Oracle Linux KVM/libvirt tooling, virsh, Cockpit where supported, OLVM REST APIs, supported SDKs, Ansible, and engine backup procedures.
+For current Oracle Linux KVM use Oracle Linux KVM/libvirt tooling, `virsh`, Cockpit where supported, supported SDKs, Ansible, and documented migration interfaces.
+
+For an existing OLVM estate, use OLVM APIs and engine backup/recovery procedures only after verifying that the exact OLVM release and Oracle Linux 8 environment remain supported. Do not assume OLVM is a current management plane for Oracle Linux 9 or 10.
 
 Verify current product and client compatibility. Prefer read-only queries before changes. Preserve asynchronous task identifiers and poll bounded terminal state.
 
@@ -66,33 +63,36 @@ Verify current product and client compatibility. Prefer read-only queries before
 
 ## Adoption questions
 
-- Which product, edition, version, and support lifecycle apply?
+- Which Oracle Linux generation, kernel family, KVM/QEMU/libvirt release, and support lifecycle apply?
+- Is the environment standalone KVM or an explicitly supported legacy OLVM estate?
 - Which manager or host is authoritative?
-- Which sites, clusters or pools, hosts, guests, networks, and storage are in scope?
+- Which sites, clusters, hosts, guests, networks, and storage are in scope?
 - Which stable identifiers prevent ambiguous selection?
 - Which identity plans and executes?
 - Which operations require separate approval?
 - Which backup is independent and demonstrably restorable?
 - Which capacity supports maintenance, migration, failover, and rollback?
-- Which hardware, firmware, guest, tools, API, SDK, module, storage, and network compatibility sources were checked?
+- Which hardware, firmware, guest, VirtIO, API, SDK, module, storage, and network compatibility sources were checked?
 - Which monitoring and owner will observe the result?
 - Which recovery path is tested?
 
 ## Lifecycle and compatibility
 
-Verify Oracle Linux release, UEK or RHCK kernel boundary, KVM/QEMU/libvirt, OLVM release, hardware certification, Oracle VirtIO drivers, guest support, storage, networking, migration, API, and support entitlement.
+Oracle publishes current KVM guidance for Oracle Linux 10 and Oracle Linux 9. Verify the exact Oracle Linux release, UEK or RHCK kernel boundary, KVM/QEMU/libvirt versions, hardware certification, Oracle VirtIO drivers, guest support, storage, networking, migration, API, and support entitlement.
 
-Last repository source review: 2026-07-14.
+Current Oracle Linux 10 KVM documentation identifies Oracle Linux Virtualization Manager availability with Oracle Linux 8. Treat OLVM as a separate legacy managed boundary rather than implying that OLVM is a current Oracle Linux 10 or Oracle Linux 9 control plane.
 
 Authoritative starting point: [Oracle Linux KVM User's Guide](https://docs.oracle.com/en/operating-systems/oracle-linux/kvm-user/).
 
-The adopting project must revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
+The repository source-review record is maintained in [`../../SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json) with durable evidence under [`../../source-reviews/`](../../source-reviews/). The adopting project must revalidate current release notes, compatibility, security guidance, licensing, entitlement, and support before product-specific work.
 
 ## Product cautions
 
-- Do not mix direct libvirt ownership with OLVM-managed objects unless Oracle documents the operation.
+- Do not mix direct libvirt ownership with OLVM-managed objects unless Oracle documents the operation for the exact supported estate.
 - Do not assume upstream oVirt or generic KVM procedures are supported unchanged by Oracle.
-- Protect OLVM engine backup and recovery before manager, cluster, or storage changes.
+- Do not deploy or expand OLVM as if it were the current management plane for Oracle Linux 9 or 10.
+- Protect OLVM engine backup and recovery before changes to a supported legacy OLVM estate.
+- Treat manager migration away from OLVM as a lifecycle project with workload, network, storage, identity, and recovery evidence.
 
 ## Automation guidance
 
@@ -159,6 +159,7 @@ Plan for:
 - partial migration
 - automation interruption and safe rerun
 - licensing or support mismatch
+- an OLVM workflow being applied outside its supported Oracle Linux 8 boundary
 
 ## Composition
 
@@ -183,4 +184,4 @@ This package does not know the adopting environment's topology, workload depende
 
 ## Maintenance
 
-Review this package when the product's management model, lifecycle, security guidance, compatibility, licensing, API behavior, or support policy changes.
+Review this package when Oracle Linux, KVM, UEK/RHCK, VirtIO, OLVM support, migration, security, or lifecycle guidance changes.

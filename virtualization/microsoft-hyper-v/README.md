@@ -82,11 +82,9 @@ Verify current product and client compatibility. Prefer read-only queries before
 
 Verify Windows Server version and servicing, cluster functional level, hardware and firmware, guest support, VM configuration version, integration services, backup, storage, network, SCVMM/WAC, PowerShell, and licensing.
 
-Last repository source review: 2026-07-14.
-
 Authoritative starting point: [Microsoft Hyper-V documentation](https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/overview).
 
-The adopting project must revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
+The accountable repository source-review date and evidence are maintained in [`../../SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json) and [`../../source-reviews/`](../../source-reviews/). Do not duplicate that date here. The adopting project must still revalidate current release notes, Windows Server lifecycle, compatibility, security guidance, licensing, and support before product-specific work.
 
 ## Product cautions
 

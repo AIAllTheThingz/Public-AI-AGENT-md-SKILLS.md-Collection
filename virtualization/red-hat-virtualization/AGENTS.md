@@ -60,9 +60,11 @@ Pin or constrain automation dependencies when practical. Verify interface, serve
 
 ## Lifecycle and compatibility
 
-Red Hat documents RHV 4.4 in Extended Life Phase, with no additional software fixes through August 31, 2026. Treat this package as legacy-operation and migration guidance. Verify current entitlement and support before any work, and do not select RHV for a new deployment without an explicit supported exception.
+Red Hat Virtualization is in Extended Life Phase and must be treated as legacy-operation and migration scope. Current Red Hat lifecycle policy describes limited support and does not include new bug fixes, security fixes, hardware enablement, or root-cause analysis. Red Hat identifies OpenShift Virtualization as the continuity roadmap.
 
-Record the exact versions and source-review date. Do not rely on remembered compatibility, feature, licensing, or support claims.
+Verify the exact installed RHV release, entitlement, available support, migration guidance, and recovery posture before work. Do not select RHV for a new deployment without an explicit supported exception.
+
+Record the exact versions, authoritative lifecycle sources, and source-review date. Do not rely on remembered compatibility, feature, licensing, or support claims.
 
 ## Non-negotiable behavior
 
@@ -84,6 +86,7 @@ Record the exact versions and source-review date. Do not rely on remembered comp
 - Prioritize inventory, containment, backup, and migration planning over feature expansion.
 - Do not perform a greenfield RHV deployment based only on historical documentation.
 - Do not change self-hosted engine, storage domains, or manager state without tested engine recovery.
+- Do not interpret Extended Life Phase as normal maintenance coverage or continued security-fix delivery.
 
 ## Product rules
 

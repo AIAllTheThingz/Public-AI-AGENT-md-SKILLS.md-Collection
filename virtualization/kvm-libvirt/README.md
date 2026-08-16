@@ -84,11 +84,9 @@ Verify current product and client compatibility. Prefer read-only queries before
 
 Verify distribution, kernel, QEMU, libvirt, machine type, firmware, CPU model, guest support, storage, networking, security policy, migration compatibility, and management-tool support.
 
-Last repository source review: 2026-07-14.
-
 Authoritative starting point: [Linux kernel KVM documentation](https://docs.kernel.org/virt/kvm/index.html).
 
-The adopting project must revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
+The accountable repository source-review date and evidence are maintained in [`../../SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json) and [`../../source-reviews/`](../../source-reviews/). Do not duplicate that date here. The adopting project must still revalidate current distribution release notes, QEMU/libvirt compatibility, security guidance, licensing, and support before product-specific work.
 
 ## Product cautions
 

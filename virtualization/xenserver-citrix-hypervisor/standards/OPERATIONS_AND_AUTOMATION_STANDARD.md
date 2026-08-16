@@ -211,6 +211,6 @@ Completion requires exact evidence, owner acceptance where applicable, operation
 
 ## Current source boundary
 
-Use current XenServer branding and documentation while recording Citrix Hypervisor or older XenServer names when they identify the installed product. Verify upgrade paths, pool compatibility, hardware compatibility, guest support, tools, licensing, and support lifecycle.
+XenServer 9 is the current GA family. Treat Citrix Hypervisor and XenServer 8 or older references as installed-estate, compatibility, or migration boundaries rather than the default greenfield target.
 
-Verify current behavior with [XenServer product documentation](https://docs.xenserver.com/en-us/xenserver/8/) and other official compatibility, security, lifecycle, and release documentation before execution.
+Verify exact update age, update channel, upgrade path, pool compatibility, hardware compatibility, guest support, tools, licensing, and support lifecycle using [XenServer 9 product documentation](https://docs.xenserver.com/en-us/xenserver/9/) and current official compatibility, security, lifecycle, and release guidance before execution.

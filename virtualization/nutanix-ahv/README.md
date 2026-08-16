@@ -86,11 +86,9 @@ Verify current product and client compatibility. Prefer read-only queries before
 
 Verify AOS, AHV, Prism Central, firmware, Foundation, LCM, hardware model, guest tools, backup, replication, API, licensing, and Nutanix interoperability before relying on a feature.
 
-Last repository source review: 2026-07-14.
+Authoritative starting points: [Nutanix support policies and FAQs](https://www.nutanix.com/support-services/support-policies-and-faqs) and the [Nutanix product documentation portal](https://portal.nutanix.com/page/documents/list?type=software).
 
-Authoritative starting point: [Nutanix product documentation portal](https://portal.nutanix.com/page/documents/list?type=software).
-
-The adopting project must revalidate current release notes, compatibility, security guidance, licensing, and support before product-specific work.
+The accountable repository source-review date and evidence are maintained in [`../../SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json) and [`../../source-reviews/`](../../source-reviews/). Do not duplicate that date here. The adopting project must still revalidate exact supported builds, interoperability, release notes, compatibility, security guidance, licensing, and support before product-specific work.
 
 ## Product cautions
 
