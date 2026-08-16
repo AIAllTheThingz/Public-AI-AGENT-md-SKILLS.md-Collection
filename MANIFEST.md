@@ -77,7 +77,7 @@ These progressive-disclosure routers and direct language skills select and compo
 
 Current repository version: `1.0.0-rc.1` **prepared and permanently validated; not yet published**.
 
-The published migration checkpoint remains `0.10.0`, published as `v0.10.0` on 2026-08-16 from commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`. The validated RC functional candidate is `89a0470a3be4902f0c70eb31d396655dde4c8d7c`, recorded in `releases/rc-readiness/1.0.0-rc.1.md`.
+The published migration checkpoint remains `0.10.0`, published as `v0.10.0` on 2026-08-16 from commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`. The validated RC functional candidate is `d0708d974e4e08bd7acad6f93661034e71d2d4ee`, recorded in `releases/rc-readiness/1.0.0-rc.1.md`.
 
 The `0.9.0` baseline remains **prepared, unpublished** and must not be reconstructed or retroactively tagged.
 
@@ -276,7 +276,7 @@ Each complete example includes root and nested agent instructions, a project man
 - reusable template package validation
 - tool package and executable-entry validation
 - repository release validation
-- published-checkpoint-to-RC compatibility regression with deliberate-removal failure coverage
+- published-checkpoint-to-RC compatibility regression with deliberate path-removal and identifier-mutation/removal failure coverage
 - deterministic release artifact generation
 - deterministic project-manifest generation
 - traceable agent-standards composition
