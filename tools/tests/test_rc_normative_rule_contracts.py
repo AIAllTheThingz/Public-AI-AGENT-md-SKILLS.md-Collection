@@ -12,6 +12,8 @@ from helpers import REPO_ROOT
 CANDIDATE_INVENTORY = REPO_ROOT / "releases" / "compatibility" / "1.0.0-rc.1.json"
 RULE_CHECKPOINT = REPO_ROOT / "releases" / "compatibility" / "0.10.0-rule-contracts.json"
 RULE_CHECKPOINT_SHA256 = "eba5b25f4036bbd62c3265579ec450c6c44f36da7a69c2a62559ae017de2efa4"
+CSHARP_PROMOTION_EVIDENCE_COMMIT = "2f6d39288e5c1a7d416e62cd75651b3d6da48dfe"
+CSHARP_NORMATIVE_ROOT = "languages/csharp/standards"
 RULE_PATTERN = re.compile(
     r"^### (?P<id>[A-Z][A-Z0-9-]*-\d{3})\s*$\n\n"
     r"\*\*Requirement:\*\* (?P<requirement>[^\n]+)$",
@@ -20,16 +22,23 @@ RULE_PATTERN = re.compile(
 RULE_HEADING_PATTERN = re.compile(r"(?m)^### ([A-Z][A-Z0-9-]*-\d{3})\s*$")
 
 
-def git_object_sha(relative: str) -> str:
+def git_object_sha_at(revision: str, relative: str) -> str:
     completed = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), "rev-parse", f"HEAD:{relative}"],
+        ["git", "-C", str(REPO_ROOT), "rev-parse", f"{revision}:{relative}"],
         text=True,
         capture_output=True,
         check=False,
     )
     if completed.returncode != 0:
-        raise AssertionError(completed.stderr.strip() or f"cannot resolve HEAD:{relative}")
+        raise AssertionError(
+            completed.stderr.strip()
+            or f"cannot resolve {revision}:{relative}; full Git history is required"
+        )
     return completed.stdout.strip()
+
+
+def git_object_sha(relative: str) -> str:
+    return git_object_sha_at("HEAD", relative)
 
 
 def extract_rule_contracts(text: str) -> list[tuple[str, str]]:
@@ -127,6 +136,21 @@ class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
         self.assertEqual(len(expected), 10)
         self.assertIn("CSHARP-LANG-001", expected)
         self.assertIn("CSHARP-EVIDENCE-010", expected)
+
+    def test_full_csharp_normative_standards_match_promotion_evidence_candidate(self):
+        promoted_tree = git_object_sha_at(CSHARP_PROMOTION_EVIDENCE_COMMIT, CSHARP_NORMATIVE_ROOT)
+        current_tree = git_object_sha_at("HEAD", CSHARP_NORMATIVE_ROOT)
+        self.assertEqual(
+            current_tree,
+            promoted_tree,
+            "stable C# normative standards changed after the independently reviewed promotion evidence candidate",
+        )
+
+        security_standard = f"{CSHARP_NORMATIVE_ROOT}/SECURITY_STANDARD.md"
+        self.assertEqual(
+            git_object_sha_at("HEAD", security_standard),
+            git_object_sha_at(CSHARP_PROMOTION_EVIDENCE_COMMIT, security_standard),
+        )
 
     def test_powershell_published_source_had_no_numbered_rule_contract(self):
         source = self.checkpoint["changedPublishedRuleSources"]["languages/powershell"]
