@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import copy
 import hashlib
 import json
 import subprocess
@@ -45,6 +46,54 @@ def canonical_ast(node: ast.AST | None) -> str:
     return "" if node is None else ast.dump(node, annotate_fields=False, include_attributes=False)
 
 
+class FindingMessageNormalizer(ast.NodeTransformer):
+    """Remove human-readable Finding message text from semantic dependency snapshots."""
+
+    def visit_Call(self, node: ast.Call) -> ast.AST:
+        node = self.generic_visit(node)
+        if isinstance(node.func, ast.Name) and node.func.id == "Finding":
+            if len(node.args) >= 2:
+                node.args[1] = ast.Constant(value="<message>")
+            for keyword in node.keywords:
+                if keyword.arg == "message":
+                    keyword.value = ast.Constant(value="<message>")
+        return node
+
+
+def normalized_semantic_ast(node: ast.AST | None) -> str:
+    if node is None:
+        return ""
+    cloned = copy.deepcopy(node)
+    cloned = FindingMessageNormalizer().visit(cloned)
+    ast.fix_missing_locations(cloned)
+    return canonical_ast(cloned)
+
+
+def loaded_names(node: ast.AST | None) -> set[str]:
+    if node is None:
+        return set()
+    return {
+        item.id
+        for item in ast.walk(node)
+        if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Load)
+    }
+
+
+def module_definitions(tree: ast.Module) -> dict[str, ast.AST]:
+    definitions: dict[str, ast.AST] = {}
+    for statement in tree.body:
+        if isinstance(statement, ast.Assign):
+            for target in statement.targets:
+                if isinstance(target, ast.Name):
+                    definitions[target.id] = statement.value
+        elif isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
+            if statement.value is not None:
+                definitions[statement.target.id] = statement.value
+        elif isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            definitions[statement.name] = statement
+    return definitions
+
+
 def finding_call_shape(node: ast.Call) -> dict[str, object]:
     # Finding(code, message, ...) exposes the code and semantic emission context as the
     # compatibility contract. Message wording is deliberately excluded because the
@@ -64,72 +113,135 @@ def finding_call_shape(node: ast.Call) -> dict[str, object]:
     }
 
 
+def finding_dependency_nodes(node: ast.Call) -> list[ast.AST]:
+    dependencies: list[ast.AST] = list(node.args[2:])
+    dependencies.extend(
+        keyword.value
+        for keyword in node.keywords
+        if keyword.arg != "message"
+    )
+    return dependencies
+
+
 class FindingSignatureVisitor(ast.NodeVisitor):
-    def __init__(self) -> None:
+    def __init__(self, definitions: dict[str, ast.AST]) -> None:
+        self.module_definitions = definitions
         self.function = "<module>"
         self.context: list[str] = []
+        self.context_nodes: list[ast.AST] = []
+        self.local_bindings: dict[str, ast.AST] = {}
         self.signatures: dict[str, list[str]] = {}
 
     def _visit_block(self, statements: list[ast.stmt]) -> None:
         for statement in statements:
             self.visit(statement)
 
-    def _with_context(self, marker: str, statements: list[ast.stmt]) -> None:
+    def _with_context(
+        self,
+        marker: str,
+        dependency_node: ast.AST | None,
+        statements: list[ast.stmt],
+    ) -> None:
         self.context.append(marker)
+        if dependency_node is not None:
+            self.context_nodes.append(dependency_node)
         try:
             self._visit_block(statements)
         finally:
+            if dependency_node is not None:
+                self.context_nodes.pop()
             self.context.pop()
 
+    def _dependency_snapshot(self, nodes: list[ast.AST]) -> dict[str, str]:
+        pending: set[str] = set()
+        for node in nodes:
+            pending.update(loaded_names(node))
+
+        snapshot: dict[str, str] = {}
+        visited: set[str] = set()
+        while pending:
+            name = pending.pop()
+            if name in visited:
+                continue
+            visited.add(name)
+
+            binding = self.local_bindings.get(name)
+            if binding is None:
+                binding = self.module_definitions.get(name)
+            if binding is None:
+                continue
+
+            snapshot[name] = normalized_semantic_ast(binding)
+            pending.update(loaded_names(binding) - visited)
+
+        return dict(sorted(snapshot.items()))
+
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        previous = self.function
+        previous_function = self.function
+        previous_bindings = self.local_bindings
         self.function = node.name
+        self.local_bindings = {}
         try:
             self._visit_block(node.body)
         finally:
-            self.function = previous
+            self.function = previous_function
+            self.local_bindings = previous_bindings
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        previous = self.function
+        previous_function = self.function
+        previous_bindings = self.local_bindings
         self.function = node.name
+        self.local_bindings = {}
         try:
             self._visit_block(node.body)
         finally:
-            self.function = previous
+            self.function = previous_function
+            self.local_bindings = previous_bindings
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                self.local_bindings[target.id] = node.value
+        self.generic_visit(node)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        if isinstance(node.target, ast.Name) and node.value is not None:
+            self.local_bindings[node.target.id] = node.value
+        self.generic_visit(node)
 
     def visit_If(self, node: ast.If) -> None:
         test = canonical_ast(node.test)
-        self._with_context(f"if:{test}", node.body)
+        self._with_context(f"if:{test}", node.test, node.body)
         if node.orelse:
-            self._with_context(f"else:{test}", node.orelse)
+            self._with_context(f"else:{test}", node.test, node.orelse)
 
     def visit_For(self, node: ast.For) -> None:
         marker = f"for:{canonical_ast(node.target)} in {canonical_ast(node.iter)}"
-        self._with_context(marker, node.body)
+        self._with_context(marker, node.iter, node.body)
         if node.orelse:
-            self._with_context(f"for-else:{marker}", node.orelse)
+            self._with_context(f"for-else:{marker}", node.iter, node.orelse)
 
     def visit_AsyncFor(self, node: ast.AsyncFor) -> None:
         marker = f"async-for:{canonical_ast(node.target)} in {canonical_ast(node.iter)}"
-        self._with_context(marker, node.body)
+        self._with_context(marker, node.iter, node.body)
         if node.orelse:
-            self._with_context(f"async-for-else:{marker}", node.orelse)
+            self._with_context(f"async-for-else:{marker}", node.iter, node.orelse)
 
     def visit_While(self, node: ast.While) -> None:
         test = canonical_ast(node.test)
-        self._with_context(f"while:{test}", node.body)
+        self._with_context(f"while:{test}", node.test, node.body)
         if node.orelse:
-            self._with_context(f"while-else:{test}", node.orelse)
+            self._with_context(f"while-else:{test}", node.test, node.orelse)
 
     def visit_Try(self, node: ast.Try) -> None:
-        self._with_context("try", node.body)
+        self._with_context("try", None, node.body)
         for handler in node.handlers:
             exception_type = canonical_ast(handler.type) if handler.type is not None else "bare"
-            self._with_context(f"except:{exception_type}", handler.body)
+            self._with_context(f"except:{exception_type}", handler.type, handler.body)
         if node.orelse:
-            self._with_context("try-else", node.orelse)
+            self._with_context("try-else", None, node.orelse)
         if node.finalbody:
-            self._with_context("finally", node.finalbody)
+            self._with_context("finally", None, node.finalbody)
 
     def visit_Call(self, node: ast.Call) -> None:
         if (
@@ -140,10 +252,12 @@ class FindingSignatureVisitor(ast.NodeVisitor):
             and isinstance(node.args[0].value, str)
         ):
             code = node.args[0].value
+            dependency_nodes = list(self.context_nodes) + finding_dependency_nodes(node)
             signature = json.dumps(
                 {
                     "function": self.function,
                     "context": list(self.context),
+                    "dependencies": self._dependency_snapshot(dependency_nodes),
                     "emission": finding_call_shape(node),
                 },
                 sort_keys=True,
@@ -153,8 +267,9 @@ class FindingSignatureVisitor(ast.NodeVisitor):
 
 
 def finding_semantic_signatures(text: str) -> dict[str, list[str]]:
-    visitor = FindingSignatureVisitor()
-    visitor.visit(ast.parse(text))
+    tree = ast.parse(text)
+    visitor = FindingSignatureVisitor(module_definitions(tree))
+    visitor.visit(tree)
     return {code: sorted(signatures) for code, signatures in visitor.signatures.items()}
 
 
@@ -196,7 +311,7 @@ class ReleaseCandidateFindingCodeContractTests(unittest.TestCase):
                     self.assertEqual(
                         published_signatures - current_signatures,
                         set(),
-                        f"published semantic context changed or disappeared for {code}",
+                        f"published semantic context or referenced data changed/disappeared for {code}",
                     )
 
                     additional = current_signatures - published_signatures
@@ -235,25 +350,42 @@ class ReleaseCandidateFindingCodeContractTests(unittest.TestCase):
                             f"unreviewed additional semantic context reuses public code {code}",
                         )
 
-    def test_semantic_signature_allows_message_rewording_but_not_condition_reuse(self):
+    def test_semantic_signature_allows_message_rewording_but_tracks_condition_and_data(self):
         original = '''
-def run(flag):
-    if flag:
-        Finding("PUBLIC_CODE", "Original wording.", path="sample")
+REQUIRED_HEADINGS = ("A", "B")
+def run(text):
+    for heading in REQUIRED_HEADINGS:
+        if heading not in text:
+            Finding("PUBLIC_CODE", "Original wording.", path="sample")
 '''
         reworded = '''
-def run(flag):
-    if flag:
-        Finding("PUBLIC_CODE", "Improved human-readable wording.", path="sample")
+REQUIRED_HEADINGS = ("A", "B")
+def run(text):
+    for heading in REQUIRED_HEADINGS:
+        if heading not in text:
+            Finding("PUBLIC_CODE", "Improved human-readable wording.", path="sample")
+'''
+        changed_data = '''
+REQUIRED_HEADINGS = ("A",)
+def run(text):
+    for heading in REQUIRED_HEADINGS:
+        if heading not in text:
+            Finding("PUBLIC_CODE", "Original wording.", path="sample")
 '''
         reused = '''
-def run(other_flag):
-    if other_flag:
-        Finding("PUBLIC_CODE", "Original wording.", path="sample")
+REQUIRED_HEADINGS = ("A", "B")
+def run(other_text):
+    for heading in REQUIRED_HEADINGS:
+        if heading not in other_text:
+            Finding("PUBLIC_CODE", "Original wording.", path="sample")
 '''
         self.assertEqual(
             finding_semantic_signatures(original),
             finding_semantic_signatures(reworded),
+        )
+        self.assertNotEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(changed_data),
         )
         self.assertNotEqual(
             finding_semantic_signatures(original),
