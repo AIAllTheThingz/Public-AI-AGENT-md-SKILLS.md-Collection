@@ -8,13 +8,23 @@ AI coding agents can generate useful software quickly. They can also generate fr
 
 These standards improve behavior. They do not guarantee security, correctness, compliance, or production readiness.
 
+## Repository identity
+
+**Public Access Agents** is the project and library name. The canonical GitHub repository is **`AIAllTheThingz/Public-AI-Governance`**.
+
+Repository URLs, raw-content URLs, and machine-readable schema identifiers use the current GitHub repository name. Release archive names retain the established `Public-Access-Agents-<VERSION>` prefix so the project identity and artifact naming remain stable without pretending the GitHub repository was never renamed.
+
+The prepared `0.9.0` baseline was never published: GitHub has no `v0.9.0` tag and no `0.9.0` GitHub Release. Current `main` must not be retroactively tagged as `v0.9.0`. The accumulated additive and modernization work under `Unreleased` is intended for the forward-only `0.10.0` release.
+
 ## Current repository version
 
-The current repository version is defined in [`VERSION`](VERSION).
+The current repository baseline is defined in [`VERSION`](VERSION).
 
-Current version: **0.9.0**
+Current baseline: **0.9.0 (prepared, unpublished)**
 
-This is a pre-1.0 compatibility baseline. It is usable and versioned, but it does not yet represent the final stable compatibility commitment.
+Next intended release: **0.10.0**
+
+This is a pre-1.0 compatibility baseline. It is usable and versioned as repository content, but it does not represent a published GitHub release or the final stable compatibility commitment.
 
 See:
 

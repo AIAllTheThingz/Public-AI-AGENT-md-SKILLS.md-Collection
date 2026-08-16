@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/AIAllTheThingz/Public-Access-Agents/main/schemas/v1/artifact-record.schema.json",
+  "$id": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/v1/artifact-record.schema.json",
   "title": "Artifact Record",
   "description": "Identifies a produced artifact, its source revision, digest, build context, provenance, and signing state.",
   "type": "object",
