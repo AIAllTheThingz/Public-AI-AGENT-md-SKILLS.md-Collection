@@ -20,7 +20,7 @@ from standards_tools import Finding, ToolResult  # noqa: E402
 CANDIDATE = "1.0.0-rc.1"
 CHECKPOINT = "0.10.0"
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
-CHECKPOINT_INVENTORY_SHA256 = "38605392a558e02178cab08aea51c9df14c634b1866cb687f646ce476e69b622"
+CHECKPOINT_INVENTORY_SHA256 = "6f5fc00dc21772b3df05d797f86b2650c8c0bf4fca2125e7fe21f88031d78103"
 TOOL_BEHAVIOR_SHA256 = "120f9869f67bb9dc900e05cd41c8bbee08bf96bd516f0a6ce527d1a43bc809a3"
 INVENTORY_PATH = REPO_ROOT / "releases" / "compatibility" / f"{CANDIDATE}.json"
 CHECKPOINT_PATH = REPO_ROOT / "releases" / "compatibility" / f"{CHECKPOINT}-checkpoint.json"
@@ -51,6 +51,54 @@ def checkpoint_compatibility_findings(checkpoint: dict, candidate: dict) -> list
     proposed_artifacts = set(candidate["stableToolContracts"]["releaseArtifacts"])
     for missing in sorted(set(checkpoint["releaseArtifactPatterns"]) - proposed_artifacts):
         findings.append(f"MISSING_RELEASE_ARTIFACT_CONTRACT:{missing}")
+    return findings
+
+
+def markdown_frontmatter_id(path: Path) -> str | None:
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        return None
+    end = text.find("\n---\n", 4)
+    if end < 0:
+        return None
+    match = re.search(r"^id:\s*(\S+)\s*$", text[:end], flags=re.MULTILINE)
+    return match.group(1) if match else None
+
+
+def observed_checkpoint_identifiers(checkpoint: dict) -> dict[str, dict[str, str]]:
+    expected = checkpoint["stableIdentifiers"]
+    markdown_ids: dict[str, str] = {}
+    schema_ids: dict[str, str] = {}
+
+    for relative in expected["markdownFrontMatterIds"]:
+        observed = markdown_frontmatter_id(REPO_ROOT / relative)
+        if observed is not None:
+            markdown_ids[relative] = observed
+
+    for relative in expected["schemaIds"]:
+        schema = json.loads((REPO_ROOT / relative).read_text(encoding="utf-8"))
+        observed = schema.get("$id")
+        if isinstance(observed, str):
+            schema_ids[relative] = observed
+
+    return {
+        "markdownFrontMatterIds": markdown_ids,
+        "schemaIds": schema_ids,
+    }
+
+
+def identifier_compatibility_findings(expected: dict, observed: dict) -> list[str]:
+    findings: list[str] = []
+    for category in ("markdownFrontMatterIds", "schemaIds"):
+        expected_values = expected[category]
+        observed_values = observed[category]
+        for path, expected_value in expected_values.items():
+            if path not in observed_values:
+                findings.append(f"IDENTIFIER_MISSING:{category}:{path}")
+            elif observed_values[path] != expected_value:
+                findings.append(
+                    f"IDENTIFIER_CHANGED:{category}:{path}:{expected_value}->{observed_values[path]}"
+                )
     return findings
 
 
@@ -85,6 +133,10 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(self.checkpoint_bytes).hexdigest(), CHECKPOINT_INVENTORY_SHA256)
         self.assertEqual(self.checkpoint["sourceCommit"], CHECKPOINT_COMMIT)
         self.assertEqual(self.checkpoint["tag"], "v0.10.0")
+        self.assertEqual(
+            self.inventory["stableIdentifierContracts"]["publishedCheckpoint"]["source"],
+            "releases/compatibility/0.10.0-checkpoint.json#stableIdentifiers",
+        )
 
         behavior_pin = self.inventory["publishedToolBehaviorContract"]
         self.assertEqual(behavior_pin["path"], "releases/compatibility/0.10.0-tool-behavior.json")
@@ -104,6 +156,44 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
             f"MISSING_STABLE_PATH:root:{removed}",
             checkpoint_compatibility_findings(self.checkpoint, candidate),
         )
+
+    def test_published_identifier_checkpoint_matches_candidate_tree(self):
+        expected = self.checkpoint["stableIdentifiers"]
+        observed = observed_checkpoint_identifiers(self.checkpoint)
+        self.assertEqual(identifier_compatibility_findings(expected, observed), [])
+
+    def test_identifier_checkpoint_detects_markdown_mutation_and_schema_removal(self):
+        expected = self.checkpoint["stableIdentifiers"]
+        observed = observed_checkpoint_identifiers(self.checkpoint)
+
+        markdown_path = next(iter(expected["markdownFrontMatterIds"]))
+        mutated = copy.deepcopy(observed)
+        mutated["markdownFrontMatterIds"][markdown_path] = "MUTATED-ID"
+        self.assertTrue(
+            any(
+                finding.startswith(f"IDENTIFIER_CHANGED:markdownFrontMatterIds:{markdown_path}:")
+                for finding in identifier_compatibility_findings(expected, mutated)
+            )
+        )
+
+        schema_path = next(iter(expected["schemaIds"]))
+        removed = copy.deepcopy(observed)
+        del removed["schemaIds"][schema_path]
+        self.assertIn(
+            f"IDENTIFIER_MISSING:schemaIds:{schema_path}",
+            identifier_compatibility_findings(expected, removed),
+        )
+
+    def test_csharp_identifiers_promoted_stable_are_enforced(self):
+        additions = self.inventory["stableIdentifierContracts"]["rcStableAdditions"]
+        skill = (REPO_ROOT / "languages" / "csharp" / "SKILL.md").read_text(encoding="utf-8")
+        skill_name = re.search(r"^name:\s*(\S+)\s*$", skill, flags=re.MULTILINE)
+        self.assertIsNotNone(skill_name)
+        self.assertEqual(skill_name.group(1), additions["csharpDirectSkillName"])
+
+        for relative, expected_id in additions["csharpFrontMatterIds"].items():
+            with self.subTest(path=relative):
+                self.assertEqual(markdown_frontmatter_id(REPO_ROOT / relative), expected_id)
 
     def test_all_enumerated_stable_paths_exist(self):
         path_groups = (
