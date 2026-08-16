@@ -79,7 +79,13 @@ def loaded_names(node: ast.AST | None) -> set[str]:
     }
 
 
-def module_definitions(tree: ast.Module) -> dict[str, ast.AST]:
+def module_data_bindings(tree: ast.Module) -> dict[str, ast.AST]:
+    """Return module data/constants, excluding helper function implementations.
+
+    Helper functions have their own finding signatures. Pulling entire helper bodies into every
+    caller's dependency snapshot would make unrelated additive helper changes look like breaking
+    changes to all downstream finding codes. Caller dataflow still records the helper call itself.
+    """
     definitions: dict[str, ast.AST] = {}
     for statement in tree.body:
         if isinstance(statement, ast.Assign):
@@ -89,8 +95,6 @@ def module_definitions(tree: ast.Module) -> dict[str, ast.AST]:
         elif isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
             if statement.value is not None:
                 definitions[statement.target.id] = statement.value
-        elif isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            definitions[statement.name] = statement
     return definitions
 
 
@@ -268,7 +272,7 @@ class FindingSignatureVisitor(ast.NodeVisitor):
 
 def finding_semantic_signatures(text: str) -> dict[str, list[str]]:
     tree = ast.parse(text)
-    visitor = FindingSignatureVisitor(module_definitions(tree))
+    visitor = FindingSignatureVisitor(module_data_bindings(tree))
     visitor.visit(tree)
     return {code: sorted(signatures) for code, signatures in visitor.signatures.items()}
 
