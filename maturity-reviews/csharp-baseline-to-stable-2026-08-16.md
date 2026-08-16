@@ -75,6 +75,7 @@ Neither downstream pilot identified a C# language-package defect. The pilots did
 The stable C# compatibility surface includes:
 
 - package entry paths: `languages/csharp/SKILL.md`, `AGENTS.md`, `README.md`, `MANIFEST.md`;
+- agent registration path `languages/csharp/agents/openai.yaml`, including the `interface.display_name`, `interface.short_description`, and `interface.default_prompt` fields; the registration must continue to identify the C# package and route its default prompt through `$csharp`, while compatible descriptive wording may evolve;
 - existing files under `languages/csharp/standards/`, `templates/`, and `examples/`;
 - stable front-matter IDs beginning with the existing C# package identifiers;
 - documented compiler/language-version, nullable, public API, serialization, exception, concurrency, resource, interop, generated-code, and scripting behavior where adopters depend on those contracts;
