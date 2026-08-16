@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import re
 import unittest
 from pathlib import Path
 
@@ -10,6 +12,10 @@ CANONICAL_REPOSITORY = "AIAllTheThingz/Public-AI-Governance"
 STALE_REPOSITORY = "AIAllTheThingz/Public-Access-Agents"
 CANONICAL_RAW_PREFIX = f"https://raw.githubusercontent.com/{CANONICAL_REPOSITORY}/"
 STALE_RAW_PREFIX = f"https://raw.githubusercontent.com/{STALE_REPOSITORY}/"
+NEXT_PUBLICATION = re.compile(
+    r"next intended publication(?:\s+is|:)?\s+`(?P<version>\d+\.\d+\.\d+)`",
+    re.IGNORECASE,
+)
 
 
 class RepositoryIdentityTests(unittest.TestCase):
@@ -46,6 +52,69 @@ class RepositoryIdentityTests(unittest.TestCase):
         self.assertIn("Status: **Prepared, not published**", next_notes)
         self.assertIn("## Required actions", next_migration)
         self.assertNotIn(f"https://github.com/{STALE_REPOSITORY}/", changelog)
+
+    def test_durable_release_and_toolchain_docs_follow_release_state(self):
+        state = json.loads((REPO_ROOT / "releases" / "release-state.json").read_text(encoding="utf-8"))
+        next_version = state["nextIntendedVersion"]
+        prepared = set(state["preparedUnpublishedVersions"])
+
+        self.assertEqual(next_version, "0.10.0")
+        self.assertIn("0.9.0", prepared)
+
+        roadmap = (REPO_ROOT / "ROADMAP.md").read_text(encoding="utf-8")
+        manifest = (REPO_ROOT / "MANIFEST.md").read_text(encoding="utf-8")
+        catalog = (REPO_ROOT / "CATALOG.md").read_text(encoding="utf-8")
+        release_policy = (REPO_ROOT / "RELEASE_POLICY.md").read_text(encoding="utf-8")
+
+        expected_direction = {
+            "ROADMAP.md": (
+                f"- The next intended publication is `{next_version}` after source-currency review, "
+                "final release preparation, and the independent specialist review required for its breaking changes."
+            ),
+            "MANIFEST.md": f"Next intended publication: `{next_version}`.",
+            "CATALOG.md": f"The next intended publication is `{next_version}`.",
+            "RELEASE_POLICY.md": f"The forward-only next intended publication is `{next_version}`, as recorded in",
+        }
+        durable_docs = {
+            "ROADMAP.md": roadmap,
+            "MANIFEST.md": manifest,
+            "CATALOG.md": catalog,
+            "RELEASE_POLICY.md": release_policy,
+        }
+        for name, text in durable_docs.items():
+            with self.subTest(document=name):
+                self.assertIn(expected_direction[name], text)
+                self.assertNotIn("Publish and independently verify the `v0.9.0` GitHub Release", text)
+                declared_versions = NEXT_PUBLICATION.findall(text)
+                self.assertEqual(
+                    declared_versions,
+                    [next_version],
+                    f"{name} must contain exactly one next-intended-publication declaration and it must match release-state.json.",
+                )
+
+        self.assertIn("prepared, unpublished", manifest.lower())
+        self.assertIn("check-freshness", manifest)
+        self.assertIn("requirements.lock", manifest)
+        self.assertIn("check-freshness", catalog)
+        self.assertIn("prepared, unpublished", catalog.lower())
+
+        self.assertIn("originally prepared `0.9.0`", release_policy)
+        self.assertIn("never published", release_policy)
+        self.assertIn("must not be reconstructed or retroactively tagged", release_policy)
+        self.assertIn("releases/release-state.json", release_policy)
+        self.assertNotIn("The initial repository release target is `0.9.0`", release_policy)
+
+    def test_roadmap_retains_package_level_adoption_testing_before_stable_promotion(self):
+        roadmap = (REPO_ROOT / "ROADMAP.md").read_text(encoding="utf-8")
+        adoption_tests = roadmap.index("Add automated package-level adoption tests")
+        maturity_reviews = roadmap.index("Complete package maturity reviews")
+
+        self.assertLess(adoption_tests, maturity_reviews)
+        self.assertIn("positive, negative, and failure-path exercises", roadmap)
+        release_step = roadmap.index("Prepare the first real `v0.10.0` release")
+        review_gate = roadmap.index("independent specialist review required for its breaking changes", release_step)
+        publish_gate = roadmap.index("publish only after that gate passes", review_gate)
+        self.assertLess(review_gate, publish_gate)
 
 
 if __name__ == "__main__":

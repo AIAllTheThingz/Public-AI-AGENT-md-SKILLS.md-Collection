@@ -190,8 +190,11 @@ The repository has a pre-1.0 versioned compatibility baseline and an evidence-ba
 - [Release policy](RELEASE_POLICY.md)
 - [Maturity policy](MATURITY_POLICY.md)
 - [Versioned release notes](releases/README.md)
+- [Machine-readable release state](releases/release-state.json)
 - [Maturity review records](maturity-reviews/README.md)
 - [Release validation and artifact tooling](tools/release/)
+
+The current `0.9.0` baseline is **prepared, unpublished** and must not be retroactively tagged. The next intended publication is `0.10.0`.
 
 The release program defines Semantic Versioning for standards, schemas, templates, tools, governance, and stable paths; 90-day and 180-day deprecation windows; migration notes; tag and GitHub Release rules; deterministic archives; SHA-256 checksums; and the `1.0.0` compatibility gate.
 
@@ -199,17 +202,18 @@ A repository release does not automatically promote every package to `stable`.
 
 ## Repository toolchain
 
-The executable toolchain validates repository structure, links, skill entry points and package routing, schemas, templates, tool packages, and the release program; generates project manifests; composes traceable standards bundles; builds deterministic release artifacts; and provides a unified validation runner.
+The executable toolchain validates repository structure, links, source-review freshness, skill entry points and package routing, schemas, templates, tool packages, and the release program; generates project manifests; composes traceable standards bundles; builds deterministic release artifacts; and provides a unified validation runner.
 
 - [Toolchain index](tools/README.md)
 - [Tool catalog](tools/TOOL_CATALOG.md)
+- [Source freshness validator](tools/check-freshness/)
 - [Command and result contract](tools/TOOL_CONTRACT.md)
 - [Development guide](tools/DEVELOPMENT_GUIDE.md)
 - [Testing guide](tools/TESTING_GUIDE.md)
 - [Security boundaries](tools/SECURITY_BOUNDARIES.md)
 - [Release tool](tools/release/README.md)
 
-Stable entry points are preserved. Permanent CI invokes the unified validation runner, including release validation.
+Stable entry points are preserved. Permanent CI invokes the unified validation runner, including source-freshness and release validation.
 
 ## Composition examples
 

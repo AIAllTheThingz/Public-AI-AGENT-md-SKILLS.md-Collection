@@ -98,7 +98,7 @@ Pre-1.0 releases still classify changes as patch, minor, or breaking using this 
 
 Pre-1.0 status is not permission to change public contracts silently.
 
-The initial repository release target is `0.9.0`. It represents a feature-complete baseline and a candidate for broader adoption testing, not the final compatibility commitment.
+The repository originally prepared `0.9.0` as its initial release target, but that release was never published and must not be reconstructed or retroactively tagged from current `main`. The forward-only next intended publication is `0.10.0`, as recorded in [`releases/release-state.json`](releases/release-state.json). `0.10.0` remains a pre-1.0 adoption and compatibility checkpoint, not the final compatibility commitment.
 
 ## Compatibility inventory
 

@@ -6,6 +6,7 @@
 - `README.md`
 - `CATALOG.md`
 - `SOURCES.md`
+- `SOURCE_REVIEWS.json`
 - `CONTRIBUTING.md`
 - `SECURITY.md`
 - `MAINTAINERS.md`
@@ -59,6 +60,7 @@ These progressive-disclosure routers and direct language skills select and compo
 - repository changelog in `CHANGELOG.md`
 - Semantic Versioning and compatibility rules in `RELEASE_POLICY.md`
 - maturity states and promotion reviews in `MATURITY_POLICY.md`
+- machine-readable release state in `releases/release-state.json`
 - versioned release notes under `releases/`
 - versioned migration notes under `releases/migrations/`
 - maturity review records and template under `maturity-reviews/`
@@ -69,7 +71,19 @@ These progressive-disclosure routers and direct language skills select and compo
 - machine-readable release manifest
 - explicit `1.0.0` compatibility gate
 
-Current repository version: `0.9.0`.
+Current repository version: `0.9.0` **prepared, unpublished**.
+
+Next intended publication: `0.10.0`.
+
+Current `main` must not be retroactively tagged as `v0.9.0`.
+
+## Source-currency maintenance
+
+- authoritative-source catalog in `SOURCES.md`
+- accountable source-review registry in `SOURCE_REVIEWS.json`
+- offline source-review age validation in `tools/check-freshness/check_freshness.py`
+- scheduled/manual freshness workflow in `.github/workflows/source-freshness.yml`
+- live vendor/source content verification remains separate from offline freshness validation and must be recorded honestly when performed
 
 ## Complete governance system
 
@@ -248,6 +262,7 @@ Each complete example includes root and nested agent instructions, a project man
 
 - repository structure validation
 - relative Markdown link and anchor validation
+- source-review freshness validation through `tools/check-freshness/check_freshness.py`
 - skill metadata, package-routing, registration, and local-link validation
 - Draft 2020-12 schema and instance validation
 - reusable template package validation
@@ -265,8 +280,10 @@ The stable validator entry paths remain present. Shared executable tools support
 
 ## Validation
 
+For CI-equivalent dependency installation and full validation:
+
 ```bash
-python -m pip install -r tools/validate-schemas/requirements.txt
+python -m pip install --require-hashes -r tools/validate-schemas/requirements.lock
 python tools/validate-all/run_all.py --include-tests
 python tools/release/validate_release.py
 ```
