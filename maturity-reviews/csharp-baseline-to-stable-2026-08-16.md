@@ -38,11 +38,15 @@ Requirements identify observable compatibility surfaces, negative behavior, canc
 
 ### Package-level adoption test
 
-Issue #47 added the `csharp-modern-dotnet` package-level exercise in `adoption-tests/candidates.json`. It requires the C# package plus the .NET companion for a modern .NET project, verifies real manifest selection and standards composition, checks accountable source-review evidence, detects incomplete adoption when .NET is omitted, and exercises invalid-selection and overwrite failure behavior.
+Issue #47 added the `csharp-modern-dotnet` package-level exercise in `adoption-tests/candidates.json`. It requires the C# package plus the .NET companion for a modern .NET project, verifies real manifest selection and entry-point standards composition, checks accountable source-review evidence, detects incomplete adoption when .NET is omitted, and exercises invalid-selection and overwrite failure behavior. That entry-point exercise remains useful but is not treated as proof that the complete proposed stable C# surface was bound.
 
-- implementation run: `31962412526` — Passed
-- permanent PR validation: `31962475556` — Passed
-- published source boundary exercised: `v0.10.0` / `83c73f3ab9a049ff2321d463164fcf98fb453a9c`
+PR #70 therefore adds `tools/tests/test_csharp_full_package_adoption.py` as the promotion-specific complete-surface exercise. The test derives the required package surface from `languages/csharp/MANIFEST.md`, binds every manifest-required file into a temporary adopter copy, and verifies SHA-256 identity for the direct skill, agent registration, package entry points, all normative standards, all required templates, and the adoption example. Its error-path cases remove a required security standard and tamper with a unit-test template, and both conditions must be detected rather than accepted.
+
+- original #47 implementation run: `31962412526` — Passed
+- original #47 permanent PR validation: `31962475556` — Passed
+- full-package-surface remediation run: `31969012948` — Passed
+- published source boundary exercised by the downstream/entry-point evidence: `v0.10.0` / `83c73f3ab9a049ff2321d463164fcf98fb453a9c`
+- complete package surface exercised against the exact PR #70 remediation tree by the full-surface test
 
 ### Representative downstream adoption 1 — TheCertMaster
 
@@ -125,7 +129,7 @@ The package is documentation/agent guidance and performs no network or privilege
 
 ## Rationale
 
-The maintainer evidence review concludes that the C# package meets the repository's baseline-to-stable evidence bar: complete package structure, accountable current source review, package-level positive/negative/failure testing, two representative real downstream adoptions, explicit compatibility inventory, security and operational boundaries, stable ownership/cadence, and no unresolved high/critical C# defect.
+The maintainer evidence review concludes that the C# package meets the repository's baseline-to-stable evidence bar: complete package structure, accountable current source review, entry-point composition plus complete manifest-surface binding with SHA-256 verification and missing/tamper failure tests, two representative real downstream adoptions, explicit compatibility inventory, security and operational boundaries, stable ownership/cadence, and no unresolved high/critical C# defect.
 
 This decision becomes effective only after the policy-required independent specialist approval is recorded on the exact promotion PR and that PR merges. The approval does not promote `.NET`, ASP.NET Core, or any downstream project.
 

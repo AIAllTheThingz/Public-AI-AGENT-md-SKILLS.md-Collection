@@ -38,6 +38,8 @@ class MaturityDecisionTests(unittest.TestCase):
         review = (REPO_ROOT / "maturity-reviews" / "csharp-baseline-to-stable-2026-08-16.md").read_text(encoding="utf-8")
         self.assertIn(REVIEW_COMMIT, review)
         self.assertIn("31962412526", review)
+        self.assertIn("test_csharp_full_package_adoption.py", review)
+        self.assertIn("31969012948", review)
         self.assertIn("AIAllTheThingz/TheCertMaster", review)
         self.assertIn("AIAllTheThingz/WindowsScriptRunner", review)
         self.assertIn("2026-08-15", review)
