@@ -12,21 +12,26 @@ status: baseline
 - Review ID: `MR-CSHARP-2026-08-16`
 - Component: `languages/csharp`
 - Component version: `0.1.0`
-- Repository commit reviewed: `ba4901c72f4c1fccda517280946f1fb1b6d2824c`
+- Promotion evidence candidate reviewed: `2f6d39288e5c1a7d416e62cd75651b3d6da48dfe`
+- Baseline source reference: `ba4901c72f4c1fccda517280946f1fb1b6d2824c`
 - Published package source used by adoption evidence: `83c73f3ab9a049ff2321d463164fcf98fb453a9c` (`v0.10.0`)
-- Current maturity at reviewed commit: `baseline`
+- Current maturity at baseline source reference: `baseline`
 - Proposed maturity: `stable`
 - Owner: `Language standards maintainers`
-- Reviewers: `AIAllTheThingz` maintainer evidence review; policy-required independent C# specialist approval must be recorded on the exact promotion PR before merge
+- Reviewers: `AIAllTheThingz` maintainer evidence review; policy-required independent C# specialist approval must be recorded on the exact final promotion PR head before merge
 - Review date: `2026-08-16`
 
 ## Scope and applicability
 
-This review covers the **C# language package** under `languages/csharp/`: its stable paths, front-matter identifiers, language-level normative standards, templates, adoption guidance, examples, and direct C# skill routing.
+This review covers the **C# language package** under `languages/csharp/`: its stable paths, front-matter identifiers, language-level normative standards, templates, adoption guidance, examples, agent registration, and direct C# skill routing.
 
 It does **not** promote the separate `languages/dotnet` package, ASP.NET Core, any project profile, deployment environment, or adopting project. Modern C# projects commonly compose C# with .NET, but the C# stable promise is limited to C# language semantics and the C# package contracts.
 
-The C# package content exercised by the `v0.10.0` adoption tests and downstream pilots is unchanged between published source commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c` and reviewed repository commit `ba4901c72f4c1fccda517280946f1fb1b6d2824c`; post-release work in that range affected release/adoption evidence, PowerShell, and manifest-generation behavior rather than `languages/csharp/`.
+The immutable promotion evidence candidate for this decision is `2f6d39288e5c1a7d416e62cd75651b3d6da48dfe`. That revision contains the proposed stable C# metadata, the complete manifest-surface adoption exercise, lexical package-path escape checks, resolved-source package-boundary checks for symlink escapes, and all other evidence used by this promotion. Exact-head `Validate standards` run `31970186120` passed on that candidate.
+
+This review record is committed in a record-only follow-up after the evidence candidate so it can durably identify an already-complete repository revision rather than attempting the impossible self-reference of embedding its own resulting commit SHA. After candidate `2f6d39288e5c1a7d416e62cd75651b3d6da48dfe`, any change to `languages/csharp/` or `tools/tests/test_csharp_full_package_adoption.py` invalidates this candidate and requires a new candidate revision, exact-head validation, and independent specialist review. A follow-up that changes only this maturity record or PR metadata does not alter the reviewed C# component/evidence tree.
+
+The C# normative package content exercised by the `v0.10.0` downstream pilots is unchanged between published source commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c` and baseline source reference `ba4901c72f4c1fccda517280946f1fb1b6d2824c`; post-release work in that range affected release/adoption evidence, PowerShell, and manifest-generation behavior rather than C# normative meaning. The promotion candidate adds maturity metadata and promotion-specific evidence without changing that normative meaning.
 
 ## Normative quality
 
@@ -40,13 +45,14 @@ Requirements identify observable compatibility surfaces, negative behavior, canc
 
 Issue #47 added the `csharp-modern-dotnet` package-level exercise in `adoption-tests/candidates.json`. It requires the C# package plus the .NET companion for a modern .NET project, verifies real manifest selection and entry-point standards composition, checks accountable source-review evidence, detects incomplete adoption when .NET is omitted, and exercises invalid-selection and overwrite failure behavior. That entry-point exercise remains useful but is not treated as proof that the complete proposed stable C# surface was bound.
 
-PR #70 therefore adds `tools/tests/test_csharp_full_package_adoption.py` as the promotion-specific complete-surface exercise. The test derives the required package surface from `languages/csharp/MANIFEST.md`, binds every manifest-required file into a temporary adopter copy, and verifies SHA-256 identity for the direct skill, agent registration, package entry points, all normative standards, all required templates, and the adoption example. Its error-path cases remove a required security standard and tamper with a unit-test template, and both conditions must be detected rather than accepted.
+PR #70 therefore adds `tools/tests/test_csharp_full_package_adoption.py` as the promotion-specific complete-surface exercise. The test derives the required package surface from `languages/csharp/MANIFEST.md`, validates manifest paths before file operations, resolves each required source beneath the package root to reject symlink escapes, binds every manifest-required file into a temporary adopter copy, and verifies SHA-256 identity for the direct skill, agent registration, package entry points, all normative standards, all required templates, and the adoption example. Its error-path cases cover missing required content, tampered content, lexical package escapes, and a symlink resolving outside the package.
 
 - original #47 implementation run: `31962412526` — Passed
 - original #47 permanent PR validation: `31962475556` — Passed
 - full-package-surface remediation run: `31969012948` — Passed
+- path-boundary remediation run at promotion evidence candidate: `31970186120` — Passed
 - published source boundary exercised by the downstream/entry-point evidence: `v0.10.0` / `83c73f3ab9a049ff2321d463164fcf98fb453a9c`
-- complete package surface exercised against the exact PR #70 remediation tree by the full-surface test
+- complete package surface and promotion-specific safety checks exercised against exact candidate `2f6d39288e5c1a7d416e62cd75651b3d6da48dfe`
 
 ### Representative downstream adoption 1 — TheCertMaster
 
@@ -90,13 +96,16 @@ No schema contract or executable C# tool CLI is exposed by this package.
 Repository evidence used for this review:
 
 ```text
+python -m unittest discover -s tools/tests -p "test_csharp_full_package_adoption.py" -v
 python -m unittest discover -s tools/tests -p "test_package_adoption.py" -v
 python -m unittest discover -s tools/tests -p "test_downstream_adoption_evidence.py" -v
 python -m unittest discover -s tools/tests -v
 python tools/validate-all/run_all.py --include-tests
 ```
 
-The #41 evidence build run `31966752975` passed the focused downstream-evidence regression, complete unit suite, complete validation pipeline, and diff check before commit. PR #69 permanent exact-head run `31966823124` passed. Post-merge `main` validation run `31966922410` passed at `ba4901c72f4c1fccda517280946f1fb1b6d2824c`.
+The #41 evidence build run `31966752975` passed the focused downstream-evidence regression, complete unit suite, complete validation pipeline, and diff check before commit. PR #69 permanent exact-head run `31966823124` passed. Post-merge `main` validation run `31966922410` passed at baseline source reference `ba4901c72f4c1fccda517280946f1fb1b6d2824c`.
+
+Promotion evidence candidate `2f6d39288e5c1a7d416e62cd75651b3d6da48dfe` passed permanent exact-head `Validate standards` run `31970186120`, including the complete validation pipeline after the full-surface, lexical path-boundary, and symlink-boundary remediation.
 
 Project/runtime validation remains downstream-specific; repository validation does not compile arbitrary C# adopter projects or certify them.
 
@@ -115,11 +124,12 @@ The source-review cadence remains 180 days. Stable maturity does not turn a date
 
 The package explicitly covers untrusted input, process execution, paths, deserialization, cryptography, secret handling, unsafe/native code, reflection, source generation, logging, resource ownership, concurrency, cancellation, and dependency/build behavior.
 
-The package is documentation/agent guidance and performs no network or privileged operation by itself. Risk appears when adopters implement C# code, so project-specific threat, authorization, runtime, platform, and operational evidence remains mandatory.
+The promotion-specific adoption harness also fails closed when a manifest-required path attempts lexical traversal or resolves outside the package root through a symlink. The package itself is documentation/agent guidance and performs no network or privileged operation by itself. Risk appears when adopters implement C# code, so project-specific threat, authorization, runtime, platform, and operational evidence remains mandatory.
 
 ## Open findings and conditions
 
 - **Blocking merge gate:** independent C# specialist review is required by `MAINTAINERS.md` before the promotion PR may merge. The independent reviewer must approve the exact final PR head; absent that review, this promotion remains unmerged and ineffective.
+- **Candidate integrity gate:** any post-`2f6d39288e5c1a7d416e62cd75651b3d6da48dfe` change to `languages/csharp/` or `tools/tests/test_csharp_full_package_adoption.py` invalidates this decision until a new promotion evidence candidate is recorded and validated.
 - The separate .NET package remains `baseline`; C# stable maturity must not be represented as .NET stable maturity.
 - No current high or critical C# package defect is open in the repository issue tracker.
 - No production Unity, Godot, native-interop, or legacy .NET Framework pilot was part of this review. Those are non-blocking because the stable promise is the documented C# language package boundary, not universal host certification.
@@ -130,9 +140,9 @@ The package is documentation/agent guidance and performs no network or privilege
 
 ## Rationale
 
-The maintainer evidence review concludes that the C# package meets the repository's baseline-to-stable evidence bar: complete package structure, accountable current source review, entry-point composition plus complete manifest-surface binding with SHA-256 verification and missing/tamper failure tests, two representative real downstream adoptions, explicit compatibility inventory, security and operational boundaries, stable ownership/cadence, and no unresolved high/critical C# defect.
+The maintainer evidence review concludes that the C# package at promotion evidence candidate `2f6d39288e5c1a7d416e62cd75651b3d6da48dfe` meets the repository's baseline-to-stable evidence bar: complete package structure, accountable current source review, entry-point composition plus complete manifest-surface binding with SHA-256 verification, lexical and resolved-source package-boundary checks, missing/tamper failure tests, two representative real downstream adoptions, explicit compatibility inventory, security and operational boundaries, stable ownership/cadence, and no unresolved high/critical C# defect.
 
-This decision becomes effective only after the policy-required independent specialist approval is recorded on the exact promotion PR and that PR merges. The approval does not promote `.NET`, ASP.NET Core, or any downstream project.
+This decision becomes effective only after the policy-required independent specialist approval is recorded on the exact final promotion PR head and that PR merges. The approval does not promote `.NET`, ASP.NET Core, or any downstream project.
 
 ## Conditions and owners
 
@@ -150,4 +160,4 @@ This decision becomes effective only after the policy-required independent speci
 - Target repository release: `1.0.0-rc.1`
 - Release-note entry: `CHANGELOG.md` `[Unreleased]` maturity-promotion entry; issue #43 must carry this promotion into the `1.0.0-rc.1` release notes before publication
 
-This maturity decision applies only to the reviewed C# package version and repository revision. It does not certify adopting projects.
+This maturity decision applies to the C# package and promotion evidence tree at `2f6d39288e5c1a7d416e62cd75651b3d6da48dfe`. It does not certify adopting projects. Any subsequent material change to the reviewed component or promotion-specific evidence requires a new candidate revision and review.
