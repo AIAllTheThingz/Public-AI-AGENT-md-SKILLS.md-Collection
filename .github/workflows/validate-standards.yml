@@ -38,6 +38,11 @@ jobs:
             --require-hashes \
             -r tools/validate-schemas/requirements.lock
 
+      - name: Debug unit tests verbosely
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: python -m unittest discover -s tools/tests -p "test_*.py" -v
+
       - name: Run complete validation pipeline
         shell: bash
         run: python tools/validate-all/run_all.py --include-tests
