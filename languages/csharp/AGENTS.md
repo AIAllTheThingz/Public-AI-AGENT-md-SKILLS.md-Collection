@@ -53,7 +53,7 @@ This package governs C# language engineering. Apply the [.NET package](../dotnet
 
 ## Compiler and compatibility boundary
 
-For new modern .NET development, use the stable C# version associated with the selected supported target framework. The source review on 2026-07-16 identifies C# 14 as the stable language associated with .NET 10.
+For new modern .NET development, use the stable C# version associated with the selected supported target framework. The accountable C# source-review state is maintained in [`../../SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json) with durable evidence under [`../../source-reviews/`](../../source-reviews/); the 2026-08-15 review identifies C# 14 as the stable language associated with .NET 10.
 
 Existing repositories must preserve their declared SDK, compiler, target framework, language version, runtime, and consumer compatibility unless migration is explicitly authorized.
 

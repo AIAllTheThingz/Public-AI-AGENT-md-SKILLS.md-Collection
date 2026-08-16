@@ -139,6 +139,30 @@ class SourceReviewEvidenceTests(unittest.TestCase):
                 self.assertIn("SOURCE_REVIEWS.json", text)
                 self.assertIn("source-reviews/", text)
 
+    def test_reviewed_csharp_package_uses_registry_evidence_authority(self):
+        paths = [
+            "languages/csharp/README.md",
+            "languages/csharp/AGENTS.md",
+        ]
+        for path in paths:
+            text = (REPO_ROOT / path).read_text(encoding="utf-8")
+            with self.subTest(path=path):
+                self.assertNotIn("2026-07-16", text)
+                self.assertIn("SOURCE_REVIEWS.json", text)
+                self.assertIn("source-reviews/", text)
+                self.assertIn("2026-08-15", text)
+
+    def test_migration_notes_disclose_lifecycle_and_source_review_boundaries(self):
+        migration = (REPO_ROOT / "releases" / "migrations" / "0.10.0.md").read_text(encoding="utf-8")
+
+        self.assertIn("XenServer 9", migration)
+        self.assertIn("Red Hat Virtualization", migration)
+        self.assertIn("OpenShift Virtualization", migration)
+        self.assertIn("Oracle Linux 9/10 KVM", migration)
+        self.assertIn("Oracle Linux 8/OLVM legacy support boundary", migration)
+        self.assertIn("SOURCE_REVIEWS.json", migration)
+        self.assertIn("NotRun`/`Blocked", migration)
+
     def test_changelog_discloses_lifecycle_corrections(self):
         changelog = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
 
