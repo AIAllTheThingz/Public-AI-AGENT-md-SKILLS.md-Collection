@@ -15,7 +15,8 @@ class ReleasePublicationBoundaryTests(unittest.TestCase):
         state = json.loads((REPO_ROOT / "releases" / "release-state.json").read_text(encoding="utf-8"))
 
         self.assertIn("0.9.0", state["preparedUnpublishedVersions"])
-        self.assertEqual(state["nextIntendedVersion"], "0.10.0")
+        self.assertIn("0.10.0", state["publishedVersions"])
+        self.assertEqual(state["nextIntendedVersion"], "1.0.0-rc.1")
         self.assertNotIn(state["nextIntendedVersion"], state["preparedUnpublishedVersions"])
         self.assertEqual(state["canonicalRepository"], "AIAllTheThingz/Public-AI-Governance")
         self.assertEqual(state["artifactPrefix"], "Public-Access-Agents")

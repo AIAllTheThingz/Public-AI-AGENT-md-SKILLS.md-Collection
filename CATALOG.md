@@ -194,7 +194,7 @@ The repository has a pre-1.0 versioned compatibility baseline and an evidence-ba
 - [Maturity review records](maturity-reviews/README.md)
 - [Release validation and artifact tooling](tools/release/)
 
-The current `0.10.0` release candidate is **prepared, unpublished**. The `0.9.0` baseline remains **prepared, unpublished** and must not be retroactively tagged. The next intended publication is `0.10.0`.
+The current `0.10.0` release is **published as `v0.10.0`**. The `0.9.0` baseline remains **prepared, unpublished** and must not be retroactively tagged. The next intended publication is `1.0.0-rc.1`.
 
 The release program defines Semantic Versioning for standards, schemas, templates, tools, governance, and stable paths; 90-day and 180-day deprecation windows; migration notes; tag and GitHub Release rules; deterministic archives; SHA-256 checksums; and the `1.0.0` compatibility gate.
 

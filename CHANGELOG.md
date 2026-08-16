@@ -14,7 +14,10 @@ Release notes distinguish:
 
 ## [Unreleased]
 
-No changes recorded after the `0.10.0` release-candidate preparation.
+Post-release maintenance after `0.10.0` publication:
+
+- Recorded durable `0.10.0` publication verification and reconciled repository documentation with the published Git tag and GitHub Release.
+- Advanced the forward-only next intended publication to `1.0.0-rc.1` for the evidence-backed compatibility-gate program.
 
 ## [0.10.0] - 2026-08-16
 

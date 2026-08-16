@@ -56,7 +56,7 @@ class RepositoryIdentityTests(unittest.TestCase):
 
         self.assertIn("never published", old_notes.lower())
         self.assertIn("must not be retroactively tagged as `v0.9.0`", changelog)
-        self.assertIn("Status: **Prepared, not published**", next_notes)
+        self.assertIn("Status: **Published and verified**", next_notes)
         self.assertIn("## Required actions", next_migration)
         self.assertNotIn(f"https://github.com/{STALE_REPOSITORY}/", changelog)
 
@@ -65,7 +65,7 @@ class RepositoryIdentityTests(unittest.TestCase):
         next_version = state["nextIntendedVersion"]
         prepared = set(state["preparedUnpublishedVersions"])
 
-        self.assertEqual(next_version, "0.10.0")
+        self.assertEqual(next_version, "1.0.0-rc.1")
         self.assertIn("0.9.0", prepared)
 
         durable_docs = {
@@ -85,14 +85,14 @@ class RepositoryIdentityTests(unittest.TestCase):
         expected_direction = {
             "README.md": f"Next intended publication: `{next_version}`.",
             "ROADMAP.md": (
-                f"- The next intended publication is `{next_version}` after source-currency review, "
-                "final release preparation, and the independent specialist review required for its breaking changes."
+                f"- The next intended publication is `{next_version}` after package-level adoption tests, "
+                "representative downstream pilots, initial maturity decisions, and the compatibility gate are complete."
             ),
             "MANIFEST.md": f"Next intended publication: `{next_version}`.",
             "CATALOG.md": f"The next intended publication is `{next_version}`.",
             "RELEASE_POLICY.md": f"The forward-only next intended publication is `{next_version}`, as recorded in",
-            "releases/README.md": f"The next intended publication is `{next_version}` and is forward-only.",
-            "tools/release/README.md": f"The next intended publication is `{next_version}` after the repository `VERSION`",
+            "releases/README.md": f"The next intended publication is `{next_version}` and is forward-only",
+            "tools/release/README.md": f"The next intended publication is `{next_version}`;",
         }
         for name, text in durable_docs.items():
             with self.subTest(document=name):
@@ -109,10 +109,12 @@ class RepositoryIdentityTests(unittest.TestCase):
         for candidate in REPO_ROOT.rglob("*.md"):
             if ".git" in candidate.parts:
                 continue
+            relative = candidate.relative_to(REPO_ROOT).as_posix()
+            if relative == "CHANGELOG.md" or (relative.startswith("releases/") and relative != "releases/README.md"):
+                continue
             candidate_text = candidate.read_text(encoding="utf-8")
             versions = NEXT_PUBLICATION.findall(candidate_text)
             if versions:
-                relative = candidate.relative_to(REPO_ROOT).as_posix()
                 discovered_declarations[relative] = versions
                 with self.subTest(discovered_document=relative):
                     self.assertTrue(
@@ -161,11 +163,10 @@ class RepositoryIdentityTests(unittest.TestCase):
         maturity_reviews = roadmap.index("Complete package maturity reviews")
 
         self.assertLess(adoption_tests, maturity_reviews)
-        self.assertIn("positive, negative, and failure-path exercises", roadmap)
-        release_step = roadmap.index("Prepare the first real `v0.10.0` release")
-        review_gate = roadmap.index("independent specialist review required for its breaking changes", release_step)
-        publish_gate = roadmap.index("publish only after that gate passes", review_gate)
-        self.assertLess(review_gate, publish_gate)
+        self.assertIn("positive, negative, boundary, and failure-path exercises", roadmap)
+        self.assertIn("`0.10.0` was published as `v0.10.0`", roadmap)
+        rc_step = roadmap.index("prepare and review `1.0.0-rc.1`")
+        self.assertLess(maturity_reviews, rc_step)
 
 
 if __name__ == "__main__":
