@@ -45,6 +45,7 @@ Before creating or modifying PowerShell code, read and follow these files:
 - `standards/TESTING_STANDARD.md`
 - `standards/SECURITY_STANDARD.md`
 - `standards/COMPLETION_EVIDENCE.md`
+- `standards/WINDOWS_POWERSHELL_51_COMPATIBILITY.md` when the adopting repository explicitly requires Windows PowerShell 5.1 or claims dual-runtime compatibility
 
 These files are mandatory extensions of this `AGENTS.md`.
 
@@ -58,14 +59,16 @@ This package remains authoritative for PowerShell language behavior. The vSphere
 
 ## PowerShell Runtime
 
-All code must target PowerShell 7.x and execute with `pwsh`.
+PowerShell 7.x executed with `pwsh` is the default runtime for new work.
+
+An adopting repository may retain an explicitly documented Windows PowerShell 5.1 compatibility boundary only when that runtime is a real project requirement. In that case, the Windows PowerShell compatibility overlay is mandatory and 5.1 evidence must be collected under `powershell.exe`; validation under `pwsh` must not be presented as proof of 5.1 runtime behavior.
 
 Requirements:
 
-- Use PowerShell Core.
-- Do not assume `powershell.exe` is the intended runtime.
-- Do not add Windows PowerShell 5.1 compatibility unless explicitly required.
-- Declare the minimum supported PowerShell 7 version when the repository does not already define it.
+- Use PowerShell Core for the default PowerShell 7 path.
+- Do not assume `powershell.exe` is the intended runtime unless the repository explicitly declares a Windows PowerShell 5.1 boundary.
+- Do not add Windows PowerShell 5.1 compatibility speculatively.
+- Declare the minimum supported version for every runtime the repository claims.
 - Do not introduce syntax, modules, or .NET APIs that require a newer runtime than the repository supports.
 - Do not claim cross-platform compatibility without evidence.
 - Identify Windows-only, Linux-only, or macOS-only behavior explicitly.

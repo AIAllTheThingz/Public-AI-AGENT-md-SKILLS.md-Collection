@@ -1,6 +1,6 @@
 # PowerShell Agent Standard Package
 
-This package provides project-agnostic engineering standards for PowerShell 7 scripts, modules, administrative tooling, remoting, and operational automation.
+This package provides project-agnostic engineering standards for PowerShell 7 scripts, modules, administrative tooling, remoting, and operational automation. Repositories with an explicit legacy Windows PowerShell 5.1 contract may compose the dedicated compatibility overlay without changing the package's PowerShell 7 default for new work.
 
 It defines how coding agents should inspect, design, implement, test, secure, document, and report PowerShell work. It does not define the adopting project's production targets, credentials, business workflow, or change-approval process.
 
@@ -16,8 +16,8 @@ It defines how coding agents should inspect, design, implement, test, secure, do
 ## Runtime baseline
 
 - Target PowerShell 7.x and execute with `pwsh`.
-- Do not assume Windows PowerShell 5.1 compatibility unless explicitly required.
-- Declare the minimum supported PowerShell version.
+- Do not assume Windows PowerShell 5.1 compatibility unless explicitly required. When it is required, apply [`WINDOWS_POWERSHELL_51_COMPATIBILITY.md`](standards/WINDOWS_POWERSHELL_51_COMPATIBILITY.md) and validate with `powershell.exe`.
+- Declare the minimum supported PowerShell version for every claimed runtime.
 - Identify Windows-only, Linux-only, and macOS-only behavior.
 - Do not claim cross-platform support without evidence.
 
@@ -40,6 +40,7 @@ Agents must read the applicable standards before implementation:
 | [`TESTING_STANDARD.md`](standards/TESTING_STANDARD.md) | Pester coverage, mocks, isolation, negative paths, and evidence |
 | [`SECURITY_STANDARD.md`](standards/SECURITY_STANDARD.md) | Credentials, remoting, native commands, validation, least privilege, and signing |
 | [`COMPLETION_EVIDENCE.md`](standards/COMPLETION_EVIDENCE.md) | Proof required before claiming completion |
+| [`WINDOWS_POWERSHELL_51_COMPATIBILITY.md`](standards/WINDOWS_POWERSHELL_51_COMPATIBILITY.md) | Explicit legacy Windows PowerShell 5.1 adoption and dual-runtime evidence boundary |
 
 Opening only `AGENTS.md` and ignoring its referenced standards is not compliant adoption.
 
@@ -77,7 +78,7 @@ For new dependency evaluations, `VCF.PowerCLI` is the current Broadcom distribut
 
 ## Project tailoring checklist
 
-- [ ] Minimum PowerShell 7 version is declared.
+- [ ] Runtime and minimum supported version are declared. PowerShell 7 remains the default; an explicit Windows PowerShell 5.1 boundary uses the compatibility overlay.
 - [ ] Supported operating systems and editions are documented.
 - [ ] Required modules and version constraints are documented.
 - [ ] Credential and secret-management mechanisms are defined.
@@ -99,7 +100,7 @@ Invoke-Pester -Path ./tests -CI
 Get-AuthenticodeSignature -FilePath <script-or-module>
 ```
 
-Do not claim a check passed unless it was actually run successfully against the relevant revision.
+Do not claim a check passed unless it was actually run successfully against the relevant revision. A repository claiming Windows PowerShell 5.1 support must also run applicable checks under `powershell.exe`; a `pwsh` result is not 5.1 runtime proof.
 
 ## Testing expectations
 
