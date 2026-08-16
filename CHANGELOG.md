@@ -19,6 +19,7 @@ Post-release maintenance after `0.10.0` publication:
 - Recorded durable `0.10.0` publication verification and reconciled repository documentation with the published Git tag and GitHub Release.
 - Advanced the forward-only next intended publication to `1.0.0-rc.1` for the evidence-backed compatibility-gate program.
 - Added an explicit legacy Windows PowerShell 5.1 adoption overlay from downstream pilot evidence while preserving PowerShell 7 as the default for new work; `pwsh` validation is not accepted as proof of Windows PowerShell 5.1 runtime compatibility.
+- Corrected `generate-manifest --include-profile-required` so selected secondary profiles contribute their discipline links as well as the primary profile; the change is additive and preserves the published `0.10.0` primary-profile expansion behavior.
 - Added shared package-level adoption tests for the initial C#, PowerShell, and Terraform/OpenTofu maturity candidates, covering positive composition, accountable source evidence, incomplete adoption, invalid selection, and overwrite failure behavior.
 
 ## [0.10.0] - 2026-08-16

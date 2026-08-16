@@ -48,7 +48,7 @@ python tools/generate-manifest/generate_manifest.py --help
 - known package slugs
 - explicit virtualization, operating-system, and networking package selection
 - at least one language
-- optional required-discipline expansion
+- optional profile-discipline expansion across the primary and selected secondary profiles
 - schema validation
 - overwrite protection
 
@@ -62,7 +62,7 @@ python tools/generate-manifest/generate_manifest.py --name example --profile INT
 python tools/generate-manifest/generate_manifest.py --config manifest-input.json --manifest-output project-manifest.json
 ```
 
-JSON configuration uses the manifest-style array keys `languages`, `disciplines`, `frameworks`, `platforms`, `virtualization`, `operatingSystems`, and `networking`. CLI selections are appended and then de-duplicated in first-seen order.
+JSON configuration uses the manifest-style array keys `languages`, `disciplines`, `frameworks`, `platforms`, `virtualization`, `operatingSystems`, and `networking`. CLI selections are appended and then de-duplicated in first-seen order. When `--include-profile-required` is supplied, profile-linked disciplines are expanded from the primary profile and every selected secondary profile. This post-`0.10.0` correction deliberately preserves the published primary-profile expansion semantics and only adds the previously omitted secondary-profile expansion.
 
 ## Text and JSON results
 
