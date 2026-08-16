@@ -14,17 +14,17 @@ These standards improve behavior. They do not guarantee security, correctness, c
 
 Repository URLs, raw-content URLs, and machine-readable schema identifiers use the current GitHub repository name. Release archive names retain the established `Public-Access-Agents-<VERSION>` prefix so the project identity and artifact naming remain stable without pretending the GitHub repository was never renamed.
 
-The `0.9.0 (prepared, unpublished)` baseline was never published: GitHub has no `v0.9.0` tag and no `0.9.0` GitHub Release. Current `main` must not be retroactively tagged as `v0.9.0`. The repository has now advanced to the `0.10.0` release-candidate source state; publication still requires the reviewed tag-driven release workflow.
+The `0.9.0 (prepared, unpublished)` baseline was never published and must not be retroactively tagged. The first real repository release, `v0.10.0`, was published on 2026-08-16 from the reviewed `main` commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`.
 
 ## Current repository version
 
 The current repository baseline is defined in [`VERSION`](VERSION).
 
-Current candidate: **0.10.0 (prepared for publication, not yet published)**
+Current published release: **0.10.0** (`v0.10.0`, published 2026-08-16)
 
-Next intended publication: `0.10.0`.
+Next intended publication: `1.0.0-rc.1`.
 
-This is a pre-1.0 release candidate. It is usable and versioned as repository content, but it does not represent a published GitHub release until `v0.10.0` and its GitHub Release are deliberately created and verified.
+This remains a pre-1.0 compatibility checkpoint. The published `0.10.0` release is the source boundary for adoption testing and maturity evidence; it is not the final stable compatibility commitment.
 
 See:
 

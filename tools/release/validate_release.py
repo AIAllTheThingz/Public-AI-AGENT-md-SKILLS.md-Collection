@@ -107,6 +107,21 @@ def read_release_state(root: Path, findings: list[Finding]) -> dict[str, Any]:
             path=RELEASE_STATE_PATH.as_posix(),
         ))
         return {}
+    published = state.get("publishedVersions", [])
+    if not isinstance(published, list) or any(not isinstance(item, str) or not SEMVER.fullmatch(item) for item in published):
+        findings.append(Finding(
+            "RELEASE_STATE_INVALID",
+            "publishedVersions must be an array of Semantic Version strings.",
+            path=RELEASE_STATE_PATH.as_posix(),
+        ))
+        return {}
+    if set(published) & set(blocked):
+        findings.append(Finding(
+            "RELEASE_STATE_INVALID",
+            "A version must not appear in both publishedVersions and preparedUnpublishedVersions.",
+            path=RELEASE_STATE_PATH.as_posix(),
+        ))
+        return {}
     next_intended = state.get("nextIntendedVersion")
     if not isinstance(next_intended, str) or not SEMVER.fullmatch(next_intended):
         findings.append(Finding(
@@ -120,6 +135,14 @@ def read_release_state(root: Path, findings: list[Finding]) -> dict[str, Any]:
         findings.append(Finding(
             "RELEASE_STATE_INVALID",
             "nextIntendedVersion must not also appear in preparedUnpublishedVersions.",
+            path=RELEASE_STATE_PATH.as_posix(),
+            details={"value": next_intended},
+        ))
+        return {}
+    if next_intended in published:
+        findings.append(Finding(
+            "RELEASE_STATE_INVALID",
+            "nextIntendedVersion must not already appear in publishedVersions.",
             path=RELEASE_STATE_PATH.as_posix(),
             details={"value": next_intended},
         ))

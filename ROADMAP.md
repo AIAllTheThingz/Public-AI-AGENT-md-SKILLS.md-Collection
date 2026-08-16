@@ -118,22 +118,16 @@
 
 ## Current release direction
 
-- `0.9.0` is a prepared baseline that was never published.
-- Current `main` must not be retroactively tagged as `v0.9.0`.
-- The next intended publication is `0.10.0` after source-currency review, final release preparation, and the independent specialist review required for its breaking changes.
+- `0.9.0` remains a prepared baseline that was never published and must not be retroactively tagged.
+- `0.10.0` was published as `v0.10.0` on 2026-08-16 from source commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`.
+- The next intended publication is `1.0.0-rc.1` after package-level adoption tests, representative downstream pilots, initial maturity decisions, and the compatibility gate are complete.
 
 ## Next maturity work
 
-1. Perform accountable authoritative-source reviews and refine freshness coverage for time-sensitive packages.
-2. Prepare the first real `v0.10.0` release, obtain the independent specialist review required for its breaking changes, publish only after that gate passes, then independently verify the published tag, artifacts, checksums, and release manifest.
-3. Add automated package-level adoption tests for selected high-value packages, including positive, negative, and failure-path exercises required by the maturity policy.
-4. Run representative external or independent adoption pilots and convert observed friction into focused fixes.
-5. Complete package maturity reviews that promote only qualified baseline packages to stable.
-6. Add additional active maintainers and independent specialist reviewers as participation grows.
-7. Configure and verify lightweight branch, tag, and private-reporting settings where GitHub administration access permits it.
-8. Add current provider-service compatibility matrices and migration guidance where adoption evidence shows they are useful.
-9. Add executable validation templates for containers, Kubernetes, infrastructure as code, and cloud platforms where they close demonstrated gaps.
-10. Add additional composition examples for data pipelines, internal automation, public libraries, security tools, and AI agent applications where pilots identify missing examples.
-11. Add policy-dependency checks where they prevent demonstrated configuration or composition mistakes.
-12. Define the intended stable compatibility surface and prepare and review at least one `1.0.0-rc.N` release.
-13. Publish `1.0.0` only after the compatibility, adoption, maturity, source-review, and independent-review gates are satisfied.
+1. Add automated package-level adoption tests for selected high-value packages, including positive, negative, boundary, and failure-path exercises required by the maturity policy.
+2. Run representative downstream adoption pilots and convert observed friction into focused corrections.
+3. Complete package maturity reviews that promote only qualified baseline components to stable.
+4. Add additional active maintainers and independent specialist reviewers as participation grows.
+5. Configure and verify the GitHub-host controls recorded as Blocked under issue #52 when an authorized administration surface becomes available.
+6. Define the intended stable compatibility surface and prepare and review `1.0.0-rc.1`.
+7. Publish final `1.0.0` only after the compatibility, adoption, maturity, source-review, security, and independent-review gates are satisfied.
