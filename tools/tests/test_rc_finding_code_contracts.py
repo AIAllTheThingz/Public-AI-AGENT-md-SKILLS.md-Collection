@@ -45,6 +45,25 @@ def canonical_ast(node: ast.AST | None) -> str:
     return "" if node is None else ast.dump(node, annotate_fields=False, include_attributes=False)
 
 
+def finding_call_shape(node: ast.Call) -> dict[str, object]:
+    # Finding(code, message, ...) exposes the code and semantic emission context as the
+    # compatibility contract. Message wording is deliberately excluded because the
+    # public tool contract permits editorial wording improvements.
+    positional_tail = [canonical_ast(argument) for argument in node.args[2:]]
+    keywords = sorted(
+        (
+            keyword.arg if keyword.arg is not None else "**",
+            canonical_ast(keyword.value),
+        )
+        for keyword in node.keywords
+        if keyword.arg != "message"
+    )
+    return {
+        "positionalTail": positional_tail,
+        "keywords": keywords,
+    }
+
+
 class FindingSignatureVisitor(ast.NodeVisitor):
     def __init__(self) -> None:
         self.function = "<module>"
@@ -125,7 +144,7 @@ class FindingSignatureVisitor(ast.NodeVisitor):
                 {
                     "function": self.function,
                     "context": list(self.context),
-                    "call": canonical_ast(node),
+                    "emission": finding_call_shape(node),
                 },
                 sort_keys=True,
             )
@@ -183,18 +202,31 @@ class ReleaseCandidateFindingCodeContractTests(unittest.TestCase):
                     additional = current_signatures - published_signatures
                     if code == "RELEASE_STATE_INVALID":
                         self.assertEqual(len(additional), 3)
-                        rendered = "\n".join(sorted(additional))
-                        self.assertIn("publishedVersions must be an array of Semantic Version strings.", rendered)
-                        self.assertIn(
-                            "A version must not appear in both publishedVersions and preparedUnpublishedVersions.",
-                            rendered,
+                        payloads = [json.loads(signature) for signature in additional]
+                        self.assertTrue(
+                            all(payload["function"] == "read_release_state" for payload in payloads)
                         )
-                        self.assertIn(
-                            "nextIntendedVersion must not already appear in publishedVersions.",
-                            rendered,
+                        contexts = ["\n".join(payload["context"]) for payload in payloads]
+                        self.assertTrue(
+                            any(
+                                "Name('published', Load())" in context
+                                and "Name('SEMVER', Load())" in context
+                                for context in contexts
+                            )
                         )
                         self.assertTrue(
-                            all('"function": "read_release_state"' in signature for signature in additional)
+                            any(
+                                "Name('published', Load())" in context
+                                and "Name('blocked', Load())" in context
+                                for context in contexts
+                            )
+                        )
+                        self.assertTrue(
+                            any(
+                                "Name('next_intended', Load())" in context
+                                and "Name('published', Load())" in context
+                                for context in contexts
+                            )
                         )
                     else:
                         self.assertEqual(
@@ -202,6 +234,31 @@ class ReleaseCandidateFindingCodeContractTests(unittest.TestCase):
                             set(),
                             f"unreviewed additional semantic context reuses public code {code}",
                         )
+
+    def test_semantic_signature_allows_message_rewording_but_not_condition_reuse(self):
+        original = '''
+def run(flag):
+    if flag:
+        Finding("PUBLIC_CODE", "Original wording.", path="sample")
+'''
+        reworded = '''
+def run(flag):
+    if flag:
+        Finding("PUBLIC_CODE", "Improved human-readable wording.", path="sample")
+'''
+        reused = '''
+def run(other_flag):
+    if other_flag:
+        Finding("PUBLIC_CODE", "Original wording.", path="sample")
+'''
+        self.assertEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(reworded),
+        )
+        self.assertNotEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(reused),
+        )
 
     def test_template_validator_emits_published_stable_path_code(self):
         with tempfile.TemporaryDirectory() as temp:
