@@ -50,11 +50,21 @@ _HISTORY_GIT_DIR = "PAG_COMPATIBILITY_GIT_DIR"
 _HISTORY_SELECTORS = "PAG_COMPATIBILITY_SELECTORS"
 
 
-def python_subprocess_environment() -> dict[str, str]:
-    """Return a child environment that keeps Python bytecode out of the source tree."""
-    environment = os.environ.copy()
-    environment["PYTHONDONTWRITEBYTECODE"] = "1"
-    return environment
+@contextmanager
+def python_bytecode_disabled():
+    """Keep validation-generated Python bytecode out of the declared source tree."""
+    previous_environment = os.environ.get("PYTHONDONTWRITEBYTECODE")
+    previous_runtime = sys.dont_write_bytecode
+    os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+    sys.dont_write_bytecode = True
+    try:
+        yield
+    finally:
+        sys.dont_write_bytecode = previous_runtime
+        if previous_environment is None:
+            os.environ.pop("PYTHONDONTWRITEBYTECODE", None)
+        else:
+            os.environ["PYTHONDONTWRITEBYTECODE"] = previous_environment
 
 
 def _git(
@@ -277,7 +287,6 @@ def run(args: argparse.Namespace) -> ToolResult:
                 text=True,
                 capture_output=True,
                 check=False,
-                env=python_subprocess_environment(),
             )
             try:
                 payload = json.loads(completed.stdout)
@@ -313,7 +322,6 @@ def run(args: argparse.Namespace) -> ToolResult:
                 text=True,
                 capture_output=True,
                 check=False,
-                env=python_subprocess_environment(),
             )
             tests_result = {
                 "exitCode": completed.returncode,
@@ -356,7 +364,8 @@ def main(argv: list[str] | None = None) -> int:
     if argv is None and "--list" in sys.argv[1:]:
         print("\n".join(VALIDATORS))
         return 0
-    return execute_tool(tool=TOOL, version=VERSION, parser=parser, run=run, argv=argv)
+    with python_bytecode_disabled():
+        return execute_tool(tool=TOOL, version=VERSION, parser=parser, run=run, argv=argv)
 
 
 if __name__ == "__main__":
