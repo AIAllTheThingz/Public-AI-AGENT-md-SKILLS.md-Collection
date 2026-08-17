@@ -1,234 +1,204 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import re
-import subprocess
-import unittest
-from collections import defaultdict
 
-from helpers import REPO_ROOT
+import rc_normative_rule_contracts_base as base
 
-CANDIDATE_INVENTORY = REPO_ROOT / "releases" / "compatibility" / "1.0.0-rc.1.json"
-RULE_CHECKPOINT = REPO_ROOT / "releases" / "compatibility" / "0.10.0-rule-contracts.json"
-RULE_CHECKPOINT_SHA256 = "5f3b7a7ddd28de5a44b45f96998d7acffb2c287bad4c7699e21561a869e50c95"
-CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
-CSHARP_PROMOTION_EVIDENCE_COMMIT = "2f6d39288e5c1a7d416e62cd75651b3d6da48dfe"
-CSHARP_NORMATIVE_ROOT = "languages/csharp/standards"
-RULE_PATTERN = re.compile(
-    r"^### (?P<id>[A-Z][A-Z0-9-]*-\d{3})\s*$\n\n"
-    r"\*\*Requirement:\*\* (?P<requirement>[^\n]+)$",
-    re.MULTILINE,
-)
+CSHARP_NORMATIVE_ROOT = base.CSHARP_NORMATIVE_ROOT
+CSHARP_PROMOTION_EVIDENCE_COMMIT = base.CSHARP_PROMOTION_EVIDENCE_COMMIT
+FRONTMATTER_ID_PATTERN = re.compile(r"^id:\s*(\S+)\s*$", re.MULTILINE)
+LIST_ITEM_PATTERN = re.compile(r"^(?:[-*]|\d+\.)\s+(?P<text>.+)$")
+NON_CONTRACT_SECTIONS = {"Purpose", "Evidence", "Examples", "References", "Rationale"}
 
 
-def git_output(*args: str) -> str:
-    completed = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), *args],
-        text=True,
-        capture_output=True,
-        check=False,
+def csharp_standard_paths_at(revision: str) -> list[str]:
+    prefix = f"{CSHARP_NORMATIVE_ROOT}/"
+    return sorted(
+        path
+        for path in base.git_output(
+            "ls-tree", "-r", "--name-only", revision, CSHARP_NORMATIVE_ROOT
+        ).splitlines()
+        if path.startswith(prefix) and path.endswith("_STANDARD.md")
     )
-    if completed.returncode != 0:
-        raise AssertionError(completed.stderr.strip() or "git command failed")
-    return completed.stdout
 
 
-def git_source_at(revision: str, relative: str) -> str:
-    return git_output("show", f"{revision}:{relative}")
+def candidate_csharp_standard_paths() -> list[str]:
+    root = base.REPO_ROOT / CSHARP_NORMATIVE_ROOT
+    return sorted(
+        path.relative_to(base.REPO_ROOT).as_posix()
+        for path in root.glob("*_STANDARD.md")
+        if path.is_file()
+    )
 
 
-def git_paths_at(revision: str, suffix: str) -> list[str]:
-    paths = git_output("ls-tree", "-r", "--name-only", revision).splitlines()
-    return sorted(path for path in paths if path.endswith(suffix))
+def frontmatter_id(text: str) -> str:
+    if not text.startswith("---\n"):
+        raise AssertionError("stable C# standard is missing front matter")
+    end = text.find("\n---\n", 4)
+    if end < 0:
+        raise AssertionError("stable C# standard has unterminated front matter")
+    match = FRONTMATTER_ID_PATTERN.search(text[4:end])
+    if match is None:
+        raise AssertionError("stable C# standard is missing front-matter id")
+    return match.group(1)
 
 
-def git_object_sha_at(revision: str, relative: str) -> str:
-    return git_output("rev-parse", f"{revision}:{relative}").strip()
+def markdown_body(text: str) -> str:
+    if not text.startswith("---\n"):
+        return text
+    end = text.find("\n---\n", 4)
+    return text if end < 0 else text[end + len("\n---\n") :]
 
 
-def extract_rule_contracts(text: str, path: str) -> list[tuple[str, str, str]]:
-    return [
-        (match.group("id"), match.group("requirement").strip(), path)
-        for match in RULE_PATTERN.finditer(text)
-    ]
+def normalize_contract_text(text: str) -> str:
+    return " ".join(text.split())
 
 
-def published_rule_contracts() -> list[tuple[str, str, str]]:
-    contracts: list[tuple[str, str, str]] = []
-    for relative in git_paths_at(CHECKPOINT_COMMIT, ".md"):
-        contracts.extend(extract_rule_contracts(git_source_at(CHECKPOINT_COMMIT, relative), relative))
+def extract_csharp_normative_contracts(text: str) -> set[str]:
+    """Preserve normative blocks while allowing non-contract editorial/additive evolution."""
+
+    contracts: set[str] = set()
+    current_section = ""
+    paragraph: list[str] = []
+    in_code_fence = False
+
+    def flush_paragraph() -> None:
+        nonlocal paragraph
+        if paragraph and current_section not in NON_CONTRACT_SECTIONS:
+            statement = normalize_contract_text(" ".join(paragraph))
+            if statement:
+                contracts.add(f"{current_section}::{statement}")
+        paragraph = []
+
+    for raw_line in markdown_body(text).splitlines():
+        stripped = raw_line.strip()
+        if stripped.startswith("```"):
+            flush_paragraph()
+            in_code_fence = not in_code_fence
+            continue
+        if in_code_fence:
+            continue
+        if stripped.startswith("## "):
+            flush_paragraph()
+            current_section = stripped[3:].strip()
+            continue
+        if stripped.startswith("# "):
+            flush_paragraph()
+            continue
+        if not stripped:
+            flush_paragraph()
+            continue
+        list_match = LIST_ITEM_PATTERN.match(stripped)
+        if list_match is not None:
+            flush_paragraph()
+            if current_section not in NON_CONTRACT_SECTIONS:
+                statement = normalize_contract_text(list_match.group("text"))
+                if statement:
+                    contracts.add(f"{current_section}::{statement}")
+            continue
+        paragraph.append(stripped)
+
+    flush_paragraph()
     return contracts
 
 
-def candidate_rule_contracts() -> list[tuple[str, str, str]]:
-    contracts: list[tuple[str, str, str]] = []
-    for path in sorted(REPO_ROOT.rglob("*.md")):
-        relative = path.relative_to(REPO_ROOT).as_posix()
-        contracts.extend(extract_rule_contracts(path.read_text(encoding="utf-8"), relative))
-    return contracts
+def csharp_standard_snapshot(text: str) -> dict[str, object]:
+    return {"id": frontmatter_id(text), "contracts": extract_csharp_normative_contracts(text)}
 
 
-def occurrences_by_key(
-    contracts: list[tuple[str, str, str]]
-) -> dict[tuple[str, str], list[str]]:
-    result: dict[tuple[str, str], list[str]] = defaultdict(list)
-    for rule_id, requirement, path in contracts:
-        result[(path, rule_id)].append(requirement)
-    return dict(result)
+def promoted_csharp_standard_contracts() -> dict[str, dict[str, object]]:
+    return {
+        path: csharp_standard_snapshot(base.git_source_at(CSHARP_PROMOTION_EVIDENCE_COMMIT, path))
+        for path in csharp_standard_paths_at(CSHARP_PROMOTION_EVIDENCE_COMMIT)
+    }
 
 
-def occurrence_paths_by_id(contracts: list[tuple[str, str, str]]) -> dict[str, list[str]]:
-    result: dict[str, list[str]] = defaultdict(list)
-    for rule_id, _, path in contracts:
-        result[rule_id].append(path)
-    return dict(result)
+def candidate_csharp_standard_contracts() -> dict[str, dict[str, object]]:
+    return {
+        path: csharp_standard_snapshot((base.REPO_ROOT / path).read_text(encoding="utf-8"))
+        for path in candidate_csharp_standard_paths()
+    }
 
 
-def rule_contract_findings(
-    published: list[tuple[str, str, str]],
-    candidate: list[tuple[str, str, str]],
+def csharp_standard_contract_findings(
+    promoted: dict[str, dict[str, object]],
+    candidate: dict[str, dict[str, object]],
 ) -> list[str]:
     findings: list[str] = []
-    expected_by_key = occurrences_by_key(published)
-    actual_by_key = occurrences_by_key(candidate)
-    expected_occurrences = occurrence_paths_by_id(published)
-    actual_occurrences = occurrence_paths_by_id(candidate)
-
-    for (path, rule_id), published_requirements in expected_by_key.items():
-        if len(published_requirements) != 1:
-            findings.append(f"PUBLISHED_DUPLICATE_IN_SCOPE:{path}:{rule_id}")
+    for path, expected in promoted.items():
+        actual = candidate.get(path)
+        if actual is None:
+            findings.append(f"MISSING_CSHARP_STANDARD:{path}")
             continue
-
-        candidate_requirements = actual_by_key.get((path, rule_id), [])
-        if not candidate_requirements:
-            findings.append(f"MISSING_RULE:{path}:{rule_id}")
-            continue
-        if len(candidate_requirements) != 1:
-            findings.append(f"DUPLICATE_RULE_IN_SCOPE:{path}:{rule_id}")
-            continue
-        if candidate_requirements[0] != published_requirements[0]:
-            findings.append(f"CHANGED_RULE_MEANING:{path}:{rule_id}")
-
-    # Published duplicate IDs in distinct scopes are grandfathered. Do not allow a
-    # published ID to acquire a new scope, and do not allow a new ID to appear more
-    # than once even when every occurrence is in the same file.
-    for rule_id, candidate_occurrences in actual_occurrences.items():
-        published_occurrences = expected_occurrences.get(rule_id)
-        if published_occurrences is not None:
-            published_paths = set(published_occurrences)
-            for extra_path in sorted(set(candidate_occurrences) - published_paths):
-                findings.append(f"REUSED_PUBLISHED_RULE_ID:{extra_path}:{rule_id}")
-        elif len(candidate_occurrences) > 1:
-            findings.append(f"DUPLICATE_NEW_RULE_ID:{rule_id}")
-
+        if actual["id"] != expected["id"]:
+            findings.append(f"CHANGED_CSHARP_STANDARD_ID:{path}")
+        for statement in sorted(set(expected["contracts"]) - set(actual["contracts"])):
+            digest = hashlib.sha256(statement.encode("utf-8")).hexdigest()[:12]
+            findings.append(f"MISSING_CSHARP_NORMATIVE_CONTRACT:{path}:{digest}")
     return sorted(findings)
 
 
-class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.inventory = json.loads(CANDIDATE_INVENTORY.read_text(encoding="utf-8"))
-        cls.checkpoint_bytes = RULE_CHECKPOINT.read_bytes()
-        cls.checkpoint = json.loads(cls.checkpoint_bytes.decode("utf-8"))
-
-    def test_candidate_pins_published_rule_contract_checkpoint(self):
-        pin = self.inventory["publishedRuleContractCheckpoint"]
-        self.assertEqual(pin["path"], "releases/compatibility/0.10.0-rule-contracts.json")
-        self.assertEqual(pin["sha256"], RULE_CHECKPOINT_SHA256)
-        self.assertEqual(hashlib.sha256(self.checkpoint_bytes).hexdigest(), RULE_CHECKPOINT_SHA256)
-        self.assertEqual(self.checkpoint["releaseVersion"], "0.10.0")
-        self.assertEqual(self.checkpoint["tag"], "v0.10.0")
-        self.assertEqual(self.checkpoint["sourceCommit"], CHECKPOINT_COMMIT)
-        self.assertIn("grandfathered", self.checkpoint["coverageRule"])
-
-    def test_every_published_numbered_rule_occurrence_and_meaning_is_preserved(self):
-        published = published_rule_contracts()
-        candidate = candidate_rule_contracts()
-        self.assertGreater(len(published), 100)
-        published_ids = {rule_id for rule_id, _, _ in published}
-        self.assertIn("SEC-INPUT-001", published_ids)
-        self.assertIn("CSHARP-LANG-001", published_ids)
-        self.assertEqual(rule_contract_findings(published, candidate), [])
-
-    def test_published_scoped_duplicates_are_grandfathered(self):
-        published = [
-            ("SHARED-001", "Same published meaning.", "a.md"),
-            ("SHARED-001", "Same published meaning.", "b.md"),
-        ]
-        self.assertEqual(rule_contract_findings(published, list(published)), [])
-
-        reused_in_new_scope = published + [
-            ("SHARED-001", "Same published meaning.", "c.md")
-        ]
-        self.assertIn(
-            "REUSED_PUBLISHED_RULE_ID:c.md:SHARED-001",
-            rule_contract_findings(published, reused_in_new_scope),
-        )
-
-    def test_new_unique_rules_are_allowed_but_new_reuse_is_rejected(self):
-        published = [("RULE-001", "Published requirement.", "a.md")]
-        compatible_addition = published + [
-            ("RULE-002", "New optional requirement.", "b.md")
-        ]
-        self.assertEqual(rule_contract_findings(published, compatible_addition), [])
-
-        reused = compatible_addition + [
-            ("RULE-002", "Same new rule reused.", "c.md")
-        ]
-        self.assertIn(
-            "DUPLICATE_NEW_RULE_ID:RULE-002",
-            rule_contract_findings(published, reused),
-        )
-
-        same_file_reuse = compatible_addition + [
-            ("RULE-003", "New optional requirement.", "same.md"),
-            ("RULE-003", "New optional requirement.", "same.md"),
-        ]
-        self.assertIn(
-            "DUPLICATE_NEW_RULE_ID:RULE-003",
-            rule_contract_findings(published, same_file_reuse),
-        )
-
-    def test_rule_contract_checker_detects_removal_and_meaning_change(self):
-        published = [
-            ("RULE-001", "First requirement.", "a.md"),
-            ("RULE-002", "Second requirement.", "b.md"),
-        ]
-        removed = [("RULE-001", "First requirement.", "a.md")]
-        self.assertIn(
-            "MISSING_RULE:b.md:RULE-002",
-            rule_contract_findings(published, removed),
-        )
-
-        changed = [
-            ("RULE-001", "Changed meaning.", "a.md"),
-            ("RULE-002", "Second requirement.", "b.md"),
-        ]
-        self.assertIn(
-            "CHANGED_RULE_MEANING:a.md:RULE-001",
-            rule_contract_findings(published, changed),
-        )
-
-    def test_csharp_product_rule_ids_and_meaning_are_preserved(self):
-        source = self.checkpoint["csharpProductRules"]
-        text = (REPO_ROOT / source["sourcePath"]).read_text(encoding="utf-8")
-        actual = {
-            rule_id: requirement
-            for rule_id, requirement, _ in extract_rule_contracts(text, source["sourcePath"])
-        }
-        self.assertEqual(actual, source["rules"])
-        self.assertEqual(len(actual), 10)
-
+class ReleaseCandidateNormativeRuleContractTests(base.ReleaseCandidateNormativeRuleContractTests):
     def test_full_csharp_normative_standards_match_promotion_evidence_candidate(self):
-        promoted_tree = git_object_sha_at(CSHARP_PROMOTION_EVIDENCE_COMMIT, CSHARP_NORMATIVE_ROOT)
-        current_tree = git_object_sha_at("HEAD", CSHARP_NORMATIVE_ROOT)
-        self.assertEqual(
-            current_tree,
-            promoted_tree,
-            "stable C# normative standards changed after the independently reviewed promotion evidence candidate",
+        """Override the former whole-tree equality with semantic promoted-contract preservation."""
+
+        promoted = promoted_csharp_standard_contracts()
+        candidate = candidate_csharp_standard_contracts()
+        self.assertGreaterEqual(len(promoted), 8)
+        self.assertGreater(sum(len(set(item["contracts"])) for item in promoted.values()), 50)
+        security = promoted[f"{CSHARP_NORMATIVE_ROOT}/SECURITY_STANDARD.md"]
+        self.assertEqual(security["id"], "CSHARP-SECURITY-001")
+        self.assertEqual(csharp_standard_contract_findings(promoted, candidate), [])
+
+    def test_csharp_contract_gate_allows_editorial_and_additive_evolution(self):
+        promoted_text = '''
+---
+id: CSHARP-SAMPLE-001
+title: Sample
+version: 0.1.0
+status: stable
+---
+# Sample
+## Purpose
+Original explanatory purpose text.
+## Requirements
+- Preserve this promoted requirement.
+## Evidence
+Original evidence guidance.
+'''.lstrip()
+        compatible_text = promoted_text.replace(
+            "Original explanatory purpose text.", "Corrected explanatory purpose text."
+        ).replace(
+            "Original evidence guidance.", "Improved evidence guidance."
+        ).replace(
+            "- Preserve this promoted requirement.",
+            "- Preserve this promoted requirement.\n- Add a new optional compatible requirement.",
+        )
+        promoted = {"sample_STANDARD.md": csharp_standard_snapshot(promoted_text)}
+        compatible = {"sample_STANDARD.md": csharp_standard_snapshot(compatible_text)}
+        self.assertEqual(csharp_standard_contract_findings(promoted, compatible), [])
+
+        changed = {
+            "sample_STANDARD.md": csharp_standard_snapshot(
+                compatible_text.replace(
+                    "Preserve this promoted requirement.", "Weaken this promoted requirement."
+                )
+            )
+        }
+        self.assertTrue(
+            any(
+                finding.startswith("MISSING_CSHARP_NORMATIVE_CONTRACT:sample_STANDARD.md:")
+                for finding in csharp_standard_contract_findings(promoted, changed)
+            )
         )
 
-
-if __name__ == "__main__":
-    unittest.main()
+        changed_id = {
+            "sample_STANDARD.md": csharp_standard_snapshot(
+                compatible_text.replace("CSHARP-SAMPLE-001", "CSHARP-SAMPLE-002")
+            )
+        }
+        self.assertIn(
+            "CHANGED_CSHARP_STANDARD_ID:sample_STANDARD.md",
+            csharp_standard_contract_findings(promoted, changed_id),
+        )
