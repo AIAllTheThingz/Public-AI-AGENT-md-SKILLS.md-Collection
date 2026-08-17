@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import importlib.util
+import json
 import os
 import subprocess
 import sys
@@ -17,11 +18,8 @@ import test_rc_parameterized_finding_reachability as parameterized
 import test_rc_unnumbered_governance_semantics as unnumbered
 
 
-ROOT_GOVERNANCE_PATHS = (
-    "AGENTS.md",
-    "MAINTAINERS.md",
-    "RELEASE_POLICY.md",
-    "MATURITY_POLICY.md",
+CHECKPOINT_INVENTORY_PATH = (
+    REPO_ROOT / "releases" / "compatibility" / "0.10.0-checkpoint.json"
 )
 
 # This paragraph is deliberately forward-moving release-state narrative, not a
@@ -60,9 +58,26 @@ def _stable_root_contracts(text: str, path: str) -> Counter[tuple[str, str, str]
     return contracts
 
 
+def _published_normative_stable_root_paths() -> tuple[str, ...]:
+    """Derive normative Markdown roots from the authenticated stable-root inventory."""
+    checkpoint = json.loads(CHECKPOINT_INVENTORY_PATH.read_text(encoding="utf-8"))
+    stable_roots = checkpoint["stablePathGroups"]["root"]
+    normative: list[str] = []
+    for relative in stable_roots:
+        if not relative.endswith(".md"):
+            continue
+        published_text = unnumbered.base.git_source_at(
+            unnumbered.base.CHECKPOINT_COMMIT,
+            relative,
+        )
+        if _stable_root_contracts(published_text, relative):
+            normative.append(relative)
+    return tuple(normative)
+
+
 def _root_governance_contracts_at_checkpoint() -> Counter[tuple[str, str, str]]:
     contracts: Counter[tuple[str, str, str]] = Counter()
-    for relative in ROOT_GOVERNANCE_PATHS:
+    for relative in _published_normative_stable_root_paths():
         contracts.update(
             _stable_root_contracts(
                 unnumbered.base.git_source_at(unnumbered.base.CHECKPOINT_COMMIT, relative),
@@ -74,7 +89,7 @@ def _root_governance_contracts_at_checkpoint() -> Counter[tuple[str, str, str]]:
 
 def _candidate_root_governance_contracts() -> Counter[tuple[str, str, str]]:
     contracts: Counter[tuple[str, str, str]] = Counter()
-    for relative in ROOT_GOVERNANCE_PATHS:
+    for relative in _published_normative_stable_root_paths():
         contracts.update(
             _stable_root_contracts(
                 (REPO_ROOT / relative).read_text(encoding="utf-8"),
@@ -86,10 +101,27 @@ def _candidate_root_governance_contracts() -> Counter[tuple[str, str, str]]:
 
 class Pr71FinalRegressionTests(unittest.TestCase):
     def test_root_governance_unnumbered_controls_are_preserved(self):
+        root_paths = _published_normative_stable_root_paths()
         published = _root_governance_contracts_at_checkpoint()
         candidate = _candidate_root_governance_contracts()
 
-        for relative in ROOT_GOVERNANCE_PATHS:
+        # These were the concrete gaps that exposed the danger of a four-file
+        # hand-maintained list.  Keep them as sentinels while deriving the full
+        # protected set from the published stable-root checkpoint.
+        self.assertTrue(
+            {
+                "AGENTS.md",
+                "MAINTAINERS.md",
+                "RELEASE_POLICY.md",
+                "MATURITY_POLICY.md",
+                "SECURITY.md",
+                "CONTRIBUTING.md",
+                ".github/pull_request_template.md",
+            }.issubset(set(root_paths)),
+            root_paths,
+        )
+
+        for relative in root_paths:
             self.assertTrue(
                 any(path == relative for path, _section, _statement in published),
                 f"checkpoint root governance contract unexpectedly empty for {relative}",
@@ -98,7 +130,7 @@ class Pr71FinalRegressionTests(unittest.TestCase):
         self.assertEqual(
             unnumbered.unnumbered_contract_findings(published, candidate),
             [],
-            "root-level governance obligations must remain compatible with v0.10.0",
+            "normative stable-root obligations must remain compatible with v0.10.0",
         )
 
     def test_forward_release_state_narrative_is_not_a_frozen_contract(self):
