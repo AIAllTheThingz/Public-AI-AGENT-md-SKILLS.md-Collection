@@ -30,6 +30,8 @@ IMPERATIVE_PREFIXES = (
     "capture ",
     "retain ",
     "preserve ",
+    "replace ",
+    "remove ",
     "state ",
     "describe ",
     "list ",
