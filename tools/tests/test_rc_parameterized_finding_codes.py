@@ -37,6 +37,22 @@ class BranchAwareParameterizedCallSiteVisitor(base.ParameterizedCallSiteVisitor)
         if node.orelse:
             self._with_context("while:else", node.test, node.orelse)
 
+    def visit_Match(self, node: ast.Match) -> None:
+        for case in node.cases:
+            # Match patterns are not expressions, so encode their canonical AST as
+            # a literal alongside the normalized subject and guard. This preserves
+            # case identity and guard semantics without pretending a pattern is an
+            # executable expression.
+            marker = ast.Tuple(
+                elts=[
+                    node.subject,
+                    ast.Constant(value=base.canonical_ast(case.pattern)),
+                    case.guard if case.guard is not None else ast.Constant(value=None),
+                ],
+                ctx=ast.Load(),
+            )
+            self._with_context("match:case", marker, case.body)
+
     def visit_Call(self, node: ast.Call) -> None:
         if not (
             isinstance(node.func, ast.Name)
@@ -141,6 +157,60 @@ def validate(root, findings):
         )
         actual = matching_contract(
             parameterized_finding_contracts(negative, "sample.py"),
+            "LICENSE_ENCODING",
+        )
+        self.assertNotEqual(expected["context"], actual["context"])
+
+    def test_moving_call_between_match_cases_changes_branch_semantics(self):
+        first_case = '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(kind, root, findings):
+    match kind:
+        case "license":
+            read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+        case "notice":
+            pass
+'''
+        second_case = '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(kind, root, findings):
+    match kind:
+        case "license":
+            pass
+        case "notice":
+            read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+'''
+        expected = matching_contract(
+            parameterized_finding_contracts(first_case, "sample.py"),
+            "LICENSE_ENCODING",
+        )
+        actual = matching_contract(
+            parameterized_finding_contracts(second_case, "sample.py"),
+            "LICENSE_ENCODING",
+        )
+        self.assertNotEqual(expected["context"], actual["context"])
+
+    def test_changing_match_guard_changes_branch_semantics(self):
+        positive_guard = '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(kind, root, findings):
+    match kind:
+        case value if value == "license":
+            read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+'''
+        negative_guard = positive_guard.replace(
+            'value == "license"',
+            'value != "license"',
+        )
+        expected = matching_contract(
+            parameterized_finding_contracts(positive_guard, "sample.py"),
+            "LICENSE_ENCODING",
+        )
+        actual = matching_contract(
+            parameterized_finding_contracts(negative_guard, "sample.py"),
             "LICENSE_ENCODING",
         )
         self.assertNotEqual(expected["context"], actual["context"])
