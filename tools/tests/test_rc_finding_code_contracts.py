@@ -6,6 +6,21 @@ import hashlib
 
 import rc_finding_code_contracts_base as base
 
+_MUTATING_METHODS = {
+    "append",
+    "extend",
+    "insert",
+    "remove",
+    "pop",
+    "clear",
+    "sort",
+    "reverse",
+    "add",
+    "discard",
+    "update",
+    "setdefault",
+}
+
 
 class _SelfNormalizer(ast.NodeTransformer):
     def __init__(
@@ -121,18 +136,6 @@ def _branch_context(
         child = parent
     markers.reverse()
     return markers
-
-
-def _nearest_statement(
-    node: ast.AST,
-    parents: dict[ast.AST, ast.AST],
-) -> ast.stmt | None:
-    current = node
-    while current in parents:
-        current = parents[current]
-        if isinstance(current, ast.stmt):
-            return current
-    return None
 
 
 def _first_bindings(
@@ -260,69 +263,84 @@ def _finding_dependency_roles(
     return roles, cutoffs
 
 
-def _first_semantic_use(
+def _target_mutation_history(
     function: ast.FunctionDef | ast.AsyncFunctionDef,
     target: str,
     cutoff: int,
     parameter_positions: dict[str, int],
     local_names: set[str],
-) -> str:
+) -> list[str]:
     parents = _parent_map(function)
-    candidates: list[tuple[int, int, str]] = []
-    for node in ast.walk(function):
-        if not (
-            isinstance(node, ast.Name)
-            and isinstance(node.ctx, ast.Load)
-            and node.id == target
-            and getattr(node, "lineno", cutoff + 1) <= cutoff
-        ):
-            continue
-        statement = _nearest_statement(node, parents)
-        if statement is None:
-            continue
+    mutations: list[tuple[int, int, str]] = []
+
+    def add(node: ast.AST) -> None:
+        line = getattr(node, "lineno", cutoff + 1)
+        if line > cutoff:
+            return
         context = _branch_context(
-            statement,
+            node,
             function,
             parents,
             target,
             parameter_positions,
             local_names,
         )
-        shape = "|".join(
-            context
-            + [
-                _normalized_for_local(
-                    statement,
-                    target,
-                    parameter_positions,
-                    local_names,
-                )
-            ]
-        )
-        candidates.append(
+        mutations.append(
             (
-                getattr(node, "lineno", cutoff),
+                line,
                 getattr(node, "col_offset", 0),
-                shape,
+                "|".join(
+                    context
+                    + [
+                        _normalized_for_local(
+                            node,
+                            target,
+                            parameter_positions,
+                            local_names,
+                        )
+                    ]
+                ),
             )
         )
-    if not candidates:
-        return "<no-use>"
-    candidates.sort()
-    return candidates[0][2]
+
+    for node in ast.walk(function):
+        if isinstance(node, ast.AugAssign) and target in base._stored_names(node.target):
+            add(node)
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            # The first binding is already captured separately; later rebinding is
+            # semantic mutation. Ignore the first assignment so unrelated line
+            # insertion does not duplicate the binding identity.
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            if any(target in base._stored_names(item) for item in targets):
+                if getattr(node, "lineno", 0) > 0:
+                    add(node)
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == target
+            and node.func.attr in _MUTATING_METHODS
+        ):
+            add(node)
+
+    mutations.sort()
+    # Drop the first direct assignment, which is represented by structural_binding.
+    if mutations:
+        first = mutations[0][2]
+        if "Assign(" in first or "AnnAssign(" in first:
+            mutations = mutations[1:]
+    return [item[2] for item in mutations]
 
 
 class _DependencyScopedBindingNormalizer(base._FunctionScopeNameNormalizer):
-    """Give Finding-relevant locals stable dependency-scoped identities."""
+    """Give Finding-relevant locals stable mutation-scoped identities."""
 
     def _mapping(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, str]:
         parameters = self._parameter_names(node)
         parameter_positions = {name: index for index, name in enumerate(parameters)}
         local_names = self._local_store_names(node) - set(parameters)
         binding_shapes = self._binding_shapes(node, parameter_positions, local_names)
-        roles, cutoffs = _finding_dependency_roles(
-            node, local_names, parameter_positions
-        )
+        roles, cutoffs = _finding_dependency_roles(node, local_names, parameter_positions)
 
         mapping = {name: f"_p{index}" for name, index in parameter_positions.items()}
         shape_by_name: dict[str, str] = {}
@@ -332,16 +350,10 @@ class _DependencyScopedBindingNormalizer(base._FunctionScopeNameNormalizer):
             digest = hashlib.sha256(structural_binding.encode("utf-8")).hexdigest()[:12]
             mapping[name] = f"_v_{digest}"
 
-        # Every local that actually enters a Finding dependency closure gets its
-        # own stable semantic identity, independent of whether unrelated siblings
-        # with the same binding shape exist. Irrelevant locals keep the legacy
-        # binding-shape identity and cannot renumber relevant variables.
         for name, role_shapes in roles.items():
             structural_binding = shape_by_name[name]
-            base_digest = hashlib.sha256(
-                structural_binding.encode("utf-8")
-            ).hexdigest()[:12]
-            first_use = _first_semantic_use(
+            base_digest = hashlib.sha256(structural_binding.encode("utf-8")).hexdigest()[:12]
+            mutations = _target_mutation_history(
                 node,
                 name,
                 cutoffs[name],
@@ -349,7 +361,7 @@ class _DependencyScopedBindingNormalizer(base._FunctionScopeNameNormalizer):
                 local_names,
             )
             identity = "\n".join(
-                [structural_binding, first_use, *sorted(role_shapes)]
+                [structural_binding, *mutations, *sorted(role_shapes)]
             )
             role_digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:10]
             mapping[name] = f"_v_{base_digest}_{role_digest}"
@@ -365,9 +377,7 @@ finding_semantic_signatures = base.finding_semantic_signatures
 published_signatures = base.published_signatures
 
 
-class ReleaseCandidateFindingCodeContractTests(
-    base.ReleaseCandidateFindingCodeContractTests
-):
+class ReleaseCandidateFindingCodeContractTests(base.ReleaseCandidateFindingCodeContractTests):
     def test_same_shaped_locals_keep_distinct_semantic_identities(self):
         original = '''
 def run(flag):
@@ -387,12 +397,10 @@ def run(flag):
         self.assertNotEqual(
             finding_semantic_signatures(original),
             finding_semantic_signatures(swapped_condition),
-            "distinct same-shaped locals must not collapse to one normalized identity",
         )
         self.assertEqual(
             finding_semantic_signatures(original),
             finding_semantic_signatures(renamed),
-            "rename-only changes must remain alpha-equivalent",
         )
 
     def test_unrelated_unused_same_shaped_local_does_not_change_existing_identity(self):
@@ -410,7 +418,6 @@ def run(flag):
         self.assertEqual(
             finding_semantic_signatures(original),
             finding_semantic_signatures(with_scratch),
-            "an unrelated unused same-shaped local must not alter an existing identity",
         )
 
     def test_unrelated_used_same_shaped_local_does_not_change_existing_identity(self):
@@ -429,7 +436,6 @@ def run(flag):
         self.assertEqual(
             finding_semantic_signatures(original),
             finding_semantic_signatures(with_scratch),
-            "an unrelated used same-shaped local outside the Finding dependency closure must not alter identity",
         )
 
 
