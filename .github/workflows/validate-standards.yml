@@ -43,7 +43,7 @@ jobs:
 
       - name: Run complete validation pipeline
         shell: bash
-        run: python tools/validate-all/run_all.py --include-tests --format json
+        run: python tools/validate-all/run_all.py --include-tests
 
       - name: Validate distributed source archive
         shell: bash
