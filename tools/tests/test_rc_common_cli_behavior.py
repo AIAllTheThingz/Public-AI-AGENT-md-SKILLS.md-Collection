@@ -22,6 +22,49 @@ def run_tool(tool_path: str, *args: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def assert_published_result_contract(
+    testcase: unittest.TestCase,
+    payload: dict[str, object],
+    contract: dict[str, object],
+) -> None:
+    """Enforce the published required JSON shape while allowing optional compatible additions."""
+
+    result_contract = contract["resultContract"]
+    required_top_level = result_contract["requiredTopLevelFields"]
+    for field in required_top_level:
+        testcase.assertIn(field, payload, f"missing published result field {field!r}")
+
+    testcase.assertIsInstance(payload["tool"], str)
+    testcase.assertTrue(payload["tool"])
+    testcase.assertIsInstance(payload["version"], str)
+    testcase.assertTrue(payload["version"])
+    testcase.assertIn(payload["status"], set(result_contract["statusValues"]))
+    testcase.assertIsInstance(payload["summary"], dict)
+    testcase.assertIsInstance(payload["findings"], list)
+    testcase.assertIsInstance(payload["metadata"], dict)
+
+    for index, finding in enumerate(payload["findings"]):
+        testcase.assertIsInstance(finding, dict, f"finding {index} must be an object")
+        for field in result_contract["requiredFindingFields"]:
+            testcase.assertIn(field, finding, f"finding {index} missing {field!r}")
+        testcase.assertIsInstance(finding["code"], str)
+        testcase.assertTrue(finding["code"])
+        testcase.assertIn(
+            finding["severity"],
+            set(result_contract["findingSeverityValues"]),
+        )
+        testcase.assertIsInstance(finding["message"], str)
+        testcase.assertTrue(finding["message"])
+        if "path" in finding:
+            testcase.assertIsInstance(finding["path"], str)
+            testcase.assertTrue(finding["path"])
+        if "line" in finding:
+            testcase.assertIsInstance(finding["line"], int)
+            testcase.assertGreaterEqual(finding["line"], 1)
+        if "details" in finding:
+            testcase.assertIsInstance(finding["details"], dict)
+
+
 class ReleaseCandidateCommonCliBehaviorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -83,7 +126,7 @@ class ReleaseCandidateCommonCliBehaviorTests(unittest.TestCase):
             f"{tool_path} did not honor --output",
         )
         payload = json.loads(result_output.read_text(encoding="utf-8"))
-        self.assertIn(payload.get("status"), {"passed", "failed", "error"})
+        assert_published_result_contract(self, payload, self.contract)
         return completed, payload
 
     def test_root_output_and_quiet_behavior_for_every_common_stable_tool(self):

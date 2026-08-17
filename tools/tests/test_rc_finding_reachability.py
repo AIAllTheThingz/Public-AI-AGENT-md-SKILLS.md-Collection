@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import ast
-import copy
 import subprocess
 import unittest
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 from helpers import REPO_ROOT
 
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
+UNKNOWN = object()
 
 
 def git_output(*args: str) -> str:
@@ -60,45 +61,151 @@ def literal_finding_code(node: ast.Call) -> str | None:
     return None
 
 
-def statement_always_terminates(node: ast.stmt) -> bool:
+def static_value(node: ast.AST, constants: dict[str, Any]) -> object:
+    if isinstance(node, ast.Constant):
+        return node.value
+    if isinstance(node, ast.Name):
+        return constants.get(node.id, UNKNOWN)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        value = static_value(node.operand, constants)
+        return UNKNOWN if value is UNKNOWN else not bool(value)
+    if isinstance(node, ast.BoolOp):
+        values = [static_value(item, constants) for item in node.values]
+        if isinstance(node.op, ast.And):
+            if any(value is not UNKNOWN and not bool(value) for value in values):
+                return False
+            if all(value is not UNKNOWN for value in values):
+                return all(bool(value) for value in values)
+        if isinstance(node.op, ast.Or):
+            if any(value is not UNKNOWN and bool(value) for value in values):
+                return True
+            if all(value is not UNKNOWN for value in values):
+                return any(bool(value) for value in values)
+        return UNKNOWN
+    if (
+        isinstance(node, ast.Compare)
+        and len(node.ops) == 1
+        and len(node.comparators) == 1
+    ):
+        left = static_value(node.left, constants)
+        right = static_value(node.comparators[0], constants)
+        if left is UNKNOWN or right is UNKNOWN:
+            return UNKNOWN
+        operator = node.ops[0]
+        if isinstance(operator, ast.Eq):
+            return left == right
+        if isinstance(operator, ast.NotEq):
+            return left != right
+        if isinstance(operator, ast.Is):
+            return left is right
+        if isinstance(operator, ast.IsNot):
+            return left is not right
+    return UNKNOWN
+
+
+def static_truth(node: ast.AST, constants: dict[str, Any]) -> bool | None:
+    value = static_value(node, constants)
+    return None if value is UNKNOWN else bool(value)
+
+
+def update_known_constants(statement: ast.stmt, constants: dict[str, Any]) -> None:
+    if isinstance(statement, ast.Assign):
+        value = static_value(statement.value, constants)
+        for target in statement.targets:
+            if isinstance(target, ast.Name):
+                if value is UNKNOWN:
+                    constants.pop(target.id, None)
+                else:
+                    constants[target.id] = value
+    elif isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
+        value = (
+            UNKNOWN
+            if statement.value is None
+            else static_value(statement.value, constants)
+        )
+        if value is UNKNOWN:
+            constants.pop(statement.target.id, None)
+        else:
+            constants[statement.target.id] = value
+    elif isinstance(statement, (ast.AugAssign, ast.Delete)):
+        for item in ast.walk(statement):
+            if isinstance(item, ast.Name) and isinstance(item.ctx, (ast.Store, ast.Del)):
+                constants.pop(item.id, None)
+
+
+def statement_always_terminates(
+    node: ast.stmt, constants: dict[str, Any] | None = None
+) -> bool:
+    constants = {} if constants is None else constants
     if isinstance(node, (ast.Return, ast.Raise, ast.Break, ast.Continue)):
         return True
-    if isinstance(node, ast.If) and node.orelse:
-        return block_always_terminates(node.body) and block_always_terminates(node.orelse)
+    if isinstance(node, ast.If):
+        truth = static_truth(node.test, constants)
+        if truth is True:
+            return block_always_terminates(node.body, constants)
+        if truth is False:
+            return bool(node.orelse) and block_always_terminates(
+                node.orelse, constants
+            )
+        return bool(node.orelse) and block_always_terminates(
+            node.body, constants
+        ) and block_always_terminates(node.orelse, constants)
     return False
 
 
-def block_always_terminates(statements: list[ast.stmt]) -> bool:
+def block_always_terminates(
+    statements: list[ast.stmt], constants: dict[str, Any] | None = None
+) -> bool:
+    state = dict(constants or {})
     for statement in statements:
-        if statement_always_terminates(statement):
+        if statement_always_terminates(statement, state):
             return True
+        update_known_constants(statement, state)
     return False
 
 
 class ReachableFindingVisitor(ast.NodeVisitor):
-    """Visit only statements that can be reached within a straight-line block."""
+    """Visit only statements that can be reached within a statically analyzable block."""
 
     def __init__(self, source_path: str) -> None:
         self.source_path = source_path
         self.function = "<module>"
+        self.constants: dict[str, Any] = {}
         self.contracts: Counter[tuple[str, str, str]] = Counter()
 
     def _visit_block(self, statements: list[ast.stmt]) -> None:
-        for statement in statements:
-            self.visit(statement)
-            if statement_always_terminates(statement):
-                break
+        previous_constants = self.constants
+        self.constants = dict(previous_constants)
+        try:
+            for statement in statements:
+                self.visit(statement)
+                if statement_always_terminates(statement, self.constants):
+                    break
+                update_known_constants(statement, self.constants)
+        finally:
+            self.constants = previous_constants
 
     def visit_Module(self, node: ast.Module) -> None:
-        self._visit_block(node.body)
+        for statement in node.body:
+            self.visit(statement)
+            if statement_always_terminates(statement, self.constants):
+                break
+            update_known_constants(statement, self.constants)
 
     def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
-        previous = self.function
+        previous_function = self.function
+        previous_constants = self.constants
         self.function = node.name
+        self.constants = dict(previous_constants)
         try:
-            self._visit_block(node.body)
+            for statement in node.body:
+                self.visit(statement)
+                if statement_always_terminates(statement, self.constants):
+                    break
+                update_known_constants(statement, self.constants)
         finally:
-            self.function = previous
+            self.function = previous_function
+            self.constants = previous_constants
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         self._visit_function(node)
@@ -108,8 +215,14 @@ class ReachableFindingVisitor(ast.NodeVisitor):
 
     def visit_If(self, node: ast.If) -> None:
         self.visit(node.test)
-        self._visit_block(node.body)
-        self._visit_block(node.orelse)
+        truth = static_truth(node.test, self.constants)
+        if truth is True:
+            self._visit_block(node.body)
+        elif truth is False:
+            self._visit_block(node.orelse)
+        else:
+            self._visit_block(node.body)
+            self._visit_block(node.orelse)
 
     def visit_For(self, node: ast.For) -> None:
         self.visit(node.iter)
@@ -123,8 +236,11 @@ class ReachableFindingVisitor(ast.NodeVisitor):
 
     def visit_While(self, node: ast.While) -> None:
         self.visit(node.test)
-        self._visit_block(node.body)
-        self._visit_block(node.orelse)
+        truth = static_truth(node.test, self.constants)
+        if truth is not False:
+            self._visit_block(node.body)
+        if truth is not True:
+            self._visit_block(node.orelse)
 
     def visit_With(self, node: ast.With) -> None:
         for item in node.items:
@@ -184,7 +300,9 @@ def candidate_contracts() -> Counter[tuple[str, str, str]]:
     for path in candidate_python_paths():
         relative = path.relative_to(REPO_ROOT).as_posix()
         result.update(
-            reachable_literal_finding_contracts(path.read_text(encoding="utf-8"), relative)
+            reachable_literal_finding_contracts(
+                path.read_text(encoding="utf-8"), relative
+            )
         )
     return result
 
@@ -241,6 +359,34 @@ def validate(value):
         self.assertEqual(
             reachable_literal_finding_contracts(source, "sample.py"), Counter()
         )
+
+    def test_constant_true_termination_suppresses_following_finding(self):
+        literal = '''
+def validate(value):
+    if True:
+        return
+    Finding("PUBLIC_CODE", "unreachable")
+'''
+        module_flag = '''
+STOP_VALIDATION = True
+def validate(value):
+    if STOP_VALIDATION:
+        return
+    Finding("PUBLIC_CODE", "unreachable")
+'''
+        local_flag = '''
+def validate(value):
+    stop_validation = True
+    if stop_validation:
+        return
+    Finding("PUBLIC_CODE", "unreachable")
+'''
+        for source in (literal, module_flag, local_flag):
+            with self.subTest(source=source):
+                self.assertEqual(
+                    reachable_literal_finding_contracts(source, "sample.py"),
+                    Counter(),
+                )
 
 
 if __name__ == "__main__":

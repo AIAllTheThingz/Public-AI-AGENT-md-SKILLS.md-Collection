@@ -16,7 +16,7 @@
   },
   "publishedFindingCodeContract": {
     "path": "releases/compatibility/0.10.0-finding-codes.json",
-    "sha256": "367b54b58db54792272752ce71b9507e89cb913bb546914896a7c01d51788a78"
+    "sha256": "07619880db05b0065d53be54626af3246559e35e0ae895cbf60d158e42561002"
   },
   "publishedRuleContractCheckpoint": {
     "path": "releases/compatibility/0.10.0-rule-contracts.json",
