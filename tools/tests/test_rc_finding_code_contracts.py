@@ -1,110 +1,105 @@
 from __future__ import annotations
 
 import ast
+import copy
 import hashlib
 
 import rc_finding_code_contracts_base as base
 
 
+class _UsageShapeNameNormalizer(ast.NodeTransformer):
+    def __init__(
+        self,
+        target: str,
+        parameter_positions: dict[str, int],
+        local_names: set[str],
+    ) -> None:
+        self.target = target
+        self.parameter_positions = parameter_positions
+        self.local_names = local_names
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id == self.target:
+            node.id = "_self"
+        elif node.id in self.parameter_positions:
+            node.id = f"_p{self.parameter_positions[node.id]}"
+        elif node.id in self.local_names:
+            node.id = "_local"
+        return node
+
+
 class _DistinctBindingNormalizer(base._FunctionScopeNameNormalizer):
-    """Keep same-shaped used locals distinct without counting unused insertions."""
+    """Keep alpha-renames stable without collapsing distinct same-shaped locals."""
 
     @staticmethod
-    def _loaded_local_names(
-        node: ast.FunctionDef | ast.AsyncFunctionDef, local_names: set[str]
-    ) -> set[str]:
-        loaded: set[str] = set()
+    def _usage_shapes(
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+        parameter_positions: dict[str, int],
+        local_names: set[str],
+    ) -> dict[str, list[str]]:
+        shapes: dict[str, list[str]] = {name: [] for name in local_names}
+        parents: dict[ast.AST, ast.AST] = {}
+        for parent in ast.walk(node):
+            for child in ast.iter_child_nodes(parent):
+                parents[child] = parent
 
-        class Collector(ast.NodeVisitor):
-            def visit_FunctionDef(self, item: ast.FunctionDef) -> None:
-                if item is node:
-                    for statement in item.body:
-                        self.visit(statement)
+        def belongs_to_function(item: ast.AST) -> bool:
+            current = item
+            while current in parents:
+                current = parents[current]
+                if isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    return current is node
+                if isinstance(current, (ast.Lambda, ast.ClassDef)):
+                    return False
+            return False
 
-            def visit_AsyncFunctionDef(self, item: ast.AsyncFunctionDef) -> None:
-                if item is node:
-                    for statement in item.body:
-                        self.visit(statement)
+        def enclosing_statement(item: ast.AST) -> ast.stmt | None:
+            current = item
+            while current in parents:
+                current = parents[current]
+                if isinstance(current, ast.stmt):
+                    return current
+            return None
 
-            def visit_Lambda(self, item: ast.Lambda) -> None:
-                return
+        for item in ast.walk(node):
+            if not (
+                isinstance(item, ast.Name)
+                and isinstance(item.ctx, ast.Load)
+                and item.id in local_names
+                and belongs_to_function(item)
+            ):
+                continue
+            statement = enclosing_statement(item)
+            if statement is None:
+                continue
+            cloned = copy.deepcopy(statement)
+            cloned = _UsageShapeNameNormalizer(
+                item.id,
+                parameter_positions,
+                local_names,
+            ).visit(cloned)
+            cloned = base.FindingMessageNormalizer().visit(cloned)
+            ast.fix_missing_locations(cloned)
+            shapes[item.id].append(base.canonical_ast(cloned))
 
-            def visit_ClassDef(self, item: ast.ClassDef) -> None:
-                return
-
-            def visit_Name(self, item: ast.Name) -> None:
-                if isinstance(item.ctx, ast.Load) and item.id in local_names:
-                    loaded.add(item.id)
-
-        Collector().visit(node)
-        return loaded
+        for values in shapes.values():
+            values.sort()
+        return shapes
 
     def _mapping(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, str]:
         parameters = self._parameter_names(node)
         parameter_positions = {name: index for index, name in enumerate(parameters)}
         local_names = self._local_store_names(node) - set(parameters)
         binding_shapes = self._binding_shapes(node, parameter_positions, local_names)
-        loaded_names = self._loaded_local_names(node, local_names)
+        usage_shapes = self._usage_shapes(node, parameter_positions, local_names)
 
         mapping = {name: f"_p{index}" for name, index in parameter_positions.items()}
-        first_shapes = {
-            name: (binding_shapes.get(name) or ["store"])[0]
-            for name in local_names
-        }
-        shape_ordinals: dict[str, int] = {}
-        first_binding_order: list[str] = []
-
-        class FirstBindingCollector(ast.NodeVisitor):
-            def visit_FunctionDef(self, item: ast.FunctionDef) -> None:
-                if item is node:
-                    for statement in item.body:
-                        self.visit(statement)
-
-            def visit_AsyncFunctionDef(self, item: ast.AsyncFunctionDef) -> None:
-                if item is node:
-                    for statement in item.body:
-                        self.visit(statement)
-
-            def visit_Lambda(self, item: ast.Lambda) -> None:
-                return
-
-            def visit_ClassDef(self, item: ast.ClassDef) -> None:
-                return
-
-            def visit_Name(self, item: ast.Name) -> None:
-                if (
-                    isinstance(item.ctx, (ast.Store, ast.Del))
-                    and item.id in loaded_names
-                    and item.id not in first_binding_order
-                ):
-                    first_binding_order.append(item.id)
-
-            def visit_ExceptHandler(self, item: ast.ExceptHandler) -> None:
-                if (
-                    item.name
-                    and item.name in loaded_names
-                    and item.name not in first_binding_order
-                ):
-                    first_binding_order.append(item.name)
-                self.generic_visit(item)
-
-        FirstBindingCollector().visit(node)
-        for name in sorted(loaded_names - set(first_binding_order)):
-            first_binding_order.append(name)
-
-        for name in first_binding_order:
-            structural_binding = first_shapes[name]
-            ordinal = shape_ordinals.get(structural_binding, 0)
-            shape_ordinals[structural_binding] = ordinal + 1
-            digest = hashlib.sha256(structural_binding.encode("utf-8")).hexdigest()[:12]
-            mapping[name] = f"_v_{digest}_{ordinal}"
-
-        # Unused locals cannot influence a published finding and therefore do not
-        # participate in the ordinal namespace of used bindings.
-        for name in local_names - loaded_names:
-            structural_binding = first_shapes[name]
-            digest = hashlib.sha256(structural_binding.encode("utf-8")).hexdigest()[:12]
-            mapping[name] = f"_unused_{digest}"
+        for name in local_names:
+            structural_binding = (binding_shapes.get(name) or ["store"])[0]
+            semantic_usage = "\n".join(usage_shapes.get(name) or ["<unused>"])
+            identity = f"{structural_binding}\n{semantic_usage}"
+            digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+            mapping[name] = f"_v_{digest}"
         return mapping
 
 
@@ -146,7 +141,7 @@ def run(flag):
             "rename-only changes must remain alpha-equivalent",
         )
 
-    def test_unrelated_same_shaped_local_does_not_renumber_existing_identity(self):
+    def test_unrelated_same_shaped_local_does_not_change_existing_identity(self):
         original = '''
 def run(flag):
     passed = []
@@ -161,7 +156,7 @@ def run(flag):
         self.assertEqual(
             finding_semantic_signatures(original),
             finding_semantic_signatures(with_scratch),
-            "an unrelated same-shaped local must not renumber an existing binding",
+            "an unrelated same-shaped local must not alter an existing identity",
         )
 
 
