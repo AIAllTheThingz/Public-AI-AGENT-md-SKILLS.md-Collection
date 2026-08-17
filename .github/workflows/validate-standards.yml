@@ -70,6 +70,11 @@ jobs:
             echo "::error title=Archive validation side effect::Validation left Git metadata inside the extracted source root."
             exit 1
           fi
+          cache_artifact="$(find "$archive_root" \( -type d -name '__pycache__' -o -type f \( -name '*.pyc' -o -name '*.pyo' \) \) -print -quit)"
+          if [ -n "$cache_artifact" ]; then
+            echo "::error title=Archive validation side effect::Validation left Python cache or bytecode inside the extracted source root: $cache_artifact"
+            exit 1
+          fi
           if [ "$status" -ne 0 ]; then
             python -c 'import json,sys; p=json.load(open(sys.argv[1], encoding="utf-8")); t=(p.get("metadata") or {}).get("tests") or {}; d=(t.get("stderr") or t.get("stdout") or json.dumps(p.get("findings", p), sort_keys=True))[-3500:]; d=d.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"); print("::error title=Archive validation diagnostics::" + d)' "$archive_result"
             exit "$status"
