@@ -202,6 +202,8 @@ def _block_has_reachable_outer_break(
                 for case in statement.cases
             ):
                 return True
+            if statement_always_terminates(statement, state):
+                return False
         elif isinstance(statement, (ast.For, ast.AsyncFor, ast.While)):
             # Breaks inside a nested loop belong to that nested loop.
             if statement_always_terminates(statement, state):
@@ -215,6 +217,32 @@ def loop_body_has_break(
     statements: list[ast.stmt], constants: dict[str, Any] | None = None
 ) -> bool:
     return _block_has_reachable_outer_break(statements, constants)
+
+
+def _pattern_is_irrefutable(pattern: ast.pattern) -> bool:
+    """Return whether a valid match pattern accepts every subject value."""
+    if isinstance(pattern, ast.MatchAs):
+        # `case _`, `case name`, and aliases of another irrefutable pattern.
+        return pattern.pattern is None or _pattern_is_irrefutable(pattern.pattern)
+    if isinstance(pattern, ast.MatchOr):
+        return any(_pattern_is_irrefutable(item) for item in pattern.patterns)
+    return False
+
+
+def _match_always_terminates(
+    node: ast.Match,
+    constants: dict[str, Any],
+) -> bool:
+    """Recognize exhaustive match statements whose reachable cases all terminate."""
+    for case in node.cases:
+        guard_truth = True if case.guard is None else static_truth(case.guard, constants)
+        if guard_truth is False:
+            continue
+        if not block_always_terminates(case.body, constants):
+            return False
+        if _pattern_is_irrefutable(case.pattern) and guard_truth is True:
+            return True
+    return False
 
 
 def statement_always_terminates(
@@ -245,6 +273,8 @@ def statement_always_terminates(
         truth = static_truth(node.test, constants)
         if truth is True and not loop_body_has_break(node.body, constants):
             return True
+    if isinstance(node, ast.Match):
+        return _match_always_terminates(node, constants)
     try_types = (ast.Try,) + ((ast.TryStar,) if hasattr(ast, "TryStar") else ())
     if isinstance(node, try_types):
         if node.finalbody and block_always_terminates(node.finalbody, constants):
