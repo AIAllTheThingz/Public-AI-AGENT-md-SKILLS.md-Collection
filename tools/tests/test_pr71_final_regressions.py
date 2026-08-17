@@ -22,6 +22,22 @@ CHECKPOINT_INVENTORY_PATH = (
     REPO_ROOT / "releases" / "compatibility" / "0.10.0-checkpoint.json"
 )
 
+# These stable root documents are deliberately forward-moving status/index
+# surfaces rather than durable policy authorities. Their current-version,
+# readiness, and roadmap prose must advance after publication without turning
+# every version bump into a compatibility break. Normative root documents such
+# as SECURITY.md, CONTRIBUTING.md, MAINTAINERS.md, MATURITY_POLICY.md,
+# RELEASE_POLICY.md, and the PR template remain derived from the authenticated
+# stable-root checkpoint and protected semantically.
+FORWARD_MOVING_INFORMATIONAL_ROOT_PATHS = frozenset(
+    {
+        "README.md",
+        "CATALOG.md",
+        "CHANGELOG.md",
+        "ROADMAP.md",
+    }
+)
+
 # This paragraph is deliberately forward-moving release-state narrative, not a
 # stable governance obligation.  The immutable v0.10.0 copy said the next
 # intended publication was v0.10.0; after publication the correct forward-only
@@ -59,12 +75,14 @@ def _stable_root_contracts(text: str, path: str) -> Counter[tuple[str, str, str]
 
 
 def _published_normative_stable_root_paths() -> tuple[str, ...]:
-    """Derive normative Markdown roots from the authenticated stable-root inventory."""
+    """Derive durable normative Markdown roots from the authenticated stable-root inventory."""
     checkpoint = json.loads(CHECKPOINT_INVENTORY_PATH.read_text(encoding="utf-8"))
     stable_roots = checkpoint["stablePathGroups"]["root"]
     normative: list[str] = []
     for relative in stable_roots:
         if not relative.endswith(".md"):
+            continue
+        if relative in FORWARD_MOVING_INFORMATIONAL_ROOT_PATHS:
             continue
         published_text = unnumbered.base.git_source_at(
             unnumbered.base.CHECKPOINT_COMMIT,
@@ -106,7 +124,7 @@ class Pr71FinalRegressionTests(unittest.TestCase):
         candidate = _candidate_root_governance_contracts()
 
         # These were the concrete gaps that exposed the danger of a four-file
-        # hand-maintained list.  Keep them as sentinels while deriving the full
+        # hand-maintained list. Keep them as sentinels while deriving the full
         # protected set from the published stable-root checkpoint.
         self.assertTrue(
             {
@@ -120,6 +138,10 @@ class Pr71FinalRegressionTests(unittest.TestCase):
             }.issubset(set(root_paths)),
             root_paths,
         )
+        self.assertFalse(
+            FORWARD_MOVING_INFORMATIONAL_ROOT_PATHS & set(root_paths),
+            "release/index/status documents must remain forward-mutable",
+        )
 
         for relative in root_paths:
             self.assertTrue(
@@ -131,6 +153,32 @@ class Pr71FinalRegressionTests(unittest.TestCase):
             unnumbered.unnumbered_contract_findings(published, candidate),
             [],
             "normative stable-root obligations must remain compatible with v0.10.0",
+        )
+
+    def test_security_reporting_prohibition_is_a_stable_root_contract(self):
+        checkpoint = unnumbered.base.git_source_at(
+            unnumbered.base.CHECKPOINT_COMMIT,
+            "SECURITY.md",
+        )
+        published = _stable_root_contracts(checkpoint, "SECURITY.md")
+        reporting_controls = [
+            statement
+            for path, _section, statement in published
+            if path == "SECURITY.md"
+            and "do not open a public issue for an exploitable vulnerability"
+            in statement.casefold()
+        ]
+        self.assertEqual(len(reporting_controls), 1)
+
+        weakened = checkpoint.replace(
+            "Do not open a public issue for an exploitable vulnerability",
+            "A public issue may be opened for an exploitable vulnerability",
+            1,
+        )
+        candidate = _stable_root_contracts(weakened, "SECURITY.md")
+        self.assertTrue(
+            unnumbered.unnumbered_contract_findings(published, candidate),
+            "weakening the published confidential-reporting control must be detected",
         )
 
     def test_forward_release_state_narrative_is_not_a_frozen_contract(self):
