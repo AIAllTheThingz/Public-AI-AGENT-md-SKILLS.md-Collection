@@ -138,7 +138,7 @@ class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
         self.assertEqual(self.checkpoint["releaseVersion"], "0.10.0")
         self.assertEqual(self.checkpoint["tag"], "v0.10.0")
         self.assertEqual(self.checkpoint["sourceCommit"], CHECKPOINT_COMMIT)
-        self.assertIn("published scoped duplicates", self.checkpoint["coverageRule"])
+        self.assertIn("grandfathered", self.checkpoint["coverageRule"])
 
     def test_every_published_numbered_rule_occurrence_and_meaning_is_preserved(self):
         published = published_rule_contracts()
