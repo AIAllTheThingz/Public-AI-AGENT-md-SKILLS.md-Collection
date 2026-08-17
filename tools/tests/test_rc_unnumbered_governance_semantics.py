@@ -23,34 +23,6 @@ BEHAVIOR_SECTION_MARKERS = (
     "boundary",
     "trigger",
 )
-BEHAVIOR_TEXT_MARKERS = (
-    " must ",
-    " must not ",
-    " may not ",
-    " shall ",
-    " shall not ",
-    " required ",
-    " prohibited ",
-    " never ",
-    " only ",
-    " authorization ",
-    " approval ",
-    " accountable ",
-    " stop when ",
-    " must remain ",
-    " must follow ",
-)
-IMPERATIVE_PREFIXES = (
-    "stop ",
-    "reject ",
-    "require ",
-    "record ",
-    "document ",
-    "obtain ",
-    "preserve ",
-    "do not ",
-    "never ",
-)
 
 
 def normalize_contract_text(text: str) -> str:
@@ -78,14 +50,6 @@ def _without_numbered_rule_blocks(text: str) -> str:
 def _section_is_behavior_defining(title: str) -> bool:
     normalized = normalize_contract_text(title).casefold()
     return any(marker in normalized for marker in BEHAVIOR_SECTION_MARKERS)
-
-
-def _statement_is_behavior_defining(statement: str) -> bool:
-    normalized = f" {normalize_contract_text(statement).casefold()} "
-    stripped = normalized.strip()
-    return any(marker in normalized for marker in BEHAVIOR_TEXT_MARKERS) or any(
-        stripped.startswith(prefix) for prefix in IMPERATIVE_PREFIXES
-    )
 
 
 def _section_statements(block: str) -> list[str]:
@@ -137,9 +101,12 @@ def extract_unnumbered_governance_contracts(
         block_start = match.end()
         block_end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
         block = text[block_start:block_end]
+        # The section heading is already the semantic classifier. Preserve every
+        # prose/list statement within such a published Decision/Exception/
+        # Completion/etc. section so negative forms such as "No closure ..." do
+        # not disappear merely because they omit a modal keyword such as "must".
         for statement in _section_statements(block):
-            if _statement_is_behavior_defining(statement):
-                contracts[(path, title.casefold(), statement)] += 1
+            contracts[(path, title.casefold(), statement)] += 1
 
     return contracts
 
@@ -206,12 +173,29 @@ class ReleaseCandidateUnnumberedGovernanceSemanticTests(unittest.TestCase):
             any("authorization is absent" in statement.casefold() for statement in organization_decision_gates),
             "authorization stop condition must be part of the immutable contract",
         )
+
+        exception_decision_gates = [
+            statement
+            for path, section, statement in published
+            if path == "governance/EXCEPTION_PROCESS.md"
+            and section == "decision gates"
+        ]
+        self.assertEqual(len(exception_decision_gates), 3)
+        self.assertTrue(
+            any(
+                statement.casefold().startswith("no closure until the deviation is removed")
+                for statement in exception_decision_gates
+            ),
+            "negative exception-closure gate must remain in the immutable contract",
+        )
+
         self.assertEqual(unnumbered_contract_findings(published, candidate), [])
 
     def test_decision_exception_and_completion_regressions_are_detected(self):
         published_text = """
 ## Decision gates
 
+- No closure until the deviation is removed or replaced by an approved permanent policy change.
 - Stop when authorization is absent for state-changing work.
 
 ## Exceptions and prohibited shortcuts
@@ -222,6 +206,10 @@ No exception may override genuine authorization and accountable human approval.
 
 The adopting repository must implement, validate, review, and record the applicable controls.
 """
+        removed_negative_gate = published_text.replace(
+            "- No closure until the deviation is removed or replaced by an approved permanent policy change.\n",
+            "",
+        )
         removed_decision = published_text.replace(
             "- Stop when authorization is absent for state-changing work.\n",
             "",
@@ -236,7 +224,12 @@ The adopting repository must implement, validate, review, and record the applica
         )
 
         published = extract_unnumbered_governance_contracts(published_text, "governance/sample.md")
-        for candidate_text in (removed_decision, weakened_exception, removed_completion):
+        for candidate_text in (
+            removed_negative_gate,
+            removed_decision,
+            weakened_exception,
+            removed_completion,
+        ):
             with self.subTest(candidate=candidate_text):
                 findings = unnumbered_contract_findings(
                     published,
