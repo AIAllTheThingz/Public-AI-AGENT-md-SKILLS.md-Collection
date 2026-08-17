@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -33,6 +34,29 @@ CHECKPOINT_GROUP_TO_CANDIDATE_KEY = {
     "tools": "stableToolEntryPaths",
     "profiles": "stableProfileEntryPaths",
 }
+
+SCHEMA_ANNOTATION_KEYS = {
+    "title",
+    "description",
+    "$comment",
+    "examples",
+    "default",
+    "$defs",
+    "definitions",
+}
+SCHEMA_STRUCTURAL_KEYS = {"required", "properties", "items"}
+
+
+def git_source_at(revision: str, relative: str) -> str:
+    completed = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "show", f"{revision}:{relative}"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise AssertionError(completed.stderr.strip() or "git show failed")
+    return completed.stdout
 
 
 def checkpoint_compatibility_findings(checkpoint: dict, candidate: dict) -> list[str]:
@@ -100,6 +124,74 @@ def identifier_compatibility_findings(expected: dict, observed: dict) -> list[st
                     f"IDENTIFIER_CHANGED:{category}:{path}:{expected_value}->{observed_values[path]}"
                 )
     return findings
+
+
+def schema_contract_findings(published: object, candidate: object, path: str = "$") -> list[str]:
+    """Compare stable JSON Schema assertions while allowing optional compatible additions."""
+
+    findings: list[str] = []
+    if not isinstance(published, dict) or not isinstance(candidate, dict):
+        if published != candidate:
+            findings.append(f"SCHEMA_VALUE_CHANGED:{path}")
+        return findings
+
+    published_required = published.get("required")
+    if published_required is not None:
+        candidate_required = candidate.get("required")
+        if (
+            not isinstance(published_required, list)
+            or not isinstance(candidate_required, list)
+            or set(candidate_required) != set(published_required)
+        ):
+            findings.append(f"SCHEMA_REQUIRED_CHANGED:{path}")
+
+    published_properties = published.get("properties")
+    if published_properties is not None:
+        candidate_properties = candidate.get("properties")
+        if not isinstance(published_properties, dict) or not isinstance(candidate_properties, dict):
+            findings.append(f"SCHEMA_PROPERTIES_MISSING:{path}")
+        else:
+            for name, published_property in published_properties.items():
+                if name not in candidate_properties:
+                    findings.append(f"SCHEMA_PROPERTY_MISSING:{path}.{name}")
+                else:
+                    findings.extend(
+                        schema_contract_findings(
+                            published_property,
+                            candidate_properties[name],
+                            f"{path}.properties.{name}",
+                        )
+                    )
+
+    if "items" in published:
+        if "items" not in candidate:
+            findings.append(f"SCHEMA_ITEMS_MISSING:{path}")
+        else:
+            findings.extend(
+                schema_contract_findings(published["items"], candidate["items"], f"{path}.items")
+            )
+
+    for key, published_value in published.items():
+        if key in SCHEMA_STRUCTURAL_KEYS or key in SCHEMA_ANNOTATION_KEYS:
+            continue
+        if key not in candidate:
+            findings.append(f"SCHEMA_KEY_MISSING:{path}:{key}")
+        elif key == "enum":
+            candidate_value = candidate[key]
+            if not isinstance(candidate_value, list) or set(candidate_value) != set(published_value):
+                findings.append(f"SCHEMA_ENUM_CHANGED:{path}")
+        elif candidate[key] != published_value:
+            findings.append(f"SCHEMA_CONTRACT_CHANGED:{path}:{key}")
+
+    # A new optional property is a documented minor-compatible extension. Other
+    # candidate-only assertion keywords narrow or otherwise alter an existing
+    # published schema node and therefore require explicit compatibility review.
+    for key in candidate:
+        if key in published or key in SCHEMA_ANNOTATION_KEYS or key == "properties":
+            continue
+        findings.append(f"SCHEMA_CONSTRAINT_ADDED:{path}:{key}")
+
+    return sorted(findings)
 
 
 class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
@@ -266,27 +358,85 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
 
     def test_published_tool_contract_and_result_schema_remain_compatible(self):
         source_documents = self.tool_behavior["sourceDocuments"]
-        contract_path = REPO_ROOT / source_documents["toolContract"]["path"]
-        result_schema_path = REPO_ROOT / source_documents["toolResultSchema"]["path"]
+        contract_relative = source_documents["toolContract"]["path"]
+        result_schema_relative = source_documents["toolResultSchema"]["path"]
+        contract_path = REPO_ROOT / contract_relative
+        result_schema_path = REPO_ROOT / result_schema_relative
 
+        # The checkpoint hashes identify the exact published v0.10.0 source. They
+        # must not require the current candidate documents to remain byte-identical.
+        published_contract = git_source_at(CHECKPOINT_COMMIT, contract_relative)
+        published_schema_text = git_source_at(CHECKPOINT_COMMIT, result_schema_relative)
         self.assertEqual(
-            hashlib.sha256(contract_path.read_bytes()).hexdigest(),
+            hashlib.sha256(published_contract.encode("utf-8")).hexdigest(),
             source_documents["toolContract"]["sha256"],
         )
         self.assertEqual(
-            hashlib.sha256(result_schema_path.read_bytes()).hexdigest(),
+            hashlib.sha256(published_schema_text.encode("utf-8")).hexdigest(),
             source_documents["toolResultSchema"]["sha256"],
         )
+        self.assertTrue(contract_path.is_file())
+        self.assertTrue(result_schema_path.is_file())
 
+        published_schema = json.loads(published_schema_text)
         schema = json.loads(result_schema_path.read_text(encoding="utf-8"))
+        self.assertEqual(schema_contract_findings(published_schema, schema), [])
+
         result_contract = self.tool_behavior["resultContract"]
-        self.assertEqual(schema["required"], result_contract["requiredTopLevelFields"])
-        self.assertEqual(schema["properties"]["status"]["enum"], result_contract["statusValues"])
+        self.assertEqual(set(schema["required"]), set(result_contract["requiredTopLevelFields"]))
+        self.assertEqual(set(schema["properties"]["status"]["enum"]), set(result_contract["statusValues"]))
         finding_schema = schema["properties"]["findings"]["items"]
-        self.assertEqual(finding_schema["required"], result_contract["requiredFindingFields"])
+        self.assertEqual(set(finding_schema["required"]), set(result_contract["requiredFindingFields"]))
         self.assertEqual(
-            finding_schema["properties"]["severity"]["enum"],
-            result_contract["findingSeverityValues"],
+            set(finding_schema["properties"]["severity"]["enum"]),
+            set(result_contract["findingSeverityValues"]),
+        )
+
+    def test_result_schema_allows_optional_additions_but_rejects_breaking_changes(self):
+        source = self.tool_behavior["sourceDocuments"]["toolResultSchema"]["path"]
+        published = json.loads(git_source_at(CHECKPOINT_COMMIT, source))
+
+        compatible = copy.deepcopy(published)
+        compatible["description"] = "Editorial clarification."
+        compatible["properties"]["traceId"] = {
+            "type": "string",
+            "description": "Optional correlation metadata.",
+        }
+        compatible["properties"]["findings"]["items"]["properties"]["ruleId"] = {
+            "type": "string"
+        }
+        self.assertEqual(schema_contract_findings(published, compatible), [])
+
+        newly_required = copy.deepcopy(compatible)
+        newly_required["required"].append("traceId")
+        self.assertIn("SCHEMA_REQUIRED_CHANGED:$", schema_contract_findings(published, newly_required))
+
+        changed_type = copy.deepcopy(published)
+        changed_type["properties"]["tool"]["type"] = "integer"
+        self.assertIn(
+            "SCHEMA_CONTRACT_CHANGED:$.properties.tool:type",
+            schema_contract_findings(published, changed_type),
+        )
+
+        changed_enum = copy.deepcopy(published)
+        changed_enum["properties"]["status"]["enum"].append("partial")
+        self.assertIn(
+            "SCHEMA_ENUM_CHANGED:$.properties.status",
+            schema_contract_findings(published, changed_enum),
+        )
+
+        changed_extension = copy.deepcopy(published)
+        changed_extension["additionalProperties"] = True
+        self.assertIn(
+            "SCHEMA_CONTRACT_CHANGED:$:additionalProperties",
+            schema_contract_findings(published, changed_extension),
+        )
+
+        narrowed_existing_property = copy.deepcopy(published)
+        narrowed_existing_property["properties"]["tool"]["pattern"] = "^[A-Z]+$"
+        self.assertIn(
+            "SCHEMA_CONSTRAINT_ADDED:$.properties.tool:pattern",
+            schema_contract_findings(published, narrowed_existing_property),
         )
 
     def test_published_cli_options_remain_available(self):

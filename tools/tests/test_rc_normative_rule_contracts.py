@@ -78,10 +78,10 @@ def occurrences_by_key(
     return dict(result)
 
 
-def paths_by_id(contracts: list[tuple[str, str, str]]) -> dict[str, set[str]]:
-    result: dict[str, set[str]] = defaultdict(set)
+def occurrence_paths_by_id(contracts: list[tuple[str, str, str]]) -> dict[str, list[str]]:
+    result: dict[str, list[str]] = defaultdict(list)
     for rule_id, _, path in contracts:
-        result[rule_id].add(path)
+        result[rule_id].append(path)
     return dict(result)
 
 
@@ -92,8 +92,8 @@ def rule_contract_findings(
     findings: list[str] = []
     expected_by_key = occurrences_by_key(published)
     actual_by_key = occurrences_by_key(candidate)
-    expected_paths = paths_by_id(published)
-    actual_paths = paths_by_id(candidate)
+    expected_occurrences = occurrence_paths_by_id(published)
+    actual_occurrences = occurrence_paths_by_id(candidate)
 
     for (path, rule_id), published_requirements in expected_by_key.items():
         if len(published_requirements) != 1:
@@ -111,13 +111,15 @@ def rule_contract_findings(
             findings.append(f"CHANGED_RULE_MEANING:{path}:{rule_id}")
 
     # Published duplicate IDs in distinct scopes are grandfathered. Do not allow a
-    # published ID to acquire a new scope, and do not allow a new ID to be reused.
-    for rule_id, candidate_paths in actual_paths.items():
-        published_paths = expected_paths.get(rule_id)
-        if published_paths is not None:
-            for extra_path in sorted(candidate_paths - published_paths):
+    # published ID to acquire a new scope, and do not allow a new ID to appear more
+    # than once even when every occurrence is in the same file.
+    for rule_id, candidate_occurrences in actual_occurrences.items():
+        published_occurrences = expected_occurrences.get(rule_id)
+        if published_occurrences is not None:
+            published_paths = set(published_occurrences)
+            for extra_path in sorted(set(candidate_occurrences) - published_paths):
                 findings.append(f"REUSED_PUBLISHED_RULE_ID:{extra_path}:{rule_id}")
-        elif len(candidate_paths) > 1:
+        elif len(candidate_occurrences) > 1:
             findings.append(f"DUPLICATE_NEW_RULE_ID:{rule_id}")
 
     return sorted(findings)
@@ -177,6 +179,15 @@ class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
         self.assertIn(
             "DUPLICATE_NEW_RULE_ID:RULE-002",
             rule_contract_findings(published, reused),
+        )
+
+        same_file_reuse = compatible_addition + [
+            ("RULE-003", "New optional requirement.", "same.md"),
+            ("RULE-003", "New optional requirement.", "same.md"),
+        ]
+        self.assertIn(
+            "DUPLICATE_NEW_RULE_ID:RULE-003",
+            rule_contract_findings(published, same_file_reuse),
         )
 
     def test_rule_contract_checker_detects_removal_and_meaning_change(self):

@@ -56,7 +56,26 @@ def canonical_ast(node: ast.AST | None) -> str:
 
 
 class FindingMessageNormalizer(ast.NodeTransformer):
-    """Remove human-readable Finding message text from semantic dependency snapshots."""
+    """Remove non-contract prose from semantic dependency snapshots."""
+
+    @staticmethod
+    def _strip_docstring(node: ast.FunctionDef | ast.AsyncFunctionDef):
+        if (
+            node.body
+            and isinstance(node.body[0], ast.Expr)
+            and isinstance(node.body[0].value, ast.Constant)
+            and isinstance(node.body[0].value.value, str)
+        ):
+            node.body = node.body[1:]
+        return node
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
+        node = self.generic_visit(node)
+        return self._strip_docstring(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AST:
+        node = self.generic_visit(node)
+        return self._strip_docstring(node)
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
         node = self.generic_visit(node)
@@ -88,7 +107,29 @@ def loaded_names(node: ast.AST | None) -> set[str]:
     }
 
 
-def module_data_bindings(tree: ast.Module) -> dict[str, ast.AST]:
+def function_bound_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
+    bound = {node.name}
+    arguments = node.args
+    for argument in (*arguments.posonlyargs, *arguments.args, *arguments.kwonlyargs):
+        bound.add(argument.arg)
+    if arguments.vararg is not None:
+        bound.add(arguments.vararg.arg)
+    if arguments.kwarg is not None:
+        bound.add(arguments.kwarg.arg)
+    for item in ast.walk(node):
+        if isinstance(item, ast.Name) and isinstance(item.ctx, (ast.Store, ast.Del)):
+            bound.add(item.id)
+    return bound
+
+
+def dependency_names(node: ast.AST | None) -> set[str]:
+    names = loaded_names(node)
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        names -= function_bound_names(node)
+    return names
+
+
+def module_semantic_bindings(tree: ast.Module) -> dict[str, ast.AST]:
     definitions: dict[str, ast.AST] = {}
     for statement in tree.body:
         if isinstance(statement, ast.Assign):
@@ -98,6 +139,8 @@ def module_data_bindings(tree: ast.Module) -> dict[str, ast.AST]:
         elif isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
             if statement.value is not None:
                 definitions[statement.target.id] = statement.value
+        elif isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            definitions[statement.name] = statement
     return definitions
 
 
@@ -172,7 +215,7 @@ class FindingSignatureVisitor(ast.NodeVisitor):
     def _dependency_snapshot(self, nodes: list[ast.AST]) -> dict[str, str]:
         pending: set[str] = set()
         for node in nodes:
-            pending.update(loaded_names(node))
+            pending.update(dependency_names(node))
 
         snapshot: dict[str, str] = {}
         visited: set[str] = set()
@@ -189,7 +232,7 @@ class FindingSignatureVisitor(ast.NodeVisitor):
                 continue
 
             snapshot[name] = normalized_semantic_ast(binding)
-            pending.update(loaded_names(binding) - visited)
+            pending.update(dependency_names(binding) - visited)
 
         return dict(sorted(snapshot.items()))
 
@@ -280,7 +323,7 @@ class FindingSignatureVisitor(ast.NodeVisitor):
 
 def finding_semantic_signatures(text: str) -> dict[str, list[str]]:
     tree = ast.parse(text)
-    visitor = FindingSignatureVisitor(module_data_bindings(tree))
+    visitor = FindingSignatureVisitor(module_semantic_bindings(tree))
     visitor.visit(tree)
     return {code: sorted(signatures) for code, signatures in visitor.signatures.items()}
 
@@ -394,6 +437,40 @@ def run(other_text):
         self.assertEqual(finding_semantic_signatures(original), finding_semantic_signatures(reworded))
         self.assertNotEqual(finding_semantic_signatures(original), finding_semantic_signatures(changed_data))
         self.assertNotEqual(finding_semantic_signatures(original), finding_semantic_signatures(reused))
+
+    def test_semantic_signature_tracks_helper_implementation_dependencies(self):
+        original = '''
+def normalize(value):
+    """Human-readable helper documentation."""
+    return value.lower()
+def run(text):
+    if normalize(text) == "blocked":
+        Finding("PUBLIC_CODE", "Original wording.", path="sample")
+'''
+        documentation_only = '''
+def normalize(value):
+    """Improved helper documentation."""
+    return value.lower()
+def run(text):
+    if normalize(text) == "blocked":
+        Finding("PUBLIC_CODE", "Original wording.", path="sample")
+'''
+        changed_helper = '''
+def normalize(value):
+    """Human-readable helper documentation."""
+    return value.upper()
+def run(text):
+    if normalize(text) == "blocked":
+        Finding("PUBLIC_CODE", "Original wording.", path="sample")
+'''
+        self.assertEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(documentation_only),
+        )
+        self.assertNotEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(changed_helper),
+        )
 
     def test_template_validator_emits_published_stable_path_code(self):
         with tempfile.TemporaryDirectory() as temp:
