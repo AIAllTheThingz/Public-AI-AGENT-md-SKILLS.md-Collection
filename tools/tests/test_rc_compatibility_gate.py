@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import re
 
@@ -10,6 +11,79 @@ SEMVER_RE = re.compile(
     r"(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?"
     r"(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$"
 )
+
+_ORIGINAL_SCHEMA_CONTRACT_FINDINGS = base.schema_contract_findings
+
+
+def _schema_is_unconstrained(schema: object) -> bool:
+    """Return whether a schema accepts every instance value."""
+    if schema is True:
+        return True
+    if not isinstance(schema, dict):
+        return False
+    return all(key in base.SCHEMA_ANNOTATION_KEYS for key in schema)
+
+
+def schema_contract_findings(
+    published: object,
+    candidate: object,
+    path: str = "$",
+) -> list[str]:
+    """Strengthen optional-property compatibility for previously open objects."""
+    findings = _ORIGINAL_SCHEMA_CONTRACT_FINDINGS(published, candidate, path)
+    if not isinstance(published, dict) or not isinstance(candidate, dict):
+        return sorted(set(findings))
+
+    candidate_properties = candidate.get("properties")
+    if not isinstance(candidate_properties, dict):
+        return sorted(set(findings))
+
+    published_properties = published.get("properties")
+    known_properties = (
+        published_properties if isinstance(published_properties, dict) else {}
+    )
+    additional = published.get("additionalProperties", True)
+
+    for name, candidate_property in candidate_properties.items():
+        if name in known_properties:
+            continue
+
+        # A closed published object rejected this name entirely, so admitting a
+        # new optional named property is a compatible extension. An open object
+        # already accepted the name with its old additionalProperties semantics;
+        # the newly named schema must not narrow those previously accepted values.
+        if additional is False:
+            continue
+        if additional is True:
+            if not _schema_is_unconstrained(candidate_property):
+                findings.append(
+                    f"SCHEMA_NEW_PROPERTY_NARROWS_OPEN_OBJECT:{path}.properties.{name}"
+                )
+            continue
+        if isinstance(additional, dict):
+            if _schema_is_unconstrained(candidate_property):
+                continue
+            if _ORIGINAL_SCHEMA_CONTRACT_FINDINGS(
+                additional,
+                candidate_property,
+                f"{path}.additionalProperties->{name}",
+            ):
+                findings.append(
+                    f"SCHEMA_NEW_PROPERTY_NARROWS_OPEN_OBJECT:{path}.properties.{name}"
+                )
+            continue
+
+        findings.append(
+            f"SCHEMA_NEW_PROPERTY_NARROWS_OPEN_OBJECT:{path}.properties.{name}"
+        )
+
+    return sorted(set(findings))
+
+
+# The historical base remains independently readable; the discovered permanent
+# gate uses the strengthened comparator, and the base comparator's recursive
+# calls resolve through this binding as well.
+base.schema_contract_findings = schema_contract_findings
 
 
 def semver_key(value: str) -> tuple:
@@ -160,6 +234,39 @@ class ReleaseCandidateCompatibilityGateTests(
             "SCHEMA_CONTRACT_CHANGED:$.properties.name:type",
             base.schema_contract_findings(published, changed_type),
         )
+
+    def test_open_schema_object_rejects_narrowing_named_property(self):
+        relative = "schemas/artifact-record.schema.json"
+        published = json.loads(base.git_source_at(base.CHECKPOINT_COMMIT, relative))
+
+        narrowed = copy.deepcopy(published)
+        extensions = narrowed["properties"]["extensions"]
+        self.assertIs(extensions["additionalProperties"], True)
+        extensions["properties"] = {"vendorFlag": {"type": "boolean"}}
+        findings = base.schema_contract_findings(published, narrowed)
+        self.assertIn(
+            "SCHEMA_NEW_PROPERTY_NARROWS_OPEN_OBJECT:$.properties.extensions.properties.vendorFlag",
+            findings,
+        )
+
+        unconstrained = copy.deepcopy(published)
+        unconstrained["properties"]["extensions"]["properties"] = {
+            "vendorFlag": {"description": "Optional vendor extension annotation."}
+        }
+        self.assertEqual(
+            base.schema_contract_findings(published, unconstrained),
+            [],
+            "annotation-only naming must not narrow a previously open extension key",
+        )
+
+    def test_closed_schema_object_allows_new_optional_property(self):
+        relative = "schemas/project-manifest.schema.json"
+        published = json.loads(base.git_source_at(base.CHECKPOINT_COMMIT, relative))
+        self.assertIs(published["additionalProperties"], False)
+
+        candidate = copy.deepcopy(published)
+        candidate["properties"]["traceId"] = {"type": "string"}
+        self.assertEqual(base.schema_contract_findings(published, candidate), [])
 
 
 if __name__ == "__main__":
