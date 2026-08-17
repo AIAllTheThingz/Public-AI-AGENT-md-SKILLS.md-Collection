@@ -55,6 +55,249 @@ def canonical_ast(node: ast.AST | None) -> str:
     return "" if node is None else ast.dump(node, annotate_fields=False, include_attributes=False)
 
 
+def _stored_names(target: ast.AST) -> list[str]:
+    return [
+        item.id
+        for item in ast.walk(target)
+        if isinstance(item, ast.Name) and isinstance(item.ctx, (ast.Store, ast.Del))
+    ]
+
+
+class _BindingShapeNormalizer(ast.NodeTransformer):
+    """Reduce a binding expression to a rename-independent structural shape."""
+
+    def __init__(self, parameter_positions: dict[str, int], local_names: set[str]) -> None:
+        self.parameter_positions = parameter_positions
+        self.local_names = local_names
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        cloned = copy.deepcopy(node)
+        if cloned.id in self.parameter_positions:
+            cloned.id = f"_p{self.parameter_positions[cloned.id]}"
+        elif cloned.id in self.local_names:
+            cloned.id = "_local"
+        return cloned
+
+    def visit_arg(self, node: ast.arg) -> ast.AST:
+        cloned = copy.deepcopy(node)
+        if cloned.arg in self.parameter_positions:
+            cloned.arg = f"_p{self.parameter_positions[cloned.arg]}"
+        elif cloned.arg in self.local_names:
+            cloned.arg = "_local"
+        return cloned
+
+
+class _FunctionScopeNameNormalizer(ast.NodeTransformer):
+    """Normalize private bound identifiers without renaming module/public names."""
+
+    def __init__(self) -> None:
+        self.scopes: list[dict[str, str]] = []
+
+    @staticmethod
+    def _parameter_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
+        args = node.args
+        names = [
+            argument.arg
+            for argument in (*args.posonlyargs, *args.args, *args.kwonlyargs)
+        ]
+        if args.vararg is not None:
+            names.append(args.vararg.arg)
+        if args.kwarg is not None:
+            names.append(args.kwarg.arg)
+        return names
+
+    @staticmethod
+    def _local_store_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
+        names: set[str] = set()
+
+        class Collector(ast.NodeVisitor):
+            def visit_FunctionDef(self, item: ast.FunctionDef) -> None:
+                if item is node:
+                    for statement in item.body:
+                        self.visit(statement)
+
+            def visit_AsyncFunctionDef(self, item: ast.AsyncFunctionDef) -> None:
+                if item is node:
+                    for statement in item.body:
+                        self.visit(statement)
+
+            def visit_Lambda(self, item: ast.Lambda) -> None:
+                return
+
+            def visit_ClassDef(self, item: ast.ClassDef) -> None:
+                return
+
+            def visit_Name(self, item: ast.Name) -> None:
+                if isinstance(item.ctx, (ast.Store, ast.Del)):
+                    names.add(item.id)
+
+            def visit_ExceptHandler(self, item: ast.ExceptHandler) -> None:
+                if item.name:
+                    names.add(item.name)
+                self.generic_visit(item)
+
+        Collector().visit(node)
+        return names
+
+    @classmethod
+    def _binding_shapes(
+        cls,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+        parameter_positions: dict[str, int],
+        local_names: set[str],
+    ) -> dict[str, list[str]]:
+        shapes: dict[str, list[str]] = {name: [] for name in local_names}
+
+        def shape(prefix: str, expression: ast.AST | None) -> str:
+            if expression is None:
+                return prefix
+            cloned = copy.deepcopy(expression)
+            cloned = _BindingShapeNormalizer(parameter_positions, local_names).visit(cloned)
+            ast.fix_missing_locations(cloned)
+            return f"{prefix}:{canonical_ast(cloned)}"
+
+        def add_target(target: ast.AST, prefix: str, expression: ast.AST | None) -> None:
+            value = shape(prefix, expression)
+            for name in _stored_names(target):
+                if name in shapes:
+                    shapes[name].append(value)
+
+        class BindingCollector(ast.NodeVisitor):
+            def visit_FunctionDef(self, item: ast.FunctionDef) -> None:
+                if item is node:
+                    for statement in item.body:
+                        self.visit(statement)
+
+            def visit_AsyncFunctionDef(self, item: ast.AsyncFunctionDef) -> None:
+                if item is node:
+                    for statement in item.body:
+                        self.visit(statement)
+
+            def visit_Lambda(self, item: ast.Lambda) -> None:
+                return
+
+            def visit_ClassDef(self, item: ast.ClassDef) -> None:
+                return
+
+            def visit_Assign(self, item: ast.Assign) -> None:
+                for target in item.targets:
+                    add_target(target, "assign", item.value)
+                self.visit(item.value)
+
+            def visit_AnnAssign(self, item: ast.AnnAssign) -> None:
+                if item.value is not None:
+                    add_target(item.target, "annassign", item.value)
+                    self.visit(item.value)
+
+            def visit_AugAssign(self, item: ast.AugAssign) -> None:
+                add_target(item.target, f"augassign:{type(item.op).__name__}", item.value)
+                self.visit(item.value)
+
+            def visit_NamedExpr(self, item: ast.NamedExpr) -> None:
+                add_target(item.target, "namedexpr", item.value)
+                self.visit(item.value)
+
+            def visit_For(self, item: ast.For) -> None:
+                add_target(item.target, "for", item.iter)
+                self.visit(item.iter)
+                for statement in item.body:
+                    self.visit(statement)
+                for statement in item.orelse:
+                    self.visit(statement)
+
+            def visit_AsyncFor(self, item: ast.AsyncFor) -> None:
+                add_target(item.target, "async-for", item.iter)
+                self.visit(item.iter)
+                for statement in item.body:
+                    self.visit(statement)
+                for statement in item.orelse:
+                    self.visit(statement)
+
+            def visit_comprehension(self, item: ast.comprehension) -> None:
+                add_target(item.target, "comprehension", item.iter)
+                self.visit(item.iter)
+                for condition in item.ifs:
+                    self.visit(condition)
+
+            def visit_With(self, item: ast.With) -> None:
+                for with_item in item.items:
+                    if with_item.optional_vars is not None:
+                        add_target(with_item.optional_vars, "with", with_item.context_expr)
+                    self.visit(with_item.context_expr)
+                for statement in item.body:
+                    self.visit(statement)
+
+            def visit_AsyncWith(self, item: ast.AsyncWith) -> None:
+                for with_item in item.items:
+                    if with_item.optional_vars is not None:
+                        add_target(with_item.optional_vars, "async-with", with_item.context_expr)
+                    self.visit(with_item.context_expr)
+                for statement in item.body:
+                    self.visit(statement)
+
+            def visit_ExceptHandler(self, item: ast.ExceptHandler) -> None:
+                if item.name and item.name in shapes:
+                    shapes[item.name].append(shape("except", item.type))
+                for statement in item.body:
+                    self.visit(statement)
+
+        BindingCollector().visit(node)
+        return shapes
+
+    def _mapping(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, str]:
+        parameters = self._parameter_names(node)
+        parameter_positions = {name: index for index, name in enumerate(parameters)}
+        local_names = self._local_store_names(node) - set(parameters)
+        binding_shapes = self._binding_shapes(node, parameter_positions, local_names)
+
+        mapping = {name: f"_p{index}" for name, index in parameter_positions.items()}
+        for name in local_names:
+            # The first binding establishes the identity of a private local. Later
+            # reassignments remain visible in dependency snapshots but must not
+            # renumber or redefine the variable merely because unrelated code adds
+            # another use of the same private name elsewhere in the function.
+            structural_binding = (binding_shapes.get(name) or ["store"])[0]
+            digest = hashlib.sha256(structural_binding.encode("utf-8")).hexdigest()[:12]
+            mapping[name] = f"_v_{digest}"
+        return mapping
+
+    def _visit_function(
+        self, node: ast.FunctionDef | ast.AsyncFunctionDef
+    ) -> ast.FunctionDef | ast.AsyncFunctionDef:
+        mapping = self._mapping(node)
+        self.scopes.append(mapping)
+        try:
+            args = node.args
+            for argument in (*args.posonlyargs, *args.args, *args.kwonlyargs):
+                argument.arg = mapping.get(argument.arg, argument.arg)
+            if args.vararg is not None:
+                args.vararg.arg = mapping.get(args.vararg.arg, args.vararg.arg)
+            if args.kwarg is not None:
+                args.kwarg.arg = mapping.get(args.kwarg.arg, args.kwarg.arg)
+            node.body = [self.visit(statement) for statement in node.body]
+            return node
+        finally:
+            self.scopes.pop()
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
+        return self._visit_function(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AST:
+        return self._visit_function(node)
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if self.scopes:
+            node.id = self.scopes[-1].get(node.id, node.id)
+        return node
+
+
+def normalize_bound_names(node: ast.AST) -> ast.AST:
+    cloned = copy.deepcopy(node)
+    normalized = _FunctionScopeNameNormalizer().visit(cloned)
+    ast.fix_missing_locations(normalized)
+    return normalized
+
+
 class FindingMessageNormalizer(ast.NodeTransformer):
     """Remove non-contract prose from semantic dependency snapshots."""
 
@@ -91,7 +334,7 @@ class FindingMessageNormalizer(ast.NodeTransformer):
 def normalized_semantic_ast(node: ast.AST | None) -> str:
     if node is None:
         return ""
-    cloned = copy.deepcopy(node)
+    cloned = normalize_bound_names(node)
     cloned = FindingMessageNormalizer().visit(cloned)
     ast.fix_missing_locations(cloned)
     return canonical_ast(cloned)
@@ -332,7 +575,7 @@ class FindingSignatureVisitor(ast.NodeVisitor):
 
 
 def finding_semantic_signatures(text: str, source_path: str = "<memory>") -> dict[str, list[str]]:
-    tree = ast.parse(text)
+    tree = normalize_bound_names(ast.parse(text))
     visitor = FindingSignatureVisitor(module_semantic_bindings(tree), source_path)
     visitor.visit(tree)
     return {code: sorted(signatures) for code, signatures in visitor.signatures.items()}
@@ -494,7 +737,11 @@ def run(other_text):
 '''
         self.assertEqual(finding_semantic_signatures(original), finding_semantic_signatures(reworded))
         self.assertNotEqual(finding_semantic_signatures(original), finding_semantic_signatures(changed_data))
-        self.assertNotEqual(finding_semantic_signatures(original), finding_semantic_signatures(reused))
+        self.assertEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(reused),
+            "alpha-equivalent private parameter renames must remain compatible",
+        )
 
     def test_semantic_signature_tracks_helper_implementation_dependencies(self):
         original = '''
