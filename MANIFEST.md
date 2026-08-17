@@ -75,7 +75,7 @@ These progressive-disclosure routers and direct language skills select and compo
 - machine-readable release manifest
 - explicit `1.0.0` compatibility gate
 
-Current repository version: `1.0.0-rc.1` **prepared and permanently validated; not yet published**.
+Current repository version: `1.0.0-rc.1` **prepared; the recorded functional compatibility candidate is permanently validated; not yet published**.
 
 The published migration checkpoint remains `0.10.0`, published as `v0.10.0` on 2026-08-16 from commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`. The exact validated RC functional candidate and permanent CI run are recorded in `releases/rc-readiness/1.0.0-rc.1.md`; this manifest intentionally does not duplicate that moving evidence pointer.
 
