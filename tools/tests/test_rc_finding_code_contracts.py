@@ -277,6 +277,20 @@ def _finding_dependency_roles(
     return roles, cutoffs
 
 
+def _mutation_target_names(target: ast.AST) -> set[str]:
+    """Return locals whose container state is changed by an assignment target."""
+    names = set(base._stored_names(target))
+    for item in ast.walk(target):
+        if not isinstance(item, ast.Subscript):
+            continue
+        root: ast.AST = item.value
+        while isinstance(root, ast.Subscript):
+            root = root.value
+        if isinstance(root, ast.Name):
+            names.add(root.id)
+    return names
+
+
 def _target_mutation_history(
     function: ast.FunctionDef | ast.AsyncFunctionDef,
     target: str,
@@ -318,11 +332,11 @@ def _target_mutation_history(
         )
 
     for node in ast.walk(function):
-        if isinstance(node, ast.AugAssign) and target in base._stored_names(node.target):
+        if isinstance(node, ast.AugAssign) and target in _mutation_target_names(node.target):
             add(node)
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
             targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-            if any(target in base._stored_names(item) for item in targets):
+            if any(target in _mutation_target_names(item) for item in targets):
                 if getattr(node, "lineno", 0) > 0:
                     add(node)
         elif (
@@ -564,6 +578,22 @@ def run(flag):
         self.assertEqual(
             finding_semantic_signatures(original),
             finding_semantic_signatures(with_scratch),
+        )
+
+    def test_subscript_assignment_changes_dependency_identity(self):
+        original = '''
+def run(document_id):
+    ids = {}
+    if document_id in ids:
+        Finding("DUPLICATE_ID", "duplicate", path="sample")
+'''
+        mutated = original.replace(
+            "    if document_id in ids:\n",
+            '    ids[document_id] = "path"\n    if document_id in ids:\n',
+        )
+        self.assertNotEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(mutated),
         )
 
 
