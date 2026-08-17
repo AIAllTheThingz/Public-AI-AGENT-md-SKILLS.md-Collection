@@ -545,15 +545,26 @@ class FindingSignatureVisitor(ast.NodeVisitor):
         if node.orelse:
             self._with_context(f"while-else:{test}", node.test, node.orelse)
 
-    def visit_Try(self, node: ast.Try) -> None:
-        self._with_context("try", None, node.body)
+    def _visit_try_regions(self, node: ast.Try | ast.AST, *, star: bool) -> None:
+        prefix = "try-star" if star else "try"
+        handler_prefix = "except-star" if star else "except"
+        self._with_context(prefix, None, node.body)
         for handler in node.handlers:
             exception_type = canonical_ast(handler.type) if handler.type is not None else "bare"
-            self._with_context(f"except:{exception_type}", handler.type, handler.body)
+            self._with_context(
+                f"{handler_prefix}:{exception_type}", handler.type, handler.body
+            )
         if node.orelse:
-            self._with_context("try-else", None, node.orelse)
+            self._with_context(f"{prefix}-else", None, node.orelse)
         if node.finalbody:
-            self._with_context("finally", None, node.finalbody)
+            self._with_context(f"{prefix}-finally", None, node.finalbody)
+
+    def visit_Try(self, node: ast.Try) -> None:
+        self._visit_try_regions(node, star=False)
+
+    if hasattr(ast, "TryStar"):
+        def visit_TryStar(self, node: ast.TryStar) -> None:
+            self._visit_try_regions(node, star=True)
 
     def visit_Call(self, node: ast.Call) -> None:
         if isinstance(node.func, ast.Name) and node.func.id == "Finding":
