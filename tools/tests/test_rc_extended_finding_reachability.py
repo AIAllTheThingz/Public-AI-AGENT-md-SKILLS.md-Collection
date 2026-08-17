@@ -177,6 +177,29 @@ def validate(value):
 '''
         self.assertEqual(reachable_contracts(source, "sample.py"), Counter())
 
+    def test_terminating_try_suppresses_following_finding(self):
+        source = '''
+def validate(value):
+    try:
+        return value
+    finally:
+        value = value
+    Finding("PUBLIC_CODE", "unreachable")
+'''
+        self.assertEqual(reachable_contracts(source, "sample.py"), Counter())
+
+    def test_try_with_fallthrough_handler_keeps_successor_reachable(self):
+        source = '''
+def validate(value):
+    try:
+        return value
+    except ValueError:
+        value = None
+    Finding("PUBLIC_CODE", "reachable")
+'''
+        contracts = reachable_contracts(source, "sample.py")
+        self.assertEqual(contracts[("sample.py", "validate", "PUBLIC_CODE")], 1)
+
     def test_loop_with_possible_break_keeps_following_finding_reachable(self):
         source = '''
 def validate(value):

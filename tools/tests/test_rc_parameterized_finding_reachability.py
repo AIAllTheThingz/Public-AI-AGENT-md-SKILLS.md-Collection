@@ -49,21 +49,21 @@ class ReachableParameterizedCallSiteVisitor(_base.ParameterizedCallSiteVisitor):
     def visit_If(self, node: ast.If) -> None:
         truth = static_truth(node.test, self.constants)
         if truth is True:
-            self._with_context(node.test, node.body)
+            self._with_context("if:true", node.test, node.body)
         elif truth is False:
             if node.orelse:
-                self._with_context(node.test, node.orelse)
+                self._with_context("if:false", node.test, node.orelse)
         else:
-            self._with_context(node.test, node.body)
+            self._with_context("if:true", node.test, node.body)
             if node.orelse:
-                self._with_context(node.test, node.orelse)
+                self._with_context("if:false", node.test, node.orelse)
 
     def visit_While(self, node: ast.While) -> None:
         truth = static_truth(node.test, self.constants)
         if truth is not False:
-            self._with_context(node.test, node.body)
+            self._with_context("while:body", node.test, node.body)
         if truth is not True and node.orelse:
-            self._with_context(node.test, node.orelse)
+            self._with_context("while:else", node.test, node.orelse)
 
 
 def reachable_parameterized_contracts(text: str, source_path: str) -> set[str]:
@@ -150,6 +150,38 @@ def validate(root, findings):
     read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
 '''
         self.assertEqual(reachable_parameterized_contracts(source, "sample.py"), set())
+
+    def test_terminating_try_before_parameterized_call_is_detected(self):
+        source = '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    try:
+        return root
+    finally:
+        root = root
+    read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+'''
+        self.assertEqual(reachable_parameterized_contracts(source, "sample.py"), set())
+
+    def test_reachable_contract_distinguishes_if_branch_polarity(self):
+        positive = '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    path = root / "LICENSE"
+    if path.is_file():
+        read_text(path, findings, "LICENSE_ENCODING")
+    else:
+        findings.append("missing")
+'''
+        negative = positive.replace(
+            '        read_text(path, findings, "LICENSE_ENCODING")\n    else:\n        findings.append("missing")',
+            '        findings.append("present")\n    else:\n        read_text(path, findings, "LICENSE_ENCODING")',
+        )
+        expected = next(iter(reachable_parameterized_contracts(positive, "sample.py")))
+        actual = next(iter(reachable_parameterized_contracts(negative, "sample.py")))
+        self.assertNotEqual(json.loads(expected)["context"], json.loads(actual)["context"])
 
     def test_reachable_contract_keeps_call_site_semantics(self):
         source = '''

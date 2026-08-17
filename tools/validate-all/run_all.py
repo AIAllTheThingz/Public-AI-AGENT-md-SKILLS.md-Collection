@@ -28,9 +28,66 @@ VALIDATORS = {
     "validate-release": "tools/release/validate_release.py",
 }
 
+COMPATIBILITY_HISTORY_BUNDLE = Path("releases/compatibility/rc-history.bundle")
+COMPATIBILITY_HISTORY_REFS = {
+    "83c73f3ab9a049ff2321d463164fcf98fb453a9c": "refs/heads/compat-v010",
+    "2f6d39288e5c1a7d416e62cd75651b3d6da48dfe": "refs/heads/compat-csharp",
+    "a96d6a92da40257cbe4c6e0fe0c7bbbd397adef3": "refs/heads/compat-helper",
+}
+
+
+def _git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", "-C", str(root), *args],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def ensure_compatibility_history(root: Path) -> None:
+    """Make authenticated RC baselines available in shallow clones and archives."""
+    root = root.resolve()
+    missing = [
+        commit
+        for commit in COMPATIBILITY_HISTORY_REFS
+        if _git(root, "cat-file", "-e", f"{commit}^{{commit}}").returncode != 0
+    ]
+    if not missing:
+        return
+
+    bundle = root / COMPATIBILITY_HISTORY_BUNDLE
+    if not bundle.is_file():
+        raise RuntimeError(
+            f"Compatibility history is unavailable and bundled baseline is missing: {bundle}"
+        )
+
+    if not (root / ".git").exists():
+        initialized = _git(root, "init", "--quiet")
+        if initialized.returncode != 0:
+            raise RuntimeError(initialized.stderr.strip() or "git init failed")
+
+    refspecs = [f"{ref}:{ref}" for ref in COMPATIBILITY_HISTORY_REFS.values()]
+    fetched = _git(root, "fetch", "--quiet", str(bundle), *refspecs)
+    if fetched.returncode != 0:
+        raise RuntimeError(fetched.stderr.strip() or "git bundle fetch failed")
+
+    unresolved = [
+        commit
+        for commit in COMPATIBILITY_HISTORY_REFS
+        if _git(root, "cat-file", "-e", f"{commit}^{{commit}}").returncode != 0
+    ]
+    if unresolved:
+        raise RuntimeError(
+            "Bundled compatibility history did not provide required commits: "
+            + ", ".join(unresolved)
+        )
+
 
 def run(args: argparse.Namespace) -> ToolResult:
     root = args.root.resolve()
+    if args.include_tests:
+        ensure_compatibility_history(root)
     selected = args.tool or list(VALIDATORS)
     unknown = [name for name in selected if name not in VALIDATORS]
     if unknown:

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import subprocess
+import tempfile
 import unittest
+from pathlib import Path
 
-from helpers import json_result, run_tool
+from helpers import REPO_ROOT, json_result, run_tool
 
 
 class ValidateAllTests(unittest.TestCase):
@@ -39,6 +42,32 @@ class ValidateAllTests(unittest.TestCase):
         payload = json_result(completed)
         self.assertEqual(payload["summary"]["validatorsCompleted"], 1)
         self.assertEqual(payload["metadata"]["results"][0]["tool"], "validate-skills")
+
+    def test_compatibility_history_bootstraps_without_existing_git_history(self):
+        import importlib.util
+        import shutil
+
+        module_path = REPO_ROOT / "tools" / "validate-all" / "run_all.py"
+        spec = importlib.util.spec_from_file_location("validate_all_portability", module_path)
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            bundle_target = root / module.COMPATIBILITY_HISTORY_BUNDLE
+            bundle_target.parent.mkdir(parents=True)
+            shutil.copy2(REPO_ROOT / module.COMPATIBILITY_HISTORY_BUNDLE, bundle_target)
+
+            module.ensure_compatibility_history(root)
+            for commit in module.COMPATIBILITY_HISTORY_REFS:
+                completed = subprocess.run(
+                    ["git", "-C", str(root), "cat-file", "-e", f"{commit}^{{commit}}"],
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                self.assertEqual(completed.returncode, 0, completed.stderr)
 
 
 if __name__ == "__main__":

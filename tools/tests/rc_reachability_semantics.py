@@ -134,6 +134,28 @@ def statement_always_terminates(
         truth = static_truth(node.test, constants)
         if truth is True and not loop_body_has_break(node.body):
             return True
+    try_types = (ast.Try,) + ((ast.TryStar,) if hasattr(ast, "TryStar") else ())
+    if isinstance(node, try_types):
+        # finally always executes; a terminating finally makes every successor dead.
+        if node.finalbody and block_always_terminates(node.finalbody, constants):
+            return True
+
+        handlers_terminate = all(
+            block_always_terminates(handler.body, constants)
+            for handler in node.handlers
+        )
+        body_terminates = block_always_terminates(node.body, constants)
+        if body_terminates:
+            # Unhandled exceptions terminate by propagation. Any caught exception
+            # must also terminate for the try statement to have no fallthrough.
+            return handlers_terminate
+
+        # If the try body can complete normally, the else path must terminate too;
+        # without an else, normal completion falls through.
+        normal_path_terminates = bool(node.orelse) and block_always_terminates(
+            node.orelse, constants
+        )
+        return normal_path_terminates and handlers_terminate
     return False
 
 
