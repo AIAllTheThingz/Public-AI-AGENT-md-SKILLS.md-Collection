@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -60,7 +61,12 @@ class ValidateAllTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location("validate_all_portability", module_path)
         module = importlib.util.module_from_spec(spec)
         assert spec.loader is not None
-        spec.loader.exec_module(module)
+        previous = sys.dont_write_bytecode
+        sys.dont_write_bytecode = True
+        try:
+            spec.loader.exec_module(module)
+        finally:
+            sys.dont_write_bytecode = previous
         return module
 
     def _copy_history_bundle(self, module, root: Path) -> None:
