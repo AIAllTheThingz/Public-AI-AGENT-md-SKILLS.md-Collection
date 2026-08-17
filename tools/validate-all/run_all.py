@@ -16,7 +16,12 @@ from pathlib import Path
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 
-from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
+_previous_dont_write_bytecode = sys.dont_write_bytecode
+sys.dont_write_bytecode = True
+try:
+    from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
+finally:
+    sys.dont_write_bytecode = _previous_dont_write_bytecode
 
 TOOL = "validate-all"
 VERSION = "1.3.0"
@@ -43,6 +48,13 @@ _HISTORY_REAL_GIT = "PAG_COMPATIBILITY_REAL_GIT"
 _HISTORY_SOURCE_ROOT = "PAG_COMPATIBILITY_SOURCE_ROOT"
 _HISTORY_GIT_DIR = "PAG_COMPATIBILITY_GIT_DIR"
 _HISTORY_SELECTORS = "PAG_COMPATIBILITY_SELECTORS"
+
+
+def python_subprocess_environment() -> dict[str, str]:
+    """Return a child environment that keeps Python bytecode out of the source tree."""
+    environment = os.environ.copy()
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    return environment
 
 
 def _git(
@@ -265,6 +277,7 @@ def run(args: argparse.Namespace) -> ToolResult:
                 text=True,
                 capture_output=True,
                 check=False,
+                env=python_subprocess_environment(),
             )
             try:
                 payload = json.loads(completed.stdout)
@@ -300,6 +313,7 @@ def run(args: argparse.Namespace) -> ToolResult:
                 text=True,
                 capture_output=True,
                 check=False,
+                env=python_subprocess_environment(),
             )
             tests_result = {
                 "exitCode": completed.returncode,
