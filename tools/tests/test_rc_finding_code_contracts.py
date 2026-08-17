@@ -278,7 +278,7 @@ def _finding_dependency_roles(
 
 
 def _mutation_target_names(target: ast.AST) -> set[str]:
-    """Return locals whose container or object state is changed by an assignment target."""
+    """Return locals whose container or object state is changed by a mutation target."""
     names = set(base._stored_names(target))
     for item in ast.walk(target):
         if not isinstance(item, (ast.Subscript, ast.Attribute)):
@@ -339,6 +339,9 @@ def _target_mutation_history(
             if any(target in _mutation_target_names(item) for item in targets):
                 if getattr(node, "lineno", 0) > 0:
                     add(node)
+        elif isinstance(node, ast.Delete):
+            if any(target in _mutation_target_names(item) for item in node.targets):
+                add(node)
         elif (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)
@@ -606,6 +609,38 @@ def run():
         mutated = original.replace(
             "    if skill.name:\n",
             '    skill.name = ""\n    if skill.name:\n',
+        )
+        self.assertNotEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(mutated),
+        )
+
+    def test_subscript_deletion_changes_dependency_identity(self):
+        original = '''
+def run(document_id):
+    ids = {document_id: "path"}
+    if document_id in ids:
+        Finding("DUPLICATE_ID", "duplicate", path="sample")
+'''
+        mutated = original.replace(
+            "    if document_id in ids:\n",
+            "    del ids[document_id]\n    if document_id in ids:\n",
+        )
+        self.assertNotEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(mutated),
+        )
+
+    def test_attribute_deletion_changes_dependency_identity(self):
+        original = '''
+def run():
+    skill = load_skill()
+    if skill.name:
+        Finding("SKILL_NAME_REQUIRED", "skill", path="sample")
+'''
+        mutated = original.replace(
+            "    if skill.name:\n",
+            "    del skill.name\n    if skill.name:\n",
         )
         self.assertNotEqual(
             finding_semantic_signatures(original),
