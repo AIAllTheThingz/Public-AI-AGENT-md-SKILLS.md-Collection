@@ -52,19 +52,34 @@ _HISTORY_SELECTORS = "PAG_COMPATIBILITY_SELECTORS"
 
 @contextmanager
 def python_bytecode_disabled():
-    """Prevent validation child processes from writing Python bytecode."""
-    previous_environment = os.environ.get("PYTHONDONTWRITEBYTECODE")
+    """Keep validation bytecode out of the declared source tree."""
+    previous_environment = {
+        "PYTHONDONTWRITEBYTECODE": os.environ.get("PYTHONDONTWRITEBYTECODE"),
+        "PYTHONPYCACHEPREFIX": os.environ.get("PYTHONPYCACHEPREFIX"),
+    }
     previous_runtime = sys.dont_write_bytecode
-    os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
-    sys.dont_write_bytecode = True
-    try:
-        yield
-    finally:
-        sys.dont_write_bytecode = previous_runtime
-        if previous_environment is None:
-            os.environ.pop("PYTHONDONTWRITEBYTECODE", None)
-        else:
-            os.environ["PYTHONDONTWRITEBYTECODE"] = previous_environment
+    previous_pycache_prefix = sys.pycache_prefix
+
+    # PYTHONDONTWRITEBYTECODE prevents ordinary imports from caching bytecode.
+    # The external cache prefix is a second containment boundary for code that
+    # deliberately re-enables bytecode writes (for example an import probe in a
+    # test).  Both the current interpreter and child interpreters are covered,
+    # while the caller's settings are restored on exit.
+    with tempfile.TemporaryDirectory(prefix="public-ai-governance-pycache-") as pycache:
+        os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+        os.environ["PYTHONPYCACHEPREFIX"] = pycache
+        sys.dont_write_bytecode = True
+        sys.pycache_prefix = pycache
+        try:
+            yield
+        finally:
+            sys.dont_write_bytecode = previous_runtime
+            sys.pycache_prefix = previous_pycache_prefix
+            for name, value in previous_environment.items():
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
 
 
 def _git(
