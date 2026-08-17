@@ -153,6 +153,8 @@ def _block_has_reachable_outer_break(
             return True
         if isinstance(statement, (ast.Return, ast.Raise, ast.Continue)):
             return False
+        if isinstance(statement, ast.Assert) and static_truth(statement.test, state) is False:
+            return False
 
         if isinstance(statement, ast.If):
             truth = static_truth(statement.test, state)
@@ -251,6 +253,8 @@ def statement_always_terminates(
     constants = {} if constants is None else constants
     if isinstance(node, (ast.Return, ast.Raise, ast.Break, ast.Continue)):
         return True
+    if isinstance(node, ast.Assert):
+        return static_truth(node.test, constants) is False
     if isinstance(node, ast.If):
         truth = static_truth(node.test, constants)
         if truth is True:
