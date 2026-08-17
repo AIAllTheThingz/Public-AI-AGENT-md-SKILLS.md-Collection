@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import copy
 import hashlib
+import json
 
 import rc_finding_code_contracts_base as base
 
@@ -19,6 +20,19 @@ _MUTATING_METHODS = {
     "discard",
     "update",
     "setdefault",
+}
+
+_BEHAVIOR_BOUND_FINDING_CONTEXTS = {
+    "MANIFEST_NO_DISCIPLINES": {
+        "sourcePath": "tools/generate-manifest/generate_manifest.py",
+        "function": "run",
+        "reason": (
+            "The post-v0.10.0 secondary-profile discipline expansion intentionally changes "
+            "the local dataflow feeding the published no-disciplines warning. Preserve this "
+            "public code behavior with direct two-sided runtime coverage rather than freezing "
+            "the implementation AST."
+        ),
+    }
 }
 
 
@@ -332,10 +346,10 @@ class _DependencyScopedBindingNormalizer(base._FunctionScopeNameNormalizer):
     """Give Finding-relevant locals stable mutation-scoped identities."""
 
     def _mapping(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, str]:
-        # `read_release_state` is already pinned byte-for-byte at the semantic AST
-        # level to the independently reviewed reconciliation commit. Keep its
-        # historical local-name projection stable so this second abstraction does
-        # not double-govern the same approved additive evolution.
+        # `read_release_state` is already pinned at the semantic AST level to the
+        # independently reviewed reconciliation commit. Keep its historical local
+        # projection stable so this abstraction does not double-govern the same
+        # approved additive evolution.
         if node.name == "read_release_state":
             return super()._mapping(node)
 
@@ -381,6 +395,117 @@ published_signatures = base.published_signatures
 
 
 class ReleaseCandidateFindingCodeContractTests(base.ReleaseCandidateFindingCodeContractTests):
+    def test_all_published_production_finding_semantics_are_preserved(self):
+        published = published_signatures()
+        current = base.candidate_signatures()
+        self.assertGreater(len(published), 20)
+
+        approved = self.contract["approvedAdditivePublishedCodeContexts"]
+        for code, expected_signatures in published.items():
+            with self.subTest(code=code):
+                current_signatures = current.get(code, set())
+                behavior_bound = _BEHAVIOR_BOUND_FINDING_CONTEXTS.get(code)
+                if behavior_bound is not None:
+                    self.assertEqual(
+                        len(current_signatures),
+                        1,
+                        f"behavior-bound public code {code} must retain exactly one production context",
+                    )
+                    payload = json.loads(next(iter(current_signatures)))
+                    self.assertEqual(payload["sourcePath"], behavior_bound["sourcePath"])
+                    self.assertEqual(payload["function"], behavior_bound["function"])
+                    continue
+
+                expected_projected = {
+                    base.project_approved_helper_changes(signature, code, self.contract)
+                    for signature in expected_signatures
+                }
+                current_projected = {
+                    base.project_approved_helper_changes(signature, code, self.contract)
+                    for signature in current_signatures
+                }
+                self.assertEqual(
+                    expected_projected - current_projected,
+                    set(),
+                    f"published semantic context or referenced data changed/disappeared for {code}",
+                )
+                additional = current_projected - expected_projected
+                if code in approved:
+                    self.assertEqual(len(additional), approved[code]["count"])
+                    if code == "RELEASE_STATE_INVALID":
+                        payloads = [json.loads(signature) for signature in additional]
+                        self.assertTrue(
+                            all(payload["function"] == "read_release_state" for payload in payloads)
+                        )
+                else:
+                    self.assertEqual(
+                        additional,
+                        set(),
+                        f"unreviewed additional semantic context reuses public code {code}",
+                    )
+
+    def test_manifest_no_disciplines_is_behavior_bound(self):
+        profile_paths = [
+            path
+            for path in sorted((base.REPO_ROOT / "profiles").glob("*.md"))
+            if path.name not in {"README.md", "MANIFEST.md"}
+            and not path.name.startswith("PROFILE_")
+        ]
+        languages = [
+            path.name
+            for path in sorted((base.REPO_ROOT / "languages").iterdir())
+            if path.is_dir()
+        ]
+        disciplines = [
+            path.name
+            for path in sorted((base.REPO_ROOT / "disciplines").iterdir())
+            if path.is_dir()
+        ]
+        self.assertTrue(profile_paths and languages and disciplines)
+
+        common_args = (
+            "--format",
+            "json",
+            "--name",
+            "rc-finding-contract",
+            "--profile",
+            profile_paths[0].stem,
+            "--language",
+            languages[0],
+            "--dry-run",
+        )
+        no_disciplines = base.run_tool(
+            "tools/generate-manifest/generate_manifest.py",
+            *common_args,
+        )
+        self.assertEqual(
+            no_disciplines.returncode,
+            0,
+            no_disciplines.stdout + no_disciplines.stderr,
+        )
+        no_disciplines_payload = base.json_result(no_disciplines)
+        no_disciplines_codes = {
+            finding["code"] for finding in no_disciplines_payload.get("findings", [])
+        }
+        self.assertIn("MANIFEST_NO_DISCIPLINES", no_disciplines_codes)
+
+        with_discipline = base.run_tool(
+            "tools/generate-manifest/generate_manifest.py",
+            *common_args,
+            "--discipline",
+            disciplines[0],
+        )
+        self.assertEqual(
+            with_discipline.returncode,
+            0,
+            with_discipline.stdout + with_discipline.stderr,
+        )
+        with_discipline_payload = base.json_result(with_discipline)
+        with_discipline_codes = {
+            finding["code"] for finding in with_discipline_payload.get("findings", [])
+        }
+        self.assertNotIn("MANIFEST_NO_DISCIPLINES", with_discipline_codes)
+
     def test_same_shaped_locals_keep_distinct_semantic_identities(self):
         original = '''
 def run(flag):

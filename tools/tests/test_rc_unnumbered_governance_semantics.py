@@ -147,7 +147,7 @@ def extract_unnumbered_governance_contracts(
 def published_contracts() -> Counter[tuple[str, str, str]]:
     contracts: Counter[tuple[str, str, str]] = Counter()
     for relative in base.git_paths_at(base.CHECKPOINT_COMMIT, ".md"):
-        if not relative.startswith("governance/"):
+        if not relative.startswith("governance/") or "/examples/" in relative:
             continue
         contracts.update(
             extract_unnumbered_governance_contracts(
