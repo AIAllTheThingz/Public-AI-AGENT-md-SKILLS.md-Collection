@@ -29,7 +29,7 @@ class ValidateAllBytecodeSideEffectTests(unittest.TestCase):
         )
         return module
 
-    def test_python_subprocess_environment_prevents_source_tree_bytecode(self):
+    def test_python_bytecode_disabled_context_applies_to_children_and_restores_parent(self):
         module = self._load_validate_all_module()
 
         with tempfile.TemporaryDirectory() as temp:
@@ -58,14 +58,21 @@ class ValidateAllBytecodeSideEffectTests(unittest.TestCase):
             for cache in root.rglob("__pycache__"):
                 shutil.rmtree(cache)
 
-            read_only = subprocess.run(
-                [sys.executable, "-c", "import fixture_module; print(fixture_module.VALUE)"],
-                cwd=root,
-                env=module.python_subprocess_environment(),
-                text=True,
-                capture_output=True,
-                check=False,
-            )
+            previous_environment = os.environ.get("PYTHONDONTWRITEBYTECODE")
+            previous_runtime = sys.dont_write_bytecode
+            with module.python_bytecode_disabled():
+                self.assertEqual(os.environ.get("PYTHONDONTWRITEBYTECODE"), "1")
+                self.assertTrue(sys.dont_write_bytecode)
+                read_only = subprocess.run(
+                    [sys.executable, "-c", "import fixture_module; print(fixture_module.VALUE)"],
+                    cwd=root,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+
+            self.assertEqual(os.environ.get("PYTHONDONTWRITEBYTECODE"), previous_environment)
+            self.assertEqual(sys.dont_write_bytecode, previous_runtime)
             self.assertEqual(read_only.returncode, 0, read_only.stdout + read_only.stderr)
             self.assertEqual(read_only.stdout.strip(), "42")
             self.assertFalse(
