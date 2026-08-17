@@ -19,6 +19,7 @@ OBLIGATION_PATTERN = re.compile(
 )
 ORDERED_LIST_PATTERN = re.compile(r"^\d+[.)]\s+")
 LIST_MARKER_PATTERN = re.compile(r"^(?:[-*+]|\d+[.)])\s+")
+BLOCKQUOTE_PATTERN = re.compile(r"^(?:>\s*)+")
 IMPERATIVE_PREFIXES = (
     "include ",
     "record ",
@@ -78,7 +79,7 @@ def normalize_obligation(line: str) -> str:
 def section_obligations(body: str) -> set[str]:
     obligations: set[str] = set()
     for raw_line in body.splitlines():
-        line = raw_line.strip()
+        line = BLOCKQUOTE_PATTERN.sub("", raw_line.strip())
         if not line or PLACEHOLDER_PATTERN.fullmatch(line):
             continue
         ordered = ORDERED_LIST_PATTERN.match(line) is not None
@@ -197,6 +198,27 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
         )
         self.assertIn(
             "MISSING_TEMPLATE_OBLIGATION:sample.md:instructions:preserve compatibility unless an approved migration says otherwise",
+            template_contract_findings(
+                "sample.md", published, template_contract(removed)
+            ),
+        )
+
+    def test_blockquoted_template_imperatives_are_preserved(self):
+        published_text = """
+## Adoption
+> Replace every documented placeholder before adoption. Remove this note after validation.
+"""
+        published = template_contract(published_text)
+        obligation = (
+            "replace every documented placeholder before adoption. remove this note after validation"
+        )
+        self.assertIn(obligation, published["obligations"]["adoption"])
+        removed = published_text.replace(
+            "> Replace every documented placeholder before adoption. Remove this note after validation.\n",
+            "",
+        )
+        self.assertIn(
+            f"MISSING_TEMPLATE_OBLIGATION:sample.md:adoption:{obligation}",
             template_contract_findings(
                 "sample.md", published, template_contract(removed)
             ),
