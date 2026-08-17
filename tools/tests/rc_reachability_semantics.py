@@ -78,39 +78,130 @@ def update_known_constants(statement: ast.stmt, constants: dict[str, Any]) -> No
                 constants.pop(item.id, None)
 
 
-class _LoopBreakVisitor(ast.NodeVisitor):
-    def __init__(self) -> None:
-        self.found = False
-
-    def visit_Break(self, node: ast.Break) -> None:
-        self.found = True
-
-    def visit_For(self, node: ast.For) -> None:
-        return
-
-    def visit_AsyncFor(self, node: ast.AsyncFor) -> None:
-        return
-
-    def visit_While(self, node: ast.While) -> None:
-        return
-
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        return
-
-    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        return
-
-    def visit_Lambda(self, node: ast.Lambda) -> None:
-        return
-
-
-def loop_body_has_break(statements: list[ast.stmt]) -> bool:
-    visitor = _LoopBreakVisitor()
-    for statement in statements:
-        visitor.visit(statement)
-        if visitor.found:
-            return True
+def _expression_obviously_non_raising(node: ast.AST | None) -> bool:
+    if node is None or isinstance(node, ast.Constant):
+        return True
+    if isinstance(node, (ast.Tuple, ast.List, ast.Set)):
+        return all(_expression_obviously_non_raising(item) for item in node.elts)
+    if isinstance(node, ast.Dict):
+        return all(
+            (key is None or _expression_obviously_non_raising(key))
+            and _expression_obviously_non_raising(value)
+            for key, value in zip(node.keys, node.values)
+        )
+    if isinstance(node, ast.UnaryOp) and isinstance(
+        node.op, (ast.UAdd, ast.USub, ast.Not, ast.Invert)
+    ):
+        return _expression_obviously_non_raising(node.operand)
     return False
+
+
+def _block_terminates_without_raising(
+    statements: list[ast.stmt], constants: dict[str, Any] | None = None
+) -> bool:
+    state = dict(constants or {})
+    for statement in statements:
+        if isinstance(statement, ast.Return):
+            return _expression_obviously_non_raising(statement.value)
+        if isinstance(statement, (ast.Break, ast.Continue)):
+            return True
+        if isinstance(statement, ast.Raise):
+            return False
+        if isinstance(statement, ast.If):
+            truth = static_truth(statement.test, state)
+            if truth is True:
+                return _block_terminates_without_raising(statement.body, state)
+            if truth is False:
+                return bool(statement.orelse) and _block_terminates_without_raising(
+                    statement.orelse, state
+                )
+            return bool(statement.orelse) and _block_terminates_without_raising(
+                statement.body, state
+            ) and _block_terminates_without_raising(statement.orelse, state)
+        if isinstance(statement, ast.Pass):
+            continue
+        if isinstance(statement, ast.Assign):
+            if not _expression_obviously_non_raising(statement.value):
+                return False
+            update_known_constants(statement, state)
+            continue
+        if isinstance(statement, ast.AnnAssign):
+            if statement.value is not None and not _expression_obviously_non_raising(
+                statement.value
+            ):
+                return False
+            update_known_constants(statement, state)
+            continue
+        if isinstance(statement, ast.Expr) and _expression_obviously_non_raising(
+            statement.value
+        ):
+            continue
+        return False
+    return False
+
+
+def _block_has_reachable_outer_break(
+    statements: list[ast.stmt], constants: dict[str, Any] | None = None
+) -> bool:
+    state = dict(constants or {})
+    for statement in statements:
+        if isinstance(statement, ast.Break):
+            return True
+        if isinstance(statement, (ast.Return, ast.Raise, ast.Continue)):
+            return False
+
+        if isinstance(statement, ast.If):
+            truth = static_truth(statement.test, state)
+            branches = (
+                [statement.body]
+                if truth is True
+                else [statement.orelse]
+                if truth is False
+                else [statement.body, statement.orelse]
+            )
+            if any(
+                _block_has_reachable_outer_break(branch, state)
+                for branch in branches
+            ):
+                return True
+            if statement_always_terminates(statement, state):
+                return False
+        elif isinstance(statement, (ast.With, ast.AsyncWith)):
+            if _block_has_reachable_outer_break(statement.body, state):
+                return True
+            if statement_always_terminates(statement, state):
+                return False
+        elif isinstance(statement, ast.Try) or (
+            hasattr(ast, "TryStar") and isinstance(statement, ast.TryStar)
+        ):
+            regions = [statement.body, statement.orelse, statement.finalbody]
+            regions.extend(handler.body for handler in statement.handlers)
+            if any(
+                _block_has_reachable_outer_break(region, state)
+                for region in regions
+            ):
+                return True
+            if statement_always_terminates(statement, state):
+                return False
+        elif isinstance(statement, ast.Match):
+            if any(
+                _block_has_reachable_outer_break(case.body, state)
+                for case in statement.cases
+            ):
+                return True
+        elif isinstance(statement, (ast.For, ast.AsyncFor, ast.While)):
+            # Breaks inside a nested loop belong to that nested loop.
+            if statement_always_terminates(statement, state):
+                return False
+
+        update_known_constants(statement, state)
+    return False
+
+
+def loop_body_has_break(
+    statements: list[ast.stmt], constants: dict[str, Any] | None = None
+) -> bool:
+    return _block_has_reachable_outer_break(statements, constants)
 
 
 def statement_always_terminates(
@@ -132,12 +223,16 @@ def statement_always_terminates(
         ) and block_always_terminates(node.orelse, constants)
     if isinstance(node, ast.While):
         truth = static_truth(node.test, constants)
-        if truth is True and not loop_body_has_break(node.body):
+        if truth is True and not loop_body_has_break(node.body, constants):
             return True
     try_types = (ast.Try,) + ((ast.TryStar,) if hasattr(ast, "TryStar") else ())
     if isinstance(node, try_types):
-        # finally always executes; a terminating finally makes every successor dead.
         if node.finalbody and block_always_terminates(node.finalbody, constants):
+            return True
+
+        # If the body obviously reaches a non-raising terminal such as
+        # `return None`, exception handlers are irrelevant because none can run.
+        if _block_terminates_without_raising(node.body, constants):
             return True
 
         handlers_terminate = all(
@@ -146,12 +241,8 @@ def statement_always_terminates(
         )
         body_terminates = block_always_terminates(node.body, constants)
         if body_terminates:
-            # Unhandled exceptions terminate by propagation. Any caught exception
-            # must also terminate for the try statement to have no fallthrough.
             return handlers_terminate
 
-        # If the try body can complete normally, the else path must terminate too;
-        # without an else, normal completion falls through.
         normal_path_terminates = bool(node.orelse) and block_always_terminates(
             node.orelse, constants
         )
