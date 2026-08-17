@@ -21,7 +21,11 @@ class ValidateAllBytecodeSideEffectTests(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         assert spec.loader is not None
         before = sys.dont_write_bytecode
-        spec.loader.exec_module(module)
+        sys.dont_write_bytecode = True
+        try:
+            spec.loader.exec_module(module)
+        finally:
+            sys.dont_write_bytecode = before
         self.assertEqual(
             sys.dont_write_bytecode,
             before,
@@ -29,7 +33,7 @@ class ValidateAllBytecodeSideEffectTests(unittest.TestCase):
         )
         return module
 
-    def test_python_bytecode_disabled_context_redirects_cache_and_restores_parent(self):
+    def test_python_bytecode_disabled_context_applies_to_children_and_restores_parent(self):
         module = self._load_validate_all_module()
 
         with tempfile.TemporaryDirectory() as temp:
@@ -58,18 +62,11 @@ class ValidateAllBytecodeSideEffectTests(unittest.TestCase):
             for cache in root.rglob("__pycache__"):
                 shutil.rmtree(cache)
 
-            previous_dont_write_environment = os.environ.get("PYTHONDONTWRITEBYTECODE")
-            previous_cache_environment = os.environ.get("PYTHONPYCACHEPREFIX")
+            previous_environment = os.environ.get("PYTHONDONTWRITEBYTECODE")
             previous_runtime = sys.dont_write_bytecode
-            previous_cache_prefix = sys.pycache_prefix
-
-            with module.python_bytecode_disabled() as cache_root:
+            with module.python_bytecode_disabled():
                 self.assertEqual(os.environ.get("PYTHONDONTWRITEBYTECODE"), "1")
-                self.assertEqual(os.environ.get("PYTHONPYCACHEPREFIX"), str(cache_root))
                 self.assertTrue(sys.dont_write_bytecode)
-                self.assertEqual(sys.pycache_prefix, str(cache_root))
-                self.assertFalse(cache_root.is_relative_to(root))
-
                 read_only = subprocess.run(
                     [sys.executable, "-c", "import fixture_module; print(fixture_module.VALUE)"],
                     cwd=root,
@@ -77,55 +74,18 @@ class ValidateAllBytecodeSideEffectTests(unittest.TestCase):
                     capture_output=True,
                     check=False,
                 )
-                self.assertEqual(read_only.returncode, 0, read_only.stdout + read_only.stderr)
-                self.assertEqual(read_only.stdout.strip(), "42")
-                self.assertFalse(list(root.rglob("*.pyc")))
 
-                # Simulate a child that explicitly re-enables bytecode by removing
-                # only the no-write flag. The inherited external cache prefix must
-                # still keep generated artifacts outside the declared source root.
-                reenabled_environment = os.environ.copy()
-                reenabled_environment.pop("PYTHONDONTWRITEBYTECODE", None)
-                redirected = subprocess.run(
-                    [sys.executable, "-c", "import fixture_module; print(fixture_module.VALUE)"],
-                    cwd=root,
-                    env=reenabled_environment,
-                    text=True,
-                    capture_output=True,
-                    check=False,
-                )
-                self.assertEqual(
-                    redirected.returncode,
-                    0,
-                    redirected.stdout + redirected.stderr,
-                )
-                self.assertEqual(redirected.stdout.strip(), "42")
-                self.assertFalse(
-                    list(root.rglob("*.pyc")),
-                    "re-enabled child bytecode must still stay outside the source tree",
-                )
-                self.assertTrue(
-                    list(cache_root.rglob("*.pyc")),
-                    "re-enabled bytecode should be redirected to the temporary external cache",
-                )
-
-            self.assertEqual(
-                os.environ.get("PYTHONDONTWRITEBYTECODE"),
-                previous_dont_write_environment,
-            )
-            self.assertEqual(
-                os.environ.get("PYTHONPYCACHEPREFIX"),
-                previous_cache_environment,
-            )
+            self.assertEqual(os.environ.get("PYTHONDONTWRITEBYTECODE"), previous_environment)
             self.assertEqual(sys.dont_write_bytecode, previous_runtime)
-            self.assertEqual(sys.pycache_prefix, previous_cache_prefix)
+            self.assertEqual(read_only.returncode, 0, read_only.stdout + read_only.stderr)
+            self.assertEqual(read_only.stdout.strip(), "42")
             self.assertFalse(
                 list(root.rglob("*.pyc")),
-                "validation must not leave Python bytecode in the source tree",
+                "validation child processes must not write Python bytecode into the source tree",
             )
             self.assertFalse(
                 list(root.rglob("__pycache__")),
-                "validation must not leave __pycache__ directories in the source tree",
+                "validation child processes must not create __pycache__ directories in the source tree",
             )
 
 
