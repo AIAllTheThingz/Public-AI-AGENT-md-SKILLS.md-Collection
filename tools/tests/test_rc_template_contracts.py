@@ -17,6 +17,8 @@ OBLIGATION_PATTERN = re.compile(
     r"\b(must(?:\s+not)?|shall(?:\s+not)?|may\s+not|cannot|do\s+not|only|required)\b",
     re.IGNORECASE,
 )
+ORDERED_LIST_PATTERN = re.compile(r"^\d+[.)]\s+")
+LIST_MARKER_PATTERN = re.compile(r"^(?:[-*+]|\d+[.)])\s+")
 IMPERATIVE_PREFIXES = (
     "include ",
     "record ",
@@ -26,6 +28,24 @@ IMPERATIVE_PREFIXES = (
     "verify ",
     "capture ",
     "retain ",
+    "preserve ",
+    "state ",
+    "describe ",
+    "list ",
+    "explain ",
+    "link ",
+    "mark ",
+    "report ",
+    "note ",
+    "select ",
+    "use ",
+    "keep ",
+    "confirm ",
+    "review ",
+    "validate ",
+    "test ",
+    "ensure ",
+    "obtain ",
 )
 
 
@@ -61,9 +81,18 @@ def section_obligations(body: str) -> set[str]:
         line = raw_line.strip()
         if not line or PLACEHOLDER_PATTERN.fullmatch(line):
             continue
-        plain = re.sub(r"^[\-*+]\s+", "", line)
+        ordered = ORDERED_LIST_PATTERN.match(line) is not None
+        plain = LIST_MARKER_PATTERN.sub("", line)
         normalized = normalize_obligation(plain)
-        if OBLIGATION_PATTERN.search(plain) or normalized.startswith(IMPERATIVE_PREFIXES):
+        # Published ordered steps are themselves behavioral instructions. Preserve
+        # them even when the imperative verb is outside the common-prefix list;
+        # this prevents numbered requirements from disappearing merely because the
+        # list marker obscures the leading verb during classification.
+        if (
+            ordered
+            or OBLIGATION_PATTERN.search(plain)
+            or normalized.startswith(IMPERATIVE_PREFIXES)
+        ):
             obligations.add(normalized)
     return obligations
 
@@ -149,6 +178,28 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
         self.assertIn(
             "approval must come from an accountable human with delegated authority",
             exception["obligations"]["approval"],
+        )
+
+    def test_numbered_template_imperatives_are_preserved(self):
+        published_text = """
+## Instructions
+1. Record the exact validation command.
+5. Preserve compatibility unless an approved migration says otherwise.
+"""
+        published = template_contract(published_text)
+        self.assertIn(
+            "preserve compatibility unless an approved migration says otherwise",
+            published["obligations"]["instructions"],
+        )
+        removed = published_text.replace(
+            "5. Preserve compatibility unless an approved migration says otherwise.\n",
+            "",
+        )
+        self.assertIn(
+            "MISSING_TEMPLATE_OBLIGATION:sample.md:instructions:preserve compatibility unless an approved migration says otherwise",
+            template_contract_findings(
+                "sample.md", published, template_contract(removed)
+            ),
         )
 
     def test_placeholder_section_and_normative_meaning_changes_are_detected(self):
