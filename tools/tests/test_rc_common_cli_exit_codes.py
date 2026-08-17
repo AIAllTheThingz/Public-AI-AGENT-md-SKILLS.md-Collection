@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import importlib.machinery
 import importlib.util
 import io
 import json
@@ -19,9 +20,18 @@ from standards_tools import Finding, ToolResult
 TOOL_BEHAVIOR = REPO_ROOT / "releases" / "compatibility" / "0.10.0-tool-behavior.json"
 
 
+class ReadOnlySourceLoader(importlib.machinery.SourceFileLoader):
+    """Load a production CLI for contract probing without writing bytecode beside it."""
+
+    def set_data(self, path, data, *, _mode=0o666):  # noqa: ANN001, ANN201 - importlib API
+        return None
+
+
 def load_tool(path: str, index: int):
     module_path = REPO_ROOT / path
-    spec = importlib.util.spec_from_file_location(f"rc_cli_exit_probe_{index}", module_path)
+    module_name = f"rc_cli_exit_probe_{index}"
+    loader = ReadOnlySourceLoader(module_name, str(module_path))
+    spec = importlib.util.spec_from_file_location(module_name, module_path, loader=loader)
     if spec is None or spec.loader is None:
         raise AssertionError(f"cannot load stable CLI: {path}")
     module = importlib.util.module_from_spec(spec)
@@ -45,7 +55,21 @@ class ReleaseCandidateCommonCliExitCodeTests(unittest.TestCase):
 
         for index, tool_path in enumerate(contract["commonCliToolPaths"]):
             with self.subTest(tool=tool_path):
+                module_path = REPO_ROOT / tool_path
+                before = {
+                    item.resolve()
+                    for item in module_path.parent.rglob("*.pyc")
+                }
                 module = load_tool(tool_path, index)
+                after = {
+                    item.resolve()
+                    for item in module_path.parent.rglob("*.pyc")
+                }
+                self.assertEqual(
+                    after,
+                    before,
+                    f"contract probing must not write bytecode beside {tool_path}",
+                )
                 self.assertTrue(hasattr(module, "main"), tool_path)
                 self.assertTrue(hasattr(module, "run"), tool_path)
                 module.run = failed_result
