@@ -7,13 +7,44 @@ import rc_finding_code_contracts_base as base
 
 
 class _DistinctBindingNormalizer(base._FunctionScopeNameNormalizer):
-    """Keep alpha-renames compatible without merging distinct same-shaped locals."""
+    """Keep same-shaped used locals distinct without counting unused insertions."""
+
+    @staticmethod
+    def _loaded_local_names(
+        node: ast.FunctionDef | ast.AsyncFunctionDef, local_names: set[str]
+    ) -> set[str]:
+        loaded: set[str] = set()
+
+        class Collector(ast.NodeVisitor):
+            def visit_FunctionDef(self, item: ast.FunctionDef) -> None:
+                if item is node:
+                    for statement in item.body:
+                        self.visit(statement)
+
+            def visit_AsyncFunctionDef(self, item: ast.AsyncFunctionDef) -> None:
+                if item is node:
+                    for statement in item.body:
+                        self.visit(statement)
+
+            def visit_Lambda(self, item: ast.Lambda) -> None:
+                return
+
+            def visit_ClassDef(self, item: ast.ClassDef) -> None:
+                return
+
+            def visit_Name(self, item: ast.Name) -> None:
+                if isinstance(item.ctx, ast.Load) and item.id in local_names:
+                    loaded.add(item.id)
+
+        Collector().visit(node)
+        return loaded
 
     def _mapping(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, str]:
         parameters = self._parameter_names(node)
         parameter_positions = {name: index for index, name in enumerate(parameters)}
         local_names = self._local_store_names(node) - set(parameters)
         binding_shapes = self._binding_shapes(node, parameter_positions, local_names)
+        loaded_names = self._loaded_local_names(node, local_names)
 
         mapping = {name: f"_p{index}" for name, index in parameter_positions.items()}
         first_shapes = {
@@ -43,7 +74,7 @@ class _DistinctBindingNormalizer(base._FunctionScopeNameNormalizer):
             def visit_Name(self, item: ast.Name) -> None:
                 if (
                     isinstance(item.ctx, (ast.Store, ast.Del))
-                    and item.id in local_names
+                    and item.id in loaded_names
                     and item.id not in first_binding_order
                 ):
                     first_binding_order.append(item.id)
@@ -51,14 +82,14 @@ class _DistinctBindingNormalizer(base._FunctionScopeNameNormalizer):
             def visit_ExceptHandler(self, item: ast.ExceptHandler) -> None:
                 if (
                     item.name
-                    and item.name in local_names
+                    and item.name in loaded_names
                     and item.name not in first_binding_order
                 ):
                     first_binding_order.append(item.name)
                 self.generic_visit(item)
 
         FirstBindingCollector().visit(node)
-        for name in sorted(local_names - set(first_binding_order)):
+        for name in sorted(loaded_names - set(first_binding_order)):
             first_binding_order.append(name)
 
         for name in first_binding_order:
@@ -67,6 +98,13 @@ class _DistinctBindingNormalizer(base._FunctionScopeNameNormalizer):
             shape_ordinals[structural_binding] = ordinal + 1
             digest = hashlib.sha256(structural_binding.encode("utf-8")).hexdigest()[:12]
             mapping[name] = f"_v_{digest}_{ordinal}"
+
+        # Unused locals cannot influence a published finding and therefore do not
+        # participate in the ordinal namespace of used bindings.
+        for name in local_names - loaded_names:
+            structural_binding = first_shapes[name]
+            digest = hashlib.sha256(structural_binding.encode("utf-8")).hexdigest()[:12]
+            mapping[name] = f"_unused_{digest}"
         return mapping
 
 
@@ -106,6 +144,24 @@ def run(flag):
             finding_semantic_signatures(original),
             finding_semantic_signatures(renamed),
             "rename-only changes must remain alpha-equivalent",
+        )
+
+    def test_unrelated_same_shaped_local_does_not_renumber_existing_identity(self):
+        original = '''
+def run(flag):
+    passed = []
+    if flag:
+        passed.append("ok")
+    if passed:
+        Finding("PUBLIC_CODE", "result", path="sample")
+'''
+        with_scratch = original.replace(
+            "    passed = []\n", "    scratch = []\n    passed = []\n"
+        )
+        self.assertEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(with_scratch),
+            "an unrelated same-shaped local must not renumber an existing binding",
         )
 
 
