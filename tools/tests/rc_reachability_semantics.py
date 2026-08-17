@@ -78,6 +78,20 @@ def update_known_constants(statement: ast.stmt, constants: dict[str, Any]) -> No
                 constants.pop(item.id, None)
 
 
+def _explicit_process_exit(node: ast.stmt) -> str | None:
+    """Return the recognized process-exit kind for a standalone call expression."""
+    if not isinstance(node, ast.Expr) or not isinstance(node.value, ast.Call):
+        return None
+    function = node.value.func
+    if not isinstance(function, ast.Attribute) or not isinstance(function.value, ast.Name):
+        return None
+    if function.value.id == "sys" and function.attr == "exit":
+        return "sys.exit"
+    if function.value.id == "os" and function.attr == "_exit":
+        return "os._exit"
+    return None
+
+
 def _expression_obviously_non_raising(node: ast.AST | None) -> bool:
     if node is None or isinstance(node, ast.Constant):
         return True
@@ -106,6 +120,11 @@ def _block_terminates_without_raising(
         if isinstance(statement, (ast.Break, ast.Continue)):
             return True
         if isinstance(statement, ast.Raise):
+            return False
+        process_exit = _explicit_process_exit(statement)
+        if process_exit == "os._exit":
+            return True
+        if process_exit == "sys.exit":
             return False
         if isinstance(statement, ast.If):
             truth = static_truth(statement.test, state)
@@ -152,6 +171,8 @@ def _block_has_reachable_outer_break(
         if isinstance(statement, ast.Break):
             return True
         if isinstance(statement, (ast.Return, ast.Raise, ast.Continue)):
+            return False
+        if _explicit_process_exit(statement) is not None:
             return False
         if isinstance(statement, ast.Assert) and static_truth(statement.test, state) is False:
             return False
@@ -252,6 +273,8 @@ def statement_always_terminates(
 ) -> bool:
     constants = {} if constants is None else constants
     if isinstance(node, (ast.Return, ast.Raise, ast.Break, ast.Continue)):
+        return True
+    if _explicit_process_exit(node) is not None:
         return True
     if isinstance(node, ast.Assert):
         return static_truth(node.test, constants) is False
