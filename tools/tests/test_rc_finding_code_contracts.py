@@ -278,13 +278,13 @@ def _finding_dependency_roles(
 
 
 def _mutation_target_names(target: ast.AST) -> set[str]:
-    """Return locals whose container state is changed by an assignment target."""
+    """Return locals whose container or object state is changed by an assignment target."""
     names = set(base._stored_names(target))
     for item in ast.walk(target):
-        if not isinstance(item, ast.Subscript):
+        if not isinstance(item, (ast.Subscript, ast.Attribute)):
             continue
         root: ast.AST = item.value
-        while isinstance(root, ast.Subscript):
+        while isinstance(root, (ast.Subscript, ast.Attribute)):
             root = root.value
         if isinstance(root, ast.Name):
             names.add(root.id)
@@ -590,6 +590,22 @@ def run(document_id):
         mutated = original.replace(
             "    if document_id in ids:\n",
             '    ids[document_id] = "path"\n    if document_id in ids:\n',
+        )
+        self.assertNotEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(mutated),
+        )
+
+    def test_attribute_assignment_changes_dependency_identity(self):
+        original = '''
+def run():
+    skill = load_skill()
+    if skill.name:
+        Finding("SKILL_NAME_REQUIRED", "skill", path="sample")
+'''
+        mutated = original.replace(
+            "    if skill.name:\n",
+            '    skill.name = ""\n    if skill.name:\n',
         )
         self.assertNotEqual(
             finding_semantic_signatures(original),
