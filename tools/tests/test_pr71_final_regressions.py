@@ -199,6 +199,44 @@ def validate(value):
         self.assertIsInstance(function, ast.FunctionDef)
         self.assertTrue(statement_always_terminates(function.body[0]))
 
+    def test_statically_false_assert_makes_successor_unreachable(self):
+        literal_source = '''
+def validate():
+    assert False
+    Finding("PUBLIC_CODE", "unreachable")
+'''
+        self.assertEqual(
+            literal.reachable_contracts(literal_source, "sample.py"),
+            Counter(),
+        )
+
+        parameterized_source = '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    enabled = False
+    assert enabled
+    read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+'''
+        self.assertEqual(
+            parameterized.reachable_parameterized_contracts(
+                parameterized_source, "sample.py"
+            ),
+            set(),
+        )
+
+        unknown_assert = '''
+def validate(flag):
+    assert flag
+    Finding("PUBLIC_CODE", "reachable")
+'''
+        self.assertEqual(
+            literal.reachable_contracts(unknown_assert, "sample.py")[
+                ("sample.py", "validate", "PUBLIC_CODE")
+            ],
+            1,
+        )
+
     def test_bytecode_reenabled_by_child_is_redirected_outside_source(self):
         module = _load_validate_all_module()
         with tempfile.TemporaryDirectory() as temp:
