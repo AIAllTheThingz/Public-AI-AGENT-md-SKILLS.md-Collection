@@ -1,92 +1,328 @@
 from __future__ import annotations
 
 import ast
+import copy
 import hashlib
 
 import rc_finding_code_contracts_base as base
 
 
-class _CollisionSafeBindingNormalizer(base._FunctionScopeNameNormalizer):
-    """Disambiguate real local-binding collisions without churning unique identities."""
-
-    @staticmethod
-    def _loaded_local_names(
-        node: ast.FunctionDef | ast.AsyncFunctionDef,
+class _SelfNormalizer(ast.NodeTransformer):
+    def __init__(
+        self,
+        target: str,
+        parameter_positions: dict[str, int],
         local_names: set[str],
-    ) -> set[str]:
-        loaded: set[str] = set()
+    ) -> None:
+        self.target = target
+        self.parameter_positions = parameter_positions
+        self.local_names = local_names
 
-        class Collector(ast.NodeVisitor):
-            def visit_FunctionDef(self, item: ast.FunctionDef) -> None:
-                if item is node:
-                    for statement in item.body:
-                        self.visit(statement)
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        cloned = copy.deepcopy(node)
+        if cloned.id == self.target:
+            cloned.id = "_self"
+        elif cloned.id in self.parameter_positions:
+            cloned.id = f"_p{self.parameter_positions[cloned.id]}"
+        elif cloned.id in self.local_names:
+            cloned.id = "_local"
+        return cloned
 
-            def visit_AsyncFunctionDef(self, item: ast.AsyncFunctionDef) -> None:
-                if item is node:
-                    for statement in item.body:
-                        self.visit(statement)
+    def visit_arg(self, node: ast.arg) -> ast.AST:
+        cloned = copy.deepcopy(node)
+        if cloned.arg in self.parameter_positions:
+            cloned.arg = f"_p{self.parameter_positions[cloned.arg]}"
+        elif cloned.arg == self.target:
+            cloned.arg = "_self"
+        elif cloned.arg in self.local_names:
+            cloned.arg = "_local"
+        return cloned
 
-            def visit_Lambda(self, item: ast.Lambda) -> None:
-                return
 
-            def visit_ClassDef(self, item: ast.ClassDef) -> None:
-                return
+def _normalized_for_local(
+    node: ast.AST,
+    target: str,
+    parameter_positions: dict[str, int],
+    local_names: set[str],
+) -> str:
+    cloned = copy.deepcopy(node)
+    cloned = _SelfNormalizer(target, parameter_positions, local_names).visit(cloned)
+    cloned = base.FindingMessageNormalizer().visit(cloned)
+    ast.fix_missing_locations(cloned)
+    return base.canonical_ast(cloned)
 
-            def visit_Name(self, item: ast.Name) -> None:
-                if isinstance(item.ctx, ast.Load) and item.id in local_names:
-                    loaded.add(item.id)
 
-        Collector().visit(node)
-        return loaded
+def _parent_map(node: ast.AST) -> dict[ast.AST, ast.AST]:
+    parents: dict[ast.AST, ast.AST] = {}
+    for parent in ast.walk(node):
+        for child in ast.iter_child_nodes(parent):
+            parents[child] = parent
+    return parents
 
-    @staticmethod
-    def _first_binding_order(
-        node: ast.FunctionDef | ast.AsyncFunctionDef,
-        names: set[str],
-    ) -> list[str]:
-        order: list[str] = []
 
-        class Collector(ast.NodeVisitor):
-            def visit_FunctionDef(self, item: ast.FunctionDef) -> None:
-                if item is node:
-                    for statement in item.body:
-                        self.visit(statement)
+def _branch_context(
+    node: ast.AST,
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    parents: dict[ast.AST, ast.AST],
+    target: str,
+    parameter_positions: dict[str, int],
+    local_names: set[str],
+) -> list[str]:
+    markers: list[str] = []
+    child = node
+    while child in parents:
+        parent = parents[child]
+        if parent is function:
+            break
+        if isinstance(parent, ast.If):
+            if child in parent.body:
+                side = "if:true"
+            elif child in parent.orelse:
+                side = "if:false"
+            else:
+                side = "if:test"
+            markers.append(
+                f"{side}:{_normalized_for_local(parent.test, target, parameter_positions, local_names)}"
+            )
+        elif isinstance(parent, (ast.For, ast.AsyncFor)):
+            if child in parent.body:
+                side = "for:body"
+            elif child in parent.orelse:
+                side = "for:else"
+            else:
+                side = "for:iter"
+            markers.append(
+                f"{side}:{_normalized_for_local(parent.iter, target, parameter_positions, local_names)}"
+            )
+        elif isinstance(parent, ast.While):
+            if child in parent.body:
+                side = "while:body"
+            elif child in parent.orelse:
+                side = "while:else"
+            else:
+                side = "while:test"
+            markers.append(
+                f"{side}:{_normalized_for_local(parent.test, target, parameter_positions, local_names)}"
+            )
+        elif isinstance(parent, ast.Try):
+            if child in parent.body:
+                markers.append("try")
+            elif child in parent.orelse:
+                markers.append("try:else")
+            elif child in parent.finalbody:
+                markers.append("try:finally")
+        elif isinstance(parent, ast.ExceptHandler):
+            marker = (
+                "except:bare"
+                if parent.type is None
+                else f"except:{_normalized_for_local(parent.type, target, parameter_positions, local_names)}"
+            )
+            markers.append(marker)
+        child = parent
+    markers.reverse()
+    return markers
 
-            def visit_AsyncFunctionDef(self, item: ast.AsyncFunctionDef) -> None:
-                if item is node:
-                    for statement in item.body:
-                        self.visit(statement)
 
-            def visit_Lambda(self, item: ast.Lambda) -> None:
-                return
+def _nearest_statement(
+    node: ast.AST,
+    parents: dict[ast.AST, ast.AST],
+) -> ast.stmt | None:
+    current = node
+    while current in parents:
+        current = parents[current]
+        if isinstance(current, ast.stmt):
+            return current
+    return None
 
-            def visit_ClassDef(self, item: ast.ClassDef) -> None:
-                return
 
-            def visit_Name(self, item: ast.Name) -> None:
-                if (
-                    isinstance(item.ctx, (ast.Store, ast.Del))
-                    and item.id in names
-                    and item.id not in order
-                ):
-                    order.append(item.id)
+def _first_bindings(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    local_names: set[str],
+) -> dict[str, ast.AST]:
+    result: dict[str, ast.AST] = {}
 
-            def visit_ExceptHandler(self, item: ast.ExceptHandler) -> None:
-                if item.name and item.name in names and item.name not in order:
-                    order.append(item.name)
-                self.generic_visit(item)
+    class Collector(ast.NodeVisitor):
+        def visit_FunctionDef(self, item: ast.FunctionDef) -> None:
+            if item is function:
+                for statement in item.body:
+                    self.visit(statement)
 
-        Collector().visit(node)
-        order.extend(sorted(names - set(order)))
-        return order
+        def visit_AsyncFunctionDef(self, item: ast.AsyncFunctionDef) -> None:
+            if item is function:
+                for statement in item.body:
+                    self.visit(statement)
+
+        def visit_Lambda(self, item: ast.Lambda) -> None:
+            return
+
+        def visit_ClassDef(self, item: ast.ClassDef) -> None:
+            return
+
+        def visit_Assign(self, item: ast.Assign) -> None:
+            for target in item.targets:
+                for name in base._stored_names(target):
+                    if name in local_names and name not in result:
+                        result[name] = item.value
+            self.visit(item.value)
+
+        def visit_AnnAssign(self, item: ast.AnnAssign) -> None:
+            if item.value is not None:
+                for name in base._stored_names(item.target):
+                    if name in local_names and name not in result:
+                        result[name] = item.value
+                self.visit(item.value)
+
+        def visit_For(self, item: ast.For) -> None:
+            for name in base._stored_names(item.target):
+                if name in local_names and name not in result:
+                    result[name] = item.iter
+            self.generic_visit(item)
+
+        def visit_AsyncFor(self, item: ast.AsyncFor) -> None:
+            for name in base._stored_names(item.target):
+                if name in local_names and name not in result:
+                    result[name] = item.iter
+            self.generic_visit(item)
+
+    Collector().visit(function)
+    return result
+
+
+def _finding_dependency_roles(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    local_names: set[str],
+    parameter_positions: dict[str, int],
+) -> tuple[dict[str, list[str]], dict[str, int]]:
+    parents = _parent_map(function)
+    roles: dict[str, list[str]] = {}
+    cutoffs: dict[str, int] = {}
+
+    for node in ast.walk(function):
+        if not (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "Finding"
+            and base.finding_code(node) is not None
+        ):
+            continue
+        dependencies = list(base.finding_dependency_nodes(node))
+        child: ast.AST = node
+        while child in parents:
+            parent = parents[child]
+            if parent is function:
+                break
+            if isinstance(parent, ast.If):
+                dependencies.append(parent.test)
+            elif isinstance(parent, (ast.For, ast.AsyncFor)):
+                dependencies.append(parent.iter)
+            elif isinstance(parent, ast.While):
+                dependencies.append(parent.test)
+            elif isinstance(parent, ast.ExceptHandler) and parent.type is not None:
+                dependencies.append(parent.type)
+            child = parent
+
+        cutoff = getattr(node, "lineno", 10**9)
+        for dependency in dependencies:
+            names = base.loaded_names(dependency) & local_names
+            for name in names:
+                marker = _normalized_for_local(
+                    dependency, name, parameter_positions, local_names
+                )
+                roles.setdefault(name, []).append(marker)
+                cutoffs[name] = min(cutoffs.get(name, cutoff), cutoff)
+
+    bindings = _first_bindings(function, local_names)
+    pending = list(roles)
+    while pending:
+        parent_name = pending.pop()
+        binding = bindings.get(parent_name)
+        if binding is None:
+            continue
+        for dependency_name in base.loaded_names(binding) & local_names:
+            if dependency_name not in roles:
+                roles[dependency_name] = []
+                cutoffs[dependency_name] = cutoffs[parent_name]
+                pending.append(dependency_name)
+            roles[dependency_name].append(
+                "binding:"
+                + _normalized_for_local(
+                    binding,
+                    dependency_name,
+                    parameter_positions,
+                    local_names,
+                )
+            )
+            cutoffs[dependency_name] = min(
+                cutoffs.get(dependency_name, cutoffs[parent_name]),
+                cutoffs[parent_name],
+            )
+
+    return roles, cutoffs
+
+
+def _first_semantic_use(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    target: str,
+    cutoff: int,
+    parameter_positions: dict[str, int],
+    local_names: set[str],
+) -> str:
+    parents = _parent_map(function)
+    candidates: list[tuple[int, int, str]] = []
+    for node in ast.walk(function):
+        if not (
+            isinstance(node, ast.Name)
+            and isinstance(node.ctx, ast.Load)
+            and node.id == target
+            and getattr(node, "lineno", cutoff + 1) <= cutoff
+        ):
+            continue
+        statement = _nearest_statement(node, parents)
+        if statement is None:
+            continue
+        context = _branch_context(
+            statement,
+            function,
+            parents,
+            target,
+            parameter_positions,
+            local_names,
+        )
+        shape = "|".join(
+            context
+            + [
+                _normalized_for_local(
+                    statement,
+                    target,
+                    parameter_positions,
+                    local_names,
+                )
+            ]
+        )
+        candidates.append(
+            (
+                getattr(node, "lineno", cutoff),
+                getattr(node, "col_offset", 0),
+                shape,
+            )
+        )
+    if not candidates:
+        return "<no-use>"
+    candidates.sort()
+    return candidates[0][2]
+
+
+class _DependencyScopedBindingNormalizer(base._FunctionScopeNameNormalizer):
+    """Give Finding-relevant locals stable dependency-scoped identities."""
 
     def _mapping(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, str]:
         parameters = self._parameter_names(node)
         parameter_positions = {name: index for index, name in enumerate(parameters)}
         local_names = self._local_store_names(node) - set(parameters)
         binding_shapes = self._binding_shapes(node, parameter_positions, local_names)
-        loaded_names = self._loaded_local_names(node, local_names)
+        roles, cutoffs = _finding_dependency_roles(
+            node, local_names, parameter_positions
+        )
 
         mapping = {name: f"_p{index}" for name, index in parameter_positions.items()}
         shape_by_name: dict[str, str] = {}
@@ -96,21 +332,32 @@ class _CollisionSafeBindingNormalizer(base._FunctionScopeNameNormalizer):
             digest = hashlib.sha256(structural_binding.encode("utf-8")).hexdigest()[:12]
             mapping[name] = f"_v_{digest}"
 
-        groups: dict[str, set[str]] = {}
-        for name in loaded_names:
-            groups.setdefault(shape_by_name[name], set()).add(name)
-
-        for structural_binding, names in groups.items():
-            if len(names) < 2:
-                continue
-            digest = hashlib.sha256(structural_binding.encode("utf-8")).hexdigest()[:12]
-            for ordinal, name in enumerate(self._first_binding_order(node, names)):
-                mapping[name] = f"_v_{digest}_{ordinal}"
+        # Every local that actually enters a Finding dependency closure gets its
+        # own stable semantic identity, independent of whether unrelated siblings
+        # with the same binding shape exist. Irrelevant locals keep the legacy
+        # binding-shape identity and cannot renumber relevant variables.
+        for name, role_shapes in roles.items():
+            structural_binding = shape_by_name[name]
+            base_digest = hashlib.sha256(
+                structural_binding.encode("utf-8")
+            ).hexdigest()[:12]
+            first_use = _first_semantic_use(
+                node,
+                name,
+                cutoffs[name],
+                parameter_positions,
+                local_names,
+            )
+            identity = "\n".join(
+                [structural_binding, first_use, *sorted(role_shapes)]
+            )
+            role_digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:10]
+            mapping[name] = f"_v_{base_digest}_{role_digest}"
 
         return mapping
 
 
-base._FunctionScopeNameNormalizer = _CollisionSafeBindingNormalizer
+base._FunctionScopeNameNormalizer = _DependencyScopedBindingNormalizer
 
 CHECKPOINT_COMMIT = base.CHECKPOINT_COMMIT
 normalized_semantic_ast = base.normalized_semantic_ast
@@ -148,7 +395,7 @@ def run(flag):
             "rename-only changes must remain alpha-equivalent",
         )
 
-    def test_unrelated_unused_same_shaped_local_does_not_renumber_existing_identity(self):
+    def test_unrelated_unused_same_shaped_local_does_not_change_existing_identity(self):
         original = '''
 def run(flag):
     passed = []
@@ -163,7 +410,26 @@ def run(flag):
         self.assertEqual(
             finding_semantic_signatures(original),
             finding_semantic_signatures(with_scratch),
-            "an unrelated unused same-shaped local must not renumber an existing binding",
+            "an unrelated unused same-shaped local must not alter an existing identity",
+        )
+
+    def test_unrelated_used_same_shaped_local_does_not_change_existing_identity(self):
+        original = '''
+def run(flag):
+    passed = []
+    if flag:
+        passed.append("ok")
+    if passed:
+        Finding("PUBLIC_CODE", "result", path="sample")
+'''
+        with_scratch = original.replace(
+            "    passed = []\n",
+            '    scratch = []\n    scratch.append("irrelevant")\n    passed = []\n',
+        )
+        self.assertEqual(
+            finding_semantic_signatures(original),
+            finding_semantic_signatures(with_scratch),
+            "an unrelated used same-shaped local outside the Finding dependency closure must not alter identity",
         )
 
 

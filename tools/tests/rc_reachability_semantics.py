@@ -174,7 +174,16 @@ def _block_has_reachable_outer_break(
         elif isinstance(statement, ast.Try) or (
             hasattr(ast, "TryStar") and isinstance(statement, ast.TryStar)
         ):
-            regions = [statement.body, statement.orelse, statement.finalbody]
+            # `finally` runs after any pending break/continue/return/raise and may
+            # replace it. Model that precedence before considering control flow
+            # from the try body, handlers, or else region.
+            if statement.finalbody:
+                if _block_has_reachable_outer_break(statement.finalbody, state):
+                    return True
+                if block_always_terminates(statement.finalbody, state):
+                    return False
+
+            regions = [statement.body, statement.orelse]
             regions.extend(handler.body for handler in statement.handlers)
             if any(
                 _block_has_reachable_outer_break(region, state)

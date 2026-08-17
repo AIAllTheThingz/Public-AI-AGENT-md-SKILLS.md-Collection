@@ -68,6 +68,55 @@ def validate(root, findings):
             set(),
         )
 
+    def test_finally_continue_overrides_pending_outer_break(self):
+        literal_source = '''
+def validate():
+    while True:
+        try:
+            break
+        finally:
+            continue
+    Finding("PUBLIC_CODE", "unreachable")
+'''
+        self.assertEqual(
+            literal.reachable_contracts(literal_source, "sample.py"),
+            Counter(),
+        )
+
+        parameterized_source = '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    while True:
+        try:
+            break
+        finally:
+            continue
+    read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+'''
+        self.assertEqual(
+            parameterized.reachable_parameterized_contracts(
+                parameterized_source, "sample.py"
+            ),
+            set(),
+        )
+
+    def test_finally_break_overrides_pending_continue(self):
+        literal_source = '''
+def validate():
+    while True:
+        try:
+            continue
+        finally:
+            break
+    Finding("PUBLIC_CODE", "reachable")
+'''
+        contracts = literal.reachable_contracts(literal_source, "sample.py")
+        self.assertEqual(
+            contracts[("sample.py", "validate", "PUBLIC_CODE")],
+            1,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
