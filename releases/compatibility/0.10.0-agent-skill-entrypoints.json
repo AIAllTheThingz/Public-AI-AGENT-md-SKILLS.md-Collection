@@ -1,0 +1,19 @@
+{
+  "formatVersion": "1.0.0",
+  "releaseVersion": "0.10.0",
+  "tag": "v0.10.0",
+  "sourceCommit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c",
+  "sourceManifest": {
+    "path": "MANIFEST.md",
+    "blobSha": "f3adfd20d54e0d1d65e88fdebcbd310988d40645"
+  },
+  "stableAgentSkillEntryPaths": [
+    "languages/SKILL.md",
+    "languages/csharp/SKILL.md",
+    "frameworks/SKILL.md",
+    "platforms/SKILL.md",
+    "virtualization/SKILL.md",
+    "operating-systems/SKILL.md",
+    "networking/SKILL.md"
+  ]
+}
