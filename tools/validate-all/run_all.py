@@ -40,8 +40,9 @@ COMPATIBILITY_HISTORY_REFS = {
 }
 
 _HISTORY_REAL_GIT = "PAG_COMPATIBILITY_REAL_GIT"
-_HISTORY_ARCHIVE_ROOT = "PAG_COMPATIBILITY_ARCHIVE_ROOT"
+_HISTORY_SOURCE_ROOT = "PAG_COMPATIBILITY_SOURCE_ROOT"
 _HISTORY_GIT_DIR = "PAG_COMPATIBILITY_GIT_DIR"
+_HISTORY_SELECTORS = "PAG_COMPATIBILITY_SELECTORS"
 
 
 def _git(
@@ -68,25 +69,6 @@ def _required_history_missing(
         for commit in COMPATIBILITY_HISTORY_REFS
         if _git(root, "cat-file", "-e", f"{commit}^{{commit}}", env=env).returncode != 0
     ]
-
-
-def _fetch_compatibility_history(
-    root: Path,
-    bundle: Path,
-    *,
-    env: dict[str, str] | None = None,
-) -> None:
-    refspecs = [f"{ref}:{ref}" for ref in COMPATIBILITY_HISTORY_REFS.values()]
-    fetched = _git(root, "fetch", "--quiet", str(bundle), *refspecs, env=env)
-    if fetched.returncode != 0:
-        raise RuntimeError(fetched.stderr.strip() or "git bundle fetch failed")
-
-    unresolved = _required_history_missing(root, env=env)
-    if unresolved:
-        raise RuntimeError(
-            "Bundled compatibility history did not provide required commits: "
-            + ", ".join(unresolved)
-        )
 
 
 def _populate_temporary_history(
@@ -122,55 +104,72 @@ def _populate_temporary_history(
 
 
 def _write_history_git_wrapper(path: Path) -> None:
-    """Write a Git shim that redirects only archive-root Git discovery."""
+    """Write a Git shim that redirects only immutable compatibility lookups."""
     path.write_text(
         '''#!/usr/bin/env python3
 from __future__ import annotations
 
+import json
 import os
 import sys
 from pathlib import Path
 
 real_git = os.environ["PAG_COMPATIBILITY_REAL_GIT"]
-archive_root = Path(os.environ["PAG_COMPATIBILITY_ARCHIVE_ROOT"]).resolve()
+source_root = Path(os.environ["PAG_COMPATIBILITY_SOURCE_ROOT"]).resolve()
 history_git_dir = Path(os.environ["PAG_COMPATIBILITY_GIT_DIR"]).resolve()
+selectors = tuple(json.loads(os.environ["PAG_COMPATIBILITY_SELECTORS"]))
 args = sys.argv[1:]
 
 
-def inside_archive(path: Path) -> bool:
+def inside_source(path: Path) -> bool:
     try:
-        path.resolve().relative_to(archive_root)
+        path.resolve().relative_to(source_root)
         return True
     except ValueError:
         return False
 
 
-def has_local_git_metadata(path: Path) -> bool:
+def command_directory() -> Path:
+    current = Path.cwd().resolve()
+    index = 0
+    while index < len(args):
+        if args[index] == "-C" and index + 1 < len(args):
+            candidate = Path(args[index + 1])
+            current = (
+                candidate.resolve()
+                if candidate.is_absolute()
+                else (current / candidate).resolve()
+            )
+            index += 2
+            continue
+        index += 1
+    return current
+
+
+def has_nested_git_metadata(path: Path) -> bool:
     current = path.resolve()
-    while inside_archive(current):
+    while inside_source(current) and current != source_root:
         if (current / ".git").exists():
             return True
-        if current == archive_root:
-            break
         current = current.parent
     return False
 
 
-def should_redirect() -> bool:
-    if args and args[0] in {"init", "clone"}:
-        return False
-    if "-C" in args:
-        index = args.index("-C")
-        if index + 1 >= len(args):
-            return False
-        target = Path(args[index + 1]).resolve()
-        return inside_archive(target) and not has_local_git_metadata(target)
-    current = Path.cwd().resolve()
-    return inside_archive(current) and not has_local_git_metadata(current)
+def uses_compatibility_history() -> bool:
+    return any(selector in argument for argument in args for selector in selectors)
 
 
-if should_redirect():
-    args = [f"--git-dir={history_git_dir}", f"--work-tree={archive_root}", *args]
+target = command_directory()
+if (
+    uses_compatibility_history()
+    and inside_source(target)
+    and not has_nested_git_metadata(target)
+):
+    args = [
+        f"--git-dir={history_git_dir}",
+        f"--work-tree={source_root}",
+        *args,
+    ]
 
 os.execv(real_git, [real_git, *args])
 ''',
@@ -181,7 +180,7 @@ os.execv(real_git, [real_git, *args])
 
 @contextmanager
 def compatibility_history(root: Path):
-    """Expose authenticated RC baselines without mutating extracted source trees."""
+    """Expose authenticated RC baselines without mutating the declared source root."""
     root = root.resolve()
     missing = _required_history_missing(root)
     if not missing:
@@ -194,15 +193,12 @@ def compatibility_history(root: Path):
             f"Compatibility history is unavailable and bundled baseline is missing: {bundle}"
         )
 
-    if (root / ".git").exists():
-        _fetch_compatibility_history(root, bundle)
-        yield
-        return
-
-    # Distributed source archives intentionally contain no Git metadata. Build a
-    # temporary object store outside the declared repository root. A scoped Git
-    # shim redirects only commands aimed at this archive root to that store; Git
-    # commands for temporary fixture repositories continue to use normal discovery.
+    # History-deficient inputs include both extracted archives and shallow Git
+    # checkouts. Always keep bootstrap objects/refs in a temporary external store;
+    # never fetch them into the user's existing repository. The Git shim redirects
+    # only lookups that explicitly name one of the immutable compatibility commits
+    # or temporary compatibility refs. All ordinary Git commands continue to use
+    # the source checkout (or nested fixture repository) normally.
     with tempfile.TemporaryDirectory(prefix="public-ai-governance-history-") as temp:
         temp_root = Path(temp)
         git_dir = temp_root / "repository.git"
@@ -227,13 +223,17 @@ def compatibility_history(root: Path):
         managed = (
             "PATH",
             _HISTORY_REAL_GIT,
-            _HISTORY_ARCHIVE_ROOT,
+            _HISTORY_SOURCE_ROOT,
             _HISTORY_GIT_DIR,
+            _HISTORY_SELECTORS,
         )
         previous = {name: os.environ.get(name) for name in managed}
         os.environ[_HISTORY_REAL_GIT] = real_git
-        os.environ[_HISTORY_ARCHIVE_ROOT] = str(root)
+        os.environ[_HISTORY_SOURCE_ROOT] = str(root)
         os.environ[_HISTORY_GIT_DIR] = str(git_dir)
+        os.environ[_HISTORY_SELECTORS] = json.dumps(
+            [*COMPATIBILITY_HISTORY_REFS.keys(), *COMPATIBILITY_HISTORY_REFS.values()]
+        )
         os.environ["PATH"] = str(wrapper_dir) + os.pathsep + (previous["PATH"] or "")
         try:
             yield

@@ -118,6 +118,10 @@ def _block_terminates_without_raising(
             return bool(statement.orelse) and _block_terminates_without_raising(
                 statement.body, state
             ) and _block_terminates_without_raising(statement.orelse, state)
+        if isinstance(statement, (ast.With, ast.AsyncWith)):
+            if _block_terminates_without_raising(statement.body, state):
+                return True
+            return False
         if isinstance(statement, ast.Pass):
             continue
         if isinstance(statement, ast.Assign):
@@ -230,6 +234,13 @@ def statement_always_terminates(
         return bool(node.orelse) and block_always_terminates(
             node.body, constants
         ) and block_always_terminates(node.orelse, constants)
+    if isinstance(node, (ast.With, ast.AsyncWith)):
+        # A context manager can suppress an exception raised by its body, so a
+        # generic `block_always_terminates()` check would be unsound here. A
+        # return/break/continue (and nested equivalents) cannot be cancelled by
+        # `__exit__`/`__aexit__`; only recognize those obviously non-raising
+        # terminal bodies and remain conservative for `raise` paths.
+        return _block_terminates_without_raising(node.body, constants)
     if isinstance(node, ast.While):
         truth = static_truth(node.test, constants)
         if truth is True and not loop_body_has_break(node.body, constants):
