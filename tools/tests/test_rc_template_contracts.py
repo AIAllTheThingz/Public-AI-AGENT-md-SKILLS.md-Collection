@@ -9,7 +9,24 @@ from helpers import REPO_ROOT
 
 CHECKPOINT = REPO_ROOT / "releases" / "compatibility" / "0.10.0-checkpoint.json"
 PLACEHOLDER_PATTERN = re.compile(r"\{\{(?P<name>[A-Z][A-Z0-9_]*)\}\}")
-SECTION_PATTERN = re.compile(r"^##\s+(?P<title>.+?)\s*$", re.MULTILINE)
+SECTION_PATTERN = re.compile(
+    r"^##\s+(?P<title>.+?)\s*$\n(?P<body>.*?)(?=^##\s+|\Z)",
+    re.MULTILINE | re.DOTALL,
+)
+OBLIGATION_PATTERN = re.compile(
+    r"\b(must(?:\s+not)?|shall(?:\s+not)?|may\s+not|cannot|do\s+not|only|required)\b",
+    re.IGNORECASE,
+)
+IMPERATIVE_PREFIXES = (
+    "include ",
+    "record ",
+    "document ",
+    "provide ",
+    "identify ",
+    "verify ",
+    "capture ",
+    "retain ",
+)
 
 
 def git_output(*args: str) -> str:
@@ -32,26 +49,62 @@ def normalize_section(title: str) -> str:
     return " ".join(title.split()).casefold()
 
 
-def template_contract(text: str) -> dict[str, set[str]]:
+def normalize_obligation(line: str) -> str:
+    value = re.sub(r"[`*_]+", "", line.strip())
+    value = re.sub(r"\s+", " ", value).strip()
+    return value.rstrip(". :;").casefold()
+
+
+def section_obligations(body: str) -> set[str]:
+    obligations: set[str] = set()
+    for raw_line in body.splitlines():
+        line = raw_line.strip()
+        if not line or PLACEHOLDER_PATTERN.fullmatch(line):
+            continue
+        plain = re.sub(r"^[\-*+]\s+", "", line)
+        normalized = normalize_obligation(plain)
+        if OBLIGATION_PATTERN.search(plain) or normalized.startswith(IMPERATIVE_PREFIXES):
+            obligations.add(normalized)
+    return obligations
+
+
+def template_contract(text: str) -> dict[str, object]:
+    sections: set[str] = set()
+    obligations: dict[str, set[str]] = {}
+    for match in SECTION_PATTERN.finditer(text):
+        title = normalize_section(match.group("title"))
+        sections.add(title)
+        obligations[title] = section_obligations(match.group("body"))
     return {
         "placeholders": set(PLACEHOLDER_PATTERN.findall(text)),
-        "sections": {
-            normalize_section(match.group("title"))
-            for match in SECTION_PATTERN.finditer(text)
-        },
+        "sections": sections,
+        "obligations": obligations,
     }
 
 
 def template_contract_findings(
     path: str,
-    published: dict[str, set[str]],
-    candidate: dict[str, set[str]],
+    published: dict[str, object],
+    candidate: dict[str, object],
 ) -> list[str]:
     findings: list[str] = []
-    for placeholder in sorted(published["placeholders"] - candidate["placeholders"]):
+    published_placeholders = published["placeholders"]
+    candidate_placeholders = candidate["placeholders"]
+    published_sections = published["sections"]
+    candidate_sections = candidate["sections"]
+    published_obligations = published["obligations"]
+    candidate_obligations = candidate["obligations"]
+
+    for placeholder in sorted(published_placeholders - candidate_placeholders):
         findings.append(f"MISSING_TEMPLATE_PLACEHOLDER:{path}:{placeholder}")
-    for section in sorted(published["sections"] - candidate["sections"]):
+    for section in sorted(published_sections - candidate_sections):
         findings.append(f"MISSING_TEMPLATE_SECTION:{path}:{section}")
+    for section, expected in sorted(published_obligations.items()):
+        current = candidate_obligations.get(section, set())
+        for obligation in sorted(expected - current):
+            findings.append(
+                f"MISSING_TEMPLATE_OBLIGATION:{path}:{section}:{obligation}"
+            )
     return findings
 
 
@@ -86,14 +139,28 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
         self.assertIn("VALIDATION_NOT_PERFORMED", completion["placeholders"])
         self.assertIn("HUMAN_REVIEW", completion["placeholders"])
         self.assertIn("human review", completion["sections"])
+        self.assertIn(
+            "the report must not claim a stronger state than the evidence supports",
+            completion["obligations"]["human review"],
+        )
 
-    def test_placeholder_rename_and_required_section_removal_are_detected(self):
+        exception_path = "templates/exception/EXCEPTION_RECORD_TEMPLATE.md"
+        exception = template_contract(git_source_at(self.source_commit, exception_path))
+        self.assertIn(
+            "approval must come from an accountable human with delegated authority",
+            exception["obligations"]["approval"],
+        )
+
+    def test_placeholder_section_and_normative_meaning_changes_are_detected(self):
         published_text = """
 # Completion
 ## Validation not performed
 {{VALIDATION_NOT_PERFORMED}}
 ## Human review
 {{HUMAN_REVIEW}}
+The report must not claim a stronger state than the evidence supports.
+## Approval
+Approval must come from an accountable human with delegated authority.
 """
         renamed = published_text.replace(
             "{{VALIDATION_NOT_PERFORMED}}",
@@ -102,6 +169,14 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
         removed_section = published_text.replace(
             "## Human review\n{{HUMAN_REVIEW}}\n",
             "{{HUMAN_REVIEW}}\n",
+        )
+        weakened_review = published_text.replace(
+            "The report must not claim a stronger state than the evidence supports.\n",
+            "The report summarizes the work.\n",
+        )
+        weakened_approval = published_text.replace(
+            "Approval must come from an accountable human with delegated authority.\n",
+            "Approval may be recorded here.\n",
         )
         published = template_contract(published_text)
 
@@ -116,6 +191,24 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
             template_contract_findings(
                 "sample.md", published, template_contract(removed_section)
             ),
+        )
+        self.assertTrue(
+            any(
+                finding.startswith(
+                    "MISSING_TEMPLATE_OBLIGATION:sample.md:human review:"
+                )
+                for finding in template_contract_findings(
+                    "sample.md", published, template_contract(weakened_review)
+                )
+            )
+        )
+        self.assertTrue(
+            any(
+                finding.startswith("MISSING_TEMPLATE_OBLIGATION:sample.md:approval:")
+                for finding in template_contract_findings(
+                    "sample.md", published, template_contract(weakened_approval)
+                )
+            )
         )
 
         compatible = published_text.replace("## Human review", "##   HUMAN review")

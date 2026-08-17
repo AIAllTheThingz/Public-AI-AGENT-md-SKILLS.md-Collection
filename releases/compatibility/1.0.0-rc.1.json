@@ -10,6 +10,10 @@
     "path": "releases/compatibility/0.10.0-checkpoint.json",
     "sha256": "a8e3d3c68e4040cb4b6b8b878f4ac46f6a55bfe66e8b080f97ee57c860a81921"
   },
+  "publishedAgentSkillEntryPointCheckpoint": {
+    "path": "releases/compatibility/0.10.0-agent-skill-entrypoints.json",
+    "sha256": "635e34c53f967d1b0bff9602037f7c716650cbf815f7aae3efc6f15c936921fb"
+  },
   "publishedToolBehaviorContract": {
     "path": "releases/compatibility/0.10.0-tool-behavior.json",
     "sha256": "120f9869f67bb9dc900e05cd41c8bbee08bf96bd516f0a6ce527d1a43bc809a3"

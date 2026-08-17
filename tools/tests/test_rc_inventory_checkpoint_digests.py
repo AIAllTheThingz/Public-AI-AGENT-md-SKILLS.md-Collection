@@ -9,6 +9,7 @@ from helpers import REPO_ROOT
 INVENTORY_PATH = REPO_ROOT / "releases" / "compatibility" / "1.0.0-rc.1.json"
 PIN_KEYS = (
     "publishedCheckpointInventory",
+    "publishedAgentSkillEntryPointCheckpoint",
     "publishedToolBehaviorContract",
     "publishedFindingCodeContract",
     "publishedRuleContractCheckpoint",
@@ -32,6 +33,16 @@ class ReleaseCandidateInventoryCheckpointDigestTests(unittest.TestCase):
                     actual,
                     f"{key} digest does not match {pin['path']}",
                 )
+
+    def test_agent_skill_checkpoint_is_authoritative_inventory_evidence(self):
+        pin = self.inventory["publishedAgentSkillEntryPointCheckpoint"]
+        self.assertEqual(
+            pin["path"],
+            "releases/compatibility/0.10.0-agent-skill-entrypoints.json",
+        )
+        checkpoint = json.loads((REPO_ROOT / pin["path"]).read_text(encoding="utf-8"))
+        self.assertEqual(len(checkpoint["stableAgentSkillEntryPaths"]), 7)
+        self.assertIn("languages/SKILL.md", checkpoint["stableAgentSkillEntryPaths"])
 
 
 if __name__ == "__main__":

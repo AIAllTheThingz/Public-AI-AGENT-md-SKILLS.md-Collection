@@ -12,6 +12,7 @@ CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
 EXPECTED_WRITERS = {
     "tools/generate-manifest/generate_manifest.py",
     "tools/compose-agents/compose_agents.py",
+    "tools/release/build_release.py",
 }
 
 
@@ -32,13 +33,57 @@ def published_stable_writers() -> set[str]:
         "ls-tree", "-r", "--name-only", CHECKPOINT_COMMIT, "tools"
     ).splitlines()
     writers: set[str] = set()
+    output_options = ('"--output"', '"--output-dir"', '"--manifest-output"')
     for path in paths:
         if not path.endswith(".py") or path.startswith("tools/tests/") or "/tests/" in path:
             continue
         source = git_output("show", f"{CHECKPOINT_COMMIT}:{path}")
-        if '"--force"' in source and '"--dry-run"' in source:
+        if '"--force"' in source and any(option in source for option in output_options):
             writers.add(path)
     return writers
+
+
+def init_release_builder_repo(root: Path) -> None:
+    (root / "releases" / "migrations").mkdir(parents=True)
+    (root / "VERSION").write_text("0.10.1\n", encoding="utf-8")
+    (root / "README.md").write_text("# Release builder fixture\n", encoding="utf-8")
+    (root / "releases" / "0.10.1.md").write_text(
+        "# Release 0.10.1\n\nCompatibility fixture.\n", encoding="utf-8"
+    )
+    (root / "releases" / "migrations" / "0.10.1.md").write_text(
+        "# Migration 0.10.1\n\nNo breaking migration.\n", encoding="utf-8"
+    )
+    (root / "releases" / "release-state.json").write_text(
+        json.dumps(
+            {
+                "formatVersion": "1.1.0",
+                "project": "Public Access Agents",
+                "canonicalRepository": "AIAllTheThingz/Public-AI-Governance",
+                "artifactPrefix": "Public-Access-Agents",
+                "preparedUnpublishedVersions": [],
+                "nextIntendedVersion": "0.10.1",
+                "publishedVersions": ["0.10.0"],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    for args in (
+        ("init",),
+        ("config", "user.email", "compat@example.invalid"),
+        ("config", "user.name", "Compatibility Test"),
+        ("add", "."),
+        ("commit", "-m", "fixture"),
+    ):
+        completed = subprocess.run(
+            ["git", "-C", str(root), *args],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if completed.returncode != 0:
+            raise AssertionError(completed.stdout + completed.stderr)
 
 
 class ReleaseCandidateWriterSafetyTests(unittest.TestCase):
@@ -135,6 +180,35 @@ class ReleaseCandidateWriterSafetyTests(unittest.TestCase):
             )
             self.assertEqual(payload["project"], "writer-safety")
             self.assertFalse(payload["copiedSources"])
+
+    def test_release_builder_refuses_existing_output_without_force_and_replaces_with_force(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "release-root"
+            root.mkdir()
+            init_release_builder_repo(root)
+            output = root / "dist"
+            output.mkdir()
+            sentinel = output / "sentinel.txt"
+            sentinel.write_text("do-not-overwrite\n", encoding="utf-8")
+            args = (
+                "--root",
+                str(root),
+                "--output-dir",
+                str(output),
+            )
+
+            blocked = run_tool("tools/release/build_release.py", *args)
+            self.assertEqual(blocked.returncode, 2, blocked.stdout + blocked.stderr)
+            self.assertTrue(sentinel.is_file())
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "do-not-overwrite\n")
+
+            forced = run_tool("tools/release/build_release.py", *args, "--force")
+            self.assertEqual(forced.returncode, 0, forced.stdout + forced.stderr)
+            self.assertFalse(sentinel.exists())
+            self.assertTrue((output / "release-manifest.json").is_file())
+            self.assertTrue((output / "SHA256SUMS.txt").is_file())
+            self.assertTrue((output / "Public-Access-Agents-0.10.1.zip").is_file())
+            self.assertTrue((output / "Public-Access-Agents-0.10.1.tar.gz").is_file())
 
 
 if __name__ == "__main__":
