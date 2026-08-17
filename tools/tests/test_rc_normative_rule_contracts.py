@@ -9,7 +9,15 @@ CSHARP_NORMATIVE_ROOT = base.CSHARP_NORMATIVE_ROOT
 CSHARP_PROMOTION_EVIDENCE_COMMIT = base.CSHARP_PROMOTION_EVIDENCE_COMMIT
 FRONTMATTER_ID_PATTERN = re.compile(r"^id:\s*(\S+)\s*$", re.MULTILINE)
 LIST_ITEM_PATTERN = re.compile(r"^(?:[-*]|\d+\.)\s+(?P<text>.+)$")
-NON_CONTRACT_SECTIONS = {"Purpose", "Examples", "References", "Rationale"}
+EDITORIAL_SECTIONS = {"Purpose", "Examples", "References", "Rationale"}
+NORMATIVE_MODAL_PATTERN = re.compile(
+    r"\b(?:must(?:\s+not)?|shall(?:\s+not)?|required|may\s+only)\b",
+    re.IGNORECASE,
+)
+NORMATIVE_IMPERATIVE_PATTERN = re.compile(
+    r"^(?:do\s+not|never|ensure|keep|use|make|avoid|require)\b",
+    re.IGNORECASE,
+)
 
 
 def csharp_standard_paths_at(revision: str) -> list[str]:
@@ -55,20 +63,33 @@ def normalize_contract_text(text: str) -> str:
     return " ".join(text.split())
 
 
+def is_normative_statement(section: str, statement: str) -> bool:
+    """Keep obligations even when authors place them in otherwise editorial sections."""
+    if section not in EDITORIAL_SECTIONS:
+        return True
+    return bool(
+        NORMATIVE_MODAL_PATTERN.search(statement)
+        or NORMATIVE_IMPERATIVE_PATTERN.search(statement)
+    )
+
+
 def extract_csharp_normative_contracts(text: str) -> set[str]:
-    """Preserve normative blocks while allowing genuinely editorial/additive evolution."""
+    """Preserve normative statements while allowing genuinely editorial evolution."""
 
     contracts: set[str] = set()
     current_section = ""
     paragraph: list[str] = []
     in_code_fence = False
 
+    def add_statement(raw_statement: str) -> None:
+        statement = normalize_contract_text(raw_statement)
+        if statement and is_normative_statement(current_section, statement):
+            contracts.add(f"{current_section}::{statement}")
+
     def flush_paragraph() -> None:
         nonlocal paragraph
-        if paragraph and current_section not in NON_CONTRACT_SECTIONS:
-            statement = normalize_contract_text(" ".join(paragraph))
-            if statement:
-                contracts.add(f"{current_section}::{statement}")
+        if paragraph:
+            add_statement(" ".join(paragraph))
         paragraph = []
 
     for raw_line in markdown_body(text).splitlines():
@@ -92,10 +113,7 @@ def extract_csharp_normative_contracts(text: str) -> set[str]:
         list_match = LIST_ITEM_PATTERN.match(stripped)
         if list_match is not None:
             flush_paragraph()
-            if current_section not in NON_CONTRACT_SECTIONS:
-                statement = normalize_contract_text(list_match.group("text"))
-                if statement:
-                    contracts.add(f"{current_section}::{statement}")
+            add_statement(list_match.group("text"))
             continue
         paragraph.append(stripped)
 
@@ -163,6 +181,13 @@ class ReleaseCandidateNormativeRuleContractTests(
                 for contract in security["contracts"]
             ),
             "promoted C# security evidence obligations must be contract-protected",
+        )
+        documentation = promoted[
+            f"{CSHARP_NORMATIVE_ROOT}/DOCUMENTATION_STANDARD.md"
+        ]
+        self.assertTrue(
+            any(contract.startswith("Examples::Do not ") for contract in documentation["contracts"]),
+            "normative safety controls remain protected even inside Examples",
         )
         self.assertEqual(csharp_standard_contract_findings(promoted, candidate), [])
 
@@ -242,3 +267,59 @@ Record promoted test and review evidence.
             "CHANGED_CSHARP_STANDARD_ID:sample_STANDARD.md",
             csharp_standard_contract_findings(promoted, changed_id),
         )
+
+    def test_normative_examples_are_preserved_without_freezing_editorial_examples(self):
+        promoted_text = """
+---
+id: CSHARP-SAMPLE-001
+title: Sample
+version: 0.1.0
+status: stable
+---
+# Sample
+## Examples
+This paragraph describes an illustrative example without imposing a requirement.
+- Do not weaken authentication or validation controls.
+- Ensure examples make safety mode visible.
+""".lstrip()
+        promoted = {"sample_STANDARD.md": csharp_standard_snapshot(promoted_text)}
+
+        editorial_change = {
+            "sample_STANDARD.md": csharp_standard_snapshot(
+                promoted_text.replace(
+                    "This paragraph describes an illustrative example without imposing a requirement.",
+                    "This paragraph now uses clearer illustrative wording.",
+                )
+            )
+        }
+        self.assertEqual(
+            csharp_standard_contract_findings(promoted, editorial_change),
+            [],
+            "non-normative example prose must remain editorial",
+        )
+
+        removed_safety = {
+            "sample_STANDARD.md": csharp_standard_snapshot(
+                promoted_text.replace(
+                    "- Do not weaken authentication or validation controls.\n",
+                    "",
+                )
+            )
+        }
+        self.assertTrue(
+            any(
+                finding.startswith(
+                    "MISSING_CSHARP_NORMATIVE_CONTRACT:sample_STANDARD.md:"
+                )
+                for finding in csharp_standard_contract_findings(
+                    promoted, removed_safety
+                )
+            ),
+            "safety imperatives in Examples must remain stable contracts",
+        )
+
+
+if __name__ == "__main__":
+    import unittest
+
+    unittest.main()
