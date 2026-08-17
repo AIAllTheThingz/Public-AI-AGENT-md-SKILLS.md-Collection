@@ -220,9 +220,14 @@ def _block_has_reachable_outer_break(
             if statement_always_terminates(statement, state):
                 return False
         elif isinstance(statement, ast.Match):
+            reachable_cases = [
+                case
+                for case in statement.cases
+                if case.guard is None or static_truth(case.guard, state) is not False
+            ]
             if any(
                 _block_has_reachable_outer_break(case.body, state)
-                for case in statement.cases
+                for case in reachable_cases
             ):
                 return True
             if statement_always_terminates(statement, state):
