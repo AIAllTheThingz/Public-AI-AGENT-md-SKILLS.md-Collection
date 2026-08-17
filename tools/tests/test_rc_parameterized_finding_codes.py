@@ -39,10 +39,6 @@ class BranchAwareParameterizedCallSiteVisitor(base.ParameterizedCallSiteVisitor)
 
     def visit_Match(self, node: ast.Match) -> None:
         for case in node.cases:
-            # Match patterns are not expressions, so encode their canonical AST as
-            # a literal alongside the normalized subject and guard. This preserves
-            # case identity and guard semantics without pretending a pattern is an
-            # executable expression.
             marker = ast.Tuple(
                 elts=[
                     node.subject,
@@ -52,6 +48,30 @@ class BranchAwareParameterizedCallSiteVisitor(base.ParameterizedCallSiteVisitor)
                 ctx=ast.Load(),
             )
             self._with_context("match:case", marker, case.body)
+
+    def _visit_try_regions(self, node: ast.AST, prefix: str = "try") -> None:
+        """Encode exception-region identity without freezing handler-local names."""
+        body = getattr(node, "body")
+        handlers = getattr(node, "handlers")
+        orelse = getattr(node, "orelse")
+        finalbody = getattr(node, "finalbody")
+
+        self._with_context(f"{prefix}:body", ast.Constant(value=prefix), body)
+        for index, handler in enumerate(handlers):
+            marker = handler.type if handler.type is not None else ast.Constant(value=None)
+            self._with_context(f"{prefix}:except:{index}", marker, handler.body)
+        if orelse:
+            self._with_context(f"{prefix}:else", ast.Constant(value=prefix), orelse)
+        if finalbody:
+            self._with_context(f"{prefix}:finally", ast.Constant(value=prefix), finalbody)
+
+    def visit_Try(self, node: ast.Try) -> None:
+        self._visit_try_regions(node)
+
+    if hasattr(ast, "TryStar"):
+
+        def visit_TryStar(self, node: ast.AST) -> None:
+            self._visit_try_regions(node, "try*")
 
     def visit_Call(self, node: ast.Call) -> None:
         if not (
@@ -214,6 +234,67 @@ def validate(kind, root, findings):
             "LICENSE_ENCODING",
         )
         self.assertNotEqual(expected["context"], actual["context"])
+
+    def test_moving_call_between_exception_regions_changes_semantics(self):
+        sources = {
+            "ordinary": '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+''',
+            "try": '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    try:
+        read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+    except ValueError:
+        pass
+''',
+            "except": '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    try:
+        root = root
+    except ValueError:
+        read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+''',
+            "else": '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    try:
+        root = root
+    except ValueError:
+        pass
+    else:
+        read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+''',
+            "finally": '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    try:
+        root = root
+    finally:
+        read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+''',
+        }
+        contexts = {}
+        for region, source in sources.items():
+            contract = matching_contract(
+                parameterized_finding_contracts(source, "sample.py"),
+                "LICENSE_ENCODING",
+            )
+            contexts[region] = json.dumps(contract["context"], sort_keys=True)
+
+        self.assertEqual(len(set(contexts.values())), len(contexts), contexts)
+        self.assertIn("try:body", contexts["try"])
+        self.assertIn("try:except:0", contexts["except"])
+        self.assertIn("try:else", contexts["else"])
+        self.assertIn("try:finally", contexts["finally"])
 
 
 if __name__ == "__main__":
