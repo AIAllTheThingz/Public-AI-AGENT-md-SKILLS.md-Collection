@@ -156,6 +156,45 @@ def validate(root, findings):
             set(),
         )
 
+    def test_explicit_process_exit_makes_successor_unreachable(self):
+        for exit_call in ("sys.exit(2)", "os._exit(2)"):
+            with self.subTest(exit_call=exit_call):
+                literal_source = f'''
+def validate():
+    {exit_call}
+    Finding("PUBLIC_CODE", "unreachable")
+'''
+                self.assertEqual(
+                    literal.reachable_contracts(literal_source, "sample.py"),
+                    Counter(),
+                )
+
+                parameterized_source = f'''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    {exit_call}
+    read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+'''
+                self.assertEqual(
+                    parameterized.reachable_parameterized_contracts(
+                        parameterized_source, "sample.py"
+                    ),
+                    set(),
+                )
+
+    def test_unrelated_exit_method_remains_fallthrough_capable(self):
+        source = '''
+def validate(runner):
+    runner.exit()
+    Finding("PUBLIC_CODE", "reachable")
+'''
+        contracts = literal.reachable_contracts(source, "sample.py")
+        self.assertEqual(
+            contracts[("sample.py", "validate", "PUBLIC_CODE")],
+            1,
+        )
+
     def test_finally_break_overrides_pending_continue(self):
         literal_source = '''
 def validate():
