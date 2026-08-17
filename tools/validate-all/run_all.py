@@ -126,7 +126,7 @@ def _populate_temporary_history(
 
 
 def _write_history_git_wrapper(path: Path) -> None:
-    """Write a Git shim that redirects only immutable compatibility lookups."""
+    """Write POSIX and Windows Git shims for immutable compatibility lookups."""
     path.write_text(
         '''#!/usr/bin/env python3
 from __future__ import annotations
@@ -198,6 +198,14 @@ os.execv(real_git, [real_git, *args])
         encoding="utf-8",
     )
     path.chmod(0o755)
+
+    # Windows command lookup does not execute an extensionless script from PATH.
+    # Keep the Python shim as the single implementation and add a .cmd launcher
+    # so subprocess calls to `git` resolve through PATHEXT before reaching git.exe.
+    path.with_suffix(".cmd").write_text(
+        f'@echo off\r\n"{sys.executable}" "%~dp0{path.name}" %*\r\n',
+        encoding="utf-8",
+    )
 
 
 @contextmanager
