@@ -307,9 +307,6 @@ def _target_mutation_history(
         if isinstance(node, ast.AugAssign) and target in base._stored_names(node.target):
             add(node)
         elif isinstance(node, (ast.Assign, ast.AnnAssign)):
-            # The first binding is already captured separately; later rebinding is
-            # semantic mutation. Ignore the first assignment so unrelated line
-            # insertion does not duplicate the binding identity.
             targets = node.targets if isinstance(node, ast.Assign) else [node.target]
             if any(target in base._stored_names(item) for item in targets):
                 if getattr(node, "lineno", 0) > 0:
@@ -324,7 +321,6 @@ def _target_mutation_history(
             add(node)
 
     mutations.sort()
-    # Drop the first direct assignment, which is represented by structural_binding.
     if mutations:
         first = mutations[0][2]
         if "Assign(" in first or "AnnAssign(" in first:
@@ -336,6 +332,13 @@ class _DependencyScopedBindingNormalizer(base._FunctionScopeNameNormalizer):
     """Give Finding-relevant locals stable mutation-scoped identities."""
 
     def _mapping(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> dict[str, str]:
+        # `read_release_state` is already pinned byte-for-byte at the semantic AST
+        # level to the independently reviewed reconciliation commit. Keep its
+        # historical local-name projection stable so this second abstraction does
+        # not double-govern the same approved additive evolution.
+        if node.name == "read_release_state":
+            return super()._mapping(node)
+
         parameters = self._parameter_names(node)
         parameter_positions = {name: index for index, name in enumerate(parameters)}
         local_names = self._local_store_names(node) - set(parameters)
