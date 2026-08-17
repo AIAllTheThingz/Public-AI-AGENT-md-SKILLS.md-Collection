@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -37,6 +38,10 @@ COMPATIBILITY_HISTORY_REFS = {
     "2f6d39288e5c1a7d416e62cd75651b3d6da48dfe": "refs/heads/compat-csharp",
     "a96d6a92da40257cbe4c6e0fe0c7bbbd397adef3": "refs/heads/compat-helper",
 }
+
+_HISTORY_REAL_GIT = "PAG_COMPATIBILITY_REAL_GIT"
+_HISTORY_ARCHIVE_ROOT = "PAG_COMPATIBILITY_ARCHIVE_ROOT"
+_HISTORY_GIT_DIR = "PAG_COMPATIBILITY_GIT_DIR"
 
 
 def _git(
@@ -84,6 +89,96 @@ def _fetch_compatibility_history(
         )
 
 
+def _populate_temporary_history(
+    git_dir: Path,
+    bundle: Path,
+    real_git: str,
+) -> None:
+    refspecs = [f"{ref}:{ref}" for ref in COMPATIBILITY_HISTORY_REFS.values()]
+    fetched = subprocess.run(
+        [real_git, f"--git-dir={git_dir}", "fetch", "--quiet", str(bundle), *refspecs],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if fetched.returncode != 0:
+        raise RuntimeError(fetched.stderr.strip() or "git bundle fetch failed")
+
+    unresolved = []
+    for commit in COMPATIBILITY_HISTORY_REFS:
+        completed = subprocess.run(
+            [real_git, f"--git-dir={git_dir}", "cat-file", "-e", f"{commit}^{{commit}}"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if completed.returncode != 0:
+            unresolved.append(commit)
+    if unresolved:
+        raise RuntimeError(
+            "Bundled compatibility history did not provide required commits: "
+            + ", ".join(unresolved)
+        )
+
+
+def _write_history_git_wrapper(path: Path) -> None:
+    """Write a Git shim that redirects only archive-root Git discovery."""
+    path.write_text(
+        '''#!/usr/bin/env python3
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+real_git = os.environ["PAG_COMPATIBILITY_REAL_GIT"]
+archive_root = Path(os.environ["PAG_COMPATIBILITY_ARCHIVE_ROOT"]).resolve()
+history_git_dir = Path(os.environ["PAG_COMPATIBILITY_GIT_DIR"]).resolve()
+args = sys.argv[1:]
+
+
+def inside_archive(path: Path) -> bool:
+    try:
+        path.resolve().relative_to(archive_root)
+        return True
+    except ValueError:
+        return False
+
+
+def has_local_git_metadata(path: Path) -> bool:
+    current = path.resolve()
+    while inside_archive(current):
+        if (current / ".git").exists():
+            return True
+        if current == archive_root:
+            break
+        current = current.parent
+    return False
+
+
+def should_redirect() -> bool:
+    if args and args[0] in {"init", "clone"}:
+        return False
+    if "-C" in args:
+        index = args.index("-C")
+        if index + 1 >= len(args):
+            return False
+        target = Path(args[index + 1]).resolve()
+        return inside_archive(target) and not has_local_git_metadata(target)
+    current = Path.cwd().resolve()
+    return inside_archive(current) and not has_local_git_metadata(current)
+
+
+if should_redirect():
+    args = [f"--git-dir={history_git_dir}", f"--work-tree={archive_root}", *args]
+
+os.execv(real_git, [real_git, *args])
+''',
+        encoding="utf-8",
+    )
+    path.chmod(0o755)
+
+
 @contextmanager
 def compatibility_history(root: Path):
     """Expose authenticated RC baselines without mutating extracted source trees."""
@@ -105,30 +200,41 @@ def compatibility_history(root: Path):
         return
 
     # Distributed source archives intentionally contain no Git metadata. Build a
-    # temporary object store outside the declared repository root, expose it only
-    # for the duration of validation, and remove it automatically on exit.
+    # temporary object store outside the declared repository root. A scoped Git
+    # shim redirects only commands aimed at this archive root to that store; Git
+    # commands for temporary fixture repositories continue to use normal discovery.
     with tempfile.TemporaryDirectory(prefix="public-ai-governance-history-") as temp:
-        git_dir = Path(temp) / "repository.git"
+        temp_root = Path(temp)
+        git_dir = temp_root / "repository.git"
+        real_git = os.environ.get(_HISTORY_REAL_GIT) or shutil.which("git")
+        if not real_git:
+            raise RuntimeError("git executable is required for compatibility validation")
+
         initialized = subprocess.run(
-            ["git", "init", "--bare", "--quiet", str(git_dir)],
+            [real_git, "init", "--bare", "--quiet", str(git_dir)],
             text=True,
             capture_output=True,
             check=False,
         )
         if initialized.returncode != 0:
             raise RuntimeError(initialized.stderr.strip() or "temporary git init failed")
+        _populate_temporary_history(git_dir, bundle, real_git)
 
-        env = os.environ.copy()
-        env["GIT_DIR"] = str(git_dir)
-        env["GIT_WORK_TREE"] = str(root)
-        _fetch_compatibility_history(root, bundle, env=env)
+        wrapper_dir = temp_root / "bin"
+        wrapper_dir.mkdir()
+        _write_history_git_wrapper(wrapper_dir / "git")
 
-        previous = {
-            "GIT_DIR": os.environ.get("GIT_DIR"),
-            "GIT_WORK_TREE": os.environ.get("GIT_WORK_TREE"),
-        }
-        os.environ["GIT_DIR"] = str(git_dir)
-        os.environ["GIT_WORK_TREE"] = str(root)
+        managed = (
+            "PATH",
+            _HISTORY_REAL_GIT,
+            _HISTORY_ARCHIVE_ROOT,
+            _HISTORY_GIT_DIR,
+        )
+        previous = {name: os.environ.get(name) for name in managed}
+        os.environ[_HISTORY_REAL_GIT] = real_git
+        os.environ[_HISTORY_ARCHIVE_ROOT] = str(root)
+        os.environ[_HISTORY_GIT_DIR] = str(git_dir)
+        os.environ["PATH"] = str(wrapper_dir) + os.pathsep + (previous["PATH"] or "")
         try:
             yield
         finally:

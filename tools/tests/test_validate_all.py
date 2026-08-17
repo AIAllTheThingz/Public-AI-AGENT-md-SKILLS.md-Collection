@@ -74,6 +74,42 @@ class ValidateAllTests(unittest.TestCase):
                     )
                     self.assertEqual(completed.returncode, 0, completed.stderr)
 
+                fixture = root / "fixture-repository"
+                fixture.mkdir()
+                commands = (
+                    ["git", "init", "--quiet"],
+                    ["git", "config", "user.name", "Compatibility Fixture"],
+                    ["git", "config", "user.email", "fixture@example.invalid"],
+                )
+                for command in commands:
+                    completed = subprocess.run(
+                        command,
+                        cwd=fixture,
+                        text=True,
+                        capture_output=True,
+                        check=False,
+                    )
+                    self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+                (fixture / "fixture.txt").write_text("fixture\n", encoding="utf-8")
+                for command in (
+                    ["git", "add", "fixture.txt"],
+                    ["git", "commit", "--quiet", "-m", "fixture"],
+                ):
+                    completed = subprocess.run(
+                        command,
+                        cwd=fixture,
+                        text=True,
+                        capture_output=True,
+                        check=False,
+                    )
+                    self.assertEqual(
+                        completed.returncode,
+                        0,
+                        "compatibility history must not leak into fixture repositories: "
+                        + completed.stdout
+                        + completed.stderr,
+                    )
+
             self.assertFalse(
                 (root / ".git").exists(),
                 "validation must leave an extracted source archive free of Git metadata",
