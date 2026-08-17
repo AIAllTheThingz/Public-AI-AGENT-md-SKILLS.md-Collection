@@ -9,7 +9,7 @@ CSHARP_NORMATIVE_ROOT = base.CSHARP_NORMATIVE_ROOT
 CSHARP_PROMOTION_EVIDENCE_COMMIT = base.CSHARP_PROMOTION_EVIDENCE_COMMIT
 FRONTMATTER_ID_PATTERN = re.compile(r"^id:\s*(\S+)\s*$", re.MULTILINE)
 LIST_ITEM_PATTERN = re.compile(r"^(?:[-*]|\d+\.)\s+(?P<text>.+)$")
-NON_CONTRACT_SECTIONS = {"Purpose", "Evidence", "Examples", "References", "Rationale"}
+NON_CONTRACT_SECTIONS = {"Purpose", "Examples", "References", "Rationale"}
 
 
 def csharp_standard_paths_at(revision: str) -> list[str]:
@@ -56,7 +56,7 @@ def normalize_contract_text(text: str) -> str:
 
 
 def extract_csharp_normative_contracts(text: str) -> set[str]:
-    """Preserve normative blocks while allowing non-contract editorial/additive evolution."""
+    """Preserve normative blocks while allowing genuinely editorial/additive evolution."""
 
     contracts: set[str] = set()
     current_section = ""
@@ -109,14 +109,18 @@ def csharp_standard_snapshot(text: str) -> dict[str, object]:
 
 def promoted_csharp_standard_contracts() -> dict[str, dict[str, object]]:
     return {
-        path: csharp_standard_snapshot(base.git_source_at(CSHARP_PROMOTION_EVIDENCE_COMMIT, path))
+        path: csharp_standard_snapshot(
+            base.git_source_at(CSHARP_PROMOTION_EVIDENCE_COMMIT, path)
+        )
         for path in csharp_standard_paths_at(CSHARP_PROMOTION_EVIDENCE_COMMIT)
     }
 
 
 def candidate_csharp_standard_contracts() -> dict[str, dict[str, object]]:
     return {
-        path: csharp_standard_snapshot((base.REPO_ROOT / path).read_text(encoding="utf-8"))
+        path: csharp_standard_snapshot(
+            (base.REPO_ROOT / path).read_text(encoding="utf-8")
+        )
         for path in candidate_csharp_standard_paths()
     }
 
@@ -139,20 +143,31 @@ def csharp_standard_contract_findings(
     return sorted(findings)
 
 
-class ReleaseCandidateNormativeRuleContractTests(base.ReleaseCandidateNormativeRuleContractTests):
+class ReleaseCandidateNormativeRuleContractTests(
+    base.ReleaseCandidateNormativeRuleContractTests
+):
     def test_full_csharp_normative_standards_match_promotion_evidence_candidate(self):
-        """Override the former whole-tree equality with semantic promoted-contract preservation."""
+        """Override former whole-tree equality with semantic promoted-contract preservation."""
 
         promoted = promoted_csharp_standard_contracts()
         candidate = candidate_csharp_standard_contracts()
         self.assertGreaterEqual(len(promoted), 8)
-        self.assertGreater(sum(len(set(item["contracts"])) for item in promoted.values()), 50)
+        self.assertGreater(
+            sum(len(set(item["contracts"])) for item in promoted.values()), 50
+        )
         security = promoted[f"{CSHARP_NORMATIVE_ROOT}/SECURITY_STANDARD.md"]
         self.assertEqual(security["id"], "CSHARP-SECURITY-001")
+        self.assertTrue(
+            any(
+                contract.startswith("Evidence::Record trust boundaries")
+                for contract in security["contracts"]
+            ),
+            "promoted C# security evidence obligations must be contract-protected",
+        )
         self.assertEqual(csharp_standard_contract_findings(promoted, candidate), [])
 
     def test_csharp_contract_gate_allows_editorial_and_additive_evolution(self):
-        promoted_text = '''
+        promoted_text = """
 ---
 id: CSHARP-SAMPLE-001
 title: Sample
@@ -165,32 +180,57 @@ Original explanatory purpose text.
 ## Requirements
 - Preserve this promoted requirement.
 ## Evidence
-Original evidence guidance.
-'''.lstrip()
+Record promoted test and review evidence.
+""".lstrip()
         compatible_text = promoted_text.replace(
-            "Original explanatory purpose text.", "Corrected explanatory purpose text."
-        ).replace(
-            "Original evidence guidance.", "Improved evidence guidance."
+            "Original explanatory purpose text.",
+            "Corrected explanatory purpose text.",
         ).replace(
             "- Preserve this promoted requirement.",
-            "- Preserve this promoted requirement.\n- Add a new optional compatible requirement.",
+            "- Preserve this promoted requirement.\n"
+            "- Add a new optional compatible requirement.",
         )
         promoted = {"sample_STANDARD.md": csharp_standard_snapshot(promoted_text)}
         compatible = {"sample_STANDARD.md": csharp_standard_snapshot(compatible_text)}
         self.assertEqual(csharp_standard_contract_findings(promoted, compatible), [])
 
-        changed = {
+        changed_requirement = {
             "sample_STANDARD.md": csharp_standard_snapshot(
                 compatible_text.replace(
-                    "Preserve this promoted requirement.", "Weaken this promoted requirement."
+                    "Preserve this promoted requirement.",
+                    "Weaken this promoted requirement.",
                 )
             )
         }
         self.assertTrue(
             any(
-                finding.startswith("MISSING_CSHARP_NORMATIVE_CONTRACT:sample_STANDARD.md:")
-                for finding in csharp_standard_contract_findings(promoted, changed)
+                finding.startswith(
+                    "MISSING_CSHARP_NORMATIVE_CONTRACT:sample_STANDARD.md:"
+                )
+                for finding in csharp_standard_contract_findings(
+                    promoted, changed_requirement
+                )
             )
+        )
+
+        weakened_evidence = {
+            "sample_STANDARD.md": csharp_standard_snapshot(
+                compatible_text.replace(
+                    "Record promoted test and review evidence.",
+                    "Evidence is optional.",
+                )
+            )
+        }
+        self.assertTrue(
+            any(
+                finding.startswith(
+                    "MISSING_CSHARP_NORMATIVE_CONTRACT:sample_STANDARD.md:"
+                )
+                for finding in csharp_standard_contract_findings(
+                    promoted, weakened_evidence
+                )
+            ),
+            "promoted evidence obligations must not be weakened as editorial prose",
         )
 
         changed_id = {
