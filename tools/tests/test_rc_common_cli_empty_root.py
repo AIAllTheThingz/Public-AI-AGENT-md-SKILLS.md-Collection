@@ -8,7 +8,7 @@ from pathlib import Path
 import test_rc_common_cli_behavior as _common
 
 
-class ReleaseCandidateCommonCliEmptyRootTests(unittest.TestCase):
+class ReleaseCandidateCommonCliInvalidRootTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.contract = json.loads(_common.TOOL_BEHAVIOR.read_text(encoding="utf-8"))
@@ -21,7 +21,7 @@ class ReleaseCandidateCommonCliEmptyRootTests(unittest.TestCase):
         if tool_path == "tools/generate-manifest/generate_manifest.py":
             return (
                 "--name",
-                "compat-empty-root",
+                "compat-invalid-root",
                 "--profile",
                 "CLI_TOOL",
                 "--language",
@@ -38,16 +38,14 @@ class ReleaseCandidateCommonCliEmptyRootTests(unittest.TestCase):
             )
         return ()
 
-    def test_every_common_tool_rejects_an_empty_declared_root(self):
+    def test_every_common_tool_rejects_a_root_with_tool_specific_invalidity(self):
         with tempfile.TemporaryDirectory() as temp:
             temp_root = Path(temp)
-            empty_root = temp_root / "empty-root"
-            empty_root.mkdir()
             manifest = temp_root / "project-manifest.json"
             manifest.write_text(
                 json.dumps(
                     {
-                        "name": "compat-empty-root",
+                        "name": "compat-invalid-root",
                         "profile": "CLI_TOOL",
                         "languages": ["csharp"],
                         "disciplines": [],
@@ -58,12 +56,23 @@ class ReleaseCandidateCommonCliEmptyRootTests(unittest.TestCase):
 
             for index, tool_path in enumerate(self.tools):
                 with self.subTest(tool=tool_path):
-                    output = temp_root / f"empty-root-{index}.json"
+                    invalid_root = temp_root / f"invalid-root-{index}"
+                    invalid_root.mkdir()
+                    if tool_path == "tools/check-links/check_links.py":
+                        # An empty directory is a valid no-op for the link checker,
+                        # so give this tool a root-local broken link. Other common
+                        # tools reject the missing repository contract directly.
+                        (invalid_root / "README.md").write_text(
+                            "[broken](missing-target.md)\n",
+                            encoding="utf-8",
+                        )
+
+                    output = temp_root / f"invalid-root-{index}.json"
                     output_dir = temp_root / f"bundle-{index}"
                     completed = _common.run_tool(
                         tool_path,
                         "--root",
-                        str(empty_root),
+                        str(invalid_root),
                         "--format",
                         "json",
                         "--output",
@@ -82,16 +91,16 @@ class ReleaseCandidateCommonCliEmptyRootTests(unittest.TestCase):
                     self.assertNotEqual(
                         completed.returncode,
                         0,
-                        f"{tool_path} incorrectly accepted an empty --root",
+                        f"{tool_path} ignored invalid content under the declared --root",
                     )
                     self.assertNotEqual(
                         payload.get("status"),
                         "passed",
-                        f"{tool_path} reported passed for an empty --root",
+                        f"{tool_path} reported passed for a deliberately invalid --root",
                     )
                     self.assertTrue(
                         payload.get("findings"),
-                        f"{tool_path} rejected the empty root without a finding",
+                        f"{tool_path} rejected the alternate root without a finding",
                     )
 
 
