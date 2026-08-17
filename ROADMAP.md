@@ -121,7 +121,7 @@
 - `0.9.0` remains a prepared baseline that was never published and must not be retroactively tagged.
 - `0.10.0` was published as `v0.10.0` on 2026-08-16 from source commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`.
 - The next intended publication is `1.0.0-rc.1` after package-level adoption tests, representative downstream pilots, initial maturity decisions, and the compatibility gate are complete.
-- The `1.0.0-rc.1` source candidate is now prepared and permanently validated. The exact functional compatibility candidate and permanent CI run are maintained in `releases/rc-readiness/1.0.0-rc.1.md`; fresh independent specialist approval on the final exact PR head and deliberate publication remain outstanding.
+- The `1.0.0-rc.1` source candidate is now prepared, and its recorded functional compatibility candidate is permanently validated. The exact functional candidate and permanent CI run are maintained in `releases/rc-readiness/1.0.0-rc.1.md`; validation of the later exact record/document tree is carried separately in PR metadata, while fresh independent specialist approval on the final exact PR head and deliberate publication remain outstanding.
 
 ## Next maturity work
 
