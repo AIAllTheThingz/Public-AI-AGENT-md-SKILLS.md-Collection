@@ -13,7 +13,7 @@ from helpers import REPO_ROOT, json_result, run_tool
 
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
 CHECKPOINT_PATH = REPO_ROOT / "releases" / "compatibility" / "0.10.0-finding-codes.json"
-CHECKPOINT_SHA256 = "367b54b58db54792272752ce71b9507e89cb913bb546914896a7c01d51788a78"
+CHECKPOINT_SHA256 = "07619880db05b0065d53be54626af3246559e35e0ae895cbf60d158e42561002"
 
 
 def git_output(*args: str) -> str:
@@ -144,6 +144,14 @@ def module_semantic_bindings(tree: ast.Module) -> dict[str, ast.AST]:
     return definitions
 
 
+def module_function_semantic_ast(text: str, function_name: str) -> str:
+    tree = ast.parse(text)
+    node = module_semantic_bindings(tree).get(function_name)
+    if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        raise AssertionError(f"module-level helper {function_name!r} was not found")
+    return normalized_semantic_ast(node)
+
+
 def finding_code(node: ast.Call) -> str | None:
     if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
         return node.args[0].value
@@ -184,8 +192,9 @@ def finding_dependency_nodes(node: ast.Call) -> list[ast.AST]:
 
 
 class FindingSignatureVisitor(ast.NodeVisitor):
-    def __init__(self, definitions: dict[str, ast.AST]) -> None:
+    def __init__(self, definitions: dict[str, ast.AST], source_path: str) -> None:
         self.module_definitions = definitions
+        self.source_path = source_path
         self.function = "<module>"
         self.context: list[str] = []
         self.context_nodes: list[ast.AST] = []
@@ -310,6 +319,7 @@ class FindingSignatureVisitor(ast.NodeVisitor):
                 dependency_nodes = list(self.context_nodes) + finding_dependency_nodes(node)
                 signature = json.dumps(
                     {
+                        "sourcePath": self.source_path,
                         "function": self.function,
                         "context": list(self.context),
                         "dependencies": self._dependency_snapshot(dependency_nodes),
@@ -321,31 +331,51 @@ class FindingSignatureVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-def finding_semantic_signatures(text: str) -> dict[str, list[str]]:
+def finding_semantic_signatures(text: str, source_path: str = "<memory>") -> dict[str, list[str]]:
     tree = ast.parse(text)
-    visitor = FindingSignatureVisitor(module_semantic_bindings(tree))
+    visitor = FindingSignatureVisitor(module_semantic_bindings(tree), source_path)
     visitor.visit(tree)
     return {code: sorted(signatures) for code, signatures in visitor.signatures.items()}
 
 
-def aggregate_signatures(sources: list[str]) -> dict[str, set[str]]:
+def aggregate_signatures(sources: list[tuple[str, str]]) -> dict[str, set[str]]:
     result: dict[str, set[str]] = {}
-    for text in sources:
-        for code, signatures in finding_semantic_signatures(text).items():
+    for source_path, text in sources:
+        for code, signatures in finding_semantic_signatures(text, source_path).items():
             result.setdefault(code, set()).update(signatures)
     return result
 
 
 def published_signatures() -> dict[str, set[str]]:
     return aggregate_signatures(
-        [git_source_at(CHECKPOINT_COMMIT, relative) for relative in published_python_paths()]
+        [
+            (relative, git_source_at(CHECKPOINT_COMMIT, relative))
+            for relative in published_python_paths()
+        ]
     )
 
 
 def candidate_signatures() -> dict[str, set[str]]:
     return aggregate_signatures(
-        [path.read_text(encoding="utf-8") for path in candidate_python_paths()]
+        [
+            (path.relative_to(REPO_ROOT).as_posix(), path.read_text(encoding="utf-8"))
+            for path in candidate_python_paths()
+        ]
     )
+
+
+def project_approved_helper_changes(signature: str, code: str, contract: dict) -> str:
+    payload = json.loads(signature)
+    dependencies = payload.get("dependencies", {})
+    for approval_id, approval in contract.get("approvedHelperSemanticChanges", {}).items():
+        if code not in approval["affectedCodes"]:
+            continue
+        if payload.get("sourcePath") != approval["sourcePath"]:
+            continue
+        helper = approval["helper"]
+        if helper in dependencies:
+            dependencies[helper] = f"<approved-helper-semantic-change:{approval_id}>"
+    return json.dumps(payload, sort_keys=True)
 
 
 def finding_map(payload: dict) -> dict[str, list[str]]:
@@ -368,6 +398,26 @@ class ReleaseCandidateFindingCodeContractTests(unittest.TestCase):
         self.assertEqual(self.contract["sourceCommit"], CHECKPOINT_COMMIT)
         self.assertEqual(self.contract["publishedSourceScope"]["root"], "tools")
         self.assertNotIn("unchangedPublishedSourceTrees", self.contract)
+        self.assertIn("referenced helper implementations", self.contract["publishedSourceScope"]["comparison"])
+
+    def test_approved_helper_semantic_changes_are_pinned_to_reviewed_source(self):
+        approvals = self.contract["approvedHelperSemanticChanges"]
+        self.assertEqual(set(approvals), {"tools/release/validate_release.py:read_release_state"})
+        for approval_id, approval in approvals.items():
+            with self.subTest(approval=approval_id):
+                current_source = (REPO_ROOT / approval["sourcePath"]).read_text(encoding="utf-8")
+                approved_source = git_source_at(
+                    approval["approvedCandidateCommit"], approval["sourcePath"]
+                )
+                self.assertEqual(
+                    module_function_semantic_ast(current_source, approval["helper"]),
+                    module_function_semantic_ast(approved_source, approval["helper"]),
+                    "approved helper changed after its reviewed compatibility source",
+                )
+                self.assertEqual(
+                    set(approval["affectedCodes"]),
+                    {"RELEASE_PUBLICATION_BLOCKED", "RELEASE_PUBLICATION_VERSION_MISMATCH"},
+                )
 
     def test_all_published_production_finding_semantics_are_preserved(self):
         published = published_signatures()
@@ -378,12 +428,20 @@ class ReleaseCandidateFindingCodeContractTests(unittest.TestCase):
         for code, expected_signatures in published.items():
             with self.subTest(code=code):
                 current_signatures = current.get(code, set())
+                expected_projected = {
+                    project_approved_helper_changes(signature, code, self.contract)
+                    for signature in expected_signatures
+                }
+                current_projected = {
+                    project_approved_helper_changes(signature, code, self.contract)
+                    for signature in current_signatures
+                }
                 self.assertEqual(
-                    expected_signatures - current_signatures,
+                    expected_projected - current_projected,
                     set(),
                     f"published semantic context or referenced data changed/disappeared for {code}",
                 )
-                additional = current_signatures - expected_signatures
+                additional = current_projected - expected_projected
                 if code in approved:
                     self.assertEqual(len(additional), approved[code]["count"])
                     if code == "RELEASE_STATE_INVALID":

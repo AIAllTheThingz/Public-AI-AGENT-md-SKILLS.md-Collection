@@ -1,5 +1,5 @@
 {
-  "formatVersion": "1.1.0",
+  "formatVersion": "1.2.0",
   "releaseVersion": "0.10.0",
   "tag": "v0.10.0",
   "sourceCommit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c",
@@ -8,13 +8,25 @@
   "publishedSourceScope": {
     "root": "tools",
     "fileExtension": ".py",
-    "comparison": "derive every literal Finding(code, ...) semantic signature from the immutable published source commit and compare it with candidate tool sources; unrelated file, documentation, test, and implementation changes are allowed"
+    "comparison": "derive every literal Finding(code, ...) semantic signature from the immutable published source commit and compare it with candidate tool sources; referenced helper implementations that feed published finding conditions are included; unrelated file, documentation, test, and implementation changes are allowed"
   },
   "approvedAdditivePublishedCodeContexts": {
     "RELEASE_STATE_INVALID": {
       "sourcePath": "tools/release/validate_release.py",
       "count": 3,
       "reason": "post-v0.10.0 publishedVersions validation adds three reviewed invalid-state contexts while preserving the published meaning of RELEASE_STATE_INVALID"
+    }
+  },
+  "approvedHelperSemanticChanges": {
+    "tools/release/validate_release.py:read_release_state": {
+      "sourcePath": "tools/release/validate_release.py",
+      "helper": "read_release_state",
+      "approvedCandidateCommit": "a96d6a92da40257cbe4c6e0fe0c7bbbd397adef3",
+      "affectedCodes": [
+        "RELEASE_PUBLICATION_BLOCKED",
+        "RELEASE_PUBLICATION_VERSION_MISMATCH"
+      ],
+      "reason": "the post-v0.10.0 release-state reconciliation intentionally strengthens read_release_state validation, while the published publication-block and intended-version findings retain their conditions; the helper body must continue to match the reviewed reconciliation commit"
     }
   },
   "representativeEmittedFindings": [
