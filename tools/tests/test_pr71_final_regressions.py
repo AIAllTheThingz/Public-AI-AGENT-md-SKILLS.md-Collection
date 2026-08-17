@@ -24,6 +24,17 @@ ROOT_GOVERNANCE_PATHS = (
     "MATURITY_POLICY.md",
 )
 
+# This paragraph is deliberately forward-moving release-state narrative, not a
+# stable governance obligation.  The immutable v0.10.0 copy said the next
+# intended publication was v0.10.0; after publication the correct forward-only
+# text names 1.0.0-rc.1.  Keep the rest of the Pre-1.0 policy protected.
+MUTABLE_ROOT_NARRATIVE = {
+    (
+        "RELEASE_POLICY.md",
+        "pre-1.0 policy",
+    ): "The repository originally prepared ",
+}
+
 
 def _load_validate_all_module():
     module_path = REPO_ROOT / "tools" / "validate-all" / "run_all.py"
@@ -40,11 +51,20 @@ def _load_validate_all_module():
     return module
 
 
+def _stable_root_contracts(text: str, path: str) -> Counter[tuple[str, str, str]]:
+    contracts = unnumbered.extract_unnumbered_governance_contracts(text, path)
+    for (contract_path, section, statement), count in list(contracts.items()):
+        prefix = MUTABLE_ROOT_NARRATIVE.get((contract_path, section))
+        if prefix is not None and statement.startswith(prefix):
+            del contracts[(contract_path, section, statement)]
+    return contracts
+
+
 def _root_governance_contracts_at_checkpoint() -> Counter[tuple[str, str, str]]:
     contracts: Counter[tuple[str, str, str]] = Counter()
     for relative in ROOT_GOVERNANCE_PATHS:
         contracts.update(
-            unnumbered.extract_unnumbered_governance_contracts(
+            _stable_root_contracts(
                 unnumbered.base.git_source_at(unnumbered.base.CHECKPOINT_COMMIT, relative),
                 relative,
             )
@@ -56,7 +76,7 @@ def _candidate_root_governance_contracts() -> Counter[tuple[str, str, str]]:
     contracts: Counter[tuple[str, str, str]] = Counter()
     for relative in ROOT_GOVERNANCE_PATHS:
         contracts.update(
-            unnumbered.extract_unnumbered_governance_contracts(
+            _stable_root_contracts(
                 (REPO_ROOT / relative).read_text(encoding="utf-8"),
                 relative,
             )
@@ -79,6 +99,34 @@ class Pr71FinalRegressionTests(unittest.TestCase):
             unnumbered.unnumbered_contract_findings(published, candidate),
             [],
             "root-level governance obligations must remain compatible with v0.10.0",
+        )
+
+    def test_forward_release_state_narrative_is_not_a_frozen_contract(self):
+        checkpoint = unnumbered.base.git_source_at(
+            unnumbered.base.CHECKPOINT_COMMIT,
+            "RELEASE_POLICY.md",
+        )
+        raw = unnumbered.extract_unnumbered_governance_contracts(
+            checkpoint,
+            "RELEASE_POLICY.md",
+        )
+        stable = _stable_root_contracts(checkpoint, "RELEASE_POLICY.md")
+
+        historical = [
+            contract
+            for contract in raw
+            if contract[0] == "RELEASE_POLICY.md"
+            and contract[1] == "pre-1.0 policy"
+            and contract[2].startswith("The repository originally prepared ")
+        ]
+        self.assertEqual(len(historical), 1)
+        self.assertNotIn(historical[0], stable)
+        self.assertTrue(
+            any(
+                path == "RELEASE_POLICY.md" and section == "pre-1.0 policy"
+                for path, section, _statement in stable
+            ),
+            "durable Pre-1.0 obligations must remain protected",
         )
 
     def test_exhaustive_match_with_terminal_catchall_makes_successor_unreachable(self):
