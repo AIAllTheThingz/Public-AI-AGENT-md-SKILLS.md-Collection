@@ -26,6 +26,44 @@ def semver_key(value: str) -> tuple:
     return (major, minor, patch, 0, tuple(parts))
 
 
+def assert_candidate_state_is_forward_only(
+    test_case,
+    current_version: str,
+    state: dict,
+) -> None:
+    published = set(state["publishedVersions"])
+    prepared = set(state["preparedUnpublishedVersions"])
+    next_intended = state["nextIntendedVersion"]
+
+    test_case.assertIn(base.CHECKPOINT, published)
+    test_case.assertNotIn(next_intended, published)
+    test_case.assertNotIn(next_intended, prepared)
+
+    candidate_published = base.CANDIDATE in published
+    candidate_abandoned = base.CANDIDATE in prepared
+    test_case.assertFalse(
+        candidate_published and candidate_abandoned,
+        "a historical RC cannot be both published and prepared-unpublished",
+    )
+
+    if candidate_published or candidate_abandoned:
+        transition = "publication" if candidate_published else "explicit abandonment"
+        test_case.assertGreater(
+            semver_key(current_version),
+            semver_key(base.CANDIDATE),
+            f"after rc.1 {transition} VERSION must advance beyond the historical candidate",
+        )
+        test_case.assertGreater(
+            semver_key(next_intended),
+            semver_key(base.CANDIDATE),
+            f"after rc.1 {transition} nextIntendedVersion must advance beyond rc.1",
+        )
+        return
+
+    test_case.assertEqual(current_version, base.CANDIDATE)
+    test_case.assertEqual(next_intended, base.CANDIDATE)
+
+
 class ReleaseCandidateCompatibilityGateTests(
     base.ReleaseCandidateCompatibilityGateTests
 ):
@@ -38,29 +76,15 @@ class ReleaseCandidateCompatibilityGateTests(
                 encoding="utf-8"
             )
         )
-        published = set(state["publishedVersions"])
-        prepared = set(state["preparedUnpublishedVersions"])
-        next_intended = state["nextIntendedVersion"]
+        assert_candidate_state_is_forward_only(self, current_version, state)
 
-        self.assertIn(base.CHECKPOINT, published)
-        self.assertNotIn(base.CANDIDATE, prepared)
-        self.assertNotIn(next_intended, published)
-        self.assertNotIn(next_intended, prepared)
-
-        if base.CANDIDATE in published:
-            self.assertGreater(
-                semver_key(current_version),
-                semver_key(base.CANDIDATE),
-                "after rc.1 publication VERSION must advance beyond the historical candidate",
-            )
-            self.assertGreater(
-                semver_key(next_intended),
-                semver_key(base.CANDIDATE),
-                "after rc.1 publication nextIntendedVersion must advance beyond rc.1",
-            )
-        else:
-            self.assertEqual(current_version, base.CANDIDATE)
-            self.assertEqual(next_intended, base.CANDIDATE)
+    def test_candidate_state_allows_explicit_abandonment(self):
+        state = {
+            "publishedVersions": [base.CHECKPOINT],
+            "preparedUnpublishedVersions": [base.CANDIDATE],
+            "nextIntendedVersion": "1.0.0-rc.2",
+        }
+        assert_candidate_state_is_forward_only(self, "1.0.0-rc.2", state)
 
     def test_release_validator_accepts_rc_tag_contract(self):
         current_version = (base.REPO_ROOT / "VERSION").read_text(
@@ -74,13 +98,17 @@ class ReleaseCandidateCompatibilityGateTests(
 
         # This is a preparation-state runtime assertion, not a permanent demand
         # that every future repository version continue accepting the historical
-        # rc.1 tag. Once rc.1 is published, the forward-only state test above owns
-        # the historical transition and this transient runtime exercise is complete.
+        # rc.1 tag. Once rc.1 is published or explicitly abandoned, the forward-
+        # only state test above owns the historical transition and this transient
+        # runtime exercise is complete.
         if current_version != base.CANDIDATE:
+            historical = set(state["publishedVersions"]) | set(
+                state["preparedUnpublishedVersions"]
+            )
             self.assertIn(
                 base.CANDIDATE,
-                set(state["publishedVersions"]),
-                "rc.1 may stop being the current tag contract only after publication",
+                historical,
+                "rc.1 may stop being the current tag contract only after publication or explicit abandonment",
             )
             self.assertGreater(semver_key(current_version), semver_key(base.CANDIDATE))
             return
