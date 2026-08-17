@@ -1,38 +1,17 @@
 {
-  "formatVersion": "1.1.0",
+  "formatVersion": "1.2.1",
   "releaseVersion": "0.10.0",
   "tag": "v0.10.0",
   "sourceCommit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c",
-  "publishedUnchangedRuleTrees": {
-    "disciplines": "e1d4c2766637f5507535e5b21b9a5b028c438982",
-    "frameworks": "fd8cf745aad5dea28ec2dbb86531247d5b0b71a1",
-    "networking": "ad389a87df2fac7786ce9fba7d89932b8f159343",
-    "operating-systems": "c16cf4d1a8037dd22ef60fcac9cc0e30b38850ef",
-    "platforms": "b359f3bde990413b553da275884e386a6c1159a4",
-    "profiles": "b7b268acb1a5ba286ff98e04608a70810474f123",
-    "virtualization": "98aff55ff7c7eb151c2e0cef779ba90a33e175c5",
-    "governance": "e169bac6cd666d2ab7e38587be9268e53302a1c6"
-  },
-  "publishedUnchangedLanguagePackageTrees": {
-    "languages/bash": "0ee7ba859a44199524bebfac2de25c2dea25eef6",
-    "languages/dotnet": "5fb38e2ca9f0756488c8a89f5b646115abf0b77f",
-    "languages/go": "f3d189c8d6497f672e438b2792a1b738d037499e",
-    "languages/java": "f7c56c38c846fe2eb99c6d5e1c184386870ca430",
-    "languages/javascript-typescript": "4a9d34241afa0ba24d6d0c60dedd64659d3b1e1e",
-    "languages/python": "7cdba7118760d554a8b219c99c6c76983232204b",
-    "languages/rust": "b132a422973ed823c1fb659a406f334646c5ba98",
-    "languages/sql": "ada274c456c70e6c733772f566d2a933042126f1",
-    "languages/terraform-opentofu": "730f62ecee06362fed2eb803509f98748fd2efb6"
-  },
-  "changedPublishedRuleSources": {
-    "languages/powershell": {
-      "publishedTreeSha": "7f1b68ff66b18108454b22b98e3528736d42e615",
-      "ruleContract": "no numbered normative rule headings matching <PREFIX>-NNN were published in v0.10.0; additive candidate changes must not create a claim that a removed published numbered rule existed"
-    }
+  "publishedRuleSourceScope": {
+    "root": ".",
+    "fileExtension": ".md",
+    "ruleHeadingPattern": "^### [A-Z][A-Z0-9-]*-[0-9]{3}$",
+    "requirementPattern": "**Requirement:** <single-line normative meaning>",
+    "comparison": "derive every numbered rule occurrence as source path + identifier + requirement meaning from the immutable published source commit; require each published occurrence to remain, grandfather published scoped duplicate identifiers, reject new reuse beyond the published occurrence set, and allow new unique rules"
   },
   "csharpProductRules": {
     "sourcePath": "languages/csharp/AGENTS.md",
-    "publishedTreeSha": "3934b00f6de542052afc37ead17dc9c1700a717c",
     "rules": {
       "CSHARP-LANG-001": "Resolve the selected SDK/compiler and use a stable language version supported by the declared target; `latest` and unapproved preview settings are prohibited.",
       "CSHARP-NULL-002": "Nullable annotations and flow analysis must express the real contract; suppression requires a narrow, reviewable invariant.",
@@ -46,5 +25,5 @@
       "CSHARP-EVIDENCE-010": "Completion claims must identify the exact source and contracts changed, resolved compiler boundary, validation results, unavailable checks, and remaining limitations."
     }
   },
-  "coverageRule": "Every candidate Markdown heading matching ^### [A-Z][A-Z0-9-]*-[0-9]{3}$ must be inside an unchanged published v0.10.0 rule tree or an explicitly versioned changed-source contract above."
+  "coverageRule": "Every numbered normative rule occurrence published in v0.10.0 is derived directly from the immutable source commit and must preserve its source path, identifier, and Requirement meaning. Duplicate identifiers already published in distinct scopes are grandfathered; new reuse beyond those published occurrences is rejected, while new unique identifiers are compatible additions."
 }

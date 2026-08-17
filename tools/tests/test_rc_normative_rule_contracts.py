@@ -5,13 +5,14 @@ import json
 import re
 import subprocess
 import unittest
-from pathlib import Path
+from collections import defaultdict
 
 from helpers import REPO_ROOT
 
 CANDIDATE_INVENTORY = REPO_ROOT / "releases" / "compatibility" / "1.0.0-rc.1.json"
 RULE_CHECKPOINT = REPO_ROOT / "releases" / "compatibility" / "0.10.0-rule-contracts.json"
-RULE_CHECKPOINT_SHA256 = "eba5b25f4036bbd62c3265579ec450c6c44f36da7a69c2a62559ae017de2efa4"
+RULE_CHECKPOINT_SHA256 = "5f3b7a7ddd28de5a44b45f96998d7acffb2c287bad4c7699e21561a869e50c95"
+CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
 CSHARP_PROMOTION_EVIDENCE_COMMIT = "2f6d39288e5c1a7d416e62cd75651b3d6da48dfe"
 CSHARP_NORMATIVE_ROOT = "languages/csharp/standards"
 RULE_PATTERN = re.compile(
@@ -19,55 +20,107 @@ RULE_PATTERN = re.compile(
     r"\*\*Requirement:\*\* (?P<requirement>[^\n]+)$",
     re.MULTILINE,
 )
-RULE_HEADING_PATTERN = re.compile(r"(?m)^### ([A-Z][A-Z0-9-]*-\d{3})\s*$")
 
 
-def git_object_sha_at(revision: str, relative: str) -> str:
+def git_output(*args: str) -> str:
     completed = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), "rev-parse", f"{revision}:{relative}"],
+        ["git", "-C", str(REPO_ROOT), *args],
         text=True,
         capture_output=True,
         check=False,
     )
     if completed.returncode != 0:
-        raise AssertionError(
-            completed.stderr.strip()
-            or f"cannot resolve {revision}:{relative}; full Git history is required"
-        )
-    return completed.stdout.strip()
+        raise AssertionError(completed.stderr.strip() or "git command failed")
+    return completed.stdout
 
 
-def git_object_sha(relative: str) -> str:
-    return git_object_sha_at("HEAD", relative)
+def git_source_at(revision: str, relative: str) -> str:
+    return git_output("show", f"{revision}:{relative}")
 
 
-def extract_rule_contracts(text: str) -> list[tuple[str, str]]:
+def git_paths_at(revision: str, suffix: str) -> list[str]:
+    paths = git_output("ls-tree", "-r", "--name-only", revision).splitlines()
+    return sorted(path for path in paths if path.endswith(suffix))
+
+
+def git_object_sha_at(revision: str, relative: str) -> str:
+    return git_output("rev-parse", f"{revision}:{relative}").strip()
+
+
+def extract_rule_contracts(text: str, path: str) -> list[tuple[str, str, str]]:
     return [
-        (match.group("id"), match.group("requirement").strip())
+        (match.group("id"), match.group("requirement").strip(), path)
         for match in RULE_PATTERN.finditer(text)
     ]
 
 
+def published_rule_contracts() -> list[tuple[str, str, str]]:
+    contracts: list[tuple[str, str, str]] = []
+    for relative in git_paths_at(CHECKPOINT_COMMIT, ".md"):
+        contracts.extend(extract_rule_contracts(git_source_at(CHECKPOINT_COMMIT, relative), relative))
+    return contracts
+
+
+def candidate_rule_contracts() -> list[tuple[str, str, str]]:
+    contracts: list[tuple[str, str, str]] = []
+    for path in sorted(REPO_ROOT.rglob("*.md")):
+        relative = path.relative_to(REPO_ROOT).as_posix()
+        contracts.extend(extract_rule_contracts(path.read_text(encoding="utf-8"), relative))
+    return contracts
+
+
+def occurrences_by_key(
+    contracts: list[tuple[str, str, str]]
+) -> dict[tuple[str, str], list[str]]:
+    result: dict[tuple[str, str], list[str]] = defaultdict(list)
+    for rule_id, requirement, path in contracts:
+        result[(path, rule_id)].append(requirement)
+    return dict(result)
+
+
+def paths_by_id(contracts: list[tuple[str, str, str]]) -> dict[str, set[str]]:
+    result: dict[str, set[str]] = defaultdict(set)
+    for rule_id, _, path in contracts:
+        result[rule_id].add(path)
+    return dict(result)
+
+
 def rule_contract_findings(
-    expected: dict[str, str], actual: list[tuple[str, str]]
+    published: list[tuple[str, str, str]],
+    candidate: list[tuple[str, str, str]],
 ) -> list[str]:
     findings: list[str] = []
-    seen: dict[str, str] = {}
-    for rule_id, requirement in actual:
-        if rule_id in seen:
-            findings.append(f"DUPLICATE_RULE_ID:{rule_id}")
+    expected_by_key = occurrences_by_key(published)
+    actual_by_key = occurrences_by_key(candidate)
+    expected_paths = paths_by_id(published)
+    actual_paths = paths_by_id(candidate)
+
+    for (path, rule_id), published_requirements in expected_by_key.items():
+        if len(published_requirements) != 1:
+            findings.append(f"PUBLISHED_DUPLICATE_IN_SCOPE:{path}:{rule_id}")
             continue
-        seen[rule_id] = requirement
 
-    for rule_id, expected_requirement in expected.items():
-        if rule_id not in seen:
-            findings.append(f"MISSING_RULE:{rule_id}")
-        elif seen[rule_id] != expected_requirement:
-            findings.append(f"CHANGED_RULE_MEANING:{rule_id}")
+        candidate_requirements = actual_by_key.get((path, rule_id), [])
+        if not candidate_requirements:
+            findings.append(f"MISSING_RULE:{path}:{rule_id}")
+            continue
+        if len(candidate_requirements) != 1:
+            findings.append(f"DUPLICATE_RULE_IN_SCOPE:{path}:{rule_id}")
+            continue
+        if candidate_requirements[0] != published_requirements[0]:
+            findings.append(f"CHANGED_RULE_MEANING:{path}:{rule_id}")
 
-    for rule_id in sorted(set(seen) - set(expected)):
-        findings.append(f"UNEXPECTED_RULE:{rule_id}")
-    return findings
+    # Published duplicate IDs in distinct scopes are grandfathered. Do not allow a
+    # published ID to acquire a new scope, and do not allow a new ID to be reused.
+    for rule_id, candidate_paths in actual_paths.items():
+        published_paths = expected_paths.get(rule_id)
+        if published_paths is not None:
+            for extra_path in sorted(candidate_paths - published_paths):
+                findings.append(f"REUSED_PUBLISHED_RULE_ID:{extra_path}:{rule_id}")
+        elif len(candidate_paths) > 1:
+            findings.append(f"DUPLICATE_NEW_RULE_ID:{rule_id}")
+
+    return sorted(findings)
 
 
 class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
@@ -84,58 +137,77 @@ class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(self.checkpoint_bytes).hexdigest(), RULE_CHECKPOINT_SHA256)
         self.assertEqual(self.checkpoint["releaseVersion"], "0.10.0")
         self.assertEqual(self.checkpoint["tag"], "v0.10.0")
-        self.assertEqual(
-            self.checkpoint["sourceCommit"],
-            "83c73f3ab9a049ff2321d463164fcf98fb453a9c",
+        self.assertEqual(self.checkpoint["sourceCommit"], CHECKPOINT_COMMIT)
+        self.assertIn("published scoped duplicates", self.checkpoint["coverageRule"])
+
+    def test_every_published_numbered_rule_occurrence_and_meaning_is_preserved(self):
+        published = published_rule_contracts()
+        candidate = candidate_rule_contracts()
+        self.assertGreater(len(published), 100)
+        published_ids = {rule_id for rule_id, _, _ in published}
+        self.assertIn("SEC-INPUT-001", published_ids)
+        self.assertIn("CSHARP-LANG-001", published_ids)
+        self.assertEqual(rule_contract_findings(published, candidate), [])
+
+    def test_published_scoped_duplicates_are_grandfathered(self):
+        published = [
+            ("SHARED-001", "Same published meaning.", "a.md"),
+            ("SHARED-001", "Same published meaning.", "b.md"),
+        ]
+        self.assertEqual(rule_contract_findings(published, list(published)), [])
+
+        reused_in_new_scope = published + [
+            ("SHARED-001", "Same published meaning.", "c.md")
+        ]
+        self.assertIn(
+            "REUSED_PUBLISHED_RULE_ID:c.md:SHARED-001",
+            rule_contract_findings(published, reused_in_new_scope),
         )
-        rule_source = self.inventory["stableIdentifierContracts"]["publishedNormativeRules"]
-        self.assertEqual(
-            rule_source["source"],
-            "releases/compatibility/0.10.0-rule-contracts.json",
+
+    def test_new_unique_rules_are_allowed_but_new_reuse_is_rejected(self):
+        published = [("RULE-001", "Published requirement.", "a.md")]
+        compatible_addition = published + [
+            ("RULE-002", "New optional requirement.", "b.md")
+        ]
+        self.assertEqual(rule_contract_findings(published, compatible_addition), [])
+
+        reused = compatible_addition + [
+            ("RULE-002", "Same new rule reused.", "c.md")
+        ]
+        self.assertIn(
+            "DUPLICATE_NEW_RULE_ID:RULE-002",
+            rule_contract_findings(published, reused),
         )
 
-    def test_every_published_numbered_rule_surface_is_anchored(self):
-        protected = {}
-        protected.update(self.checkpoint["publishedUnchangedRuleTrees"])
-        protected.update(self.checkpoint["publishedUnchangedLanguagePackageTrees"])
+    def test_rule_contract_checker_detects_removal_and_meaning_change(self):
+        published = [
+            ("RULE-001", "First requirement.", "a.md"),
+            ("RULE-002", "Second requirement.", "b.md"),
+        ]
+        removed = [("RULE-001", "First requirement.", "a.md")]
+        self.assertIn(
+            "MISSING_RULE:b.md:RULE-002",
+            rule_contract_findings(published, removed),
+        )
 
-        for relative, expected_tree in protected.items():
-            with self.subTest(tree=relative):
-                self.assertEqual(git_object_sha(relative), expected_tree)
-
-        csharp_source = self.checkpoint["csharpProductRules"]["sourcePath"]
-        power_shell_root = "languages/powershell"
-        rule_paths: dict[str, list[str]] = {}
-        for path in sorted(REPO_ROOT.rglob("*.md")):
-            relative = path.relative_to(REPO_ROOT).as_posix()
-            ids = RULE_HEADING_PATTERN.findall(path.read_text(encoding="utf-8"))
-            if ids:
-                rule_paths[relative] = ids
-
-        def covered(relative: str) -> bool:
-            if relative == csharp_source:
-                return True
-            if relative == power_shell_root or relative.startswith(power_shell_root + "/"):
-                return True
-            return any(
-                relative == root or relative.startswith(root + "/")
-                for root in protected
-            )
-
-        uncovered = {path: ids for path, ids in rule_paths.items() if not covered(path)}
-        self.assertEqual(uncovered, {})
-        self.assertIn("disciplines/application-security/AGENTS.md", rule_paths)
-        self.assertIn("SEC-INPUT-001", rule_paths["disciplines/application-security/AGENTS.md"])
+        changed = [
+            ("RULE-001", "Changed meaning.", "a.md"),
+            ("RULE-002", "Second requirement.", "b.md"),
+        ]
+        self.assertIn(
+            "CHANGED_RULE_MEANING:a.md:RULE-001",
+            rule_contract_findings(published, changed),
+        )
 
     def test_csharp_product_rule_ids_and_meaning_are_preserved(self):
         source = self.checkpoint["csharpProductRules"]
         text = (REPO_ROOT / source["sourcePath"]).read_text(encoding="utf-8")
-        actual = extract_rule_contracts(text)
-        expected = source["rules"]
-        self.assertEqual(rule_contract_findings(expected, actual), [])
-        self.assertEqual(len(expected), 10)
-        self.assertIn("CSHARP-LANG-001", expected)
-        self.assertIn("CSHARP-EVIDENCE-010", expected)
+        actual = {
+            rule_id: requirement
+            for rule_id, requirement, _ in extract_rule_contracts(text, source["sourcePath"])
+        }
+        self.assertEqual(actual, source["rules"])
+        self.assertEqual(len(actual), 10)
 
     def test_full_csharp_normative_standards_match_promotion_evidence_candidate(self):
         promoted_tree = git_object_sha_at(CSHARP_PROMOTION_EVIDENCE_COMMIT, CSHARP_NORMATIVE_ROOT)
@@ -145,42 +217,6 @@ class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
             promoted_tree,
             "stable C# normative standards changed after the independently reviewed promotion evidence candidate",
         )
-
-        security_standard = f"{CSHARP_NORMATIVE_ROOT}/SECURITY_STANDARD.md"
-        self.assertEqual(
-            git_object_sha_at("HEAD", security_standard),
-            git_object_sha_at(CSHARP_PROMOTION_EVIDENCE_COMMIT, security_standard),
-        )
-
-    def test_powershell_published_source_had_no_numbered_rule_contract(self):
-        source = self.checkpoint["changedPublishedRuleSources"]["languages/powershell"]
-        self.assertEqual(source["publishedTreeSha"], "7f1b68ff66b18108454b22b98e3528736d42e615")
-        self.assertIn("no numbered normative rule headings", source["ruleContract"])
-
-    def test_rule_contract_checker_detects_removal_meaning_change_and_reuse(self):
-        expected = {
-            "RULE-001": "First requirement.",
-            "RULE-002": "Second requirement.",
-        }
-
-        removed = [("RULE-001", "First requirement.")]
-        self.assertIn("MISSING_RULE:RULE-002", rule_contract_findings(expected, removed))
-
-        changed = [
-            ("RULE-001", "Changed meaning."),
-            ("RULE-002", "Second requirement."),
-        ]
-        self.assertIn(
-            "CHANGED_RULE_MEANING:RULE-001",
-            rule_contract_findings(expected, changed),
-        )
-
-        reused = [
-            ("RULE-001", "First requirement."),
-            ("RULE-001", "Different reused meaning."),
-            ("RULE-002", "Second requirement."),
-        ]
-        self.assertIn("DUPLICATE_RULE_ID:RULE-001", rule_contract_findings(expected, reused))
 
 
 if __name__ == "__main__":

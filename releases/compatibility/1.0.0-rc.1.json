@@ -16,11 +16,11 @@
   },
   "publishedFindingCodeContract": {
     "path": "releases/compatibility/0.10.0-finding-codes.json",
-    "sha256": "8c3fb59522f2230d32e8a3675c9f9bbf5113c671b29e3a90bc6193b3b4244e4d"
+    "sha256": "367b54b58db54792272752ce71b9507e89cb913bb546914896a7c01d51788a78"
   },
   "publishedRuleContractCheckpoint": {
     "path": "releases/compatibility/0.10.0-rule-contracts.json",
-    "sha256": "eba5b25f4036bbd62c3265579ec450c6c44f36da7a69c2a62559ae017de2efa4"
+    "sha256": "5f3b7a7ddd28de5a44b45f96998d7acffb2c287bad4c7699e21561a869e50c95"
   },
   "compatibilityClassification": "compatible",
   "stableRootPaths": [
@@ -135,7 +135,7 @@
     "publishedNormativeRules": {
       "source": "releases/compatibility/0.10.0-rule-contracts.json",
       "scope": [
-        "every published v0.10.0 numbered normative rule in governance, disciplines, languages, frameworks, platforms, virtualization, operating systems, networking, and profiles is anchored by an immutable published tree or explicit changed-source contract",
+        "every published v0.10.0 numbered normative rule occurrence is derived directly from the immutable published source commit as source path + identifier + Requirement meaning; published scoped duplicates are grandfathered, new reuse is rejected, and compatible new unique rules are allowed",
         "C# product rule ids and exact requirement meanings promoted stable in this RC"
       ]
     },
@@ -200,7 +200,7 @@
       "published v0.10.0 root stable entry paths",
       "published v0.10.0 stable rolling schema filenames",
       "seven original stable template paths",
-      "published v0.10.0 governance/profile/schema identifiers plus the complete published numbered normative-rule surface and C# rule meanings promoted stable in this RC",
+      "published v0.10.0 governance/profile/schema identifiers plus every published numbered normative rule occurrence and meaning and the C# rule meanings promoted stable in this RC",
       "published v0.10.0 CLI/result/exit-code, finding-code, and safe-overwrite tool behavior",
       "canonical profile files and their complete package-directory stable entry points",
       "release artifact naming and checksum contract",

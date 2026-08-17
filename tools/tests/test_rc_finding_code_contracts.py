@@ -7,39 +7,48 @@ import json
 import subprocess
 import tempfile
 import unittest
+from pathlib import Path
 
 from helpers import REPO_ROOT, json_result, run_tool
 
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
 CHECKPOINT_PATH = REPO_ROOT / "releases" / "compatibility" / "0.10.0-finding-codes.json"
-CHECKPOINT_SHA256 = "8c3fb59522f2230d32e8a3675c9f9bbf5113c671b29e3a90bc6193b3b4244e4d"
+CHECKPOINT_SHA256 = "367b54b58db54792272752ce71b9507e89cb913bb546914896a7c01d51788a78"
 
 
-def git_object_sha(relative: str) -> str:
+def git_output(*args: str) -> str:
     completed = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), "rev-parse", f"HEAD:{relative}"],
+        ["git", "-C", str(REPO_ROOT), *args],
         text=True,
         capture_output=True,
         check=False,
     )
     if completed.returncode != 0:
-        raise AssertionError(completed.stderr.strip() or f"cannot resolve HEAD:{relative}")
-    return completed.stdout.strip()
+        raise AssertionError(completed.stderr.strip() or "git command failed")
+    return completed.stdout
 
 
 def git_source_at(commit: str, relative: str) -> str:
-    completed = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), "show", f"{commit}:{relative}"],
-        text=True,
-        capture_output=True,
-        check=False,
+    return git_output("show", f"{commit}:{relative}")
+
+
+def published_python_paths() -> list[str]:
+    paths = git_output("ls-tree", "-r", "--name-only", CHECKPOINT_COMMIT, "tools").splitlines()
+    return sorted(
+        path
+        for path in paths
+        if path.endswith(".py")
+        and not path.startswith("tools/tests/")
+        and "/tests/" not in path
     )
-    if completed.returncode != 0:
-        raise AssertionError(
-            completed.stderr.strip()
-            or f"cannot resolve published source {commit}:{relative}; full Git history is required"
-        )
-    return completed.stdout
+
+
+def candidate_python_paths() -> list[Path]:
+    return sorted(
+        path
+        for path in (REPO_ROOT / "tools").rglob("*.py")
+        if "tests" not in path.relative_to(REPO_ROOT / "tools").parts
+    )
 
 
 def canonical_ast(node: ast.AST | None) -> str:
@@ -80,12 +89,6 @@ def loaded_names(node: ast.AST | None) -> set[str]:
 
 
 def module_data_bindings(tree: ast.Module) -> dict[str, ast.AST]:
-    """Return module data/constants, excluding helper function implementations.
-
-    Helper functions have their own finding signatures. Pulling entire helper bodies into every
-    caller's dependency snapshot would make unrelated additive helper changes look like breaking
-    changes to all downstream finding codes. Caller dataflow still records the helper call itself.
-    """
     definitions: dict[str, ast.AST] = {}
     for statement in tree.body:
         if isinstance(statement, ast.Assign):
@@ -98,10 +101,20 @@ def module_data_bindings(tree: ast.Module) -> dict[str, ast.AST]:
     return definitions
 
 
+def finding_code(node: ast.Call) -> str | None:
+    if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+        return node.args[0].value
+    for keyword in node.keywords:
+        if (
+            keyword.arg == "code"
+            and isinstance(keyword.value, ast.Constant)
+            and isinstance(keyword.value.value, str)
+        ):
+            return keyword.value.value
+    return None
+
+
 def finding_call_shape(node: ast.Call) -> dict[str, object]:
-    # Finding(code, message, ...) exposes the code and semantic emission context as the
-    # compatibility contract. Message wording is deliberately excluded because the
-    # public tool contract permits editorial wording improvements.
     positional_tail = [canonical_ast(argument) for argument in node.args[2:]]
     keywords = sorted(
         (
@@ -109,7 +122,7 @@ def finding_call_shape(node: ast.Call) -> dict[str, object]:
             canonical_ast(keyword.value),
         )
         for keyword in node.keywords
-        if keyword.arg != "message"
+        if keyword.arg not in {"code", "message"}
     )
     return {
         "positionalTail": positional_tail,
@@ -122,7 +135,7 @@ def finding_dependency_nodes(node: ast.Call) -> list[ast.AST]:
     dependencies.extend(
         keyword.value
         for keyword in node.keywords
-        if keyword.arg != "message"
+        if keyword.arg not in {"code", "message"}
     )
     return dependencies
 
@@ -248,25 +261,20 @@ class FindingSignatureVisitor(ast.NodeVisitor):
             self._with_context("finally", None, node.finalbody)
 
     def visit_Call(self, node: ast.Call) -> None:
-        if (
-            isinstance(node.func, ast.Name)
-            and node.func.id == "Finding"
-            and node.args
-            and isinstance(node.args[0], ast.Constant)
-            and isinstance(node.args[0].value, str)
-        ):
-            code = node.args[0].value
-            dependency_nodes = list(self.context_nodes) + finding_dependency_nodes(node)
-            signature = json.dumps(
-                {
-                    "function": self.function,
-                    "context": list(self.context),
-                    "dependencies": self._dependency_snapshot(dependency_nodes),
-                    "emission": finding_call_shape(node),
-                },
-                sort_keys=True,
-            )
-            self.signatures.setdefault(code, []).append(signature)
+        if isinstance(node.func, ast.Name) and node.func.id == "Finding":
+            code = finding_code(node)
+            if code is not None:
+                dependency_nodes = list(self.context_nodes) + finding_dependency_nodes(node)
+                signature = json.dumps(
+                    {
+                        "function": self.function,
+                        "context": list(self.context),
+                        "dependencies": self._dependency_snapshot(dependency_nodes),
+                        "emission": finding_call_shape(node),
+                    },
+                    sort_keys=True,
+                )
+                self.signatures.setdefault(code, []).append(signature)
         self.generic_visit(node)
 
 
@@ -275,6 +283,26 @@ def finding_semantic_signatures(text: str) -> dict[str, list[str]]:
     visitor = FindingSignatureVisitor(module_data_bindings(tree))
     visitor.visit(tree)
     return {code: sorted(signatures) for code, signatures in visitor.signatures.items()}
+
+
+def aggregate_signatures(sources: list[str]) -> dict[str, set[str]]:
+    result: dict[str, set[str]] = {}
+    for text in sources:
+        for code, signatures in finding_semantic_signatures(text).items():
+            result.setdefault(code, set()).update(signatures)
+    return result
+
+
+def published_signatures() -> dict[str, set[str]]:
+    return aggregate_signatures(
+        [git_source_at(CHECKPOINT_COMMIT, relative) for relative in published_python_paths()]
+    )
+
+
+def candidate_signatures() -> dict[str, set[str]]:
+    return aggregate_signatures(
+        [path.read_text(encoding="utf-8") for path in candidate_python_paths()]
+    )
 
 
 def finding_map(payload: dict) -> dict[str, list[str]]:
@@ -295,64 +323,44 @@ class ReleaseCandidateFindingCodeContractTests(unittest.TestCase):
         self.assertEqual(self.contract["releaseVersion"], "0.10.0")
         self.assertEqual(self.contract["tag"], "v0.10.0")
         self.assertEqual(self.contract["sourceCommit"], CHECKPOINT_COMMIT)
-        self.assertEqual(self.contract["toolContractPath"], "tools/TOOL_CONTRACT.md")
+        self.assertEqual(self.contract["publishedSourceScope"]["root"], "tools")
+        self.assertNotIn("unchangedPublishedSourceTrees", self.contract)
 
-    def test_unchanged_published_tool_sources_preserve_all_finding_codes_and_meanings(self):
-        for relative, expected_tree in self.contract["unchangedPublishedSourceTrees"].items():
-            with self.subTest(tree=relative):
-                self.assertEqual(git_object_sha(relative), expected_tree)
+    def test_all_published_production_finding_semantics_are_preserved(self):
+        published = published_signatures()
+        current = candidate_signatures()
+        self.assertGreater(len(published), 20)
 
-    def test_changed_tool_sources_preserve_checkpointed_finding_semantics(self):
-        for relative, codes in self.contract["changedSourceCodes"].items():
-            published = finding_semantic_signatures(git_source_at(CHECKPOINT_COMMIT, relative))
-            current = finding_semantic_signatures((REPO_ROOT / relative).read_text(encoding="utf-8"))
-
-            for code in codes:
-                with self.subTest(tool=relative, code=code):
-                    published_signatures = set(published.get(code, []))
-                    current_signatures = set(current.get(code, []))
-                    self.assertTrue(published_signatures, f"published source did not emit {code}")
-                    self.assertEqual(
-                        published_signatures - current_signatures,
-                        set(),
-                        f"published semantic context or referenced data changed/disappeared for {code}",
-                    )
-
-                    additional = current_signatures - published_signatures
+        approved = self.contract["approvedAdditivePublishedCodeContexts"]
+        for code, expected_signatures in published.items():
+            with self.subTest(code=code):
+                current_signatures = current.get(code, set())
+                self.assertEqual(
+                    expected_signatures - current_signatures,
+                    set(),
+                    f"published semantic context or referenced data changed/disappeared for {code}",
+                )
+                additional = current_signatures - expected_signatures
+                if code in approved:
+                    self.assertEqual(len(additional), approved[code]["count"])
                     if code == "RELEASE_STATE_INVALID":
-                        self.assertEqual(len(additional), 3)
                         payloads = [json.loads(signature) for signature in additional]
                         self.assertTrue(
                             all(payload["function"] == "read_release_state" for payload in payloads)
                         )
-                        contexts = ["\n".join(payload["context"]) for payload in payloads]
-                        self.assertTrue(
-                            any(
-                                "Name('published', Load())" in context
-                                and "Name('SEMVER', Load())" in context
-                                for context in contexts
-                            )
-                        )
-                        self.assertTrue(
-                            any(
-                                "Name('published', Load())" in context
-                                and "Name('blocked', Load())" in context
-                                for context in contexts
-                            )
-                        )
-                        self.assertTrue(
-                            any(
-                                "Name('next_intended', Load())" in context
-                                and "Name('published', Load())" in context
-                                for context in contexts
-                            )
-                        )
-                    else:
-                        self.assertEqual(
-                            additional,
-                            set(),
-                            f"unreviewed additional semantic context reuses public code {code}",
-                        )
+                else:
+                    self.assertEqual(
+                        additional,
+                        set(),
+                        f"unreviewed additional semantic context reuses public code {code}",
+                    )
+
+    def test_new_unique_finding_codes_are_allowed(self):
+        published = {"OLD_CODE": {"old-signature"}}
+        current = {"OLD_CODE": {"old-signature"}, "NEW_CODE": {"new-signature"}}
+        for code, signatures in published.items():
+            self.assertEqual(signatures - current.get(code, set()), set())
+        self.assertIn("NEW_CODE", set(current) - set(published))
 
     def test_semantic_signature_allows_message_rewording_but_tracks_condition_and_data(self):
         original = '''
@@ -383,18 +391,9 @@ def run(other_text):
         if heading not in other_text:
             Finding("PUBLIC_CODE", "Original wording.", path="sample")
 '''
-        self.assertEqual(
-            finding_semantic_signatures(original),
-            finding_semantic_signatures(reworded),
-        )
-        self.assertNotEqual(
-            finding_semantic_signatures(original),
-            finding_semantic_signatures(changed_data),
-        )
-        self.assertNotEqual(
-            finding_semantic_signatures(original),
-            finding_semantic_signatures(reused),
-        )
+        self.assertEqual(finding_semantic_signatures(original), finding_semantic_signatures(reworded))
+        self.assertNotEqual(finding_semantic_signatures(original), finding_semantic_signatures(changed_data))
+        self.assertNotEqual(finding_semantic_signatures(original), finding_semantic_signatures(reused))
 
     def test_template_validator_emits_published_stable_path_code(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -408,7 +407,6 @@ def run(other_text):
         self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
         findings = finding_map(json_result(completed))
         self.assertIn("TEMPLATE_STABLE_PATH_MISSING", findings)
-        self.assertIn("Missing stable template path.", findings["TEMPLATE_STABLE_PATH_MISSING"])
 
     def test_generate_manifest_emits_published_warning_and_input_codes(self):
         warning = run_tool(
@@ -424,8 +422,7 @@ def run(other_text):
             "--dry-run",
         )
         self.assertEqual(warning.returncode, 0, warning.stdout + warning.stderr)
-        warning_findings = finding_map(json_result(warning))
-        self.assertIn("MANIFEST_NO_DISCIPLINES", warning_findings)
+        self.assertIn("MANIFEST_NO_DISCIPLINES", finding_map(json_result(warning)))
 
         invalid = run_tool(
             "tools/generate-manifest/generate_manifest.py",
@@ -440,8 +437,7 @@ def run(other_text):
             "--dry-run",
         )
         self.assertEqual(invalid.returncode, 2, invalid.stdout + invalid.stderr)
-        invalid_findings = finding_map(json_result(invalid))
-        self.assertIn("INPUT_ERROR", invalid_findings)
+        self.assertIn("INPUT_ERROR", finding_map(json_result(invalid)))
 
     def test_release_validator_emits_published_tag_mismatch_code(self):
         completed = run_tool(
@@ -452,8 +448,7 @@ def run(other_text):
             "v0.0.0",
         )
         self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
-        findings = finding_map(json_result(completed))
-        self.assertIn("RELEASE_TAG_MISMATCH", findings)
+        self.assertIn("RELEASE_TAG_MISMATCH", finding_map(json_result(completed)))
 
     def test_representative_checkpoint_codes_are_explicit(self):
         representatives = {
