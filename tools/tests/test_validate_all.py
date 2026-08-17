@@ -43,7 +43,7 @@ class ValidateAllTests(unittest.TestCase):
         self.assertEqual(payload["summary"]["validatorsCompleted"], 1)
         self.assertEqual(payload["metadata"]["results"][0]["tool"], "validate-skills")
 
-    def test_compatibility_history_bootstraps_without_existing_git_history(self):
+    def test_compatibility_history_uses_temporary_git_metadata_for_archives(self):
         import importlib.util
         import shutil
 
@@ -59,15 +59,25 @@ class ValidateAllTests(unittest.TestCase):
             bundle_target.parent.mkdir(parents=True)
             shutil.copy2(REPO_ROOT / module.COMPATIBILITY_HISTORY_BUNDLE, bundle_target)
 
-            module.ensure_compatibility_history(root)
-            for commit in module.COMPATIBILITY_HISTORY_REFS:
-                completed = subprocess.run(
-                    ["git", "-C", str(root), "cat-file", "-e", f"{commit}^{{commit}}"],
-                    text=True,
-                    capture_output=True,
-                    check=False,
+            self.assertFalse((root / ".git").exists())
+            with module.compatibility_history(root):
+                self.assertFalse(
+                    (root / ".git").exists(),
+                    "archive compatibility bootstrap must not create Git metadata in the source root",
                 )
-                self.assertEqual(completed.returncode, 0, completed.stderr)
+                for commit in module.COMPATIBILITY_HISTORY_REFS:
+                    completed = subprocess.run(
+                        ["git", "-C", str(root), "cat-file", "-e", f"{commit}^{{commit}}"],
+                        text=True,
+                        capture_output=True,
+                        check=False,
+                    )
+                    self.assertEqual(completed.returncode, 0, completed.stderr)
+
+            self.assertFalse(
+                (root / ".git").exists(),
+                "validation must leave an extracted source archive free of Git metadata",
+            )
 
 
 if __name__ == "__main__":

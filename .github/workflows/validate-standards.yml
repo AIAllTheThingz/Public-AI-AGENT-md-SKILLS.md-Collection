@@ -43,11 +43,34 @@ jobs:
 
       - name: Run complete validation pipeline
         shell: bash
-        run: python tools/validate-all/run_all.py --include-tests --format json
+        run: |
+          result_file="$(mktemp)"
+          set +e
+          python tools/validate-all/run_all.py --include-tests --format json >"$result_file"
+          status=$?
+          set -e
+          cat "$result_file"
+          if [ "$status" -ne 0 ]; then
+            python -c 'import json,sys; p=json.load(open(sys.argv[1], encoding="utf-8")); t=(p.get("metadata") or {}).get("tests") or {}; d=(t.get("stderr") or t.get("stdout") or json.dumps(p.get("findings", p), sort_keys=True))[-3500:]; d=d.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"); print("::error title=Validation diagnostics::" + d)' "$result_file"
+            exit "$status"
+          fi
 
       - name: Validate distributed source archive
         shell: bash
         run: |
           archive_root="$(mktemp -d)"
+          archive_result="$(mktemp)"
           git archive --format=tar HEAD | tar -xf - -C "$archive_root"
-          python "$archive_root/tools/validate-all/run_all.py" --include-tests
+          set +e
+          python "$archive_root/tools/validate-all/run_all.py" --include-tests --format json >"$archive_result"
+          status=$?
+          set -e
+          cat "$archive_result"
+          if [ -e "$archive_root/.git" ]; then
+            echo "::error title=Archive validation side effect::Validation left Git metadata inside the extracted source root."
+            exit 1
+          fi
+          if [ "$status" -ne 0 ]; then
+            python -c 'import json,sys; p=json.load(open(sys.argv[1], encoding="utf-8")); t=(p.get("metadata") or {}).get("tests") or {}; d=(t.get("stderr") or t.get("stdout") or json.dumps(p.get("findings", p), sort_keys=True))[-3500:]; d=d.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"); print("::error title=Archive validation diagnostics::" + d)' "$archive_result"
+            exit "$status"
+          fi

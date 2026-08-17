@@ -62,6 +62,42 @@ class ReleaseCandidateCompatibilityGateTests(
             self.assertEqual(current_version, base.CANDIDATE)
             self.assertEqual(next_intended, base.CANDIDATE)
 
+    def test_release_validator_accepts_rc_tag_contract(self):
+        current_version = (base.REPO_ROOT / "VERSION").read_text(
+            encoding="utf-8"
+        ).strip()
+        state = json.loads(
+            (base.REPO_ROOT / "releases" / "release-state.json").read_text(
+                encoding="utf-8"
+            )
+        )
+
+        # This is a preparation-state runtime assertion, not a permanent demand
+        # that every future repository version continue accepting the historical
+        # rc.1 tag. Once rc.1 is published, the forward-only state test above owns
+        # the historical transition and this transient runtime exercise is complete.
+        if current_version != base.CANDIDATE:
+            self.assertIn(
+                base.CANDIDATE,
+                set(state["publishedVersions"]),
+                "rc.1 may stop being the current tag contract only after publication",
+            )
+            self.assertGreater(semver_key(current_version), semver_key(base.CANDIDATE))
+            return
+
+        completed = base.run_tool(
+            "tools/release/validate_release.py",
+            "--format",
+            "json",
+            "--tag",
+            f"v{base.CANDIDATE}",
+        )
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+        payload = base.json_result(completed)
+        self.assertEqual(payload["status"], "passed")
+        self.assertEqual(payload["summary"]["repositoryVersion"], base.CANDIDATE)
+        self.assertEqual(payload["summary"]["expectedTag"], f"v{base.CANDIDATE}")
+
     def test_every_published_stable_schema_contract_remains_compatible(self):
         paths = self.inventory["stableSchemaPaths"]
         self.assertEqual(len(paths), 12)

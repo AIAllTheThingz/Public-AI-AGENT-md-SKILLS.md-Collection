@@ -5,8 +5,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
+import tempfile
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
@@ -36,24 +39,58 @@ COMPATIBILITY_HISTORY_REFS = {
 }
 
 
-def _git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+def _git(
+    root: Path,
+    *args: str,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["git", "-C", str(root), *args],
         text=True,
         capture_output=True,
         check=False,
+        env=env,
     )
 
 
-def ensure_compatibility_history(root: Path) -> None:
-    """Make authenticated RC baselines available in shallow clones and archives."""
-    root = root.resolve()
-    missing = [
+def _required_history_missing(
+    root: Path,
+    *,
+    env: dict[str, str] | None = None,
+) -> list[str]:
+    return [
         commit
         for commit in COMPATIBILITY_HISTORY_REFS
-        if _git(root, "cat-file", "-e", f"{commit}^{{commit}}").returncode != 0
+        if _git(root, "cat-file", "-e", f"{commit}^{{commit}}", env=env).returncode != 0
     ]
+
+
+def _fetch_compatibility_history(
+    root: Path,
+    bundle: Path,
+    *,
+    env: dict[str, str] | None = None,
+) -> None:
+    refspecs = [f"{ref}:{ref}" for ref in COMPATIBILITY_HISTORY_REFS.values()]
+    fetched = _git(root, "fetch", "--quiet", str(bundle), *refspecs, env=env)
+    if fetched.returncode != 0:
+        raise RuntimeError(fetched.stderr.strip() or "git bundle fetch failed")
+
+    unresolved = _required_history_missing(root, env=env)
+    if unresolved:
+        raise RuntimeError(
+            "Bundled compatibility history did not provide required commits: "
+            + ", ".join(unresolved)
+        )
+
+
+@contextmanager
+def compatibility_history(root: Path):
+    """Expose authenticated RC baselines without mutating extracted source trees."""
+    root = root.resolve()
+    missing = _required_history_missing(root)
     if not missing:
+        yield
         return
 
     bundle = root / COMPATIBILITY_HISTORY_BUNDLE
@@ -62,103 +99,122 @@ def ensure_compatibility_history(root: Path) -> None:
             f"Compatibility history is unavailable and bundled baseline is missing: {bundle}"
         )
 
-    if not (root / ".git").exists():
-        initialized = _git(root, "init", "--quiet")
-        if initialized.returncode != 0:
-            raise RuntimeError(initialized.stderr.strip() or "git init failed")
+    if (root / ".git").exists():
+        _fetch_compatibility_history(root, bundle)
+        yield
+        return
 
-    refspecs = [f"{ref}:{ref}" for ref in COMPATIBILITY_HISTORY_REFS.values()]
-    fetched = _git(root, "fetch", "--quiet", str(bundle), *refspecs)
-    if fetched.returncode != 0:
-        raise RuntimeError(fetched.stderr.strip() or "git bundle fetch failed")
-
-    unresolved = [
-        commit
-        for commit in COMPATIBILITY_HISTORY_REFS
-        if _git(root, "cat-file", "-e", f"{commit}^{{commit}}").returncode != 0
-    ]
-    if unresolved:
-        raise RuntimeError(
-            "Bundled compatibility history did not provide required commits: "
-            + ", ".join(unresolved)
+    # Distributed source archives intentionally contain no Git metadata. Build a
+    # temporary object store outside the declared repository root, expose it only
+    # for the duration of validation, and remove it automatically on exit.
+    with tempfile.TemporaryDirectory(prefix="public-ai-governance-history-") as temp:
+        git_dir = Path(temp) / "repository.git"
+        initialized = subprocess.run(
+            ["git", "init", "--bare", "--quiet", str(git_dir)],
+            text=True,
+            capture_output=True,
+            check=False,
         )
+        if initialized.returncode != 0:
+            raise RuntimeError(initialized.stderr.strip() or "temporary git init failed")
+
+        env = os.environ.copy()
+        env["GIT_DIR"] = str(git_dir)
+        env["GIT_WORK_TREE"] = str(root)
+        _fetch_compatibility_history(root, bundle, env=env)
+
+        previous = {
+            "GIT_DIR": os.environ.get("GIT_DIR"),
+            "GIT_WORK_TREE": os.environ.get("GIT_WORK_TREE"),
+        }
+        os.environ["GIT_DIR"] = str(git_dir)
+        os.environ["GIT_WORK_TREE"] = str(root)
+        try:
+            yield
+        finally:
+            for name, value in previous.items():
+                if value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = value
 
 
 def run(args: argparse.Namespace) -> ToolResult:
     root = args.root.resolve()
-    if args.include_tests:
-        ensure_compatibility_history(root)
-    selected = args.tool or list(VALIDATORS)
-    unknown = [name for name in selected if name not in VALIDATORS]
-    if unknown:
-        raise ValueError(f"Unknown validator(s): {', '.join(unknown)}")
+    history = compatibility_history(root) if args.include_tests else nullcontext()
 
-    results: list[dict] = []
-    findings: list[Finding] = []
-    for name in selected:
-        script = root / VALIDATORS[name]
-        completed = subprocess.run(
-            [sys.executable, str(script), "--root", str(root), "--format", "json"],
-            cwd=root,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        try:
-            payload = json.loads(completed.stdout)
-        except json.JSONDecodeError:
-            payload = {
-                "tool": name,
-                "status": "error",
-                "summary": {},
-                "findings": [{
-                    "code": "AGGREGATE_UNPARSEABLE_RESULT",
-                    "severity": "error",
-                    "message": "Validator did not emit valid JSON.",
-                }],
-                "metadata": {"stdout": completed.stdout[-4000:], "stderr": completed.stderr[-4000:]},
+    with history:
+        selected = args.tool or list(VALIDATORS)
+        unknown = [name for name in selected if name not in VALIDATORS]
+        if unknown:
+            raise ValueError(f"Unknown validator(s): {', '.join(unknown)}")
+
+        results: list[dict] = []
+        findings: list[Finding] = []
+        for name in selected:
+            script = root / VALIDATORS[name]
+            completed = subprocess.run(
+                [sys.executable, str(script), "--root", str(root), "--format", "json"],
+                cwd=root,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            try:
+                payload = json.loads(completed.stdout)
+            except json.JSONDecodeError:
+                payload = {
+                    "tool": name,
+                    "status": "error",
+                    "summary": {},
+                    "findings": [{
+                        "code": "AGGREGATE_UNPARSEABLE_RESULT",
+                        "severity": "error",
+                        "message": "Validator did not emit valid JSON.",
+                    }],
+                    "metadata": {"stdout": completed.stdout[-4000:], "stderr": completed.stderr[-4000:]},
+                }
+            payload["exitCode"] = completed.returncode
+            results.append(payload)
+            if payload.get("status") != "passed":
+                findings.append(Finding(
+                    "VALIDATOR_FAILED",
+                    f"{name} returned status {payload.get('status')} and exit code {completed.returncode}.",
+                    path=VALIDATORS[name],
+                    details={"result": payload},
+                ))
+                if args.fail_fast:
+                    break
+
+        tests_result = None
+        if args.include_tests and not (args.fail_fast and findings):
+            completed = subprocess.run(
+                [sys.executable, "-m", "unittest", "discover", "-s", str(root / "tools" / "tests"), "-p", "test_*.py"],
+                cwd=root,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            tests_result = {
+                "exitCode": completed.returncode,
+                "stdout": completed.stdout[-4000:],
+                "stderr": completed.stderr[-4000:],
             }
-        payload["exitCode"] = completed.returncode
-        results.append(payload)
-        if payload.get("status") != "passed":
-            findings.append(Finding(
-                "VALIDATOR_FAILED",
-                f"{name} returned status {payload.get('status')} and exit code {completed.returncode}.",
-                path=VALIDATORS[name],
-                details={"result": payload},
-            ))
-            if args.fail_fast:
-                break
+            if completed.returncode != 0:
+                findings.append(Finding("UNIT_TESTS_FAILED", "Tool unit tests failed.", path="tools/tests", details=tests_result))
 
-    tests_result = None
-    if args.include_tests and not (args.fail_fast and findings):
-        completed = subprocess.run(
-            [sys.executable, "-m", "unittest", "discover", "-s", str(root / "tools" / "tests"), "-p", "test_*.py"],
-            cwd=root,
-            text=True,
-            capture_output=True,
-            check=False,
+        return ToolResult.from_findings(
+            tool=TOOL,
+            version=VERSION,
+            findings=findings,
+            summary={
+                "validatorsRequested": len(selected),
+                "validatorsCompleted": len(results),
+                "testsIncluded": args.include_tests,
+                "findings": len(findings),
+            },
+            metadata={"results": results, "tests": tests_result},
         )
-        tests_result = {
-            "exitCode": completed.returncode,
-            "stdout": completed.stdout[-4000:],
-            "stderr": completed.stderr[-4000:],
-        }
-        if completed.returncode != 0:
-            findings.append(Finding("UNIT_TESTS_FAILED", "Tool unit tests failed.", path="tools/tests", details=tests_result))
-
-    return ToolResult.from_findings(
-        tool=TOOL,
-        version=VERSION,
-        findings=findings,
-        summary={
-            "validatorsRequested": len(selected),
-            "validatorsCompleted": len(results),
-            "testsIncluded": args.include_tests,
-            "findings": len(findings),
-        },
-        metadata={"results": results, "tests": tests_result},
-    )
 
 
 def build_parser() -> argparse.ArgumentParser:
