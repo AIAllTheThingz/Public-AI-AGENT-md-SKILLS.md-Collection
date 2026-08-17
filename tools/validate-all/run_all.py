@@ -52,36 +52,19 @@ _HISTORY_SELECTORS = "PAG_COMPATIBILITY_SELECTORS"
 
 @contextmanager
 def python_bytecode_disabled():
-    """Keep validation-generated Python bytecode out of the declared source tree."""
-    previous_dont_write_environment = os.environ.get("PYTHONDONTWRITEBYTECODE")
-    previous_cache_environment = os.environ.get("PYTHONPYCACHEPREFIX")
+    """Prevent validation child processes from writing Python bytecode."""
+    previous_environment = os.environ.get("PYTHONDONTWRITEBYTECODE")
     previous_runtime = sys.dont_write_bytecode
-    previous_cache_prefix = sys.pycache_prefix
-
-    # Some portability tests intentionally load production modules through custom
-    # import paths or child interpreters. Keep the normal no-bytecode policy, but
-    # also redirect any cache write that is explicitly re-enabled to a temporary
-    # external directory. This preserves strict source-tree cache detection while
-    # making validation itself read-only with respect to the declared source root.
-    with tempfile.TemporaryDirectory(prefix="public-ai-governance-pycache-") as temp:
-        cache_root = Path(temp).resolve()
-        os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
-        os.environ["PYTHONPYCACHEPREFIX"] = str(cache_root)
-        sys.dont_write_bytecode = True
-        sys.pycache_prefix = str(cache_root)
-        try:
-            yield cache_root
-        finally:
-            sys.dont_write_bytecode = previous_runtime
-            sys.pycache_prefix = previous_cache_prefix
-            if previous_dont_write_environment is None:
-                os.environ.pop("PYTHONDONTWRITEBYTECODE", None)
-            else:
-                os.environ["PYTHONDONTWRITEBYTECODE"] = previous_dont_write_environment
-            if previous_cache_environment is None:
-                os.environ.pop("PYTHONPYCACHEPREFIX", None)
-            else:
-                os.environ["PYTHONPYCACHEPREFIX"] = previous_cache_environment
+    os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+    sys.dont_write_bytecode = True
+    try:
+        yield
+    finally:
+        sys.dont_write_bytecode = previous_runtime
+        if previous_environment is None:
+            os.environ.pop("PYTHONDONTWRITEBYTECODE", None)
+        else:
+            os.environ["PYTHONDONTWRITEBYTECODE"] = previous_environment
 
 
 def _git(
