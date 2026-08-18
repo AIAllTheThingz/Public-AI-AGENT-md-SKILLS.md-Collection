@@ -5,6 +5,7 @@ import unittest
 from collections import Counter
 
 import rc_finding_code_contracts_base as base
+import test_rc_finding_code_contracts as semantic_active
 import test_rc_zzzzzzzzzzzzzzzzz_function_defaults_and_constructor_provenance as _defaults_and_provenance  # noqa: F401
 
 
@@ -58,6 +59,30 @@ class ReleaseCandidateLiteralFindingMultiplicityTests(unittest.TestCase):
         self.assertGreater(len(published), 20)
         for code, expected_counts in published.items():
             with self.subTest(code=code):
+                behavior_bound = semantic_active._BEHAVIOR_BOUND_FINDING_CONTEXTS.get(code)
+                if behavior_bound is not None:
+                    # This code has a reviewed post-v0.10 implementation change and is
+                    # intentionally protected by two-sided runtime coverage instead of
+                    # exact v0.10 AST identity. Multiplicity still matters: the candidate
+                    # must retain exactly one production occurrence at the reviewed
+                    # source/function, so an accidental duplicate cannot hide behind the
+                    # behavior-bound exemption.
+                    current_counts = candidate.get(code, Counter())
+                    self.assertEqual(
+                        sum(current_counts.values()),
+                        1,
+                        f"behavior-bound public code {code} must retain exactly one literal occurrence",
+                    )
+                    signatures = [
+                        signature
+                        for signature, count in current_counts.items()
+                        for _ in range(count)
+                    ]
+                    payload = json.loads(signatures[0])
+                    self.assertEqual(payload["sourcePath"], behavior_bound["sourcePath"])
+                    self.assertEqual(payload["function"], behavior_bound["function"])
+                    continue
+
                 expected = _project_counts(expected_counts, code, contract)
                 current = _project_counts(candidate.get(code, Counter()), code, contract)
 
