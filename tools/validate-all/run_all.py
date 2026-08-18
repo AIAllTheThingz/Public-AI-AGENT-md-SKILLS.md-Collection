@@ -306,6 +306,61 @@ def command_name() -> str | None:
     return None
 
 
+def init_target_directory() -> Path:
+    current = command_directory()
+    if command_name() != "init":
+        return current
+
+    options_with_values = {
+        "-b",
+        "--initial-branch",
+        "--separate-git-dir",
+        "--object-format",
+        "--ref-format",
+        "--template",
+    }
+    index = 0
+    seen_init = False
+    while index < len(args):
+        argument = args[index]
+        if not seen_init:
+            if argument in {"-C", "-c"} and index + 1 < len(args):
+                index += 2
+                continue
+            if argument == "init":
+                seen_init = True
+            index += 1
+            continue
+
+        if argument == "--":
+            if index + 1 >= len(args):
+                return current
+            candidate = Path(args[index + 1])
+            return (
+                candidate.resolve()
+                if candidate.is_absolute()
+                else (current / candidate).resolve()
+            )
+        if argument in options_with_values and index + 1 < len(args):
+            index += 2
+            continue
+        if argument.startswith("--") and "=" in argument:
+            index += 1
+            continue
+        if argument.startswith("-"):
+            index += 1
+            continue
+
+        candidate = Path(argument)
+        return (
+            candidate.resolve()
+            if candidate.is_absolute()
+            else (current / candidate).resolve()
+        )
+
+    return current
+
+
 def has_nested_git_metadata(path: Path) -> bool:
     current = path.resolve()
     while inside_source(current) and current != source_root:
@@ -319,7 +374,7 @@ def uses_compatibility_history() -> bool:
     return any(selector in argument for argument in args for selector in selectors)
 
 
-target = command_directory()
+target = init_target_directory()
 source_has_git_metadata = (source_root / ".git").exists()
 nested_repository_creation = (
     target != source_root
