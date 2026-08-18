@@ -289,6 +289,23 @@ def command_directory() -> Path:
     return current
 
 
+def command_name() -> str | None:
+    index = 0
+    while index < len(args):
+        argument = args[index]
+        if argument == "-C" and index + 1 < len(args):
+            index += 2
+            continue
+        if argument == "-c" and index + 1 < len(args):
+            index += 2
+            continue
+        if argument.startswith("-"):
+            index += 1
+            continue
+        return argument
+    return None
+
+
 def has_nested_git_metadata(path: Path) -> bool:
     current = path.resolve()
     while inside_source(current) and current != source_root:
@@ -304,8 +321,13 @@ def uses_compatibility_history() -> bool:
 
 target = command_directory()
 source_has_git_metadata = (source_root / ".git").exists()
+nested_repository_creation = (
+    target != source_root
+    and command_name() == "init"
+)
 if (
     inside_source(target)
+    and not nested_repository_creation
     and not has_nested_git_metadata(target)
     and (uses_compatibility_history() or not source_has_git_metadata)
 ):
