@@ -21,13 +21,46 @@ _previous_module_semantic_bindings = literal_base.module_semantic_bindings
 _previous_finding_dependency_nodes = literal_base.finding_dependency_nodes
 
 
+def _module_execution_statements(statements: list[ast.stmt]):
+    """Yield statements executed in module scope without descending into definitions."""
+    for statement in statements:
+        yield statement
+        if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+        if isinstance(statement, ast.If):
+            yield from _module_execution_statements(statement.body)
+            yield from _module_execution_statements(statement.orelse)
+        elif isinstance(statement, (ast.For, ast.AsyncFor, ast.While)):
+            yield from _module_execution_statements(statement.body)
+            yield from _module_execution_statements(statement.orelse)
+        elif isinstance(statement, (ast.With, ast.AsyncWith)):
+            yield from _module_execution_statements(statement.body)
+        elif isinstance(statement, ast.Try) or (
+            hasattr(ast, "TryStar") and isinstance(statement, ast.TryStar)
+        ):
+            yield from _module_execution_statements(statement.body)
+            for handler in statement.handlers:
+                yield from _module_execution_statements(handler.body)
+            yield from _module_execution_statements(statement.orelse)
+            yield from _module_execution_statements(statement.finalbody)
+        elif isinstance(statement, ast.Match):
+            for case in statement.cases:
+                yield from _module_execution_statements(case.body)
+
+
 def _module_semantic_bindings(tree: ast.Module) -> dict[str, ast.AST]:
     definitions = _previous_module_semantic_bindings(tree)
 
-    for statement in tree.body:
+    # Import provenance is part of a public constructor's identity even when the
+    # import is intentionally wrapped in module-level execution control such as
+    # validate-all's bytecode-containment try/finally. Do not descend into
+    # function/class definitions, where Python binding rules are different.
+    for statement in _module_execution_statements(tree.body):
         if isinstance(statement, ast.ImportFrom):
             module = statement.module or ""
             for alias in statement.names:
+                if alias.name == "*":
+                    continue
                 bound_name = alias.asname or alias.name
                 definitions[bound_name] = ast.Constant(
                     value=f"import-from:{module}:{alias.name}"
@@ -219,6 +252,36 @@ def run():
             literal_base.finding_semantic_signatures(published),
             literal_base.finding_semantic_signatures(replaced),
         )
+
+    def test_finding_constructor_import_inside_module_try_is_preserved(self) -> None:
+        direct = '''
+from standards_tools import Finding
+
+def run():
+    Finding("PUBLIC_CODE", "message")
+'''
+        wrapped = '''
+try:
+    from standards_tools import Finding
+finally:
+    cleanup = True
+
+def run():
+    Finding("PUBLIC_CODE", "message")
+'''
+        alternate = wrapped.replace(
+            "from standards_tools import Finding",
+            "from alternate_tools import Finding",
+        )
+
+        direct_signature = literal_base.finding_semantic_signatures(direct)
+        wrapped_signature = literal_base.finding_semantic_signatures(wrapped)
+        alternate_signature = literal_base.finding_semantic_signatures(alternate)
+        self.assertEqual(
+            direct_signature["PUBLIC_CODE"][0],
+            wrapped_signature["PUBLIC_CODE"][0],
+        )
+        self.assertNotEqual(wrapped_signature, alternate_signature)
 
 
 if __name__ == "__main__":
