@@ -140,10 +140,116 @@ def _populate_temporary_history(
         )
 
 
+def _populate_temporary_head(
+    git_dir: Path,
+    root: Path,
+    real_git: str,
+) -> None:
+    """Create an external ephemeral HEAD representing a no-Git source tree."""
+    index_file = git_dir.parent / "validation-index"
+    env = os.environ.copy()
+    env["GIT_INDEX_FILE"] = str(index_file)
+
+    added = subprocess.run(
+        [
+            real_git,
+            f"--git-dir={git_dir}",
+            f"--work-tree={root}",
+            "add",
+            "-A",
+            "--",
+            ".",
+        ],
+        cwd=root,
+        text=True,
+        capture_output=True,
+        check=False,
+        env=env,
+    )
+    if added.returncode != 0:
+        raise RuntimeError(added.stderr.strip() or "temporary source-tree staging failed")
+
+    tree = subprocess.run(
+        [real_git, f"--git-dir={git_dir}", "write-tree"],
+        text=True,
+        capture_output=True,
+        check=False,
+        env=env,
+    )
+    if tree.returncode != 0:
+        raise RuntimeError(tree.stderr.strip() or "temporary source tree creation failed")
+    tree_sha = tree.stdout.strip()
+
+    commit_env = env.copy()
+    commit_env.update(
+        {
+            "GIT_AUTHOR_NAME": "Public AI Governance Validation",
+            "GIT_AUTHOR_EMAIL": "validation@example.invalid",
+            "GIT_COMMITTER_NAME": "Public AI Governance Validation",
+            "GIT_COMMITTER_EMAIL": "validation@example.invalid",
+            "GIT_AUTHOR_DATE": "2000-01-01T00:00:00+00:00",
+            "GIT_COMMITTER_DATE": "2000-01-01T00:00:00+00:00",
+        }
+    )
+    committed = subprocess.run(
+        [
+            real_git,
+            f"--git-dir={git_dir}",
+            "commit-tree",
+            tree_sha,
+            "-m",
+            "temporary distributed-source validation tree",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+        env=commit_env,
+    )
+    if committed.returncode != 0:
+        raise RuntimeError(
+            committed.stderr.strip() or "temporary source commit creation failed"
+        )
+    commit_sha = committed.stdout.strip()
+
+    updated = subprocess.run(
+        [
+            real_git,
+            f"--git-dir={git_dir}",
+            "update-ref",
+            "refs/heads/current-source",
+            commit_sha,
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if updated.returncode != 0:
+        raise RuntimeError(
+            updated.stderr.strip() or "temporary source HEAD update failed"
+        )
+
+    symbolic = subprocess.run(
+        [
+            real_git,
+            f"--git-dir={git_dir}",
+            "symbolic-ref",
+            "HEAD",
+            "refs/heads/current-source",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if symbolic.returncode != 0:
+        raise RuntimeError(
+            symbolic.stderr.strip() or "temporary source HEAD selection failed"
+        )
+
+
 def _write_history_git_wrapper(path: Path) -> None:
     """Write POSIX and Windows Git shims for immutable compatibility lookups."""
     path.write_text(
-        '''#!/usr/bin/env python3
+        r'''#!/usr/bin/env python3
 from __future__ import annotations
 
 import json
@@ -197,10 +303,11 @@ def uses_compatibility_history() -> bool:
 
 
 target = command_directory()
+source_has_git_metadata = (source_root / ".git").exists()
 if (
-    uses_compatibility_history()
-    and inside_source(target)
+    inside_source(target)
     and not has_nested_git_metadata(target)
+    and (uses_compatibility_history() or not source_has_git_metadata)
 ):
     args = [
         f"--git-dir={history_git_dir}",
@@ -240,10 +347,10 @@ def compatibility_history(root: Path):
 
     # History-deficient inputs include both extracted archives and shallow Git
     # checkouts. Always keep bootstrap objects/refs in a temporary external store;
-    # never fetch them into the user's existing repository. The Git shim redirects
-    # only lookups that explicitly name one of the immutable compatibility commits
-    # or temporary compatibility refs. All ordinary Git commands continue to use
-    # the source checkout (or nested fixture repository) normally.
+    # never fetch them into the user's existing repository. In a source archive,
+    # the same external store also receives an ephemeral HEAD representing the
+    # extracted tree so ordinary HEAD:<path> compatibility checks remain usable.
+    # Nested fixture repositories continue to use their own Git metadata.
     with tempfile.TemporaryDirectory(prefix="public-ai-governance-history-") as temp:
         temp_root = Path(temp)
         git_dir = temp_root / "repository.git"
@@ -260,6 +367,8 @@ def compatibility_history(root: Path):
         if initialized.returncode != 0:
             raise RuntimeError(initialized.stderr.strip() or "temporary git init failed")
         _populate_temporary_history(git_dir, bundle, real_git)
+        if not (root / ".git").exists():
+            _populate_temporary_head(git_dir, root, real_git)
 
         wrapper_dir = temp_root / "bin"
         wrapper_dir.mkdir()
