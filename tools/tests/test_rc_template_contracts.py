@@ -13,6 +13,7 @@ SECTION_PATTERN = re.compile(
     r"^##\s+(?P<title>.+?)\s*$\n(?P<body>.*?)(?=^##\s+|\Z)",
     re.MULTILINE | re.DOTALL,
 )
+SECTION_HEADING_PATTERN = re.compile(r"^##\s+(?P<title>.+?)\s*$")
 OBLIGATION_PATTERN = re.compile(
     r"\b(must(?:\s+not)?|shall(?:\s+not)?|may\s+not|cannot|do\s+not|only|required)\b",
     re.IGNORECASE,
@@ -50,6 +51,7 @@ IMPERATIVE_PREFIXES = (
     "ensure ",
     "obtain ",
 )
+ROOT_SECTION = "<root>"
 
 
 def git_output(*args: str) -> str:
@@ -76,6 +78,49 @@ def normalize_obligation(line: str) -> str:
     value = re.sub(r"[`*_]+", "", line.strip())
     value = re.sub(r"\s+", " ", value).strip()
     return value.rstrip(". :;").casefold()
+
+
+def normalize_placeholder_field_label(line: str) -> str:
+    """Return the stable field label preceding a placeholder, if one exists."""
+    value = BLOCKQUOTE_PATTERN.sub("", line.strip())
+    value = LIST_MARKER_PATTERN.sub("", value)
+    value = re.sub(r"[`*_]+", "", value).strip()
+    first_placeholder = PLACEHOLDER_PATTERN.search(value)
+    if first_placeholder is None:
+        return ""
+    prefix = value[: first_placeholder.start()].strip()
+    if not prefix.endswith(":"):
+        return ""
+    return " ".join(prefix[:-1].split()).casefold()
+
+
+def placeholder_bindings(text: str) -> set[tuple[str, str, str]]:
+    """Bind each placeholder to its H2 section and published field label."""
+    bindings: set[tuple[str, str, str]] = set()
+    current_section = ROOT_SECTION
+    in_fence = False
+
+    for raw_line in text.splitlines():
+        stripped = raw_line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        heading = SECTION_HEADING_PATTERN.match(raw_line)
+        if heading is not None:
+            current_section = normalize_section(heading.group("title"))
+            continue
+
+        names = PLACEHOLDER_PATTERN.findall(raw_line)
+        if not names:
+            continue
+        label = normalize_placeholder_field_label(raw_line)
+        for name in names:
+            bindings.add((name, current_section, label))
+
+    return bindings
 
 
 def section_obligations(body: str) -> set[str]:
@@ -109,6 +154,7 @@ def template_contract(text: str) -> dict[str, object]:
         obligations[title] = section_obligations(match.group("body"))
     return {
         "placeholders": set(PLACEHOLDER_PATTERN.findall(text)),
+        "placeholderBindings": placeholder_bindings(text),
         "sections": sections,
         "obligations": obligations,
     }
@@ -122,6 +168,8 @@ def template_contract_findings(
     findings: list[str] = []
     published_placeholders = published["placeholders"]
     candidate_placeholders = candidate["placeholders"]
+    published_bindings = published["placeholderBindings"]
+    candidate_bindings = candidate["placeholderBindings"]
     published_sections = published["sections"]
     candidate_sections = candidate["sections"]
     published_obligations = published["obligations"]
@@ -129,6 +177,11 @@ def template_contract_findings(
 
     for placeholder in sorted(published_placeholders - candidate_placeholders):
         findings.append(f"MISSING_TEMPLATE_PLACEHOLDER:{path}:{placeholder}")
+    for placeholder, section, label in sorted(published_bindings - candidate_bindings):
+        findings.append(
+            "MISSING_TEMPLATE_PLACEHOLDER_BINDING:"
+            f"{path}:{placeholder}:{section}:{label or '<standalone>'}"
+        )
     for section in sorted(published_sections - candidate_sections):
         findings.append(f"MISSING_TEMPLATE_SECTION:{path}:{section}")
     for section, expected in sorted(published_obligations.items()):
@@ -179,6 +232,10 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
         exception_path = "templates/exception/EXCEPTION_RECORD_TEMPLATE.md"
         exception = template_contract(git_source_at(self.source_commit, exception_path))
         self.assertIn(
+            ("APPROVER", "approval", "approver"),
+            exception["placeholderBindings"],
+        )
+        self.assertIn(
             "approval must come from an accountable human with delegated authority",
             exception["obligations"]["approval"],
         )
@@ -224,6 +281,72 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
             template_contract_findings(
                 "sample.md", published, template_contract(removed)
             ),
+        )
+
+    def test_placeholder_section_and_field_label_are_preserved(self):
+        published_text = """
+# Exception
+## Business need
+{{BUSINESS_NEED}}
+## Approval
+- Approver: {{APPROVER}}
+- Approval date: `{{APPROVAL_DATE}}`
+"""
+        published = template_contract(published_text)
+        moved = published_text.replace(
+            "## Business need\n{{BUSINESS_NEED}}\n## Approval\n- Approver: {{APPROVER}}\n",
+            "## Business need\n{{BUSINESS_NEED}}\n- Approver: {{APPROVER}}\n## Approval\n",
+        )
+        relabeled = published_text.replace(
+            "- Approver: {{APPROVER}}",
+            "- Reviewer: {{APPROVER}}",
+        )
+
+        binding = "MISSING_TEMPLATE_PLACEHOLDER_BINDING:sample.md:APPROVER:approval:approver"
+        self.assertIn(
+            binding,
+            template_contract_findings(
+                "sample.md", published, template_contract(moved)
+            ),
+        )
+        self.assertIn(
+            binding,
+            template_contract_findings(
+                "sample.md", published, template_contract(relabeled)
+            ),
+        )
+
+        compatible = published_text.replace(
+            "- Approver: {{APPROVER}}",
+            "* **Approver:** {{APPROVER}}",
+        )
+        self.assertEqual(
+            template_contract_findings(
+                "sample.md", published, template_contract(compatible)
+            ),
+            [],
+        )
+
+    def test_root_placeholder_field_labels_are_preserved(self):
+        published_text = """
+# Authorization
+- Requested by: {{REQUESTED_BY}}
+- Owner: `{{OWNER}}`
+## Scope
+{{SCOPE}}
+"""
+        published = template_contract(published_text)
+        self.assertIn(
+            ("REQUESTED_BY", ROOT_SECTION, "requested by"),
+            published["placeholderBindings"],
+        )
+        self.assertIn(
+            ("OWNER", ROOT_SECTION, "owner"),
+            published["placeholderBindings"],
+        )
+        self.assertIn(
+            ("SCOPE", "scope", ""),
+            published["placeholderBindings"],
         )
 
     def test_placeholder_section_and_normative_meaning_changes_are_detected(self):
