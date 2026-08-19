@@ -15,6 +15,7 @@ RULE_CHECKPOINT_SHA256 = "5f3b7a7ddd28de5a44b45f96998d7acffb2c287bad4c7699e21561
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
 CSHARP_PROMOTION_EVIDENCE_COMMIT = "2f6d39288e5c1a7d416e62cd75651b3d6da48dfe"
 CSHARP_NORMATIVE_ROOT = "languages/csharp/standards"
+HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
 RULE_PATTERN = re.compile(
     r"^### (?P<id>[A-Z][A-Z0-9-]*-\d{3})\s*$\n\n"
     r"\*\*Requirement:\*\* (?P<requirement>[^\n]+)$",
@@ -47,10 +48,16 @@ def git_object_sha_at(revision: str, relative: str) -> str:
     return git_output("rev-parse", f"{revision}:{relative}").strip()
 
 
+def rendered_markdown(text: str) -> str:
+    """Remove Markdown HTML comments before extracting visible normative contracts."""
+    return HTML_COMMENT_PATTERN.sub("", text)
+
+
 def extract_rule_contracts(text: str, path: str) -> list[tuple[str, str, str]]:
+    visible_text = rendered_markdown(text)
     return [
         (match.group("id"), match.group("requirement").strip(), path)
-        for match in RULE_PATTERN.finditer(text)
+        for match in RULE_PATTERN.finditer(visible_text)
     ]
 
 
@@ -208,6 +215,27 @@ class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
         self.assertIn(
             "CHANGED_RULE_MEANING:a.md:RULE-001",
             rule_contract_findings(published, changed),
+        )
+
+    def test_html_comments_do_not_preserve_numbered_rules(self):
+        visible = """
+### GOV-SAMPLE-001
+
+**Requirement:** Preserve this published requirement.
+""".lstrip()
+        hidden = """
+<!--
+### GOV-SAMPLE-001
+
+**Requirement:** Preserve this published requirement.
+-->
+""".lstrip()
+        published = extract_rule_contracts(visible, "sample.md")
+        candidate = extract_rule_contracts(hidden, "sample.md")
+        self.assertEqual(candidate, [])
+        self.assertIn(
+            "MISSING_RULE:sample.md:GOV-SAMPLE-001",
+            rule_contract_findings(published, candidate),
         )
 
     def test_csharp_product_rule_ids_and_meaning_are_preserved(self):
