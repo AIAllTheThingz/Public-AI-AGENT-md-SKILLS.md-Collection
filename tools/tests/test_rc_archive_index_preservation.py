@@ -34,6 +34,11 @@ class ReleaseCandidateArchiveIndexPreservationTests(unittest.TestCase):
             root = Path(temp) / "source"
             git_dir = Path(temp) / "history.git"
             root.mkdir()
+            # The archive can contain a file that is ignored by the current
+            # source rules because git archive exports tracked files regardless
+            # of whether the same path pattern is ignored today. Reconstructing
+            # tracked state must therefore force-stage the distributed bytes.
+            (root / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
             (root / "committed.pyc").write_bytes(b"published-bytecode-fixture")
             (root / "ordinary.txt").write_text("tracked\n", encoding="utf-8")
 
@@ -60,8 +65,10 @@ class ReleaseCandidateArchiveIndexPreservationTests(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(listed.returncode, 0, listed.stderr)
-            self.assertIn("committed.pyc", listed.stdout.splitlines())
-            self.assertIn("ordinary.txt", listed.stdout.splitlines())
+            tracked = listed.stdout.splitlines()
+            self.assertIn(".gitignore", tracked)
+            self.assertIn("committed.pyc", tracked)
+            self.assertIn("ordinary.txt", tracked)
 
             status = subprocess.run(
                 [
