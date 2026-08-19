@@ -12,6 +12,7 @@ NUMBERED_RULE_HEADING = re.compile(
 )
 H2_HEADING = re.compile(r"^## (?P<title>[^\n]+)\s*$", re.MULTILINE)
 H3_OR_HIGHER_HEADING = re.compile(r"^#{1,3}\s+.+$", re.MULTILINE)
+HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
 BEHAVIOR_SECTION_MARKERS = (
     "decision",
     "exception",
@@ -45,6 +46,10 @@ def normalize_contract_text(text: str) -> str:
     text = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", text)
     text = re.sub(r"[`*_]+", "", text)
     return " ".join(text.split()).strip()
+
+
+def visible_markdown(text: str) -> str:
+    return HTML_COMMENT_PATTERN.sub("", text)
 
 
 def _without_numbered_rule_blocks(text: str) -> str:
@@ -133,6 +138,7 @@ def extract_unnumbered_governance_contracts(
     text: str,
     path: str,
 ) -> Counter[tuple[str, str, str]]:
+    text = visible_markdown(text)
     text = _without_numbered_rule_blocks(text)
     matches = list(H2_HEADING.finditer(text))
     contracts: Counter[tuple[str, str, str]] = Counter()
@@ -315,6 +321,28 @@ The adopting repository must implement, validate, review, and record the applica
                     ),
                 )
                 self.assertTrue(findings)
+
+    def test_html_comments_cannot_preserve_hidden_governance_controls(self):
+        published_text = """
+## Decision gates
+
+- Stop when authorization is absent for state-changing work.
+"""
+        candidate_text = """
+## Decision gates
+
+<!--
+- Stop when authorization is absent for state-changing work.
+-->
+"""
+        published = extract_unnumbered_governance_contracts(
+            published_text, "governance/sample.md"
+        )
+        candidate = extract_unnumbered_governance_contracts(
+            candidate_text, "governance/sample.md"
+        )
+        self.assertTrue(unnumbered_contract_findings(published, candidate))
+        self.assertEqual(candidate, Counter())
 
 
 if __name__ == "__main__":
