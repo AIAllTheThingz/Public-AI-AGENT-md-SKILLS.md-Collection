@@ -9,6 +9,7 @@ CSHARP_NORMATIVE_ROOT = base.CSHARP_NORMATIVE_ROOT
 CSHARP_PROMOTION_EVIDENCE_COMMIT = base.CSHARP_PROMOTION_EVIDENCE_COMMIT
 FRONTMATTER_ID_PATTERN = re.compile(r"^id:\s*(\S+)\s*$", re.MULTILINE)
 LIST_ITEM_PATTERN = re.compile(r"^(?:[-*]|\d+\.)\s+(?P<text>.+)$")
+HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
 EDITORIAL_SECTIONS = {"Purpose", "Examples", "References", "Rationale"}
 NORMATIVE_MODAL_PATTERN = re.compile(
     r"\b(?:must(?:\s+not)?|shall(?:\s+not)?|required|may\s+only)\b",
@@ -74,7 +75,7 @@ def is_normative_statement(section: str, statement: str) -> bool:
 
 
 def extract_csharp_normative_contracts(text: str) -> set[str]:
-    """Preserve normative statements while allowing genuinely editorial evolution."""
+    """Preserve visible normative statements while allowing editorial evolution."""
 
     contracts: set[str] = set()
     current_section = ""
@@ -92,7 +93,12 @@ def extract_csharp_normative_contracts(text: str) -> set[str]:
             add_statement(" ".join(paragraph))
         paragraph = []
 
-    for raw_line in markdown_body(text).splitlines():
+    # HTML comments are not rendered to adopters and therefore cannot satisfy a
+    # published normative contract. Strip complete single- or multi-line comment
+    # regions before collecting headings, list items, or paragraph obligations.
+    visible_markdown = HTML_COMMENT_PATTERN.sub("", markdown_body(text))
+
+    for raw_line in visible_markdown.splitlines():
         stripped = raw_line.strip()
         if stripped.startswith("```"):
             flush_paragraph()
@@ -316,6 +322,61 @@ This paragraph describes an illustrative example without imposing a requirement.
                 )
             ),
             "safety imperatives in Examples must remain stable contracts",
+        )
+
+    def test_html_comments_cannot_hide_promoted_normative_contracts(self):
+        promoted_text = """
+---
+id: CSHARP-SAMPLE-001
+title: Sample
+version: 0.1.0
+status: stable
+---
+# Sample
+## Security requirements
+- Never commit credentials or secrets.
+- Require explicit authorization for privileged operations.
+""".lstrip()
+        promoted = {"sample_STANDARD.md": csharp_standard_snapshot(promoted_text)}
+
+        hidden_requirement_text = promoted_text.replace(
+            "- Never commit credentials or secrets.\n",
+            "<!--\n- Never commit credentials or secrets.\n-->\n",
+        )
+        hidden_requirement = {
+            "sample_STANDARD.md": csharp_standard_snapshot(hidden_requirement_text)
+        }
+        findings = csharp_standard_contract_findings(promoted, hidden_requirement)
+        self.assertTrue(
+            any(
+                finding.startswith(
+                    "MISSING_CSHARP_NORMATIVE_CONTRACT:sample_STANDARD.md:"
+                )
+                for finding in findings
+            ),
+            findings,
+        )
+        self.assertFalse(
+            any(
+                "Never commit credentials or secrets."
+                in contract
+                for contract in hidden_requirement["sample_STANDARD.md"]["contracts"]
+            ),
+            "HTML-commented requirements must not count as visible contracts",
+        )
+
+        commented_addition_text = promoted_text + """
+<!--
+- Never introduce an unrelated hidden requirement.
+-->
+"""
+        commented_addition = {
+            "sample_STANDARD.md": csharp_standard_snapshot(commented_addition_text)
+        }
+        self.assertEqual(
+            csharp_standard_contract_findings(promoted, commented_addition),
+            [],
+            "comment-only additions must not alter the visible contract surface",
         )
 
 
