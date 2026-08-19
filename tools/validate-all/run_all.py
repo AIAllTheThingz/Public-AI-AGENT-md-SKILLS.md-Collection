@@ -411,8 +411,13 @@ os.execv(real_git, [real_git, *args])
 def compatibility_history(root: Path):
     """Expose authenticated RC baselines without mutating the declared source root."""
     root = root.resolve()
-    missing = _required_history_missing(root)
-    if not missing:
+    source_has_git_metadata = (root / ".git").exists()
+    missing = (
+        _required_history_missing(root)
+        if source_has_git_metadata
+        else list(COMPATIBILITY_HISTORY_REFS)
+    )
+    if source_has_git_metadata and not missing:
         yield
         return
 
@@ -422,12 +427,13 @@ def compatibility_history(root: Path):
             f"Compatibility history is unavailable and bundled baseline is missing: {bundle}"
         )
 
-    # History-deficient inputs include both extracted archives and shallow Git
-    # checkouts. Always keep bootstrap objects/refs in a temporary external store;
-    # never fetch them into the user's existing repository. In a source archive,
-    # the same external store also receives an ephemeral HEAD representing the
-    # extracted tree so ordinary HEAD:<path> compatibility checks remain usable.
-    # Nested fixture repositories continue to use their own Git metadata.
+    # History-deficient inputs include extracted archives and shallow Git
+    # checkouts. A no-.git source root is always treated as an archive even when
+    # Git can walk upward into a parent checkout containing the required commits.
+    # Bootstrap objects/refs stay in a temporary external store; never fetch them
+    # into the user's repository. Archive roots also receive an ephemeral HEAD
+    # representing the declared source tree. Nested fixture repositories continue
+    # to use their own Git metadata.
     with tempfile.TemporaryDirectory(prefix="public-ai-governance-history-") as temp:
         temp_root = Path(temp)
         git_dir = temp_root / "repository.git"
@@ -444,7 +450,7 @@ def compatibility_history(root: Path):
         if initialized.returncode != 0:
             raise RuntimeError(initialized.stderr.strip() or "temporary git init failed")
         _populate_temporary_history(git_dir, bundle, real_git)
-        if not (root / ".git").exists():
+        if not source_has_git_metadata:
             _populate_temporary_head(git_dir, root, real_git)
 
         wrapper_dir = temp_root / "bin"
