@@ -11,17 +11,23 @@ RULE_HEADING_PATTERN = re.compile(
     re.MULTILINE,
 )
 FIELD_PATTERN = re.compile(r"^\*\*(?P<label>[^*\n:]+):\*\*\s*(?P<value>.*)$")
+HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 def normalize_contract_text(text: str) -> str:
     return " ".join(text.split())
 
 
+def visible_markdown(text: str) -> str:
+    return HTML_COMMENT_PATTERN.sub("", text)
+
+
 def extract_rule_field_contracts(
     text: str, path: str
 ) -> list[tuple[str, str, dict[str, str]]]:
-    """Extract every bold-labeled behavioral field within numbered rule blocks."""
+    """Extract every visible bold-labeled behavioral field in numbered rules."""
 
+    text = visible_markdown(text)
     matches = list(RULE_HEADING_PATTERN.finditer(text))
     contracts: list[tuple[str, str, dict[str, str]]] = []
 
@@ -197,6 +203,31 @@ class ReleaseCandidateNumberedRuleSemanticTests(unittest.TestCase):
                 extract_rule_field_contracts(removed_evidence, "sample.md"),
             ),
         )
+
+    def test_html_comments_cannot_preserve_hidden_rule_fields(self):
+        published_text = """
+### SAMPLE-001
+
+**Requirement:** Preserve the published behavior.
+
+**Expected evidence:** Record positive and negative tests.
+"""
+        candidate_text = """
+### SAMPLE-001
+
+**Requirement:** Preserve the published behavior.
+
+<!--
+**Expected evidence:** Record positive and negative tests.
+-->
+"""
+        published = extract_rule_field_contracts(published_text, "sample.md")
+        candidate = extract_rule_field_contracts(candidate_text, "sample.md")
+        self.assertIn(
+            "RULE_FIELD_MISSING:sample.md:SAMPLE-001:expected evidence",
+            rule_field_contract_findings(published, candidate),
+        )
+        self.assertNotIn("expected evidence", candidate[0][2])
 
 
 if __name__ == "__main__":
