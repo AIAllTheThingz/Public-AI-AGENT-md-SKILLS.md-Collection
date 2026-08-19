@@ -14,8 +14,9 @@ import test_rc_zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz_final_p1_and_ci_compositio
 # because an earlier sibling in the same expression fails. The compatibility
 # identity must not, however, absorb every unrelated prior statement: doing so
 # would freeze implementation details that v0.10 never promised. This layer
-# therefore records the concrete dangerous case raised in review: a preceding
-# same-module helper call whose body can be proven not to return normally.
+# records execution barriers that are concrete and independently meaningful:
+# same-module helpers proven not to return normally and function-local imports,
+# whose import resolution can fail before the finding is reached.
 
 
 def _call_name(node: ast.AST) -> str | None:
@@ -118,6 +119,14 @@ def _helper_guaranteed_to_abort(
 
 
 def _literal_blocking_prerequisite(visitor, statement: ast.stmt) -> ast.AST | None:
+    # Module-scope imports already participate in module initialization and
+    # constructor/dependency provenance. The review gap is an import inserted in
+    # an executing function immediately before an emission.
+    if visitor.function != "<module>" and isinstance(
+        statement,
+        (ast.Import, ast.ImportFrom),
+    ):
+        return statement
     if not isinstance(statement, ast.Expr):
         return None
     helper_name = _call_name(statement.value)
@@ -132,6 +141,11 @@ def _parameterized_blocking_prerequisite(
     visitor,
     statement: ast.stmt,
 ) -> ast.AST | None:
+    if visitor.caller != "<module>" and isinstance(
+        statement,
+        (ast.Import, ast.ImportFrom),
+    ):
+        return statement
     if not isinstance(statement, ast.Expr):
         return None
     helper_name = _call_name(statement.value)
@@ -142,13 +156,19 @@ def _parameterized_blocking_prerequisite(
     return None
 
 
+def _prerequisite_marker(node: ast.AST) -> str:
+    if isinstance(node, (ast.Import, ast.ImportFrom)):
+        return f"statement:requires-prior-execution:{literal_base.canonical_ast(node)}"
+    return "statement:requires-prior-execution"
+
+
 def _visit_block_with_statement_prerequisites(self, statements: list[ast.stmt]) -> None:
     blocker: ast.AST | None = None
     for statement in statements:
         if blocker is None:
             self.visit(statement)
         else:
-            self.context.append("statement:requires-prior-execution")
+            self.context.append(_prerequisite_marker(blocker))
             self.context_nodes.append(blocker)
             try:
                 self.visit(statement)
@@ -177,7 +197,7 @@ def _parameterized_visit_block_with_statement_prerequisites(
             self.visit(statement)
         else:
             self.context_nodes.append(
-                ("statement:requires-prior-execution", blocker)
+                (_prerequisite_marker(blocker), blocker)
             )
             try:
                 self.visit(statement)
@@ -211,7 +231,7 @@ def _reachable_parameterized_visit_block_with_statement_prerequisites(
                 self.visit(statement)
             else:
                 self.context_nodes.append(
-                    ("statement:requires-prior-execution", blocker)
+                    (_prerequisite_marker(blocker), blocker)
                 )
                 try:
                     self.visit(statement)
@@ -323,6 +343,55 @@ def validate(root, findings):
                 "sample.py",
             ),
             parameterized_reachability.reachable_parameterized_contracts(
+                preceded,
+                "sample.py",
+            ),
+        )
+
+    def test_function_local_import_changes_literal_contract(self) -> None:
+        direct = '''
+from standards_tools import Finding
+
+def run(findings):
+    findings.append(Finding("PUBLIC_CODE", "message"))
+'''
+        preceded = '''
+from standards_tools import Finding
+
+def run(findings):
+    import definitely_missing_package
+    findings.append(Finding("PUBLIC_CODE", "message"))
+'''
+        expected = literal_base.finding_semantic_signatures(direct)
+        actual = literal_base.finding_semantic_signatures(preceded)
+        self.assertNotEqual(expected, actual)
+        self.assertTrue(
+            any(
+                "definitely_missing_package" in signature
+                for signature in actual["PUBLIC_CODE"]
+            )
+        )
+
+    def test_function_local_import_changes_parameterized_contract(self) -> None:
+        direct = '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+'''
+        preceded = '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    import definitely_missing_package
+    read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+'''
+        self.assertNotEqual(
+            parameterized_active.parameterized_finding_contracts(
+                direct,
+                "sample.py",
+            ),
+            parameterized_active.parameterized_finding_contracts(
                 preceded,
                 "sample.py",
             ),
