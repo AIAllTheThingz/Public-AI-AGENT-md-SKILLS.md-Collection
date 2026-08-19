@@ -13,6 +13,7 @@ CHECKPOINT_PATH = REPO_ROOT / "releases" / "compatibility" / "0.10.0-agent-skill
 CHECKPOINT_SHA256 = "635e34c53f967d1b0bff9602037f7c716650cbf815f7aae3efc6f15c936921fb"
 _LINK_PATTERN = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 _TABLE_SEPARATOR = re.compile(r"^:?-{3,}:?$")
+_HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 def git_source_at(commit: str, relative: str) -> str:
@@ -39,7 +40,12 @@ def git_object_sha(commit: str, relative: str) -> str:
     return completed.stdout.strip()
 
 
+def visible_markdown(text: str) -> str:
+    return _HTML_COMMENT_PATTERN.sub("", text)
+
+
 def agent_skill_entry_paths(manifest_text: str) -> set[str]:
+    manifest_text = visible_markdown(manifest_text)
     section = manifest_text.split("## Agent skill entry points", 1)[1].split(
         "## Repository licensing", 1
     )[0]
@@ -69,9 +75,9 @@ def _is_separator_row(cells: list[str] | None) -> bool:
 
 
 def skill_routing_contract(skill_text: str) -> set[str]:
-    """Extract stable evidence -> package routing rows from router skill tables."""
+    """Extract stable evidence -> package routing rows from visible router tables."""
 
-    lines = skill_text.splitlines()
+    lines = visible_markdown(skill_text).splitlines()
     contracts: set[str] = set()
     index = 0
 
@@ -221,6 +227,25 @@ class ReleaseCandidateAgentSkillEntryPointTests(unittest.TestCase):
         self.assertTrue(
             missing_routing_contracts(published, skill_routing_contract(changed))
         )
+
+    def test_commented_out_router_table_does_not_count_as_routing(self):
+        published_text = """
+| Evidence | Package |
+|---|---|
+| `.py` | [`python/`](python/) |
+"""
+        candidate_text = """
+<!--
+| Evidence | Package |
+|---|---|
+| `.py` | [`python/`](python/) |
+-->
+"""
+        published = skill_routing_contract(published_text)
+        candidate = skill_routing_contract(candidate_text)
+        self.assertEqual(len(published), 1)
+        self.assertEqual(candidate, set())
+        self.assertTrue(missing_routing_contracts(published, candidate))
 
 
 if __name__ == "__main__":
