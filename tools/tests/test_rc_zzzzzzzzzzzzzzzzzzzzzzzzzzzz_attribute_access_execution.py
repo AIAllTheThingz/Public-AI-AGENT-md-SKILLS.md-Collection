@@ -20,10 +20,9 @@ import test_rc_zzzzzzzzzzzzzzzzzzzzzzzzzzz_left_to_right_expression_execution as
 
 # Attribute lookup is executable. A structurally simple receiver does not prove
 # that ``receiver.attribute`` succeeds: ``None.missing`` raises before any later
-# sibling expression can execute. Strengthen the left-to-right execution layer
-# without making unknown user-object attributes look definitely failing.
+# sibling expression can execute. Strengthen only execution-state classification
+# so existing deferred lambda/nested-function semantics remain intact.
 
-_PREVIOUS_STRUCTURALLY_SAFE = left_to_right._structurally_safe
 _PREVIOUS_EXECUTION_STATE = left_to_right._execution_state
 
 # Values produced by the static evaluator are deliberately limited to ordinary
@@ -44,14 +43,6 @@ _STATIC_ATTRIBUTE_RECEIVER_TYPES = (
     frozenset,
     range,
 )
-
-
-def _structurally_safe(node: ast.AST) -> bool:
-    if isinstance(node, ast.Attribute):
-        # Attribute access itself can raise even when evaluating the receiver is
-        # harmless. Its state is resolved explicitly below when possible.
-        return False
-    return _PREVIOUS_STRUCTURALLY_SAFE(node)
 
 
 def _attribute_execution_state(
@@ -75,15 +66,21 @@ def _attribute_execution_state(
 
 
 def _execution_state(node: ast.AST, constants: dict[str, Any]) -> str:
-    if isinstance(node, ast.Attribute):
-        return _attribute_execution_state(node, constants)
+    attribute_states = [
+        _attribute_execution_state(item, constants)
+        for item in ast.walk(node)
+        if isinstance(item, ast.Attribute)
+    ]
+    if left_to_right._RAISES in attribute_states:
+        return left_to_right._RAISES
+    if left_to_right._UNKNOWN in attribute_states:
+        return left_to_right._UNKNOWN
     return _PREVIOUS_EXECUTION_STATE(node, constants)
 
 
-# The sequence visitors installed by the preceding layer resolve these globals
-# dynamically, so strengthening the two classifiers updates literal, sink,
-# reachability, completion, and caller-supplied finding scans together.
-left_to_right._structurally_safe = _structurally_safe
+# The sequence visitors installed by the preceding layer resolve this global
+# dynamically. Do not replace ``_structurally_safe``: doing so changes deferred
+# callable execution semantics outside the left-to-right prerequisite boundary.
 left_to_right._execution_state = _execution_state
 
 
@@ -163,6 +160,20 @@ def validate(obj, findings):
                 marker.startswith("tuple:1:requires-prior-evaluation")
                 for marker in payload["context"]
             )
+        )
+
+    def test_nested_unknown_attribute_is_an_execution_prerequisite(self) -> None:
+        direct = '''
+def validate(obj, findings):
+    findings.append(Finding("PUBLIC_CODE", "visible"))
+'''
+        guarded = '''
+def validate(obj, findings):
+    (obj.value + 1, findings.append(Finding("PUBLIC_CODE", "visible")))
+'''
+        self.assertNotEqual(
+            literal_base.finding_semantic_signatures(direct),
+            literal_base.finding_semantic_signatures(guarded),
         )
 
     def test_known_existing_builtin_attribute_is_not_false_positive(self) -> None:
