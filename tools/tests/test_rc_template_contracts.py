@@ -14,6 +14,7 @@ SECTION_PATTERN = re.compile(
     re.MULTILINE | re.DOTALL,
 )
 SECTION_HEADING_PATTERN = re.compile(r"^##\s+(?P<title>.+?)\s*$")
+HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
 OBLIGATION_PATTERN = re.compile(
     r"\b(must(?:\s+not)?|shall(?:\s+not)?|may\s+not|cannot|do\s+not|only|required)\b",
     re.IGNORECASE,
@@ -68,6 +69,11 @@ def git_output(*args: str) -> str:
 
 def git_source_at(revision: str, relative: str) -> str:
     return git_output("show", f"{revision}:{relative}")
+
+
+def rendered_markdown(text: str) -> str:
+    """Remove Markdown HTML comments before extracting visible template contracts."""
+    return HTML_COMMENT_PATTERN.sub("", text)
 
 
 def normalize_section(title: str) -> str:
@@ -146,6 +152,7 @@ def section_obligations(body: str) -> set[str]:
 
 
 def template_contract(text: str) -> dict[str, object]:
+    text = rendered_markdown(text)
     sections: set[str] = set()
     obligations: dict[str, set[str]] = {}
     for match in SECTION_PATTERN.finditer(text):
@@ -413,6 +420,48 @@ Approval must come from an accountable human with delegated authority.
         self.assertEqual(
             template_contract_findings(
                 "sample.md", published, template_contract(compatible)
+            ),
+            [],
+        )
+
+    def test_html_comments_do_not_preserve_template_fields_or_obligations(self):
+        published_text = """
+# Exception
+## Approval
+- Approver: {{APPROVER}}
+Approval must come from an accountable human with delegated authority.
+""".lstrip()
+        hidden_text = """
+# Exception
+## Approval
+<!--
+- Approver: {{APPROVER}}
+Approval must come from an accountable human with delegated authority.
+-->
+""".lstrip()
+        published = template_contract(published_text)
+        candidate = template_contract(hidden_text)
+        findings = template_contract_findings("sample.md", published, candidate)
+        self.assertIn(
+            "MISSING_TEMPLATE_PLACEHOLDER:sample.md:APPROVER",
+            findings,
+        )
+        self.assertIn(
+            "MISSING_TEMPLATE_PLACEHOLDER_BINDING:sample.md:APPROVER:approval:approver",
+            findings,
+        )
+        self.assertIn(
+            "MISSING_TEMPLATE_OBLIGATION:sample.md:approval:approval must come from an accountable human with delegated authority",
+            findings,
+        )
+
+        comment_only = published_text.replace(
+            "## Approval\n",
+            "## Approval\n<!-- editorial note only -->\n",
+        )
+        self.assertEqual(
+            template_contract_findings(
+                "sample.md", published, template_contract(comment_only)
             ),
             [],
         )
