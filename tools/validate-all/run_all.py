@@ -149,6 +149,9 @@ def _populate_temporary_head(
     # Routed Git commands use the temporary repository without GIT_INDEX_FILE.
     # Populate that repository's default index so ls-files/status continue to
     # describe the extracted source tree after the ephemeral commit is created.
+    # Force staging because an extracted source archive represents tracked
+    # content already; its .gitignore must not hide files that were actually
+    # distributed (for example a mistakenly committed *.pyc).
     index_file = git_dir / "index"
     env = os.environ.copy()
     env["GIT_INDEX_FILE"] = str(index_file)
@@ -160,6 +163,7 @@ def _populate_temporary_head(
             f"--work-tree={root}",
             "add",
             "-A",
+            "-f",
             "--",
             ".",
         ],
