@@ -146,7 +146,10 @@ def _populate_temporary_head(
     real_git: str,
 ) -> None:
     """Create an external ephemeral HEAD representing a no-Git source tree."""
-    index_file = git_dir.parent / "validation-index"
+    # Routed Git commands use the temporary repository without GIT_INDEX_FILE.
+    # Populate that repository's default index so ls-files/status continue to
+    # describe the extracted source tree after the ephemeral commit is created.
+    index_file = git_dir / "index"
     env = os.environ.copy()
     env["GIT_INDEX_FILE"] = str(index_file)
 
