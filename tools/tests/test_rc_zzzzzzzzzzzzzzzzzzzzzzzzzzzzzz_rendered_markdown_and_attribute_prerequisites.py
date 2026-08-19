@@ -1,16 +1,24 @@
 from __future__ import annotations
 
 import ast
-import json
 import re
 import unittest
+from collections import Counter
 
+import rc_finding_code_contracts_base as literal_base
 import rc_normative_rule_contracts_base as rule_base
 import test_rc_agent_skill_entrypoints as skills
+import test_rc_approved_helper_and_deferred_execution as deferred_execution
+import test_rc_extended_finding_reachability as extended_reachability
+import test_rc_finding_reachability as basic_reachability
 import test_rc_numbered_rule_semantics as numbered
+import test_rc_parameterized_finding_codes as parameterized_active
+import test_rc_parameterized_finding_reachability as parameterized_reachability
 import test_rc_template_contracts as templates
 import test_rc_unnumbered_governance_semantics as unnumbered
-import test_rc_zzzzzzzzzzzzzzzzzzzzzzzzzzz_left_to_right_expression_execution as expression_execution
+import test_rc_zzz_finding_emission_sink as sink_execution
+import test_rc_zzzz_sink_rebinding_and_parameterized_multiplicity as multiplicity
+import test_rc_zzzzz_lexical_function_execution as lexical_execution
 
 
 # Compatibility contracts describe operative rendered guidance, not text that is
@@ -59,8 +67,8 @@ def _rendered_markdown(text: str) -> str:
 
 
 # Install the shared rendered-content projection on every Markdown semantic
-# extractor. These lookups are global at call time, so both immutable published
-# source and the current candidate are compared under the same rendering rules.
+# extractor. Both immutable published source and the current candidate are
+# compared under the same rendering rules.
 rule_base.rendered_markdown = _rendered_markdown
 numbered.visible_markdown = _rendered_markdown
 unnumbered.visible_markdown = _rendered_markdown
@@ -68,50 +76,184 @@ templates.rendered_markdown = _rendered_markdown
 skills.visible_markdown = _rendered_markdown
 
 
-# Attribute lookup can execute user code or fail even when evaluating its
-# receiver is harmless. It is therefore an execution prerequisite, not a
-# structurally safe sibling. Retain the previous narrow safe classifier for all
-# other expression forms while making attribute success conservative/unknown.
-_previous_structurally_safe = expression_execution._structurally_safe
+# The left-to-right execution layer intentionally replaced visit_Call on several
+# scanners. That replacement accidentally bypassed the older deferred-lambda and
+# lexical-nested-function invocation hooks. Recompose those execution semantics
+# around the latest call visitors rather than weakening the prerequisite model.
+# Attribute execution remains owned by the dedicated attribute-access layer,
+# which distinguishes known-safe builtin attributes from unknown or known-failing
+# lookups. Do not replace its structurally-safe classifier here.
 
 
-def _structurally_safe(node: ast.AST) -> bool:
-    if isinstance(node, ast.Attribute):
+def _invoke_reachable_lambda(visitor, node: ast.Call) -> bool:
+    deferred = deferred_execution._lambda_binding_for_call(visitor, node)
+    if deferred is None:
         return False
-    return _previous_structurally_safe(node)
+
+    if isinstance(node.func, ast.Lambda):
+        visitor.visit(node.func)
+    for argument in node.args:
+        visitor.visit(argument)
+    for keyword in node.keywords:
+        visitor.visit(keyword.value)
+
+    active = getattr(visitor, "_active_lambda_bodies", set())
+    marker = id(deferred)
+    if marker in active:
+        return True
+    active.add(marker)
+    try:
+        visitor.visit(deferred.body)
+    finally:
+        active.remove(marker)
+    return True
 
 
-expression_execution._structurally_safe = _structurally_safe
+def _invoke_reachable_nested(visitor, node: ast.Call, identity_attribute: str) -> bool:
+    def invoke(current, qualified) -> None:
+        current._visit_function(qualified)
+
+    return lexical_execution._invoke_nested_function(
+        visitor,
+        node,
+        identity_attribute=identity_attribute,
+        invoke=invoke,
+    )
 
 
-class ReleaseCandidateRenderedMarkdownAndAttributePrerequisiteTests(unittest.TestCase):
-    def test_attribute_lookup_before_literal_finding_is_an_execution_prerequisite(self) -> None:
-        direct = '''
-def validate(findings):
-    findings.append(Finding("PUBLIC_CODE", "visible"))
-'''
-        guarded = '''
-def validate(findings):
-    obj = None
-    (obj.missing, findings.append(Finding("PUBLIC_CODE", "visible")))
-'''
-        expected = expression_execution.literal_base.finding_semantic_signatures(direct)
-        actual = expression_execution.literal_base.finding_semantic_signatures(guarded)
-        self.assertNotEqual(expected, actual)
+_current_literal_visit_call = literal_base.FindingSignatureVisitor.visit_Call
+_current_sink_visit_call = sink_execution.SinkAwareFindingSignatureVisitor.visit_Call
 
-        sink_expected = expression_execution.sink_execution.finding_semantic_signatures_with_sink(direct)
-        sink_actual = expression_execution.sink_execution.finding_semantic_signatures_with_sink(guarded)
-        self.assertNotEqual(sink_expected, sink_actual)
 
-        payload = json.loads(actual["PUBLIC_CODE"][0])
-        self.assertTrue(
-            any(
-                marker.startswith("tuple:1:requires-prior-evaluation")
-                for marker in payload["context"]
-            ),
-            payload,
-        )
+def _literal_visit_call(self, node: ast.Call) -> None:
+    if deferred_execution._lambda_binding_for_call(self, node) is not None:
+        deferred_execution._literal_visit_call(self, node)
+        return
+    if lexical_execution._invoke_nested_function(
+        self,
+        node,
+        identity_attribute="function",
+        invoke=lexical_execution._literal_invoke,
+    ):
+        return
+    _current_literal_visit_call(self, node)
 
+
+def _sink_visit_call(self, node: ast.Call) -> None:
+    if deferred_execution._lambda_binding_for_call(self, node) is not None:
+        deferred_execution._literal_visit_call(self, node)
+        return
+    if lexical_execution._invoke_nested_function(
+        self,
+        node,
+        identity_attribute="function",
+        invoke=lexical_execution._literal_invoke,
+    ):
+        return
+    _current_sink_visit_call(self, node)
+
+
+literal_base.FindingSignatureVisitor.visit_Call = _literal_visit_call
+sink_execution.SinkAwareFindingSignatureVisitor.visit_Call = _sink_visit_call
+
+
+def _compose_reachability_visit_call(visitor_type) -> None:
+    current = visitor_type.visit_Call
+
+    def visit_call(self, node: ast.Call) -> None:
+        if _invoke_reachable_lambda(self, node):
+            return
+        if _invoke_reachable_nested(self, node, "function"):
+            return
+        current(self, node)
+
+    visitor_type.visit_Call = visit_call
+
+
+for _visitor_type in (
+    basic_reachability.ReachableFindingVisitor,
+    extended_reachability.ExtendedReachableFindingVisitor,
+    sink_execution.SinkAwareReachableFindingVisitor,
+):
+    _compose_reachability_visit_call(_visitor_type)
+
+
+_parameterized_visitor = parameterized_active.BranchAwareParameterizedCallSiteVisitor
+_current_parameterized_visit_call = _parameterized_visitor.visit_Call
+
+
+def _parameterized_visit_call(self, node: ast.Call) -> None:
+    if deferred_execution._lambda_binding_for_call(self, node) is not None:
+        deferred_execution._parameterized_visit_call(self, node)
+        return
+    if lexical_execution._invoke_nested_function(
+        self,
+        node,
+        identity_attribute="caller",
+        invoke=lexical_execution._parameterized_invoke,
+    ):
+        return
+    _current_parameterized_visit_call(self, node)
+
+
+_parameterized_visitor.visit_Call = _parameterized_visit_call
+parameterized_active.base.ParameterizedCallSiteVisitor = _parameterized_visitor
+
+
+_current_reachable_parameterized_visit_call = (
+    parameterized_reachability.ReachableParameterizedCallSiteVisitor.visit_Call
+)
+
+
+def _reachable_parameterized_visit_call(self, node: ast.Call) -> None:
+    if deferred_execution._lambda_binding_for_call(self, node) is not None:
+        deferred_execution._parameterized_visit_call(self, node)
+        return
+    if _invoke_reachable_nested(self, node, "caller"):
+        return
+    _current_reachable_parameterized_visit_call(self, node)
+
+
+parameterized_reachability.ReachableParameterizedCallSiteVisitor.visit_Call = (
+    _reachable_parameterized_visit_call
+)
+
+
+# The counting visitors own concrete visit_Call implementations, so compose the
+# same invocation behavior there and point the multiplicity delegation hook at
+# the final semantic call visitor.
+_current_counting_visit_call = multiplicity._CountingParameterizedCallSiteVisitor.visit_Call
+_current_counting_reachable_visit_call = (
+    multiplicity._CountingReachableParameterizedCallSiteVisitor.visit_Call
+)
+
+
+def _counting_visit_call(self, node: ast.Call) -> None:
+    if deferred_execution._lambda_binding_for_call(self, node) is not None:
+        deferred_execution._parameterized_visit_call(self, node)
+        return
+    if _invoke_reachable_nested(self, node, "caller"):
+        return
+    _current_counting_visit_call(self, node)
+
+
+def _counting_reachable_visit_call(self, node: ast.Call) -> None:
+    if deferred_execution._lambda_binding_for_call(self, node) is not None:
+        deferred_execution._parameterized_visit_call(self, node)
+        return
+    if _invoke_reachable_nested(self, node, "caller"):
+        return
+    _current_counting_reachable_visit_call(self, node)
+
+
+multiplicity._CountingParameterizedCallSiteVisitor.visit_Call = _counting_visit_call
+multiplicity._CountingReachableParameterizedCallSiteVisitor.visit_Call = (
+    _counting_reachable_visit_call
+)
+multiplicity._COMPOSED_PARAMETERIZED_VISIT_CALL = _parameterized_visit_call
+
+
+class ReleaseCandidateRenderedMarkdownAndCompositionTests(unittest.TestCase):
     def test_fenced_numbered_rule_is_not_an_operative_contract(self) -> None:
         published_text = '''
 ### GOV-DEMO-001
@@ -302,6 +444,64 @@ def validate(findings):
         candidate = skills.skill_routing_contract(fenced_text)
         self.assertTrue(published)
         self.assertTrue(skills.missing_routing_contracts(published, candidate))
+
+    def test_latest_composition_preserves_invoked_lambda_and_nested_reachability(self) -> None:
+        lambda_source = '''
+def validate():
+    deferred = lambda: Finding("PUBLIC_CODE", "visible")
+    deferred()
+'''
+        self.assertEqual(
+            extended_reachability.reachable_contracts(lambda_source, "sample.py")[(
+                "sample.py",
+                "validate",
+                "PUBLIC_CODE",
+            )],
+            1,
+        )
+
+        nested_source = '''
+def validate():
+    def emit():
+        Finding("PUBLIC_CODE", "visible")
+    emit()
+'''
+        self.assertEqual(
+            extended_reachability.reachable_contracts(nested_source, "sample.py")[(
+                "sample.py",
+                "validate.<locals>.emit",
+                "PUBLIC_CODE",
+            )],
+            1,
+        )
+
+    def test_latest_composition_preserves_parameterized_lambda_and_nested_reachability(self) -> None:
+        lambda_source = '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    deferred = lambda: read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+    deferred()
+'''
+        lambda_contracts = parameterized_reachability.reachable_parameterized_contracts(
+            lambda_source,
+            "sample.py",
+        )
+        self.assertEqual(len(lambda_contracts), 1)
+
+        nested_source = '''
+def read_text(path, findings, code):
+    Finding(code, "decode failed", path="sample")
+def validate(root, findings):
+    def emit():
+        read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
+    emit()
+'''
+        nested_contracts = parameterized_reachability.reachable_parameterized_contracts(
+            nested_source,
+            "sample.py",
+        )
+        self.assertEqual(len(nested_contracts), 1)
 
 
 if __name__ == "__main__":
