@@ -34,6 +34,9 @@ import test_rc_zzzzzzzzzzzzzzzzzzzzzzzzzzz_left_to_right_expression_execution as
 
 _HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
 _FENCE_OPEN_PATTERN = re.compile(r"^[ \t]{0,3}(?P<marker>`{3,}|~{3,})")
+_ATX_HEADING_PATTERN = re.compile(r"^#{1,6}(?:[ \t]+|$)")
+_LIST_MARKER_PATTERN = re.compile(r"^(?:[-+*]|\d{1,9}[.)])(?:[ \t]+|$)")
+_SETEXT_OR_RULE_PATTERN = re.compile(r"^(?:=+|-+|(?:\*\s*){3,}|(?:_\s*){3,})[ \t]*$")
 
 
 def _indent_columns(text: str) -> int:
@@ -52,15 +55,33 @@ def _line_break(raw_line: str) -> str:
     return "\n" if raw_line.endswith(("\n", "\r")) else ""
 
 
+def _opens_or_continues_paragraph(candidate: str) -> bool:
+    """Return whether a following indented line would interrupt paragraph/list text."""
+
+    stripped = candidate.lstrip(" \t")
+    if not stripped:
+        return False
+    if _ATX_HEADING_PATTERN.match(stripped):
+        return False
+    if stripped.startswith(">"):
+        return False
+    if _SETEXT_OR_RULE_PATTERN.match(stripped):
+        return False
+    # List content owns ambiguous indentation ahead of indented-code parsing.
+    if _LIST_MARKER_PATTERN.match(stripped):
+        return True
+    return True
+
+
 def _rendered_markdown(text: str) -> str:
     """Project Markdown to operative source text for compatibility scanners.
 
     This intentionally is not a full Markdown renderer. It models the non-rendered
-    regions that matter to these semantic extractors: HTML comments, fenced code,
-    and top-level CommonMark indented code blocks. Indented code blocks may begin
-    only where a block can begin (document start or after a blank rendered line),
-    so ordinary paragraph/list continuation text is not discarded merely because
-    it contains indentation.
+    regions material to these semantic extractors: HTML comments, fenced code,
+    and CommonMark indented code blocks. Four-column indentation begins code when
+    it does not interrupt an active paragraph/list continuation; headings and
+    other block boundaries therefore permit indented code without requiring an
+    extra blank line.
     """
 
     without_comments = _HTML_COMMENT_PATTERN.sub("", text)
@@ -68,7 +89,7 @@ def _rendered_markdown(text: str) -> str:
     fence_character: str | None = None
     fence_length = 0
     in_indented_code = False
-    previous_rendered_blank = True
+    paragraph_or_list_open = False
 
     for raw_line in without_comments.splitlines(keepends=True):
         candidate = raw_line.rstrip("\r\n")
@@ -87,13 +108,13 @@ def _rendered_markdown(text: str) -> str:
                     fence_character = None
                     fence_length = 0
             output.append(_line_break(raw_line))
-            previous_rendered_blank = True
+            paragraph_or_list_open = False
             continue
 
         if in_indented_code:
             if blank or leading_columns >= 4:
                 output.append(_line_break(raw_line))
-                previous_rendered_blank = True
+                paragraph_or_list_open = False
                 continue
             in_indented_code = False
 
@@ -103,17 +124,20 @@ def _rendered_markdown(text: str) -> str:
             fence_character = marker[0]
             fence_length = len(marker)
             output.append(_line_break(raw_line))
-            previous_rendered_blank = True
+            paragraph_or_list_open = False
             continue
 
-        if leading_columns >= 4 and previous_rendered_blank and not blank:
+        if leading_columns >= 4 and not paragraph_or_list_open and not blank:
             in_indented_code = True
             output.append(_line_break(raw_line))
-            previous_rendered_blank = True
+            paragraph_or_list_open = False
             continue
 
         output.append(raw_line)
-        previous_rendered_blank = blank
+        if blank:
+            paragraph_or_list_open = False
+        elif leading_columns < 4:
+            paragraph_or_list_open = _opens_or_continues_paragraph(candidate)
 
     return "".join(output)
 
@@ -244,6 +268,27 @@ def validate():
                 "templates/demo.md", published, candidate
             )
         )
+
+    def test_indented_code_can_follow_heading_without_blank_line(self) -> None:
+        published_text = '''
+## Approval
+- Approval must come from an accountable human.
+'''
+        indented_text = '''
+## Approval
+    - Approval must come from an accountable human.
+'''
+        published = templates.template_contract(published_text)
+        candidate = templates.template_contract(indented_text)
+        self.assertTrue(
+            templates.template_contract_findings(
+                "templates/demo.md", published, candidate
+            )
+        )
+
+    def test_indentation_does_not_interrupt_plain_paragraph(self) -> None:
+        text = "Paragraph text\n    continuation text\n"
+        self.assertIn("continuation text", _rendered_markdown(text))
 
     def test_four_space_indented_governance_control_is_not_operative(self) -> None:
         published_text = '''
