@@ -7,83 +7,158 @@ import rc_finding_code_contracts_base as literal_base
 import test_rc_parameterized_finding_codes as parameterized_active
 import test_rc_parameterized_finding_reachability as parameterized_reachability
 import test_rc_zzz_finding_emission_sink as sink_execution
-import test_rc_zzzzzzzzzzzzzzzzzzzzzzzzzzz_left_to_right_expression_execution as left_to_right
-import test_rc_zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz_definition_defaults_and_bound_names as bound_names_layer
 import test_rc_zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz_final_p1_and_ci_composition as final_composition  # noqa: F401
 
 
 # A Finding can be unreachable because an earlier *statement* fails, not only
-# because an earlier sibling in the same expression fails. Preserve those
-# execution prerequisites in literal, sink, and caller-supplied-code contracts.
+# because an earlier sibling in the same expression fails. The compatibility
+# identity must not, however, absorb every unrelated prior statement: doing so
+# would freeze implementation details that v0.10 never promised. This layer
+# therefore records the concrete dangerous case raised in review: a preceding
+# same-module helper call whose body can be proven not to return normally.
 
 
-def _statement_execution_expression(statement: ast.stmt) -> ast.AST | None:
-    if isinstance(statement, ast.Expr):
-        return statement.value
-    if isinstance(statement, ast.Assign):
-        return statement.value
-    if isinstance(statement, ast.AnnAssign):
-        return statement.value
-    if isinstance(statement, ast.AugAssign):
-        # Augmented assignment evaluates its target/value and dynamic operator.
-        # The complete statement is retained when execution cannot be proven safe.
-        return statement
+def _call_name(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+        return node.func.id
     return None
 
 
-def _literal_statement_execution_state(
+def _is_explicit_process_exit(node: ast.AST) -> bool:
+    if not isinstance(node, ast.Call):
+        return False
+    if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+        return (node.func.value.id, node.func.attr) in {
+            ("sys", "exit"),
+            ("os", "_exit"),
+        }
+    return False
+
+
+def _static_bool(node: ast.AST) -> bool | None:
+    if isinstance(node, ast.Constant):
+        if node.value is True:
+            return True
+        if node.value is False or node.value is None:
+            return False
+    return None
+
+
+def _block_guaranteed_to_abort(
+    statements: list[ast.stmt],
+    definitions: dict[str, ast.AST],
+    seen: set[str],
+) -> bool:
+    for statement in statements:
+        if isinstance(statement, ast.Raise):
+            return True
+        if isinstance(statement, ast.Return):
+            return False
+        if isinstance(statement, ast.Expr):
+            if _is_explicit_process_exit(statement.value):
+                return True
+            helper_name = _call_name(statement.value)
+            if helper_name and _helper_guaranteed_to_abort(
+                helper_name,
+                definitions,
+                seen,
+            ):
+                return True
+        if isinstance(statement, ast.If):
+            truth = _static_bool(statement.test)
+            if truth is True:
+                if _block_guaranteed_to_abort(statement.body, definitions, seen):
+                    return True
+                continue
+            if truth is False:
+                if _block_guaranteed_to_abort(statement.orelse, definitions, seen):
+                    return True
+                continue
+            if statement.body and statement.orelse:
+                if _block_guaranteed_to_abort(
+                    statement.body,
+                    definitions,
+                    seen,
+                ) and _block_guaranteed_to_abort(
+                    statement.orelse,
+                    definitions,
+                    seen,
+                ):
+                    return True
+        # Other statements may raise at runtime, but without proof they are not
+        # allowed to perturb the published compatibility identity.
+    return False
+
+
+def _helper_guaranteed_to_abort(
+    name: str,
+    definitions: dict[str, ast.AST],
+    seen: set[str] | None = None,
+) -> bool:
+    definition = definitions.get(name)
+    # Calling async def merely constructs a coroutine until it is awaited, so it
+    # is not a synchronous pre-emission blocker at this call site.
+    if not isinstance(definition, ast.FunctionDef):
+        return False
+
+    active = set(seen or ())
+    if name in active:
+        return False
+    active.add(name)
+
+    body = list(definition.body)
+    if (
+        body
+        and isinstance(body[0], ast.Expr)
+        and isinstance(body[0].value, ast.Constant)
+        and isinstance(body[0].value.value, str)
+    ):
+        body = body[1:]
+    return _block_guaranteed_to_abort(body, definitions, active)
+
+
+def _literal_blocking_prerequisite(visitor, statement: ast.stmt) -> ast.AST | None:
+    if not isinstance(statement, ast.Expr):
+        return None
+    helper_name = _call_name(statement.value)
+    if helper_name is None:
+        return None
+    if _helper_guaranteed_to_abort(helper_name, visitor.module_definitions):
+        return statement.value
+    return None
+
+
+def _parameterized_blocking_prerequisite(
     visitor,
     statement: ast.stmt,
-) -> tuple[str, ast.AST | None]:
-    expression = _statement_execution_expression(statement)
-    if expression is None:
-        return left_to_right._SAFE, None
-
-    if isinstance(expression, ast.stmt):
-        return left_to_right._UNKNOWN, statement
-
-    constants = left_to_right._literal_constants(visitor)
-    state = bound_names_layer._visitor_execution_state(visitor, expression, constants)
-    return state, expression
-
-
-def _parameterized_statement_execution_state(
-    visitor,
-    statement: ast.stmt,
-) -> tuple[str, ast.AST | None]:
-    expression = _statement_execution_expression(statement)
-    if expression is None:
-        return left_to_right._SAFE, None
-
-    if isinstance(expression, ast.stmt):
-        return left_to_right._UNKNOWN, statement
-
-    constants = left_to_right._parameterized_constants(visitor)
-    state = bound_names_layer._visitor_execution_state(visitor, expression, constants)
-    return state, expression
+) -> ast.AST | None:
+    if not isinstance(statement, ast.Expr):
+        return None
+    helper_name = _call_name(statement.value)
+    if helper_name is None:
+        return None
+    if _helper_guaranteed_to_abort(helper_name, visitor.definitions):
+        return statement.value
+    return None
 
 
 def _visit_block_with_statement_prerequisites(self, statements: list[ast.stmt]) -> None:
-    prerequisites: list[ast.AST] = []
-
+    blocker: ast.AST | None = None
     for statement in statements:
-        if prerequisites:
+        if blocker is None:
+            self.visit(statement)
+        else:
             self.context.append("statement:requires-prior-execution")
-            self.context_nodes.append(left_to_right._prerequisite_node(prerequisites))
+            self.context_nodes.append(blocker)
             try:
                 self.visit(statement)
             finally:
                 self.context_nodes.pop()
                 self.context.pop()
-        else:
-            self.visit(statement)
 
-        state, expression = _literal_statement_execution_state(self, statement)
-        if expression is not None and state in {
-            left_to_right._UNKNOWN,
-            left_to_right._RAISES,
-        }:
-            prerequisites.append(expression)
+        candidate = _literal_blocking_prerequisite(self, statement)
+        if candidate is not None:
+            blocker = candidate
 
 
 literal_base.FindingSignatureVisitor._visit_block = _visit_block_with_statement_prerequisites
@@ -96,29 +171,22 @@ def _parameterized_visit_block_with_statement_prerequisites(
     self,
     statements: list[ast.stmt],
 ) -> None:
-    prerequisites: list[ast.AST] = []
-
+    blocker: ast.AST | None = None
     for statement in statements:
-        if prerequisites:
+        if blocker is None:
+            self.visit(statement)
+        else:
             self.context_nodes.append(
-                (
-                    "statement:requires-prior-execution",
-                    left_to_right._prerequisite_node(prerequisites),
-                )
+                ("statement:requires-prior-execution", blocker)
             )
             try:
                 self.visit(statement)
             finally:
                 self.context_nodes.pop()
-        else:
-            self.visit(statement)
 
-        state, expression = _parameterized_statement_execution_state(self, statement)
-        if expression is not None and state in {
-            left_to_right._UNKNOWN,
-            left_to_right._RAISES,
-        }:
-            prerequisites.append(expression)
+        candidate = _parameterized_blocking_prerequisite(self, statement)
+        if candidate is not None:
+            blocker = candidate
 
 
 _parameterized_visitor._visit_block = _parameterized_visit_block_with_statement_prerequisites
@@ -136,32 +204,23 @@ def _reachable_parameterized_visit_block_with_statement_prerequisites(
 ) -> None:
     previous_constants = self.constants
     self.constants = dict(previous_constants)
-    prerequisites: list[ast.AST] = []
+    blocker: ast.AST | None = None
     try:
         for statement in statements:
-            if prerequisites:
+            if blocker is None:
+                self.visit(statement)
+            else:
                 self.context_nodes.append(
-                    (
-                        "statement:requires-prior-execution",
-                        left_to_right._prerequisite_node(prerequisites),
-                    )
+                    ("statement:requires-prior-execution", blocker)
                 )
                 try:
                     self.visit(statement)
                 finally:
                     self.context_nodes.pop()
-            else:
-                self.visit(statement)
 
-            state, expression = _parameterized_statement_execution_state(
-                self,
-                statement,
-            )
-            if expression is not None and state in {
-                left_to_right._UNKNOWN,
-                left_to_right._RAISES,
-            }:
-                prerequisites.append(expression)
+            candidate = _parameterized_blocking_prerequisite(self, statement)
+            if candidate is not None:
+                blocker = candidate
 
             if parameterized_reachability.statement_always_terminates(
                 statement,
@@ -199,7 +258,6 @@ def run(findings):
     explode()
     findings.append(Finding("PUBLIC_CODE", "message"))
 '''
-
         expected = literal_base.finding_semantic_signatures(direct)
         actual = literal_base.finding_semantic_signatures(preceded)
         self.assertNotEqual(expected, actual)
@@ -270,7 +328,7 @@ def validate(root, findings):
             ),
         )
 
-    def test_statically_safe_prior_statement_does_not_add_contract_noise(self) -> None:
+    def test_normal_helper_statement_does_not_freeze_implementation_detail(self) -> None:
         direct = '''
 from standards_tools import Finding
 
@@ -280,11 +338,37 @@ def run(findings):
         preceded = '''
 from standards_tools import Finding
 
+def observe():
+    return 1
+
 def run(findings):
-    0
+    observe()
     findings.append(Finding("PUBLIC_CODE", "message"))
 '''
         self.assertEqual(
+            literal_base.finding_semantic_signatures(direct),
+            literal_base.finding_semantic_signatures(preceded),
+        )
+
+    def test_transitively_raising_helper_is_a_prerequisite(self) -> None:
+        direct = '''
+from standards_tools import Finding
+
+def run(findings):
+    findings.append(Finding("PUBLIC_CODE", "message"))
+'''
+        preceded = '''
+from standards_tools import Finding
+
+def explode():
+    raise RuntimeError("stop")
+def wrapper():
+    explode()
+def run(findings):
+    wrapper()
+    findings.append(Finding("PUBLIC_CODE", "message"))
+'''
+        self.assertNotEqual(
             literal_base.finding_semantic_signatures(direct),
             literal_base.finding_semantic_signatures(preceded),
         )
