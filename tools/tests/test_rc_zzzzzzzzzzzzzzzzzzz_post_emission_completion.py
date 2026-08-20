@@ -59,7 +59,9 @@ def _sequence_can_complete_normally(
         rest = statements[index + 1 :]
 
         if isinstance(statement, ast.Return):
-            return True
+            if statement.value is None:
+                return True
+            return not _expression_guaranteed_abnormal(statement.value, state)
         if isinstance(statement, ast.Raise):
             return False
         if isinstance(statement, ast.Assert):
@@ -248,6 +250,46 @@ from standards_tools import Finding
 def run(findings):
     findings.append(Finding("PUBLIC_CODE", "message"))
     return None
+'''
+        normal, abnormal = _completion_counts(source, "sample.py")
+        key = ("sample.py", "run", "PUBLIC_CODE")
+        self.assertEqual(normal[key], 1)
+        self.assertEqual(abnormal[key], 0)
+
+    def test_raising_return_expression_after_emission_is_abnormal(self) -> None:
+        source = '''
+from standards_tools import Finding
+
+def run(findings):
+    findings.append(Finding("PUBLIC_CODE", "message"))
+    return 1 / 0
+'''
+        normal, abnormal = _completion_counts(source, "sample.py")
+        key = ("sample.py", "run", "PUBLIC_CODE")
+        self.assertEqual(normal[key], 0)
+        self.assertEqual(abnormal[key], 1)
+
+    def test_explicit_exit_return_expression_is_abnormal(self) -> None:
+        source = '''
+import sys
+from standards_tools import Finding
+
+def run(findings):
+    findings.append(Finding("PUBLIC_CODE", "message"))
+    return sys.exit(1)
+'''
+        normal, abnormal = _completion_counts(source, "sample.py")
+        key = ("sample.py", "run", "PUBLIC_CODE")
+        self.assertEqual(normal[key], 0)
+        self.assertEqual(abnormal[key], 1)
+
+    def test_unknown_return_expression_keeps_normal_completion_possible(self) -> None:
+        source = '''
+from standards_tools import Finding
+
+def run(findings, value):
+    findings.append(Finding("PUBLIC_CODE", "message"))
+    return value
 '''
         normal, abnormal = _completion_counts(source, "sample.py")
         key = ("sample.py", "run", "PUBLIC_CODE")
