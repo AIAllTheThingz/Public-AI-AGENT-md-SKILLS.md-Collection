@@ -89,6 +89,9 @@ terminal._evaluate_static_shape = _evaluate_static_shape_with_starred_rhs
 
 
 _previous_rule_findings = numbered.rule_field_contract_findings
+_previous_permission_expansion_classifier = (
+    terminal._is_permission_expanding_statement
+)
 
 _EXTRA_ESCAPE_LABEL_MARKERS = (
     "exempt",
@@ -107,6 +110,16 @@ def _candidate_only_behavioral_label(label: str) -> bool:
 
 
 terminal._is_candidate_only_behavioral_field = _candidate_only_behavioral_label
+
+
+def _is_permission_expanding_statement(value: str) -> bool:
+    normalized = numbered.normalize_contract_text(value).casefold()
+    return _previous_permission_expansion_classifier(value) or bool(
+        re.search(r"\bno\s+longer\s+mandatory\b", normalized)
+    )
+
+
+terminal._is_permission_expanding_statement = _is_permission_expanding_statement
 
 
 def _candidate_only_rule_field_findings(
@@ -186,6 +199,14 @@ _STOPWORDS = {
     "when",
     "with",
 }
+_OBLIGATION_RESTATEMENT_TOKENS = {
+    "mandatory",
+    "must",
+    "perform",
+    "requir",
+    "require",
+    "shall",
+}
 
 
 def _stem_token(token: str) -> str:
@@ -203,6 +224,10 @@ def _semantic_tokens(text: str) -> set[str]:
     }
 
 
+def _obligation_subject_action_tokens(text: str) -> set[str]:
+    return _semantic_tokens(text) - _OBLIGATION_RESTATEMENT_TOKENS
+
+
 def _conditional_escape_weakens_published(
     statement: str,
     published_peers: list[str],
@@ -215,14 +240,14 @@ def _conditional_escape_weakens_published(
     if not prefix or _OBLIGATION_MARKER.search(prefix) is None:
         return False
 
-    prefix_tokens = _semantic_tokens(prefix)
+    prefix_tokens = _obligation_subject_action_tokens(prefix)
     if len(prefix_tokens) < 2:
         return False
 
     for peer in published_peers:
         if _OBLIGATION_MARKER.search(peer) is None:
             continue
-        peer_tokens = _semantic_tokens(peer)
+        peer_tokens = _obligation_subject_action_tokens(peer)
         if not peer_tokens:
             continue
         overlap = len(prefix_tokens & peer_tokens) / len(prefix_tokens)
@@ -308,6 +333,38 @@ def validate():
             numbered.rule_field_contract_findings(published, candidate),
         )
 
+    def test_neutral_label_no_longer_mandatory_is_permission_expansion(self) -> None:
+        published_text = """
+### SAMPLE-001
+
+**Requirement:** Authentication is required.
+"""
+        candidate_text = published_text + """
+**Notes:** Authentication is no longer mandatory.
+"""
+        published = numbered.extract_rule_field_contracts(published_text, "sample.md")
+        candidate = numbered.extract_rule_field_contracts(candidate_text, "sample.md")
+        self.assertIn(
+            "RULE_BEHAVIORAL_FIELD_ADDED:sample.md:SAMPLE-001:notes",
+            numbered.rule_field_contract_findings(published, candidate),
+        )
+
+    def test_neutral_editorial_label_is_not_permission_expansion(self) -> None:
+        published_text = """
+### SAMPLE-001
+
+**Requirement:** Authentication is required.
+"""
+        candidate_text = published_text + """
+**Notes:** Authentication terminology is used consistently in this section.
+"""
+        published = numbered.extract_rule_field_contracts(published_text, "sample.md")
+        candidate = numbered.extract_rule_field_contracts(candidate_text, "sample.md")
+        self.assertEqual(
+            numbered.rule_field_contract_findings(published, candidate),
+            [],
+        )
+
     def test_unless_exception_to_published_obligation_is_rejected(self) -> None:
         published_text = """
 ## Independent review
@@ -316,6 +373,33 @@ Independent review is required before high-risk work is merged.
 """
         candidate_text = published_text + """
 Independent review is required unless the author marks the change urgent.
+"""
+        published = unnumbered.extract_unnumbered_governance_contracts(
+            published_text,
+            "AGENTS.md",
+        )
+        candidate = unnumbered.extract_unnumbered_governance_contracts(
+            candidate_text,
+            "AGENTS.md",
+        )
+        self.assertTrue(
+            any(
+                item.startswith("UNNUMBERED_GOVERNANCE_WEAKENING_ADDED:")
+                for item in unnumbered.unnumbered_contract_findings(
+                    published,
+                    candidate,
+                )
+            )
+        )
+
+    def test_modal_restatement_unless_exception_is_rejected(self) -> None:
+        published_text = """
+## Independent review
+
+Independent review is required before high-risk work is merged.
+"""
+        candidate_text = published_text + """
+Independent review must be performed unless the author marks the change urgent.
 """
         published = unnumbered.extract_unnumbered_governance_contracts(
             published_text,
