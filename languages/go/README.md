@@ -125,3 +125,13 @@ A completion report must include files and packages changed, behavior and public
 The adopting repository must still define business requirements, service architecture, deployment environments, identity, data ownership, incident response, release management, backup, recovery, and organization-specific compliance.
 
 This package improves agent behavior. It does not guarantee that generated Go software is secure, correct, compliant, or production ready.
+
+## Authoritative starting points
+
+- [Go documentation](https://go.dev/doc/)
+- [The Go programming language specification](https://go.dev/ref/spec)
+- [Go modules reference](https://go.dev/ref/mod)
+- [Go standard library](https://pkg.go.dev/std)
+- [Go release policy](https://go.dev/doc/devel/release)
+
+Revalidate current Go, module, toolchain, security, and support behavior before relying on version-specific guidance.

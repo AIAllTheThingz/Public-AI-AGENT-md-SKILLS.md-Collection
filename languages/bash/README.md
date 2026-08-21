@@ -128,3 +128,11 @@ A completion report must identify scripts and files changed, supported shells an
 The adopting repository must still define production targets, scheduling, change approval, credentials, remote execution, data classification, incident response, backup, recovery, and organization-specific compliance.
 
 This package improves agent behavior. It does not guarantee that generated shell automation is secure, correct, portable, compliant, or safe to run in production.
+
+## Authoritative starting points
+
+- [GNU Bash Reference Manual (Bash)](https://www.gnu.org/software/bash/manual/bash.html)
+- [POSIX Shell Command Language (POSIX `sh`)](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html)
+- [POSIX Utilities (external command behavior)](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/contents.html)
+
+Revalidate the selected Bash version, declared POSIX target, external utilities, security, and support behavior before relying on version-specific guidance.

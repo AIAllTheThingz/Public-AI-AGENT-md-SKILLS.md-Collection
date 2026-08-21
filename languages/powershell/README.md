@@ -159,3 +159,13 @@ Templates are references, not production-ready artifacts. Replace placeholders a
 The adopting repository must still define production targets, scheduling, deployment, credential sources, change approval, data classification, backup, recovery, and organization-specific compliance.
 
 This package improves agent behavior. It does not guarantee that generated automation is secure, correct, compliant, or safe to run in production.
+
+## Authoritative starting points
+
+- [PowerShell documentation](https://learn.microsoft.com/en-us/powershell/)
+- [PowerShell scripting overview](https://learn.microsoft.com/en-us/powershell/scripting/overview?view=powershell-7.6)
+- [about language keywords](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_language_keywords?view=powershell-7.6)
+- [PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer)
+- [Pester documentation](https://pester.dev/docs/quick-start)
+
+Revalidate current PowerShell, module, analyzer, security, and platform-support behavior before relying on version-specific guidance.

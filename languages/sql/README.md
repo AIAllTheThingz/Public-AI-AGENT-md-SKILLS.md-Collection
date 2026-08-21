@@ -127,3 +127,13 @@ A completion report must include objects and scripts changed, data and compatibi
 The adopting repository must still define business data requirements, production ownership, database operations, maintenance windows, data classification, incident response, backup, recovery, retention, and organization-specific compliance.
 
 This package improves agent behavior. It does not guarantee that generated SQL is correct, portable, secure, performant, or safe to deploy.
+
+## Authoritative starting points
+
+- [ISO/IEC 9075-1:2023 SQL/Framework](https://www.iso.org/standard/76583.html)
+- [PostgreSQL documentation](https://www.postgresql.org/docs/)
+- [Microsoft SQL Server documentation](https://learn.microsoft.com/en-us/sql/sql-server/)
+- [MySQL Reference Manual](https://dev.mysql.com/doc/refman/8.4/en/)
+- [SQLite documentation](https://www.sqlite.org/docs.html)
+
+Revalidate the declared engine, edition, version, dialect, security, and support behavior; do not infer portability from another engine's documentation.

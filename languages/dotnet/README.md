@@ -142,3 +142,13 @@ Useful entry points include:
 The adopting repository must still define production architecture, deployment environments, data ownership, identity providers, database operations, incident response, backup, recovery, and organization-specific compliance.
 
 This package improves agent behavior. It does not guarantee that generated software is secure, correct, compliant, or production ready.
+
+## Authoritative starting points
+
+- [.NET documentation](https://learn.microsoft.com/en-us/dotnet/)
+- [Target frameworks in SDK-style projects](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
+- [Configure the .NET SDK](https://learn.microsoft.com/en-us/dotnet/core/tools/global-json)
+- [NuGet documentation](https://learn.microsoft.com/en-us/nuget/)
+- [.NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core)
+
+Revalidate current SDK, target-framework, package, security, and support behavior before relying on version-specific guidance.

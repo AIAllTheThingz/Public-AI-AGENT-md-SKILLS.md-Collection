@@ -128,3 +128,13 @@ A completion report must include modules and resources changed, create/update/re
 The adopting repository must still define cloud architecture, account ownership, networking, identity, policy enforcement, production approvals, incident response, business continuity, backup, recovery, and organization-specific compliance.
 
 This package improves agent behavior. It does not guarantee that generated infrastructure code is secure, correct, compliant, or safe to apply.
+
+## Authoritative starting points
+
+- [Terraform CLI documentation](https://developer.hashicorp.com/terraform/cli)
+- [Terraform language documentation](https://developer.hashicorp.com/terraform/language)
+- [Terraform v1.x compatibility promises](https://developer.hashicorp.com/terraform/language/v1-compatibility-promises)
+- [OpenTofu documentation](https://opentofu.org/docs/)
+- [OpenTofu language documentation](https://opentofu.org/docs/language/)
+
+Revalidate the selected Terraform or OpenTofu engine, exact version, providers, security, and support behavior before relying on version-specific guidance.

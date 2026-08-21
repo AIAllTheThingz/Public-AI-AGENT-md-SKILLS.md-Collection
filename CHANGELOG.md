@@ -14,7 +14,7 @@ Release notes distinguish:
 
 ## [Unreleased]
 
-- None.
+- Added authoritative first-party and standards-body starting points to the ten non-C# language package READMEs.
 
 ## [1.0.0-rc.1] - 2026-08-16
 
