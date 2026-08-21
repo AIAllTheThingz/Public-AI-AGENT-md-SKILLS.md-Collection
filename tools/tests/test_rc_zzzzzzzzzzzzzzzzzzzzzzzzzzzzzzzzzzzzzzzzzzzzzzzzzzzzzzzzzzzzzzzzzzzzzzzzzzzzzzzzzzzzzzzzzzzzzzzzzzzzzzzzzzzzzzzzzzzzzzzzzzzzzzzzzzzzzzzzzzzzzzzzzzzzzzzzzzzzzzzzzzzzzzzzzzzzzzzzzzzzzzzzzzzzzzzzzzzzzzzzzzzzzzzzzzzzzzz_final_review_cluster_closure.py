@@ -341,15 +341,44 @@ def _candidate_only_behavioral_label(label: str) -> bool:
 terminal._is_candidate_only_behavioral_field = _candidate_only_behavioral_label
 
 
+_RESTRICTIVE_DEONTIC_PATTERNS = (
+    re.compile(
+        r"\b(?:is|are|was|were|be)(?:\s+not|n't|\s+no\s+longer)\s+optional\b"
+    ),
+    re.compile(
+        r"\b(?:must|shall|may|can|do|does|did)(?:\s+not|n't)\s+"
+        r"(?:be\s+)?(?:skipp\w*|omit\w*|waiv\w*)\b"
+    ),
+    re.compile(
+        r"\bno\s+(?:exceptions?|overrides?|waivers?)\b.*"
+        r"\b(?:permitted|allowed|available|applicable)\b"
+    ),
+    re.compile(
+        r"\b(?:exceptions?|overrides?|waivers?)\b.*"
+        r"\b(?:is|are|be)(?:\s+not|n't)\s+"
+        r"(?:permitted|allowed|available|applicable)\b"
+    ),
+)
+_DEOBLIGATION_PATTERNS = (
+    re.compile(
+        r"\b(?:is|are|was|were|be)(?:\s+not|n't|\s+no\s+longer)\s+"
+        r"(?:mandatory|required|compulsory|obligatory|necessary)\b"
+    ),
+    re.compile(r"\bneed(?:\s+not|n't)\b"),
+    re.compile(r"\b(?:do|does|did)(?:\s+not|n't)\s+have\s+to\b"),
+    re.compile(
+        r"\b(?:may|can)\s+(?:be\s+)?(?:skipp\w*|omit\w*|waiv\w*)\b"
+    ),
+)
+
+
 def _is_permission_expanding_statement(value: str) -> bool:
     normalized = numbered.normalize_contract_text(value).casefold()
-    return _previous_permission_expansion_classifier(value) or bool(
-        re.search(
-            r"\b(?:may\s+be\s+skipped|no\s+longer\s+mandatory|"
-            r"(?:is|are|was|were|be)\s+not\s+mandatory)\b",
-            normalized,
-        )
-    )
+    if any(pattern.search(normalized) for pattern in _DEOBLIGATION_PATTERNS):
+        return True
+    if any(pattern.search(normalized) for pattern in _RESTRICTIVE_DEONTIC_PATTERNS):
+        return False
+    return _previous_permission_expansion_classifier(value)
 
 
 terminal._is_permission_expanding_statement = _is_permission_expanding_statement
@@ -724,6 +753,66 @@ def validate():
             "RULE_BEHAVIORAL_FIELD_ADDED:sample.md:SAMPLE-001:notes",
             numbered.rule_field_contract_findings(published, candidate),
         )
+
+    def test_neutral_label_deobligation_family_is_permission_expansion(self) -> None:
+        published_text = """
+### SAMPLE-001
+
+**Requirement:** Authentication is required.
+"""
+        expected = "RULE_BEHAVIORAL_FIELD_ADDED:sample.md:SAMPLE-001:notes"
+        for value in (
+            "Authentication is not compulsory.",
+            "Authentication is no longer obligatory.",
+            "Authentication is not necessary.",
+            "Authentication need not be performed.",
+            "Authentication does not have to be performed.",
+            "Authentication may be omitted.",
+            "Authentication can be waived.",
+        ):
+            with self.subTest(value=value):
+                candidate = numbered.extract_rule_field_contracts(
+                    published_text + f"\n**Notes:** {value}\n",
+                    "sample.md",
+                )
+                published = numbered.extract_rule_field_contracts(
+                    published_text,
+                    "sample.md",
+                )
+                self.assertIn(
+                    expected,
+                    numbered.rule_field_contract_findings(published, candidate),
+                )
+
+    def test_neutral_label_restrictive_deontic_text_is_not_permission_expansion(
+        self,
+    ) -> None:
+        published_text = """
+### SAMPLE-001
+
+**Requirement:** Authentication is required.
+"""
+        for value in (
+            "Authentication is not optional.",
+            "Authentication is no longer optional.",
+            "Authentication must not be skipped.",
+            "Authentication may not be omitted.",
+            "No waiver is permitted.",
+            "Exceptions are not allowed.",
+        ):
+            with self.subTest(value=value):
+                candidate = numbered.extract_rule_field_contracts(
+                    published_text + f"\n**Notes:** {value}\n",
+                    "sample.md",
+                )
+                published = numbered.extract_rule_field_contracts(
+                    published_text,
+                    "sample.md",
+                )
+                self.assertEqual(
+                    numbered.rule_field_contract_findings(published, candidate),
+                    [],
+                )
 
     def test_neutral_editorial_label_is_not_permission_expansion(self) -> None:
         published_text = """
