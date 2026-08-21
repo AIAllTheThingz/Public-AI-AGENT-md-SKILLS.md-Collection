@@ -1,0 +1,93 @@
+{
+  "formatVersion": "1.0.0",
+  "releaseVersion": "0.10.0",
+  "tag": "v0.10.0",
+  "sourceCommit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c",
+  "sourceDocuments": {
+    "toolContract": {
+      "path": "tools/TOOL_CONTRACT.md",
+      "blobSha": "b38903317f734813997ea90fe127b5759b778d38",
+      "sha256": "27b55bb28f2ae7e249dcc6183201a15def9c56331cf25a63efd76e9b4d8d4b36"
+    },
+    "toolResultSchema": {
+      "path": "tools/contracts/tool-result.schema.json",
+      "blobSha": "eb34a1dfc82723f7abe833f4623e7ce5fbc345ca",
+      "sha256": "105aa94978e921d14a4d7bb23613715cbb21d73e04d843f09a33dbdf28a4bd69"
+    }
+  },
+  "commonCliOptions": [
+    "--root",
+    "--format",
+    "--output",
+    "--quiet",
+    "--help"
+  ],
+  "commonCliToolPaths": [
+    "tools/validate-standards/validate_repository.py",
+    "tools/check-links/check_links.py",
+    "tools/check-freshness/check_freshness.py",
+    "tools/validate-skills/validate_skills.py",
+    "tools/validate-schemas/validate_schemas.py",
+    "tools/validate-templates/validate_templates.py",
+    "tools/validate-tools/validate_tools.py",
+    "tools/release/validate_release.py",
+    "tools/generate-manifest/generate_manifest.py",
+    "tools/compose-agents/compose_agents.py",
+    "tools/validate-all/run_all.py"
+  ],
+  "legacyCliExceptions": {
+    "tools/release/build_release.py": [
+      "--root",
+      "--output-dir",
+      "--tag",
+      "--force",
+      "--help"
+    ]
+  },
+  "formatValues": [
+    "text",
+    "json"
+  ],
+  "exitCodeContract": {
+    "success": 0,
+    "validationFailure": 1,
+    "inputOrConfigurationError": 2,
+    "internalError": 3
+  },
+  "resultContract": {
+    "requiredTopLevelFields": [
+      "tool",
+      "version",
+      "status",
+      "summary",
+      "findings",
+      "metadata"
+    ],
+    "statusValues": [
+      "passed",
+      "failed",
+      "error"
+    ],
+    "requiredFindingFields": [
+      "code",
+      "severity",
+      "message"
+    ],
+    "findingSeverityValues": [
+      "error",
+      "warning",
+      "info"
+    ]
+  },
+  "representativeWriterContract": {
+    "toolPath": "tools/generate-manifest/generate_manifest.py",
+    "requiredOptions": [
+      "--manifest-output",
+      "--force",
+      "--dry-run"
+    ],
+    "refuseOverwriteWithoutForce": true,
+    "dryRunDoesNotWrite": true,
+    "forceAllowsReplacement": true
+  }
+}

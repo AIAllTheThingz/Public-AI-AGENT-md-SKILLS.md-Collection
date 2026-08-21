@@ -1,11 +1,25 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def sha256_utf8_text_file(path: Path) -> str:
+    """Hash UTF-8 text with CRLF normalized to the published LF representation."""
+
+    content = path.read_bytes()
+    try:
+        content.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError(f"expected UTF-8 text file: {path}") from exc
+    if b"\0" in content:
+        raise ValueError(f"expected UTF-8 text file: {path}")
+    return hashlib.sha256(content.replace(b"\r\n", b"\n")).hexdigest()
 
 
 def run_tool(relative_script: str, *args: str, root: Path | None=None):

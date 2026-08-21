@@ -121,13 +121,14 @@
 - `0.9.0` remains a prepared baseline that was never published and must not be retroactively tagged.
 - `0.10.0` was published as `v0.10.0` on 2026-08-16 from source commit `83c73f3ab9a049ff2321d463164fcf98fb453a9c`.
 - The next intended publication is `1.0.0-rc.1` after package-level adoption tests, representative downstream pilots, initial maturity decisions, and the compatibility gate are complete.
+- The `1.0.0-rc.1` source candidate is now prepared, and its recorded functional compatibility candidate is permanently validated. The exact functional candidate and permanent CI run are maintained in `releases/rc-readiness/1.0.0-rc.1.md`; validation of the later exact record/document tree is carried separately in PR metadata, while fresh independent specialist approval on the final exact PR head and deliberate publication remain outstanding.
 
 ## Next maturity work
 
-1. Add automated package-level adoption tests for selected high-value packages, including positive, negative, boundary, and failure-path exercises required by the maturity policy.
-2. Run representative downstream adoption pilots and convert observed friction into focused corrections.
-3. Complete package maturity reviews that promote only qualified baseline components to stable.
+1. **Completed:** Add automated package-level adoption tests for selected high-value packages, including positive, negative, boundary, and failure-path exercises required by the maturity policy.
+2. **Completed:** Run representative downstream adoption pilots and convert observed friction into focused corrections.
+3. **Completed for the initial release-candidate cohort:** Complete package maturity reviews that promote only qualified baseline components to stable; C# is stable while PowerShell and Terraform/OpenTofu remain baseline under recorded decisions.
 4. Add additional active maintainers and independent specialist reviewers as participation grows.
 5. Configure and verify the GitHub-host controls recorded as Blocked under issue #52 when an authorized administration surface becomes available.
-6. Define the intended stable compatibility surface and prepare and review `1.0.0-rc.1`.
-7. Publish final `1.0.0` only after the compatibility, adoption, maturity, source-review, security, and independent-review gates are satisfied.
+6. **In progress:** Define the intended stable compatibility surface and prepare and review `1.0.0-rc.1`; path, identifier, normative-rule, schema, template, tool-behavior, package-boundary, migration, and source-candidate evidence are complete, while fresh exact-head independent specialist approval and publication remain.
+7. Publish final `1.0.0` only after at least one RC is published and available for review and the compatibility, adoption, maturity, source-review, security, artifact-verification, and independent-review gates are satisfied.

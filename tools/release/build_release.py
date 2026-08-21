@@ -17,7 +17,12 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
-from validate_release import read_release_state as validate_release_state
+_previous_dont_write_bytecode = sys.dont_write_bytecode
+sys.dont_write_bytecode = True
+try:
+    from validate_release import read_release_state as validate_release_state
+finally:
+    sys.dont_write_bytecode = _previous_dont_write_bytecode
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 BUILDER_VERSION = "1.0.0"

@@ -1,0 +1,219 @@
+{
+  "formatVersion": "1.0.0",
+  "candidateVersion": "1.0.0-rc.1",
+  "sourceCheckpoint": {
+    "version": "0.10.0",
+    "tag": "v0.10.0",
+    "commit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
+  },
+  "publishedCheckpointInventory": {
+    "path": "releases/compatibility/0.10.0-checkpoint.json",
+    "sha256": "a8e3d3c68e4040cb4b6b8b878f4ac46f6a55bfe66e8b080f97ee57c860a81921"
+  },
+  "publishedAgentSkillEntryPointCheckpoint": {
+    "path": "releases/compatibility/0.10.0-agent-skill-entrypoints.json",
+    "sha256": "635e34c53f967d1b0bff9602037f7c716650cbf815f7aae3efc6f15c936921fb"
+  },
+  "publishedToolBehaviorContract": {
+    "path": "releases/compatibility/0.10.0-tool-behavior.json",
+    "sha256": "120f9869f67bb9dc900e05cd41c8bbee08bf96bd516f0a6ce527d1a43bc809a3"
+  },
+  "publishedFindingCodeContract": {
+    "path": "releases/compatibility/0.10.0-finding-codes.json",
+    "sha256": "07619880db05b0065d53be54626af3246559e35e0ae895cbf60d158e42561002"
+  },
+  "publishedRuleContractCheckpoint": {
+    "path": "releases/compatibility/0.10.0-rule-contracts.json",
+    "sha256": "5f3b7a7ddd28de5a44b45f96998d7acffb2c287bad4c7699e21561a869e50c95"
+  },
+  "compatibilityClassification": "compatible",
+  "stableRootPaths": [
+    "AGENTS.md",
+    "README.md",
+    "CATALOG.md",
+    "SOURCES.md",
+    "SOURCE_REVIEWS.json",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "MAINTAINERS.md",
+    ".github/CODEOWNERS",
+    ".github/pull_request_template.md",
+    "VERSION",
+    "CHANGELOG.md",
+    "RELEASE_POLICY.md",
+    "MATURITY_POLICY.md",
+    "ROADMAP.md",
+    "LICENSE",
+    "NOTICE",
+    "LICENSING.md"
+  ],
+  "stableSchemaPaths": [
+    "schemas/artifact-record.schema.json",
+    "schemas/completion-result.schema.json",
+    "schemas/exception-record.schema.json",
+    "schemas/project-manifest.schema.json",
+    "schemas/risk-classification.schema.json",
+    "schemas/test-evidence.schema.json",
+    "schemas/v1/artifact-record.schema.json",
+    "schemas/v1/completion-result.schema.json",
+    "schemas/v1/exception-record.schema.json",
+    "schemas/v1/project-manifest.schema.json",
+    "schemas/v1/risk-classification.schema.json",
+    "schemas/v1/test-evidence.schema.json"
+  ],
+  "stableTemplatePaths": [
+    "templates/root/AGENTS_TEMPLATE.md",
+    "templates/nested/AGENTS_TEMPLATE.md",
+    "templates/architecture-decision/ADR_TEMPLATE.md",
+    "templates/completion/COMPLETION_REPORT_TEMPLATE.md",
+    "templates/exception/EXCEPTION_RECORD_TEMPLATE.md",
+    "templates/risk/RISK_ASSESSMENT_TEMPLATE.md",
+    "templates/threat-model/THREAT_MODEL_TEMPLATE.md"
+  ],
+  "stableToolEntryPaths": [
+    "tools/validate-standards/validate_repository.py",
+    "tools/check-links/check_links.py",
+    "tools/check-freshness/check_freshness.py",
+    "tools/validate-skills/validate_skills.py",
+    "tools/validate-schemas/validate_schemas.py",
+    "tools/validate-templates/validate_templates.py",
+    "tools/validate-tools/validate_tools.py",
+    "tools/release/validate_release.py",
+    "tools/release/build_release.py",
+    "tools/generate-manifest/generate_manifest.py",
+    "tools/compose-agents/compose_agents.py",
+    "tools/validate-all/run_all.py"
+  ],
+  "stableProfileEntryPaths": [
+    "profiles/WEB_API.md",
+    "profiles/web-api",
+    "profiles/WEB_APPLICATION.md",
+    "profiles/web-application",
+    "profiles/WORKER_SERVICE.md",
+    "profiles/worker-service",
+    "profiles/CLI_TOOL.md",
+    "profiles/cli-tool",
+    "profiles/DESKTOP_APPLICATION.md",
+    "profiles/desktop-application",
+    "profiles/MOBILE_APPLICATION.md",
+    "profiles/mobile-application",
+    "profiles/SERVERLESS_FUNCTION.md",
+    "profiles/serverless-function",
+    "profiles/DATA_PIPELINE.md",
+    "profiles/data-pipeline",
+    "profiles/PUBLIC_LIBRARY.md",
+    "profiles/public-library",
+    "profiles/INTERNAL_AUTOMATION.md",
+    "profiles/internal-automation",
+    "profiles/MULTI_TENANT_SAAS.md",
+    "profiles/multi-tenant-saas",
+    "profiles/SECURITY_TOOL.md",
+    "profiles/security-tool",
+    "profiles/AI_AGENT_APPLICATION.md",
+    "profiles/ai-agent-application"
+  ],
+  "stableToolContracts": {
+    "resultSchema": "tools/contracts/tool-result.schema.json",
+    "exitCodeMeaning": "documented existing meanings remain compatible",
+    "jsonOutput": "documented result fields remain compatible",
+    "overwriteBehavior": "writing tools retain documented safe overwrite behavior",
+    "releaseArtifacts": [
+      "Public-Access-Agents-<VERSION>.zip",
+      "Public-Access-Agents-<VERSION>.tar.gz",
+      "SHA256SUMS.txt",
+      "release-manifest.json",
+      "RELEASE_NOTES.md",
+      "MIGRATION_NOTES.md"
+    ],
+    "findingCodes": "published finding-code values and meanings remain compatible"
+  },
+  "stableIdentifierContracts": {
+    "publishedCheckpoint": {
+      "source": "releases/compatibility/0.10.0-checkpoint.json#stableIdentifiers",
+      "scope": [
+        "governance policy front-matter ids",
+        "canonical profile front-matter ids",
+        "stable schema and tool-result $id values"
+      ]
+    },
+    "publishedNormativeRules": {
+      "source": "releases/compatibility/0.10.0-rule-contracts.json",
+      "scope": [
+        "every published v0.10.0 numbered normative rule occurrence is derived directly from the immutable published source commit as source path + identifier + Requirement meaning; published scoped duplicates are grandfathered, new reuse is rejected, and compatible new unique rules are allowed",
+        "C# product rule ids and exact requirement meanings promoted stable in this RC"
+      ]
+    },
+    "rcStableAdditions": {
+      "csharpDirectSkillName": "csharp",
+      "csharpFrontMatterIds": {
+        "languages/csharp/AGENTS.md": "CSHARP-AGENT-001",
+        "languages/csharp/README.md": "CSHARP-README-001",
+        "languages/csharp/MANIFEST.md": "CSHARP-MANIFEST-001",
+        "languages/csharp/standards/API_DESIGN_AND_COMPATIBILITY_STANDARD.md": "CSHARP-API-001",
+        "languages/csharp/standards/ASYNC_AND_CONCURRENCY_STANDARD.md": "CSHARP-ASYNC-001",
+        "languages/csharp/standards/BUILD_AND_DEPENDENCY_STANDARD.md": "CSHARP-BUILD-001",
+        "languages/csharp/standards/COMPLETION_EVIDENCE.md": "CSHARP-EVIDENCE-001",
+        "languages/csharp/standards/CSHARP_CODING_STANDARD.md": "CSHARP-CODE-001",
+        "languages/csharp/standards/DOCUMENTATION_STANDARD.md": "CSHARP-DOC-001",
+        "languages/csharp/standards/INTEROP_REFLECTION_AND_GENERATION_STANDARD.md": "CSHARP-INTEROP-001",
+        "languages/csharp/standards/OBSERVABILITY_STANDARD.md": "CSHARP-OBS-001",
+        "languages/csharp/standards/RESOURCE_AND_PERFORMANCE_STANDARD.md": "CSHARP-RESOURCE-001",
+        "languages/csharp/standards/SCRIPTING_AND_TOOLING_STANDARD.md": "CSHARP-SCRIPT-001",
+        "languages/csharp/standards/SECURITY_STANDARD.md": "CSHARP-SECURITY-001",
+        "languages/csharp/standards/TESTING_STANDARD.md": "CSHARP-TEST-001",
+        "languages/csharp/standards/TYPE_SYSTEM_AND_NULLABILITY_STANDARD.md": "CSHARP-TYPE-001",
+        "languages/csharp/templates/AGENTS_TEMPLATE.md": "CSHARP-TEMPLATE-AGENT-001",
+        "languages/csharp/templates/ADOPTION_CHECKLIST.md": "CSHARP-TEMPLATE-ADOPT-001",
+        "languages/csharp/examples/ADOPTION_EXAMPLE.md": "CSHARP-EXAMPLE-001"
+      }
+    }
+  },
+  "stablePackages": [
+    {
+      "path": "languages/csharp",
+      "maturity": "stable",
+      "requiredSurfaceSource": "languages/csharp/MANIFEST.md",
+      "directSkill": "csharp",
+      "agentRegistration": "languages/csharp/agents/openai.yaml"
+    }
+  ],
+  "baselineExclusionRule": "Every standards package not explicitly listed in stablePackages remains outside the 1.0.0 stable package promise for this release candidate, even when its paths remain repository compatibility surfaces.",
+  "baselineExcludedFamilies": [
+    "languages/* except languages/csharp",
+    "disciplines/*",
+    "frameworks/*",
+    "platforms/*",
+    "virtualization/*",
+    "operating-systems/*",
+    "networking/*",
+    "profiles/*"
+  ],
+  "migrationFrom0100": {
+    "breakingChanges": [],
+    "requiredActions": [
+      "Update the recorded repository source from v0.10.0 to the reviewed 1.0.0-rc.1 candidate when deliberately evaluating the release candidate.",
+      "Re-run repository or project validation after changing the pinned standards source.",
+      "Treat only languages/csharp as a stable package commitment; do not infer stable maturity for baseline packages."
+    ],
+    "reviewActions": [
+      "C# adopters should review the newly explicit stable compatibility commitment.",
+      "PowerShell adopters using Windows PowerShell 5.1 should review the additive legacy compatibility overlay.",
+      "Mixed-profile adopters using --include-profile-required should review the additive secondary-profile discipline expansion."
+    ],
+    "preservedContracts": [
+      "published v0.10.0 root stable entry paths",
+      "published v0.10.0 stable rolling schema filenames",
+      "seven original stable template paths",
+      "published v0.10.0 governance/profile/schema identifiers plus every published numbered normative rule occurrence and meaning and the C# rule meanings promoted stable in this RC",
+      "published v0.10.0 CLI/result/exit-code, finding-code, and safe-overwrite tool behavior",
+      "canonical profile files and their complete package-directory stable entry points",
+      "release artifact naming and checksum contract",
+      "repository governance and exception authority after the v0.10.0 policy transition"
+    ]
+  },
+  "final100GateNotYetClaimed": [
+    "at least one 1.0.0-rc.N must be published and available for review before final 1.0.0",
+    "release artifacts and checksums for the final candidate must be independently verified",
+    "final 1.0.0 compatibility approval requires independent specialist review on the exact final release commit"
+  ]
+}

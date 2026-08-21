@@ -18,13 +18,15 @@ The `0.9.0 (prepared, unpublished)` baseline was never published and must not be
 
 ## Current repository version
 
-The current repository baseline is defined in [`VERSION`](VERSION).
+The current source candidate is defined in [`VERSION`](VERSION).
 
-Current published release: **0.10.0** (`v0.10.0`, published 2026-08-16)
+Current source candidate: **1.0.0-rc.1** (prepared, with its recorded functional compatibility candidate permanently validated; exact record/document-tree validation is tracked separately, and the RC is not yet published). See the [RC readiness record](releases/rc-readiness/1.0.0-rc.1.md) and PR validation metadata for the exact-head result.
+
+Current published release: **0.10.0** (`v0.10.0`, published 2026-08-16). It remains the published migration checkpoint for the RC compatibility gate.
 
 Next intended publication: `1.0.0-rc.1`.
 
-This remains a pre-1.0 compatibility checkpoint. The published `0.10.0` release is the source boundary for adoption testing and maturity evidence; it is not the final stable compatibility commitment.
+The prepared RC defines the proposed first stable compatibility surface but does not itself establish a published release. Final `1.0.0` remains a separate gate requiring a published RC, independently verified artifacts/checksums, exact-final-commit independent compatibility approval, and no unresolved high/critical release blocker.
 
 See:
 

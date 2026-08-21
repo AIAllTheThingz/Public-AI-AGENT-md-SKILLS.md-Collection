@@ -61,13 +61,14 @@ class MaturityDecisionTests(unittest.TestCase):
         self.assertIn("current count from #41 is zero", terraform)
         self.assertIn("two representative", terraform)
 
-    def test_language_index_and_changelog_expose_decision_without_overclaim(self):
+    def test_language_index_and_changelog_expose_final_decision_without_overclaim(self):
         language_index = (REPO_ROOT / "languages" / "README.md").read_text(encoding="utf-8")
         self.assertIn("| [C#](csharp/)", language_index)
         self.assertRegex(language_index, r"\| \[C#\]\(csharp/\).*\| Stable \|")
         changelog = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-        self.assertIn("proposed C# `baseline` → `stable`", changelog)
-        self.assertIn("deferred PowerShell and Terraform/OpenTofu", changelog)
+        self.assertIn("Promoted the C# language package from `baseline` to `stable`", changelog)
+        self.assertIn("every package not enumerated as stable outside the stable package promise", changelog)
+        self.assertNotIn("proposed C# `baseline` → `stable`", changelog)
 
 
 if __name__ == "__main__":

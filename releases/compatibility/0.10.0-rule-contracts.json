@@ -1,0 +1,29 @@
+{
+  "formatVersion": "1.2.1",
+  "releaseVersion": "0.10.0",
+  "tag": "v0.10.0",
+  "sourceCommit": "83c73f3ab9a049ff2321d463164fcf98fb453a9c",
+  "publishedRuleSourceScope": {
+    "root": ".",
+    "fileExtension": ".md",
+    "ruleHeadingPattern": "^### [A-Z][A-Z0-9-]*-[0-9]{3}$",
+    "requirementPattern": "**Requirement:** <single-line normative meaning>",
+    "comparison": "derive every numbered rule occurrence as source path + identifier + requirement meaning from the immutable published source commit; require each published occurrence to remain, grandfather published scoped duplicate identifiers, reject new reuse beyond the published occurrence set, and allow new unique rules"
+  },
+  "csharpProductRules": {
+    "sourcePath": "languages/csharp/AGENTS.md",
+    "rules": {
+      "CSHARP-LANG-001": "Resolve the selected SDK/compiler and use a stable language version supported by the declared target; `latest` and unapproved preview settings are prohibited.",
+      "CSHARP-NULL-002": "Nullable annotations and flow analysis must express the real contract; suppression requires a narrow, reviewable invariant.",
+      "CSHARP-ASYNC-003": "Asynchronous and concurrent code must propagate cancellation, avoid sync-over-async, bound concurrency, and define ownership of started work.",
+      "CSHARP-API-004": "Public APIs, serialized shapes, generic constraints, default values, exception behavior, and binary/source compatibility must change only through reviewed versioning and migration decisions.",
+      "CSHARP-RESOURCE-005": "Code must distinguish owned from borrowed resources and deterministically release owned synchronous and asynchronous resources on success, failure, and cancellation.",
+      "CSHARP-SEC-006": "C# code must validate trust boundaries and must not use insecure deserialization, command construction, path handling, cryptography, certificate bypass, or secret exposure as implementation shortcuts.",
+      "CSHARP-TOOL-007": "Build, analyzer, formatter, generator, scripting-host, and dependency versions must be reproducible and reviewed; operational execution must not silently acquire floating code.",
+      "CSHARP-TEST-008": "Tests must cover externally meaningful normal, boundary, invalid, cancellation, failure, concurrency, cleanup, and compatibility behavior appropriate to the change.",
+      "CSHARP-INTEROP-009": "Reflection, `dynamic`, expression compilation, source generation, native interop, and unsafe code require a documented boundary, minimized scope, validation, and fallback or failure behavior.",
+      "CSHARP-EVIDENCE-010": "Completion claims must identify the exact source and contracts changed, resolved compiler boundary, validation results, unavailable checks, and remaining limitations."
+    }
+  },
+  "coverageRule": "Every numbered normative rule occurrence published in v0.10.0 is derived directly from the immutable source commit and must preserve its source path, identifier, and Requirement meaning. Duplicate identifiers already published in distinct scopes are grandfathered; new reuse beyond those published occurrences is rejected, while new unique identifiers are compatible additions."
+}

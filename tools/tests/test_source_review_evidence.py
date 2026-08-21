@@ -162,8 +162,13 @@ class SourceReviewEvidenceTests(unittest.TestCase):
     def test_olvm_scope_narrowing_is_classified_as_breaking(self):
         changelog = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
         release = (REPO_ROOT / "releases" / "0.10.0.md").read_text(encoding="utf-8")
-        for name, text in (("CHANGELOG.md", changelog), ("releases/0.10.0.md", release)):
-            breaking = text.split("### Breaking changes", 1)[1].split("### Normative changes", 1)[0] if name == "CHANGELOG.md" else text.split("## Breaking changes", 1)[1].split("## Normative changes", 1)[0]
+        changelog_0100 = changelog.split("## [0.10.0] - 2026-08-16", 1)[1].split("## [0.9.0]", 1)[0]
+        documents = (
+            ("CHANGELOG.md#0.10.0", changelog_0100, "### Breaking changes", "### Normative changes"),
+            ("releases/0.10.0.md", release, "## Breaking changes", "## Normative changes"),
+        )
+        for name, text, breaking_heading, normative_heading in documents:
+            breaking = text.split(breaking_heading, 1)[1].split(normative_heading, 1)[0]
             with self.subTest(document=name):
                 self.assertIn("Oracle Linux Virtualization Manager (OLVM)", breaking)
                 self.assertIn("Oracle Linux 9/10", breaking)
