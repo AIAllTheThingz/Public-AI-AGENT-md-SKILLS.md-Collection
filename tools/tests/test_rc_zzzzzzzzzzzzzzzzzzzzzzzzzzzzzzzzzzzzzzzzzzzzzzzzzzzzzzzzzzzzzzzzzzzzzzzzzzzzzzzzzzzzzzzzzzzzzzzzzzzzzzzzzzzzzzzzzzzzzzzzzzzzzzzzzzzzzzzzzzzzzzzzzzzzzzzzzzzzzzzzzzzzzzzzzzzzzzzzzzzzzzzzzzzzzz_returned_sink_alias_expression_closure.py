@@ -172,6 +172,32 @@ def _eval_expr(
             return _eval_expr(node.func.body, after, calls)
         return _NO, after
 
+    if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Dict):
+        after = dict(current)
+        entries: list[tuple[object, str]] = []
+        for key, value in zip(node.value.keys, node.value.values):
+            if key is None:
+                _, after = _eval_expr(value, after, calls)
+                continue
+            _, after = _eval_expr(key, after, calls)
+            value_state, after = _eval_expr(value, after, calls)
+            try:
+                literal_key = ast.literal_eval(key)
+            except (ValueError, TypeError, SyntaxError):
+                literal_key = object()
+            entries.append((literal_key, value_state))
+        _, after = _eval_expr(node.slice, after, calls)
+        try:
+            selected_key = ast.literal_eval(node.slice)
+        except (ValueError, TypeError, SyntaxError):
+            selected_key = object()
+        matches = [state for key, state in entries if key == selected_key]
+        if len(matches) == 1:
+            return matches[0], after
+        if any(state != _NO for _, state in entries):
+            return _MAYBE, after
+        return _NO, after
+
     if isinstance(node, ast.Subscript) and isinstance(
         node.value,
         (ast.Tuple, ast.List),
@@ -276,6 +302,30 @@ def _value_state(node: ast.AST, env: dict[str, str]) -> str:
     return state
 
 
+def _static_bind_target(
+    target: ast.AST,
+    value: ast.AST,
+    env: dict[str, str],
+) -> dict[str, str]:
+    if isinstance(target, ast.Name):
+        return _bind(env, target.id, _value_state(value, env))
+
+    if isinstance(target, (ast.Tuple, ast.List)) and isinstance(
+        value,
+        (ast.Tuple, ast.List),
+    ):
+        if (
+            not any(isinstance(item, ast.Starred) for item in target.elts)
+            and len(target.elts) == len(value.elts)
+        ):
+            result = dict(env)
+            for target_item, value_item in zip(target.elts, value.elts):
+                result = _static_bind_target(target_item, value_item, result)
+            return result
+
+    return _kill_target(env, target)
+
+
 def _assign(
     statement: ast.Assign | ast.AnnAssign,
     env: dict[str, str],
@@ -290,10 +340,14 @@ def _assign(
         value = statement.value
 
     state, after = _eval_expr(value, env)
+
     if all(isinstance(target, ast.Name) for target in targets):
         for target in targets:
             after = _bind(after, target.id, state)
         return after
+
+    if len(targets) == 1:
+        return _static_bind_target(targets[0], value, after)
 
     result = dict(after)
     for target in targets:
@@ -488,13 +542,24 @@ def _flow(
             continue
 
         if isinstance(statement, ast.Match):
-            _, after_subject = _eval_expr(statement.subject, current)
+            subject_state, after_subject = _eval_expr(statement.subject, current)
             merged: dict[str, str] | None = None
             catchall = False
             for case in statement.cases:
                 case_env = dict(after_subject)
-                for name in _pattern_names(case.pattern):
-                    case_env.pop(name, None)
+                if (
+                    isinstance(case.pattern, ast.MatchAs)
+                    and case.pattern.pattern is None
+                    and case.pattern.name
+                ):
+                    case_env = _bind(
+                        case_env,
+                        case.pattern.name,
+                        subject_state,
+                    )
+                else:
+                    for name in _pattern_names(case.pattern):
+                        case_env.pop(name, None)
 
                 if case.guard is not None:
                     guard_state, case_env = _eval_expr(case.guard, case_env)
@@ -745,6 +810,66 @@ def harmless(**kwargs):
 def validate():
     findings = []
     maker = (harmless, ToolResult.from_findings)[1]
+    findings.append(Finding("PUBLIC_CODE", "visible"))
+    return maker(tool="validate", version="1", findings=[])
+"""
+        self.assertTrue(self._has_alias_marker(source))
+
+    def test_destructured_constructor_alias_is_tracked(self) -> None:
+        source = """
+from standards_tools import Finding, ToolResult
+
+def harmless(**kwargs):
+    return kwargs
+
+def validate():
+    findings = []
+    maker, other = ToolResult.from_findings, harmless
+    findings.append(Finding("PUBLIC_CODE", "visible"))
+    return maker(tool="validate", version="1", findings=[])
+"""
+        self.assertTrue(self._has_alias_marker(source))
+
+    def test_literal_mapping_selection_tracks_alias(self) -> None:
+        source = """
+from standards_tools import Finding, ToolResult
+
+def harmless(**kwargs):
+    return kwargs
+
+def validate():
+    findings = []
+    maker = {
+        "safe": harmless,
+        "sink": ToolResult.from_findings,
+    }["sink"]
+    findings.append(Finding("PUBLIC_CODE", "visible"))
+    return maker(tool="validate", version="1", findings=[])
+"""
+        self.assertTrue(self._has_alias_marker(source))
+
+    def test_literal_loop_target_alias_is_tracked(self) -> None:
+        source = """
+from standards_tools import Finding, ToolResult
+
+def validate():
+    findings = []
+    for maker in [ToolResult.from_findings]:
+        pass
+    findings.append(Finding("PUBLIC_CODE", "visible"))
+    return maker(tool="validate", version="1", findings=[])
+"""
+        self.assertTrue(self._has_alias_marker(source))
+
+    def test_match_capture_of_constructor_alias_is_tracked(self) -> None:
+        source = """
+from standards_tools import Finding, ToolResult
+
+def validate():
+    findings = []
+    match ToolResult.from_findings:
+        case maker:
+            pass
     findings.append(Finding("PUBLIC_CODE", "visible"))
     return maker(tool="validate", version="1", findings=[])
 """
