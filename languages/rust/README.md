@@ -131,5 +131,6 @@ This package improves agent behavior. It does not guarantee that generated Rust 
 - [Rust standard library](https://doc.rust-lang.org/std/)
 - [The Cargo Book](https://doc.rust-lang.org/cargo/)
 - [The rustc Book](https://doc.rust-lang.org/rustc/)
+- [The Rustonomicon](https://doc.rust-lang.org/nomicon/)
 
 Revalidate current Rust, toolchain, standard library, Cargo, security, and support behavior before relying on version-specific guidance.

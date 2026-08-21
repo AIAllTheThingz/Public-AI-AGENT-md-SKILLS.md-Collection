@@ -15,6 +15,7 @@ Release notes distinguish:
 ## [Unreleased]
 
 - Added authoritative first-party and standards-body starting points to the ten non-C# language package READMEs.
+- Added the official Rustonomicon to the Rust package's authoritative starting points for unsafe-code boundaries.
 
 ## [1.0.0-rc.1] - 2026-08-16
 
