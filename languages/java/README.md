@@ -133,3 +133,13 @@ A completion report must include:
 The adopting repository must still define business requirements, framework architecture, production topology, identity, data ownership, database operations, incident response, release management, backup, recovery, and organization-specific compliance.
 
 This package improves agent behavior. It does not guarantee that generated Java software is secure, correct, compliant, or production ready.
+
+## Authoritative starting points
+
+- [OpenJDK documentation](https://openjdk.org/)
+- [Java SE specifications, including the language and JVM specifications](https://docs.oracle.com/javase/specs/)
+- [Java SE API documentation index](https://docs.oracle.com/en/java/javase/)
+- [Apache Maven guides](https://maven.apache.org/guides/)
+- [Gradle user manual](https://docs.gradle.org/current/userguide/userguide.html)
+
+Revalidate current Java, JVM, build-tool, security, and support behavior before relying on version-specific guidance.

@@ -124,3 +124,12 @@ A completion report must identify files and crates changed, public API and featu
 The adopting repository must still define business requirements, runtime architecture, supported targets, deployment environments, identity, data ownership, incident response, release management, backup, recovery, and organization-specific compliance.
 
 This package improves agent behavior. It does not guarantee that generated Rust software is secure, correct, compliant, or production ready.
+
+## Authoritative starting points
+
+- [The Rust Reference](https://doc.rust-lang.org/reference/)
+- [Rust standard library](https://doc.rust-lang.org/std/)
+- [The Cargo Book](https://doc.rust-lang.org/cargo/)
+- [The rustc Book](https://doc.rust-lang.org/rustc/)
+
+Revalidate current Rust, toolchain, standard library, Cargo, security, and support behavior before relying on version-specific guidance.

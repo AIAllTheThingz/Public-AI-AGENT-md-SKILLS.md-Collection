@@ -138,3 +138,13 @@ Templates are reference starting points. Replace placeholders and review toolcha
 The adopting repository must still define business requirements, framework architecture, production environments, data ownership, identity, incident response, backup, recovery, release management, and organization-specific compliance.
 
 This package improves agent behavior. It does not guarantee that generated Python software is secure, correct, compliant, or production ready.
+
+## Authoritative starting points
+
+- [Python documentation](https://docs.python.org/3/)
+- [Python language reference](https://docs.python.org/3/reference/)
+- [Python standard library](https://docs.python.org/3/library/)
+- [Python Enhancement Proposals](https://peps.python.org/)
+- [Python Packaging User Guide](https://packaging.python.org/)
+
+Revalidate current Python, packaging, security, and support behavior before relying on version-specific guidance.

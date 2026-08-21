@@ -138,3 +138,13 @@ Templates are starting points, not a command to replace an existing toolchain. R
 The adopting repository must still define framework architecture, browser support, deployment environments, API ownership, data classification, incident response, package publishing, backup, recovery, and organization-specific compliance.
 
 This package improves agent behavior. It does not guarantee that generated software is secure, correct, compliant, or production ready.
+
+## Authoritative starting points
+
+- [ECMAScript Language Specification](https://tc39.es/ecma262/)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
+- [TypeScript TSConfig Reference](https://www.typescriptlang.org/tsconfig/)
+- [Node.js 24 LTS API documentation](https://nodejs.org/docs/latest-v24.x/api/index.html)
+- [DOM Standard](https://dom.spec.whatwg.org/)
+
+Revalidate current ECMAScript, TypeScript, Node.js, browser, security, and support behavior before relying on version-specific guidance.
