@@ -170,7 +170,8 @@ def _is_permission_expanding_statement(value: str) -> bool:
     normalized = numbered.normalize_contract_text(value).casefold()
     return _previous_permission_expansion_classifier(value) or bool(
         re.search(
-            r"\b(?:may\s+be\s+skipped|no\s+longer\s+mandatory)\b",
+            r"\b(?:may\s+be\s+skipped|no\s+longer\s+mandatory|"
+            r"(?:is|are|was|were|be)\s+not\s+mandatory)\b",
             normalized,
         )
     )
@@ -428,6 +429,22 @@ def validate():
 """
         candidate_text = published_text + """
 **Notes:** Authentication is no longer mandatory.
+"""
+        published = numbered.extract_rule_field_contracts(published_text, "sample.md")
+        candidate = numbered.extract_rule_field_contracts(candidate_text, "sample.md")
+        self.assertIn(
+            "RULE_BEHAVIORAL_FIELD_ADDED:sample.md:SAMPLE-001:notes",
+            numbered.rule_field_contract_findings(published, candidate),
+        )
+
+    def test_neutral_label_not_mandatory_is_permission_expansion(self) -> None:
+        published_text = """
+### SAMPLE-001
+
+**Requirement:** Authentication is required.
+"""
+        candidate_text = published_text + """
+**Notes:** Authentication is not mandatory.
 """
         published = numbered.extract_rule_field_contracts(published_text, "sample.md")
         candidate = numbered.extract_rule_field_contracts(candidate_text, "sample.md")
