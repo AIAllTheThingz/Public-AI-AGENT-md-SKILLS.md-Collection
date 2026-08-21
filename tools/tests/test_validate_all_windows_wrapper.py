@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -40,6 +42,40 @@ class ValidateAllWindowsWrapperTests(unittest.TestCase):
             self.assertIn(sys.executable, command)
             self.assertIn("%~dp0git", command)
             self.assertIn("%*", command)
+
+    def test_history_wrapper_routes_child_python_git_calls(self):
+        module = load_validate_all_module()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "archive"
+            root.mkdir()
+            bundle = root / module.COMPATIBILITY_HISTORY_BUNDLE
+            bundle.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(REPO_ROOT / module.COMPATIBILITY_HISTORY_BUNDLE, bundle)
+
+            with module.compatibility_history(root):
+                completed = subprocess.run(
+                    [
+                        sys.executable,
+                        "-c",
+                        (
+                            "import subprocess, sys; "
+                            "run = subprocess.run("
+                            "['git', '-C', sys.argv[1], 'rev-parse', "
+                            "'--show-toplevel'], "
+                            "text=True, capture_output=True, check=False); "
+                            "print(run.stdout, end=''); "
+                            "print(run.stderr, end='', file=sys.stderr); "
+                            "raise SystemExit(run.returncode)"
+                        ),
+                        str(root),
+                    ],
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertEqual(Path(completed.stdout.strip()).resolve(), root.resolve())
 
 
 if __name__ == "__main__":

@@ -41,6 +41,8 @@ class ReleaseCandidateArchiveIndexPreservationTests(unittest.TestCase):
             (root / ".gitignore").write_text("*.pyc\n", encoding="utf-8")
             (root / "committed.pyc").write_bytes(b"published-bytecode-fixture")
             (root / "ordinary.txt").write_text("tracked\n", encoding="utf-8")
+            long_name = "z" * 252 + ".py"
+            (root / long_name).write_text("long tracked path\n", encoding="utf-8")
 
             initialized = subprocess.run(
                 [real_git, "init", "--bare", "--quiet", str(git_dir)],
@@ -69,6 +71,7 @@ class ReleaseCandidateArchiveIndexPreservationTests(unittest.TestCase):
             self.assertIn(".gitignore", tracked)
             self.assertIn("committed.pyc", tracked)
             self.assertIn("ordinary.txt", tracked)
+            self.assertIn(long_name, tracked)
 
             status = subprocess.run(
                 [

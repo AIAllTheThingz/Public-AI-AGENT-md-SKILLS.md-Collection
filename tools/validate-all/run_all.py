@@ -48,6 +48,7 @@ _HISTORY_REAL_GIT = "PAG_COMPATIBILITY_REAL_GIT"
 _HISTORY_SOURCE_ROOT = "PAG_COMPATIBILITY_SOURCE_ROOT"
 _HISTORY_GIT_DIR = "PAG_COMPATIBILITY_GIT_DIR"
 _HISTORY_SELECTORS = "PAG_COMPATIBILITY_SELECTORS"
+_HISTORY_GIT_WRAPPER = "PAG_COMPATIBILITY_GIT_WRAPPER"
 
 
 @contextmanager
@@ -156,6 +157,19 @@ def _populate_temporary_head(
     env = os.environ.copy()
     env["GIT_INDEX_FILE"] = str(index_file)
 
+    if os.name == "nt":
+        configured = subprocess.run(
+            [real_git, f"--git-dir={git_dir}", "config", "core.longpaths", "true"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if configured.returncode != 0:
+            raise RuntimeError(
+                configured.stderr.strip()
+                or "temporary long-path configuration failed"
+            )
+
     added = subprocess.run(
         [
             real_git,
@@ -261,6 +275,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -399,6 +414,10 @@ if (
         *args,
     ]
 
+if os.name == "nt":
+    completed = subprocess.run([real_git, *args], check=False)
+    raise SystemExit(completed.returncode)
+
 os.execv(real_git, [real_git, *args])
 ''',
         encoding="utf-8",
@@ -410,6 +429,46 @@ os.execv(real_git, [real_git, *args])
     # so subprocess calls to `git` resolve through PATHEXT before reaching git.exe.
     path.with_suffix(".cmd").write_text(
         f'@echo off\r\n"{sys.executable}" "%~dp0{path.name}" %*\r\n',
+        encoding="utf-8",
+    )
+
+
+def _is_bare_git_command(args: object) -> bool:
+    return (
+        isinstance(args, (list, tuple))
+        and bool(args)
+        and str(args[0]).casefold() in {"git", "git.exe", "git.cmd", "git.bat"}
+    )
+
+
+def _write_windows_git_subprocess_hook(path: Path) -> None:
+    path.write_text(
+        r'''from __future__ import annotations
+
+import os
+import subprocess
+import sys
+
+wrapper = os.environ.get("PAG_COMPATIBILITY_GIT_WRAPPER")
+original_popen = subprocess.Popen
+
+
+def is_bare_git_command(args: object) -> bool:
+    return (
+        isinstance(args, (list, tuple))
+        and bool(args)
+        and str(args[0]).casefold() in {"git", "git.exe", "git.cmd", "git.bat"}
+    )
+
+
+def wrapped_popen(args, *popenargs, **kwargs):
+    if wrapper and is_bare_git_command(args):
+        args = [sys.executable, wrapper, *args[1:]]
+    return original_popen(args, *popenargs, **kwargs)
+
+
+subprocess.Popen = wrapped_popen
+''',
         encoding="utf-8",
     )
 
@@ -462,7 +521,8 @@ def compatibility_history(root: Path):
 
         wrapper_dir = temp_root / "bin"
         wrapper_dir.mkdir()
-        _write_history_git_wrapper(wrapper_dir / "git")
+        wrapper = wrapper_dir / "git"
+        _write_history_git_wrapper(wrapper)
 
         managed = (
             "PATH",
@@ -470,6 +530,8 @@ def compatibility_history(root: Path):
             _HISTORY_SOURCE_ROOT,
             _HISTORY_GIT_DIR,
             _HISTORY_SELECTORS,
+            _HISTORY_GIT_WRAPPER,
+            "PYTHONPATH",
         )
         previous = {name: os.environ.get(name) for name in managed}
         os.environ[_HISTORY_REAL_GIT] = real_git
@@ -479,9 +541,28 @@ def compatibility_history(root: Path):
             [*COMPATIBILITY_HISTORY_REFS.keys(), *COMPATIBILITY_HISTORY_REFS.values()]
         )
         os.environ["PATH"] = str(wrapper_dir) + os.pathsep + (previous["PATH"] or "")
+        original_popen = None
+        if os.name == "nt":
+            _write_windows_git_subprocess_hook(wrapper_dir / "sitecustomize.py")
+            os.environ[_HISTORY_GIT_WRAPPER] = str(wrapper)
+            os.environ["PYTHONPATH"] = (
+                str(wrapper_dir)
+                + os.pathsep
+                + (previous["PYTHONPATH"] or "")
+            )
+            original_popen = subprocess.Popen
+
+            def wrapped_popen(args, *popenargs, **kwargs):
+                if _is_bare_git_command(args):
+                    args = [sys.executable, str(wrapper), *args[1:]]
+                return original_popen(args, *popenargs, **kwargs)
+
+            subprocess.Popen = wrapped_popen
         try:
             yield
         finally:
+            if original_popen is not None:
+                subprocess.Popen = original_popen
             for name, value in previous.items():
                 if value is None:
                     os.environ.pop(name, None)

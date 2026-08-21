@@ -80,6 +80,181 @@ def _evaluate_static_shape_with_starred_rhs(
 terminal._evaluate_static_shape = _evaluate_static_shape_with_starred_rhs
 
 
+_previous_eval_expr = expr._eval_expr
+
+
+def _is_static_value(node: ast.AST) -> bool:
+    try:
+        ast.literal_eval(node)
+    except (ValueError, TypeError, SyntaxError):
+        return False
+    return True
+
+
+def _is_resolvable_partial_constructor(node: ast.AST) -> bool:
+    return (
+        isinstance(node, ast.Call)
+        and getattr(node, "_pag_resolvable_partial", False)
+        and bool(node.args)
+        and not any(isinstance(argument, ast.Starred) for argument in node.args)
+        and all(_is_static_value(argument) for argument in node.args[1:])
+        and all(
+            keyword.arg is not None and _is_static_value(keyword.value)
+            for keyword in node.keywords
+        )
+    )
+
+
+def _partial_factory(node: ast.AST, modules: set[str], factories: set[str]) -> bool:
+    return (
+        isinstance(node, ast.Name)
+        and node.id in factories
+    ) or (
+        isinstance(node, ast.Attribute)
+        and isinstance(node.value, ast.Name)
+        and node.value.id in modules
+        and node.attr == "partial"
+    )
+
+
+def _bound_names(statement: ast.Assign | ast.AnnAssign) -> set[str]:
+    targets = (
+        [statement.target]
+        if isinstance(statement, ast.AnnAssign)
+        else list(statement.targets)
+    )
+    return {
+        target.id
+        for target in targets
+        if isinstance(target, ast.Name)
+    }
+
+
+def _mark_partial_calls(
+    node: ast.AST,
+    modules: set[str],
+    factories: set[str],
+) -> None:
+    for candidate in ast.walk(node):
+        if isinstance(candidate, ast.Call) and _partial_factory(
+            candidate.func,
+            modules,
+            factories,
+        ):
+            candidate._pag_resolvable_partial = True
+
+
+def _mark_partial_statements(
+    statements: list[ast.stmt],
+    modules: set[str],
+    factories: set[str],
+) -> None:
+    for statement in statements:
+        if isinstance(statement, ast.Import):
+            for imported in statement.names:
+                name = imported.asname or imported.name.split(".", 1)[0]
+                if imported.name == "functools":
+                    modules.add(name)
+                else:
+                    modules.discard(name)
+                    factories.discard(name)
+            continue
+
+        if isinstance(statement, ast.ImportFrom):
+            for imported in statement.names:
+                name = imported.asname or imported.name
+                if statement.module == "functools" and imported.name == "partial":
+                    factories.add(name)
+                else:
+                    modules.discard(name)
+                    factories.discard(name)
+            continue
+
+        if isinstance(statement, (ast.Assign, ast.AnnAssign)) and statement.value:
+            _mark_partial_calls(statement.value, modules, factories)
+            names = _bound_names(statement)
+            if _partial_factory(statement.value, modules, factories):
+                factories.update(names)
+            else:
+                factories.difference_update(names)
+                modules.difference_update(names)
+            continue
+
+        if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            local_modules = set(modules)
+            local_factories = set(factories)
+            local_names = {
+                argument.arg
+                for argument in (
+                    *statement.args.posonlyargs,
+                    *statement.args.args,
+                    *statement.args.kwonlyargs,
+                )
+            }
+            if statement.args.vararg is not None:
+                local_names.add(statement.args.vararg.arg)
+            if statement.args.kwarg is not None:
+                local_names.add(statement.args.kwarg.arg)
+            local_modules.difference_update(local_names)
+            local_factories.difference_update(local_names)
+            _mark_partial_statements(
+                statement.body,
+                local_modules,
+                local_factories,
+            )
+            modules.discard(statement.name)
+            factories.discard(statement.name)
+            continue
+
+        _mark_partial_calls(statement, modules, factories)
+
+
+def _mark_resolvable_partial_calls(
+    finding: ast.Call,
+    parents: dict[int, ast.AST],
+) -> None:
+    root: ast.AST = finding
+    while id(root) in parents:
+        root = parents[id(root)]
+    if isinstance(root, ast.Module):
+        _mark_partial_statements(root.body, set(), set())
+
+
+_previous_aliased_return_markers = expr.alias_layer._aliased_return_markers
+
+
+def _aliased_return_markers_with_partial_wrappers(
+    finding: ast.Call,
+    receiver: ast.AST,
+    parents: dict[int, ast.AST],
+) -> list[str]:
+    _mark_resolvable_partial_calls(finding, parents)
+    return _previous_aliased_return_markers(finding, receiver, parents)
+
+
+expr.alias_layer._aliased_return_markers = (
+    _aliased_return_markers_with_partial_wrappers
+)
+
+
+def _eval_expr_with_partial_constructor_aliases(
+    node: ast.AST,
+    env: dict[str, str],
+    calls: list[tuple[ast.Call, str]] | None = None,
+) -> tuple[str, dict[str, str]]:
+    if not _is_resolvable_partial_constructor(node):
+        return _previous_eval_expr(node, env, calls)
+
+    _, after = _previous_eval_expr(node.func, env, calls)
+    constructor_state, after = _previous_eval_expr(node.args[0], after, calls)
+    for keyword in node.keywords:
+        _, after = _previous_eval_expr(keyword.value, after, calls)
+    return constructor_state, after
+
+
+expr._eval_expr = _eval_expr_with_partial_constructor_aliases
+
+
 _previous_bind_shape = terminal._bind_shape
 
 
@@ -388,6 +563,103 @@ def validate():
     return maker(tool="validate", version="1", findings=[])
 """
         self.assertTrue(self._has_alias_marker(source))
+
+    def test_functools_partial_constructor_alias_tracks_discarded_findings(self) -> None:
+        kept = """
+import functools
+from standards_tools import Finding, ToolResult
+
+def validate():
+    findings = []
+    maker = functools.partial(
+        ToolResult.from_findings,
+        tool="validate",
+        version="1",
+    )
+    findings.append(Finding("PUBLIC_CODE", "visible"))
+    return maker(findings=findings)
+"""
+        discarded = kept.replace(
+            "return maker(findings=findings)",
+            "return maker(findings=[])",
+        )
+        self.assertNotEqual(
+            expr.literal_base.finding_semantic_signatures(kept, "sample.py"),
+            expr.literal_base.finding_semantic_signatures(discarded, "sample.py"),
+        )
+
+    def test_imported_partial_constructor_alias_tracks_discarded_findings(self) -> None:
+        source = """
+from functools import partial
+from standards_tools import Finding, ToolResult
+
+def validate():
+    findings = []
+    maker = partial(ToolResult.from_findings, tool="validate", version="1")
+    findings.append(Finding("PUBLIC_CODE", "visible"))
+    return maker(findings=[])
+"""
+        self.assertTrue(self._has_alias_marker(source))
+
+    def test_partial_factory_alias_tracks_static_bound_findings(self) -> None:
+        direct = """
+from standards_tools import Finding, ToolResult
+
+def validate():
+    findings = []
+    findings.append(Finding("PUBLIC_CODE", "visible"))
+    return ToolResult.from_findings(tool="validate", version="1", findings=findings)
+"""
+        discarded = """
+import functools as wrappers
+from standards_tools import Finding, ToolResult
+
+def validate():
+    findings = []
+    factory = wrappers.partial
+    maker = factory(ToolResult.from_findings, "validate", "1", [])
+    findings.append(Finding("PUBLIC_CODE", "visible"))
+    return maker()
+"""
+        self.assertNotEqual(
+            expr.literal_base.finding_semantic_signatures(direct, "sample.py"),
+            expr.literal_base.finding_semantic_signatures(discarded, "sample.py"),
+        )
+        self.assertTrue(self._has_alias_marker(discarded))
+
+    def test_dynamic_prebound_findings_remains_conservative(self) -> None:
+        prebound = """
+from functools import partial
+from standards_tools import Finding, ToolResult
+
+def validate():
+    findings = []
+    maker = partial(
+        ToolResult.from_findings,
+        tool="validate",
+        version="1",
+        findings=findings,
+    )
+    findings.append(Finding("PUBLIC_CODE", "visible"))
+    return maker()
+"""
+        self.assertFalse(self._has_alias_marker(prebound))
+
+    def test_functools_partial_of_unrelated_callable_is_not_constructor_alias(self) -> None:
+        source = """
+import functools
+from standards_tools import Finding, ToolResult
+
+def harmless(**kwargs):
+    return kwargs
+
+def validate():
+    findings = []
+    maker = functools.partial(harmless, tool="validate")
+    findings.append(Finding("PUBLIC_CODE", "visible"))
+    return maker(findings=[])
+"""
+        self.assertFalse(self._has_alias_marker(source))
 
     def test_exemption_label_is_behavioral(self) -> None:
         published_text = """
