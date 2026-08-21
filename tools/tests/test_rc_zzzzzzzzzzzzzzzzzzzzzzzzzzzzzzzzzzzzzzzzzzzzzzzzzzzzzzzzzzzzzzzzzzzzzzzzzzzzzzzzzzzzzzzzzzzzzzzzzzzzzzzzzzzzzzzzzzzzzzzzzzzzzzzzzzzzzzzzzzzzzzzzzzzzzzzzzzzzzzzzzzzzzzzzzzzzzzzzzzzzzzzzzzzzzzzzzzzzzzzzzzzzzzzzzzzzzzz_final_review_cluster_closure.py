@@ -80,6 +80,60 @@ def _evaluate_static_shape_with_starred_rhs(
 terminal._evaluate_static_shape = _evaluate_static_shape_with_starred_rhs
 
 
+_previous_bind_shape = terminal._bind_shape
+
+
+def _bind_shape_preserving_normalized_duplicate_aliases(
+    target: ast.AST,
+    shape: tuple[str, list[object] | None],
+    env: dict[str, str],
+) -> dict[str, str]:
+    state, children = shape
+    if not isinstance(target, (ast.Tuple, ast.List)) or children is None:
+        return _previous_bind_shape(target, shape, env)
+
+    targets = list(target.elts)
+    if (
+        len(targets) != len(children)
+        or any(isinstance(item, ast.Starred) for item in targets)
+    ):
+        return _previous_bind_shape(target, shape, env)
+
+    duplicate_names = {
+        item.id
+        for item in targets
+        if isinstance(item, ast.Name)
+        and sum(
+            isinstance(candidate, ast.Name) and candidate.id == item.id
+            for candidate in targets
+        ) > 1
+    }
+    if not duplicate_names:
+        return _previous_bind_shape(target, shape, env)
+
+    joined_states: dict[str, str] = {}
+    for item, child in zip(targets, children):
+        if not isinstance(item, ast.Name) or item.id not in duplicate_names:
+            continue
+        child_state, _child_children = child
+        previous = joined_states.get(item.id, terminal._NO)
+        joined_states[item.id] = expr._join(previous, child_state)
+
+    result = dict(env)
+    for item, child in zip(targets, children):
+        if isinstance(item, ast.Name) and item.id in joined_states:
+            result = expr._bind(result, item.id, joined_states[item.id])
+        else:
+            result = _previous_bind_shape(item, child, result)
+    return result
+
+
+# Bound-name normalization can collapse distinct destructuring names to one
+# canonical identifier. Retain the joined alias state rather than letting a
+# later non-alias slot erase an earlier constructor alias.
+terminal._bind_shape = _bind_shape_preserving_normalized_duplicate_aliases
+
+
 # ---------------------------------------------------------------------------
 # Candidate-only numbered-rule fields.
 #
@@ -115,7 +169,10 @@ terminal._is_candidate_only_behavioral_field = _candidate_only_behavioral_label
 def _is_permission_expanding_statement(value: str) -> bool:
     normalized = numbered.normalize_contract_text(value).casefold()
     return _previous_permission_expansion_classifier(value) or bool(
-        re.search(r"\bno\s+longer\s+mandatory\b", normalized)
+        re.search(
+            r"\b(?:may\s+be\s+skipped|no\s+longer\s+mandatory)\b",
+            normalized,
+        )
     )
 
 
@@ -166,6 +223,7 @@ numbered.rule_field_contract_findings = _candidate_only_rule_field_findings
 # control rather than a new restrictive control.
 
 
+_previous_unnumbered_extractor = unnumbered.extract_unnumbered_governance_contracts
 _previous_unnumbered_findings = unnumbered.unnumbered_contract_findings
 _ESCAPE_CLAUSE = re.compile(
     r"\b(?:unless|except\s+(?:if|when|where))\b",
@@ -228,6 +286,33 @@ def _obligation_subject_action_tokens(text: str) -> set[str]:
     return _semantic_tokens(text) - _OBLIGATION_RESTATEMENT_TOKENS
 
 
+def _extract_unnumbered_contracts_with_permission_bullets(
+    text: str,
+    path: str,
+):
+    contracts = _previous_unnumbered_extractor(text, path)
+    section = ""
+    for line in text.splitlines():
+        heading = re.match(r"^\s*#{1,6}\s+(.+?)\s*$", line)
+        if heading is not None:
+            section = numbered.normalize_contract_text(heading.group(1)).casefold()
+            continue
+
+        bullet = re.match(r"^\s*[-*+]\s+(.+?)\s*$", line)
+        if bullet is None or not section:
+            continue
+        statement = bullet.group(1)
+        if terminal._is_permission_expanding_statement(statement):
+            contracts[(path, section, statement)] += 1
+
+    return contracts
+
+
+unnumbered.extract_unnumbered_governance_contracts = (
+    _extract_unnumbered_contracts_with_permission_bullets
+)
+
+
 def _conditional_escape_weakens_published(
     statement: str,
     published_peers: list[str],
@@ -269,7 +354,9 @@ def _unnumbered_findings_with_conditional_escapes(
     for (path, section, statement), count in (candidate - published).items():
         if count <= 0:
             continue
-        if _conditional_escape_weakens_published(
+        if terminal._is_permission_expanding_statement(
+            statement
+        ) or _conditional_escape_weakens_published(
             statement,
             peers.get((path, section), []),
         ):
