@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 import tempfile
 import unittest
@@ -90,7 +91,12 @@ class ReviewHardeningRegressionTests(unittest.TestCase):
                 encoding="utf-8",
             )
             linked = root / ".github" / "workflows" / "outside-link.yml"
-            linked.symlink_to(outside)
+            try:
+                linked.symlink_to(outside)
+            except OSError as exc:
+                if os.name == "nt" and exc.winerror == 1314:
+                    self.skipTest("symlink creation requires a Windows privilege not available here")
+                raise
 
             completed = run_tool(
                 "tools/validate-tools/validate_tools.py",

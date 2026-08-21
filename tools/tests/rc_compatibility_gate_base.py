@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from helpers import REPO_ROOT, json_result, run_tool
+from helpers import REPO_ROOT, json_result, run_tool, sha256_utf8_text_file
 
 TOOLS_LIB = REPO_ROOT / "tools" / "lib"
 if str(TOOLS_LIB) not in sys.path:
@@ -222,7 +222,7 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         pinned = self.inventory["publishedCheckpointInventory"]
         self.assertEqual(pinned["path"], "releases/compatibility/0.10.0-checkpoint.json")
         self.assertEqual(pinned["sha256"], CHECKPOINT_INVENTORY_SHA256)
-        self.assertEqual(hashlib.sha256(self.checkpoint_bytes).hexdigest(), CHECKPOINT_INVENTORY_SHA256)
+        self.assertEqual(sha256_utf8_text_file(CHECKPOINT_PATH), CHECKPOINT_INVENTORY_SHA256)
         self.assertEqual(self.checkpoint["sourceCommit"], CHECKPOINT_COMMIT)
         self.assertEqual(self.checkpoint["tag"], "v0.10.0")
         self.assertEqual(
@@ -233,7 +233,7 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         behavior_pin = self.inventory["publishedToolBehaviorContract"]
         self.assertEqual(behavior_pin["path"], "releases/compatibility/0.10.0-tool-behavior.json")
         self.assertEqual(behavior_pin["sha256"], TOOL_BEHAVIOR_SHA256)
-        self.assertEqual(hashlib.sha256(self.tool_behavior_bytes).hexdigest(), TOOL_BEHAVIOR_SHA256)
+        self.assertEqual(sha256_utf8_text_file(TOOL_BEHAVIOR_PATH), TOOL_BEHAVIOR_SHA256)
         self.assertEqual(self.tool_behavior["sourceCommit"], CHECKPOINT_COMMIT)
         self.assertEqual(self.tool_behavior["tag"], "v0.10.0")
 

@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from helpers import REPO_ROOT, json_result, run_tool
+from helpers import REPO_ROOT, json_result, run_tool, sha256_utf8_text_file
 
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
 CHECKPOINT_PATH = REPO_ROOT / "releases" / "compatibility" / "0.10.0-finding-codes.json"
@@ -646,7 +646,7 @@ class ReleaseCandidateFindingCodeContractTests(unittest.TestCase):
         cls.contract = json.loads(cls.checkpoint_bytes.decode("utf-8"))
 
     def test_checkpoint_is_pinned_to_published_source(self):
-        self.assertEqual(hashlib.sha256(self.checkpoint_bytes).hexdigest(), CHECKPOINT_SHA256)
+        self.assertEqual(sha256_utf8_text_file(CHECKPOINT_PATH), CHECKPOINT_SHA256)
         self.assertEqual(self.contract["releaseVersion"], "0.10.0")
         self.assertEqual(self.contract["tag"], "v0.10.0")
         self.assertEqual(self.contract["sourceCommit"], CHECKPOINT_COMMIT)

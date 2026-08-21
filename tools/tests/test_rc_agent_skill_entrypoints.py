@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import subprocess
 import unittest
 
-from helpers import REPO_ROOT
+from helpers import REPO_ROOT, sha256_utf8_text_file
 
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
 CHECKPOINT_PATH = REPO_ROOT / "releases" / "compatibility" / "0.10.0-agent-skill-entrypoints.json"
@@ -138,7 +137,7 @@ class ReleaseCandidateAgentSkillEntryPointTests(unittest.TestCase):
         cls.checkpoint = json.loads(cls.checkpoint_bytes.decode("utf-8"))
 
     def test_checkpoint_is_immutable_and_derived_from_published_manifest(self):
-        self.assertEqual(hashlib.sha256(self.checkpoint_bytes).hexdigest(), CHECKPOINT_SHA256)
+        self.assertEqual(sha256_utf8_text_file(CHECKPOINT_PATH), CHECKPOINT_SHA256)
         self.assertEqual(self.checkpoint["releaseVersion"], "0.10.0")
         self.assertEqual(self.checkpoint["tag"], "v0.10.0")
         self.assertEqual(self.checkpoint["sourceCommit"], CHECKPOINT_COMMIT)

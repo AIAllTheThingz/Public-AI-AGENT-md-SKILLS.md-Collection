@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import subprocess
 import unittest
 from collections import defaultdict
 
-from helpers import REPO_ROOT
+from helpers import REPO_ROOT, sha256_utf8_text_file
 
 CANDIDATE_INVENTORY = REPO_ROOT / "releases" / "compatibility" / "1.0.0-rc.1.json"
 RULE_CHECKPOINT = REPO_ROOT / "releases" / "compatibility" / "0.10.0-rule-contracts.json"
@@ -143,7 +142,7 @@ class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
         pin = self.inventory["publishedRuleContractCheckpoint"]
         self.assertEqual(pin["path"], "releases/compatibility/0.10.0-rule-contracts.json")
         self.assertEqual(pin["sha256"], RULE_CHECKPOINT_SHA256)
-        self.assertEqual(hashlib.sha256(self.checkpoint_bytes).hexdigest(), RULE_CHECKPOINT_SHA256)
+        self.assertEqual(sha256_utf8_text_file(RULE_CHECKPOINT), RULE_CHECKPOINT_SHA256)
         self.assertEqual(self.checkpoint["releaseVersion"], "0.10.0")
         self.assertEqual(self.checkpoint["tag"], "v0.10.0")
         self.assertEqual(self.checkpoint["sourceCommit"], CHECKPOINT_COMMIT)
