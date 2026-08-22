@@ -131,6 +131,8 @@ This package improves agent behavior. It does not guarantee that generated infra
 
 ## Authoritative starting points
 
+Terraform and OpenTofu are separate authority domains. The selected execution engine's official documentation is authoritative for engine-specific behavior.
+
 - [Terraform CLI documentation](https://developer.hashicorp.com/terraform/cli)
 - [Terraform language documentation](https://developer.hashicorp.com/terraform/language)
 - [Terraform v1.x compatibility promises](https://developer.hashicorp.com/terraform/language/v1-compatibility-promises)

@@ -128,7 +128,7 @@ This package improves agent behavior. It does not guarantee that generated Go so
 
 ## Authoritative starting points
 
-- [Go documentation](https://go.dev/doc/)
+- [Go command documentation](https://go.dev/cmd/go/)
 - [The Go programming language specification](https://go.dev/ref/spec)
 - [Go modules reference](https://go.dev/ref/mod)
 - [Go standard library](https://pkg.go.dev/std)
