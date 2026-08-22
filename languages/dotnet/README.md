@@ -148,7 +148,8 @@ This package improves agent behavior. It does not guarantee that generated softw
 - [.NET documentation](https://learn.microsoft.com/en-us/dotnet/)
 - [Target frameworks in SDK-style projects](https://learn.microsoft.com/en-us/dotnet/standard/frameworks)
 - [Configure the .NET SDK](https://learn.microsoft.com/en-us/dotnet/core/tools/global-json)
+- [MSBuild documentation](https://learn.microsoft.com/en-us/visualstudio/msbuild/msbuild)
 - [NuGet documentation](https://learn.microsoft.com/en-us/nuget/)
 - [.NET support policy](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core)
 
-Revalidate current SDK, target-framework, package, security, and support behavior before relying on version-specific guidance.
+Revalidate current SDK, target-framework, MSBuild, package, security, and support behavior before relying on version-specific guidance.

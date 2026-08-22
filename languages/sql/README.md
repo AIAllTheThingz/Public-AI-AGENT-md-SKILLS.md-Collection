@@ -130,6 +130,8 @@ This package improves agent behavior. It does not guarantee that generated SQL i
 
 ## Authoritative starting points
 
+ISO/IEC 9075 is the general normative foundation. The selected database engine's official documentation is authoritative for dialect-specific syntax and behavior.
+
 - [ISO/IEC 9075-1:2023 SQL/Framework](https://www.iso.org/standard/76583.html)
 - [PostgreSQL documentation](https://www.postgresql.org/docs/)
 - [Microsoft SQL Server documentation](https://learn.microsoft.com/en-us/sql/sql-server/)
