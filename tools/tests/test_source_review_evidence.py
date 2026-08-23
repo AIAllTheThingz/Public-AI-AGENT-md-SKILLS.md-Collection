@@ -7,7 +7,40 @@ from pathlib import Path
 from helpers import REPO_ROOT
 
 
+NEW_BASELINE_SOURCE_REVIEWS = {
+    "disciplines-product-management": "disciplines/product-management",
+    "disciplines-user-experience": "disciplines/user-experience",
+    "governance-product-inception-lifecycle": (
+        "governance/PRODUCT_INCEPTION_LIFECYCLE.md"
+    ),
+}
+
+
 class SourceReviewEvidenceTests(unittest.TestCase):
+    def test_new_product_lifecycle_components_have_durable_source_reviews(self):
+        registry = json.loads(
+            (REPO_ROOT / "SOURCE_REVIEWS.json").read_text(encoding="utf-8")
+        )
+        records = {record["id"]: record for record in registry["records"]}
+
+        for record_id, expected_scope in NEW_BASELINE_SOURCE_REVIEWS.items():
+            with self.subTest(record=record_id):
+                record = records.get(record_id)
+                self.assertIsNotNone(record, f"missing source-review record: {record_id}")
+                assert record is not None
+                self.assertEqual(record["scope"], expected_scope)
+                self.assertEqual(record["maturity"], "baseline")
+                self.assertIsNotNone(record["lastReviewed"])
+                self.assertEqual(
+                    record["reviewEvidence"],
+                    f"source-reviews/{record['lastReviewed']}.md",
+                )
+
+                evidence_path = REPO_ROOT / record["reviewEvidence"]
+                self.assertTrue(evidence_path.is_file(), record["reviewEvidence"])
+                evidence = evidence_path.read_text(encoding="utf-8")
+                self.assertIn(expected_scope, evidence)
+
     def test_production_registry_is_granular_and_evidence_backed(self):
         registry = json.loads((REPO_ROOT / "SOURCE_REVIEWS.json").read_text(encoding="utf-8"))
         records = registry["records"]

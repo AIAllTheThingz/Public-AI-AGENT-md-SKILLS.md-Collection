@@ -84,6 +84,17 @@ def h2_section(text: str, heading: str) -> str:
     return match.group("body")
 
 
+def h3_section(text: str, heading: str) -> str:
+    match = re.search(
+        rf"^### {re.escape(heading)}\s*$\n(?P<body>.*?)(?=^#{{1,3}} |\Z)",
+        text,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    if match is None:
+        raise AssertionError(f"missing subsection: {heading}")
+    return match.group("body")
+
+
 def bullet_items(text: str, heading: str) -> list[str]:
     items: list[str] = []
     current: list[str] = []
@@ -112,6 +123,29 @@ def table_areas(text: str, heading: str) -> list[str]:
 
 
 class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
+    def test_normal_implementation_requires_explicit_build_gate_pass(self) -> None:
+        lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
+        build_gate = h3_section(lifecycle, "Build Gate")
+        self.assertIn(
+            "Normal production implementation must not start unless the Build Gate "
+            "decision is explicitly `Pass`.",
+            build_gate,
+        )
+
+        prototype_exception = h2_section(
+            lifecycle,
+            "Prototype and experiment exception",
+        )
+        self.assertIn(
+            "An explicitly authorized prototype or experiment may begin before all "
+            "normal inception evidence exists",
+            prototype_exception,
+        )
+        self.assertIn(
+            "Prototype work must not silently become normal production implementation",
+            prototype_exception,
+        )
+
     def test_product_and_ux_overlays_are_conditional_in_every_profile_surface(
         self,
     ) -> None:

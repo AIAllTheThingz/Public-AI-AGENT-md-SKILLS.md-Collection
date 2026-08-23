@@ -79,6 +79,8 @@ Record research state and UX-validation state independently. Evidence for one cl
 
 These links are starting points, not certification or compliance claims, and this package does not reproduce copyrighted standards text.
 
+Accountable review dates and sources are recorded in [`SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json), with durable findings under [`source-reviews/`](../../source-reviews/).
+
 ## Completion
 
 Run repository validation and link checking. Adoption is incomplete until evidence states are honest, accessibility responsibilities remain intact, and findings, limitations, excluded populations, and unresolved risks are visible.

@@ -3,6 +3,78 @@
   "defaultReviewIntervalDays": 180,
   "records": [
     {
+      "id": "disciplines-product-management",
+      "scope": "disciplines/product-management",
+      "maturity": "baseline",
+      "owner": "Engineering discipline maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": "2026-08-23",
+      "reviewEvidence": "source-reviews/2026-08-23.md",
+      "authoritativeSources": [
+        {
+          "name": "ISO/IEC/IEEE 29148 requirements engineering catalog entry",
+          "url": "https://www.iso.org/standard/72089.html"
+        },
+        {
+          "name": "ISO/IEC/IEEE 15288 system life cycle processes catalog entry",
+          "url": "https://www.iso.org/standard/81702.html"
+        },
+        {
+          "name": "ISO/IEC 25010 product quality model catalog entry",
+          "url": "https://www.iso.org/standard/78176.html"
+        }
+      ],
+      "notes": "Official public ISO catalog metadata and abstracts were reviewed for the package's requirements, lifecycle, and quality-model starting points. Full ISO standards text was not accessed, and the package does not claim clause-level conformance or certification."
+    },
+    {
+      "id": "disciplines-user-experience",
+      "scope": "disciplines/user-experience",
+      "maturity": "baseline",
+      "owner": "Engineering discipline maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": "2026-08-23",
+      "reviewEvidence": "source-reviews/2026-08-23.md",
+      "authoritativeSources": [
+        {
+          "name": "ISO 9241-210 human-centred design catalog entry",
+          "url": "https://www.iso.org/standard/77520.html"
+        },
+        {
+          "name": "ISO 9241-11 usability definitions and concepts catalog entry",
+          "url": "https://www.iso.org/standard/63500.html"
+        },
+        {
+          "name": "W3C Web Content Accessibility Guidelines 2.2",
+          "url": "https://www.w3.org/TR/WCAG22/"
+        },
+        {
+          "name": "WAI-ARIA Authoring Practices Guide",
+          "url": "https://www.w3.org/WAI/ARIA/apg/"
+        }
+      ],
+      "notes": "Official ISO public catalog metadata and public W3C guidance were reviewed for human-centred design, usability, and the UX/accessibility boundary. Full ISO standards text was not accessed; UX evidence remains separate from accessibility conformance evidence."
+    },
+    {
+      "id": "governance-product-inception-lifecycle",
+      "scope": "governance/PRODUCT_INCEPTION_LIFECYCLE.md",
+      "maturity": "baseline",
+      "owner": "Governance maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": "2026-08-23",
+      "reviewEvidence": "source-reviews/2026-08-23.md",
+      "authoritativeSources": [
+        {
+          "name": "ISO/IEC/IEEE 29148 requirements engineering catalog entry",
+          "url": "https://www.iso.org/standard/72089.html"
+        },
+        {
+          "name": "ISO/IEC/IEEE 15288 system life cycle processes catalog entry",
+          "url": "https://www.iso.org/standard/81702.html"
+        }
+      ],
+      "notes": "Official public ISO catalog metadata and abstracts were reviewed for requirements and system-lifecycle framing. The repository's named gates, evidence decisions, authorization boundary, and prototype exception are repository governance controls rather than claims about ISO requirements."
+    },
+    {
       "id": "languages-powershell",
       "scope": "languages/powershell",
       "maturity": "baseline",

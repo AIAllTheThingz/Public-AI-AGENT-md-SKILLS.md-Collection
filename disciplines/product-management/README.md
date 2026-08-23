@@ -86,6 +86,8 @@ Traceability records must distinguish `Planned`, `Implemented`, `Tested`, `Revie
 
 These are starting points only. This package summarizes selected engineering concepts, does not reproduce standards text, and does not claim certification or compliance.
 
+Accountable review dates and sources are recorded in [`SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json), with durable findings under [`source-reviews/`](../../source-reviews/).
+
 ## Validation and completion
 
 Run the repository standards validator and link checker. Adoption is incomplete until requirements and decisions have owners, evidence states are honest, unresolved unknowns are visible, and completion claims do not exceed traceability evidence.

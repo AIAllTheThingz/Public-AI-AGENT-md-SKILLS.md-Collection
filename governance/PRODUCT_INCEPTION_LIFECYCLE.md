@@ -108,7 +108,7 @@ The gate requires:
 - validation strategy covering applicable positive, negative, security, accessibility, performance, resilience, recovery, compatibility, and operational behavior
 - phased implementation plan, owners, dependencies, rollback considerations, and evidence locations
 
-**Decision:** `Pass`, `Fail`, or `Blocked`. Normal production implementation must not start after a failed or blocked gate. Passing authorizes only the reviewed scope and must be revisited after material change.
+**Decision:** `Pass`, `Fail`, or `Blocked`. Normal production implementation must not start unless the Build Gate decision is explicitly `Pass`. Passing authorizes only the reviewed scope and must be revisited after material change.
 
 ## Prototype and experiment exception
 
@@ -171,3 +171,5 @@ Maintain the applicable chain `Idea -> Requirement -> Architecture Decision -> I
 ## Completion boundary
 
 Adopting this lifecycle does not establish product success, certification, compliance, release approval, or production readiness. Those claims require applicable implementation, validation, accountable review, authorization, and operational evidence.
+
+Accountable authoritative-source review dates and sources are recorded in [`SOURCE_REVIEWS.json`](../SOURCE_REVIEWS.json), with durable findings under [`source-reviews/`](../source-reviews/).
