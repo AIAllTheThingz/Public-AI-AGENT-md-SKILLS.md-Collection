@@ -40,6 +40,8 @@ Secure Development Policy
 
 Dependencies indicate conceptual control, not permission to ignore a policy that is not shown beneath another.
 
+The [Product Inception Lifecycle](PRODUCT_INCEPTION_LIFECYCLE.md) composes the Agent Working Method, Risk Classification, Completion Evidence, Human Review, Secure Development, and Production Readiness policies into Concept, Requirements, Design, Build, and product-state transitions. It is lifecycle guidance, not a replacement policy or a parallel maturity system.
+
 ## Policy-to-record map
 
 | Policy | Primary records |
@@ -64,6 +66,8 @@ Dependencies indicate conceptual control, not permission to ignore a policy that
 - Human review determines whether evidence is accepted.
 - Exceptions alter selected controls temporarily but do not erase risk.
 - Production readiness is a separate decision from implementation completion.
+- Product inception gates constrain when normal production implementation may begin; bounded prototypes require explicit authorization and cannot silently become architecture of record.
+- Product lifecycle state is evidence-backed and remains distinct from repository component maturity.
 - Threat modeling feeds secure-development requirements.
 - Vulnerability response feeds remediation, regression, and policy improvement.
 

@@ -64,8 +64,8 @@ The skills are progressive-disclosure routers. They load only the packages relev
 
 | Area | Purpose |
 |---|---|
-| [`governance/`](governance/README.md) | Organization-wide agent behavior, risk, exceptions, evidence, and review |
-| [`disciplines/`](disciplines/README.md) | Security, architecture, testing, APIs, data, accessibility, operations, and delivery |
+| [`governance/`](governance/README.md) | Organization-wide agent behavior, product inception, risk, exceptions, evidence, and review |
+| [`disciplines/`](disciplines/README.md) | Product management, UX, security, architecture, testing, APIs, data, accessibility, operations, and delivery |
 | [`languages/`](languages/README.md) | Copyable language-specific standards packages |
 | [`platforms/`](platforms/README.md) | Containers, Kubernetes, infrastructure as code, and cloud platforms |
 | [`virtualization/`](virtualization/README.md) | Hypervisors, virtualization managers, clusters, hosts, guests, virtual networking and storage, recovery, and migration |

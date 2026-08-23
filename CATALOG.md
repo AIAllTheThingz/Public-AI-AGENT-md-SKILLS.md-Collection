@@ -23,6 +23,7 @@ The governance system defines authority, precedence, risk, evidence, review, exc
 | [Governance index](governance/README.md) | Selection, precedence, operating model, adoption, evidence states, and maintenance |
 | [Organization Contract](governance/ORGANIZATION_CONTRACT.md) | Defines precedence, non-negotiable controls, authority, and accountability |
 | [Agent Working Method](governance/AGENT_WORKING_METHOD.md) | Defines discovery, planning, implementation, validation, and reporting |
+| [Product Inception Lifecycle](governance/PRODUCT_INCEPTION_LIFECYCLE.md) | Defines evidence-based concept, requirements, design, build, and product-lifecycle gates |
 | [Risk Classification](governance/RISK_CLASSIFICATION.md) | Scales review, testing, authorization, rollback, and evidence |
 | [Completion Evidence](governance/COMPLETION_EVIDENCE.md) | Defines proof required before claiming completion |
 | [Exception Process](governance/EXCEPTION_PROCESS.md) | Provides a time-bounded, reviewed path for deviations |
@@ -37,6 +38,8 @@ See the [governance policy map](governance/POLICY_MAP.md), [adoption guide](gove
 
 ## Engineering disciplines
 
+- [Product Management](disciplines/product-management/)
+- [User Experience](disciplines/user-experience/)
 - [Application Security](disciplines/application-security/)
 - [Architecture and System Design](disciplines/architecture/)
 - [Testing and Quality Engineering](disciplines/testing/)

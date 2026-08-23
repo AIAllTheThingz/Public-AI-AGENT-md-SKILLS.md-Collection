@@ -104,6 +104,7 @@ Current `main` must not be retroactively tagged as `v0.9.0`.
 - `governance/POLICY_LIFECYCLE.md`
 - `governance/CONTROL_EVIDENCE_MODEL.md`
 - `governance/GOVERNANCE_DECISION_MATRIX.md`
+- `governance/PRODUCT_INCEPTION_LIFECYCLE.md`
 - eleven governance policies
 - governance adoption, authorization, review, risk, exception, readiness, threat, vulnerability, AI-review, evidence, and policy-change templates
 - governance workflow and decision examples
@@ -125,6 +126,8 @@ Current `main` must not be retroactively tagged as `v0.9.0`.
 
 ## Complete discipline packages
 
+- `disciplines/product-management`
+- `disciplines/user-experience`
 - `disciplines/application-security`
 - `disciplines/architecture`
 - `disciplines/testing`

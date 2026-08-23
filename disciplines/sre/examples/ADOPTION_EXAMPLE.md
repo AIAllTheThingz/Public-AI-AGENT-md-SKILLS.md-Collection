@@ -46,6 +46,10 @@ It does not remove shared controls merely because they are inconvenient.
 - recovery and failover tests
 - reviewed runbooks and escalation
 - documented reliability risks
+- a production-readiness record tied to the fictitious candidate, with every applicable area assessed and no pass inferred from deployment alone
+- a scaling applicability matrix that justifies simple single-instance choices and leaves unexecuted scaling validation as `NotRun`
+
+The example does not claim `OperationallyVerified`: no real production service or representative production workload exists.
 
 The completion report also lists checks not run, known limitations, accepted exceptions, residual risks, and follow-up owners.
 

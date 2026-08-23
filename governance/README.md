@@ -87,6 +87,8 @@ request
 
 Detailed roles and decision responsibilities are described in [OPERATING_MODEL.md](OPERATING_MODEL.md).
 
+New products and material capabilities also follow the [Product Inception Lifecycle](PRODUCT_INCEPTION_LIFECYCLE.md), which defines evidence-based Concept, Requirements, Design, and Build gates plus product lifecycle states without replacing component maturity policy.
+
 ## Required roles
 
 Projects must identify roles proportionate to risk:
@@ -171,15 +173,16 @@ For each material change:
 2. Confirm authority.
 3. Classify risk.
 4. Identify applicable policies and standards.
-5. Define acceptance criteria and evidence.
-6. Determine whether threat modeling, specialist review, rollback, or exception handling is required.
-7. Authorize consequential execution.
-8. Implement the smallest coherent change.
-9. Validate exact behavior.
-10. Review evidence and limitations.
-11. Approve, reject, or request changes.
-12. Record production or operational decision when applicable.
-13. Track follow-up, exception expiry, and residual risk.
+5. For new products or material capabilities, evaluate the applicable Product Inception gates.
+6. Define acceptance criteria and evidence.
+7. Determine whether threat modeling, specialist review, rollback, or exception handling is required.
+8. Authorize consequential execution.
+9. Implement the smallest coherent change.
+10. Validate exact behavior.
+11. Review evidence and limitations.
+12. Approve, reject, or request changes.
+13. Record production or operational decision when applicable.
+14. Track follow-up, exception expiry, and residual risk.
 
 ## Exceptions
 

@@ -2,6 +2,19 @@
 
 These sources inform the repository. The repository summarizes and operationalizes selected ideas; it does not reproduce or replace the source documents.
 
+## Product and requirements engineering
+
+- ISO/IEC/IEEE 29148, Systems and software engineering — Life cycle processes — Requirements engineering: https://www.iso.org/standard/72089.html
+- ISO/IEC/IEEE 15288, Systems and software engineering — System life cycle processes: https://www.iso.org/standard/81702.html
+- ISO/IEC 25010, Systems and software Quality Requirements and Evaluation — Product quality model: https://www.iso.org/standard/78176.html
+
+## User experience
+
+- ISO 9241-210, Ergonomics of human-system interaction — Human-centred design for interactive systems: https://www.iso.org/standard/77520.html
+- ISO 9241-11, Ergonomics of human-system interaction — Usability: Definitions and concepts: https://www.iso.org/standard/63500.html
+
+Where UX and accessibility intersect, use the W3C sources in the Accessibility section without treating UX validation as accessibility evidence.
+
 ## Secure development and application security
 
 - NIST SP 800-218, Secure Software Development Framework (SSDF): https://csrc.nist.gov/pubs/sp/800/218/final
@@ -119,6 +132,16 @@ These sources inform the repository. The repository summarizes and operationaliz
 ## Observability
 
 - OpenTelemetry documentation: https://opentelemetry.io/docs/
+
+## Reliability, production readiness, and scaling
+
+- Google Site Reliability Engineering book: https://sre.google/sre-book/table-of-contents/
+- Google Site Reliability Workbook: https://sre.google/workbook/table-of-contents/
+- Kubernetes resource management documentation: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+- Kubernetes Horizontal Pod Autoscaling documentation: https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/
+- AWS Well-Architected Reliability Pillar: https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html
+- Microsoft Azure Well-Architected Reliability guidance: https://learn.microsoft.com/en-us/azure/well-architected/reliability/
+- Google Cloud Well-Architected Reliability pillar: https://docs.cloud.google.com/architecture/framework/reliability
 
 ## JSON Schema and validation
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Discipline packages define engineering behavior that crosses programming languages, frameworks, platforms, and project types. They turn concerns such as security, testing, architecture, accessibility, reliability, documentation, and delivery into explicit agent instructions, supporting standards, review checklists, evidence requirements, and completion gates.
+Discipline packages define product and engineering behavior that crosses programming languages, frameworks, platforms, and project types. They turn concerns such as product definition, user experience, security, testing, architecture, accessibility, reliability, documentation, and delivery into explicit agent instructions, supporting standards, review checklists, evidence requirements, and completion gates.
 
 A discipline package is selected because its work is relevant, not because a team has a matching job title. A small project can require several disciplines. A large project can still omit a discipline only when the omission is genuinely justified and recorded.
 
@@ -12,6 +12,8 @@ These packages improve consistency and reviewability. They do not replace accoun
 
 | Discipline | Use it when | Common companions |
 |---|---|---|
+| [Product Management](product-management/) | A product, capability, material outcome, requirement, MVP boundary, or priority is being defined or changed. | [User Experience](user-experience/), [Architecture and System Design](architecture/), [Testing and Quality Engineering](testing/) |
+| [User Experience](user-experience/) | A user or operator pursues goals through a journey, task, workflow, or interface. | [Product Management](product-management/), [Accessibility](accessibility/), [Testing and Quality Engineering](testing/) |
 | [Application Security](application-security/) | The system accepts untrusted input. | [Architecture and System Design](architecture/), [Testing and Quality Engineering](testing/), [Privacy and Data Governance](privacy/) |
 | [Architecture and System Design](architecture/) | A new component, service, data store, or external dependency is introduced. | [Application Security](application-security/), [Testing and Quality Engineering](testing/), [Observability](observability/) |
 | [Testing and Quality Engineering](testing/) | Software behavior changes. | [Application Security](application-security/), [Architecture and System Design](architecture/), [CI/CD](ci-cd/) |
@@ -63,16 +65,18 @@ Start with the project profile, architecture, data flows, trust boundaries, user
 
 Ask:
 
-1. Does the project accept untrusted input or protect sensitive operations?
-2. Does it expose an API or integrate with another system?
-3. Does it store, transform, publish, or retain data?
-4. Does it have a user interface or user-facing content?
-5. Does it run as a service, scheduled job, workflow, or operational process?
-6. Does it build, package, publish, deploy, or promote artifacts?
-7. Does it have availability, recovery, incident, or on-call expectations?
-8. Will non-authors need to use, operate, maintain, audit, or recover it?
-9. Are compatibility, migration, versioning, or coordinated rollout concerns present?
-10. What evidence would be required before an accountable reviewer accepts the change?
+1. Is a product problem, intended user, outcome, requirement, scope, or priority being defined or changed?
+2. Does a user or operator pursue goals through a journey, workflow, or interface?
+3. Does the project accept untrusted input or protect sensitive operations?
+4. Does it expose an API or integrate with another system?
+5. Does it store, transform, publish, or retain data?
+6. Does it have a user interface or user-facing content?
+7. Does it run as a service, scheduled job, workflow, or operational process?
+8. Does it build, package, publish, deploy, or promote artifacts?
+9. Does it have availability, scaling, recovery, incident, or on-call expectations?
+10. Will non-authors need to use, operate, maintain, audit, or recover it?
+11. Are compatibility, migration, versioning, or coordinated rollout concerns present?
+12. What evidence would be required before an accountable reviewer accepts the change?
 
 The answer normally produces several applicable discipline packages.
 
@@ -82,7 +86,7 @@ These are starting points, not exemptions.
 
 ### Web application
 
-Usually includes application security, architecture, testing, API engineering when applicable, accessibility, privacy, documentation, CI/CD, software supply chain, observability, release engineering, and SRE when production reliability is material.
+Usually includes product management, user experience, application security, architecture, testing, API engineering when applicable, accessibility, privacy, documentation, CI/CD, software supply chain, observability, release engineering, and SRE when production reliability is material.
 
 ### Worker service or scheduled automation
 

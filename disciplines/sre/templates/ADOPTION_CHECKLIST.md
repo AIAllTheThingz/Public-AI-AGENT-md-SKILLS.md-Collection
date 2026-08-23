@@ -35,6 +35,9 @@ status: baseline
 
 ## Validation and approval
 
+- [ ] Production-readiness areas and decision authority are defined for the exact candidate and operating scope.
+- [ ] Scaling areas are marked `Applicable`, justified `NotApplicable`, `NotRun`, `Blocked`, or `Verified` with evidence.
+- [ ] Deployment, rollback, backup, restore, recovery, observability, capacity, security, ownership, runbook, incident, cost, limitation, and risk evidence is selected proportionate to applicability.
 - [ ] Repository validation and link checking pass.
 - [ ] Project-specific validation is executable.
 - [ ] Evidence storage and completion reporting are defined.

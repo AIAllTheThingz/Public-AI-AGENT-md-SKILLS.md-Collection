@@ -27,6 +27,8 @@ This discipline applies to:
 
 - service objectives and error budgets
 - capacity and performance
+- production readiness and operating acceptance
+- scaling implementation strategy
 - resilience and recovery
 - incident management
 - on-call and runbooks
@@ -52,6 +54,8 @@ Read every applicable supporting standard before implementation:
 
 - [`standards/SLO_ERROR_BUDGET_STANDARD.md`](standards/SLO_ERROR_BUDGET_STANDARD.md)
 - [`standards/CAPACITY_PERFORMANCE_STANDARD.md`](standards/CAPACITY_PERFORMANCE_STANDARD.md)
+- [`standards/PRODUCTION_READINESS_STANDARD.md`](standards/PRODUCTION_READINESS_STANDARD.md)
+- [`standards/SCALING_STRATEGY_STANDARD.md`](standards/SCALING_STRATEGY_STANDARD.md)
 - [`standards/RESILIENCE_RECOVERY_STANDARD.md`](standards/RESILIENCE_RECOVERY_STANDARD.md)
 - [`standards/INCIDENT_MANAGEMENT_STANDARD.md`](standards/INCIDENT_MANAGEMENT_STANDARD.md)
 - [`standards/RUNBOOK_ONCALL_STANDARD.md`](standards/RUNBOOK_ONCALL_STANDARD.md)
@@ -92,6 +96,18 @@ The supporting standards extend this file. This `AGENTS.md` takes precedence if 
 **Requirement:** Feed incident learning into tests, automation, and design.
 
 **Evidence:** Post-incident actions.
+
+### SRE-READINESS-006
+
+**Requirement:** Make production readiness a separate evidence-backed decision for the exact candidate and supported operating scope.
+
+**Evidence:** Readiness record whose applicable areas are `Pass`, `Fail`, `Blocked`, or justified `NotApplicable`.
+
+### SRE-SCALING-007
+
+**Requirement:** Record and validate the simplest applicable scaling implementation decisions against the workload and operating envelope.
+
+**Evidence:** Scaling-strategy applicability matrix and representative validation evidence.
 
 ## Non-negotiable behavior
 

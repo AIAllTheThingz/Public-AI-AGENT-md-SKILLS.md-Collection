@@ -83,7 +83,7 @@ Start with [`AGENTS.md`](AGENTS.md). It contains the mandatory agent rules, pres
 | [`Unit and Component Testing Standard`](standards/UNIT_COMPONENT_STANDARD.md) | Test cohesive behavior, boundaries, errors, state transitions, and invariants with deterministic isolated tests. |
 | [`Integration and Contract Testing Standard`](standards/INTEGRATION_CONTRACT_STANDARD.md) | Validate schemas, protocols, authentication, authorization, timeouts, retries, compatibility, and representative dependency behavior. |
 | [`End-to-End Testing Standard`](standards/END_TO_END_STANDARD.md) | Use focused end-to-end scenarios for critical user and operational journeys without replacing lower-level diagnostics. |
-| [`Nonfunctional Testing Standard`](standards/NONFUNCTIONAL_TESTING_STANDARD.md) | Define performance, load, resilience, recovery, security, accessibility, and compatibility tests when risk requires them. |
+| [`Nonfunctional Testing Standard`](standards/NONFUNCTIONAL_TESTING_STANDARD.md) | Define contextual baseline, load, stress, spike, soak, scaling, failure-under-load, recovery-under-load, resilience, security, accessibility, and compatibility evidence. |
 | [`Test Data and Environment Standard`](standards/TEST_DATA_ENVIRONMENT_STANDARD.md) | Use controlled, synthetic, minimal, isolated, reproducible data and environments; protect secrets and personal data. |
 | [`Defect and Regression Standard`](standards/DEFECT_REGRESSION_STANDARD.md) | Capture fail-before and pass-after evidence, add durable regression coverage, and avoid weakening assertions or skipping tests. |
 | [`Testing Completion Evidence`](standards/COMPLETION_EVIDENCE.md) | Record requirements covered, test commands, results, environments, skipped checks, flaky behavior, limitations, and residual risk. |
@@ -122,6 +122,7 @@ Typical completion evidence includes:
 
 - risk-based test strategy
 - repeatable test results
+- performance-test applicability decisions, representative workload and environment, selected latency/throughput/error/resource/saturation/cost evidence, and supported operating envelope
 - negative and failure-path coverage
 - regression evidence
 - documented gaps and unsupported environments
@@ -144,6 +145,14 @@ python tools/check-links/check_links.py
 
 The adopting project must also define discipline-specific validation commands and review procedures. This package intentionally does not invent tool names, environments, credentials, endpoints, data sets, or production targets.
 
+## Authoritative starting points for performance validation
+
+- [Google Site Reliability Engineering book](https://sre.google/sre-book/table-of-contents/)
+- [Google Site Reliability Workbook](https://sre.google/workbook/table-of-contents/)
+- [Kubernetes resource management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) and [Horizontal Pod Autoscaling](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/) when Kubernetes is the system under test
+
+Use current official runtime, framework, database, queue, cloud-service, or load-tool documentation for technology-specific metrics and limits. These links are starting points; they do not establish certification, compliance, representative test execution, or production performance.
+
 ## Common failure modes
 
 - equating coverage percentage with quality
@@ -151,6 +160,8 @@ The adopting project must also define discipline-specific validation commands an
 - using production data casually
 - skipping negative and failure cases
 - weakening tests to make CI green
+- claiming performance from an unrepresentative happy-path benchmark
+- reporting averages while hiding tail latency, errors, saturation, or incomplete recovery
 
 Other common mistakes include copying only selected controls without documenting omissions, declaring success without evidence, treating a scanner or checklist as proof by itself, and assuming the package removes the need for human accountability.
 
