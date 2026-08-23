@@ -122,7 +122,7 @@ Typical completion evidence includes:
 
 - risk-based test strategy
 - repeatable test results
-- performance-test applicability decisions, representative workload and environment, selected latency/throughput/error/resource/saturation/cost evidence, and supported operating envelope
+- performance-test applicability decisions with per-test owners, explicit execution authorization and safeguards, safe stop conditions, representative workload and environment, selected latency/throughput/error/resource/saturation/cost evidence, and supported operating envelope
 - negative and failure-path coverage
 - regression evidence
 - documented gaps and unsupported environments

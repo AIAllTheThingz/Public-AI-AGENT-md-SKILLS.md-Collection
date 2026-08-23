@@ -380,6 +380,45 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             completion_gate,
         )
 
+    def test_performance_matrix_retains_per_test_safety_ownership(self) -> None:
+        performance = h2_section(
+            read("disciplines/testing/templates/EVIDENCE_RECORD_TEMPLATE.md"),
+            "Performance validation",
+        )
+        table = [
+            [cell.strip() for cell in line.strip().strip("|").split("|")]
+            for line in performance.splitlines()
+            if line.startswith("|")
+        ]
+        self.assertGreaterEqual(len(table), 10)
+        header = table[0]
+        for required_column in (
+            "Owner",
+            "Authorization and safeguards",
+            "Stop conditions",
+        ):
+            with self.subTest(column=required_column):
+                self.assertIn(required_column, header)
+
+        separator, *rows = table[1:]
+        self.assertTrue(all(set(cell) <= {"-", ":"} for cell in separator))
+        self.assertEqual(
+            [row[0] for row in rows],
+            [
+                "Baseline",
+                "Load",
+                "Stress",
+                "Spike",
+                "Soak/endurance",
+                "Scaling",
+                "Failure under load",
+                "Recovery under load",
+            ],
+        )
+        for row in rows:
+            with self.subTest(test_type=row[0]):
+                self.assertEqual(len(row), len(header))
+
     def test_readiness_template_has_one_result_per_standard_area(self) -> None:
         standard = read(
             "disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md"
@@ -429,6 +468,26 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         ):
             with self.subTest(test_type=test_type):
                 self.assertIn(test_type, migration)
+
+    def test_conditional_product_overlays_have_breaking_profile_migration(self) -> None:
+        unreleased = h2_section(read("CHANGELOG.md"), "[Unreleased]")
+        breaking = h3_section(unreleased, "Breaking changes")
+        migration = h3_section(unreleased, "Migration notes")
+
+        for overlay in ("Product Management", "User Experience"):
+            with self.subTest(overlay=overlay):
+                self.assertIn(overlay, breaking)
+                self.assertIn(overlay, migration)
+        self.assertIn("conditional overlays", breaking)
+        self.assertIn("all 13 canonical project profiles", breaking)
+        self.assertIn("becomes mandatory", breaking)
+
+        for canonical_name, _package_slug in CANONICAL_PROFILE_PACKAGES:
+            with self.subTest(existing_profile=canonical_name):
+                self.assertIn(f"`{Path(canonical_name).stem}`", migration)
+        self.assertIn("selected primary and secondary profile", migration)
+        self.assertIn("predicate is not satisfied", migration)
+        self.assertIn("omission rationale", migration)
 
     def test_readiness_template_records_overall_decision_and_authority(self) -> None:
         standard = read(

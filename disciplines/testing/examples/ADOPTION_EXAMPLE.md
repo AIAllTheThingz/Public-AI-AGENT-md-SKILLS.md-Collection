@@ -46,7 +46,7 @@ It does not remove shared controls merely because they are inconvenient.
 - negative and failure-path coverage
 - regression evidence
 - documented gaps and unsupported environments
-- a contextual performance-test matrix; the fictitious project marks spike and soak testing `NotApplicable` with rationale, leaves production-scale recovery `NotRun`, and does not generalize a local baseline beyond its environment
+- a contextual performance-test matrix whose rows identify the test owner, explicit execution authorization and safeguards, and safe stop conditions; the fictitious project marks spike and soak testing `NotApplicable` with rationale, leaves production-scale recovery `NotRun`, and does not generalize a local baseline beyond its environment
 - representative evidence selected from throughput, p95/p99 latency, error rate, CPU, memory, connection count, queue depth, database utilization, saturation, and cost rather than requiring every possible metric
 
 The completion report also lists checks not run, known limitations, accepted exceptions, residual risks, and follow-up owners.

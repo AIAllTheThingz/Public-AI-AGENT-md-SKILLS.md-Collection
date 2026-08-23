@@ -24,6 +24,7 @@ This standard defines detailed requirements for one part of the **Testing and Qu
 - Record exceptions through the repository exception process instead of weakening the standard silently.
 - For performance validation, explicitly assess the applicability of baseline, load, stress, spike, soak or endurance, scaling, failure-under-load, and recovery-under-load testing.
 - Record each performance-test type as `Applicable`, justified `NotApplicable`, `NotRun`, `Blocked`, or `Tested` using the repository evidence model; do not infer a result from planned scripts or configuration.
+- For each performance-test type, record its accountable owner, explicit execution authorization and safeguards, and safe stop conditions independently; record why any field is unresolved when the state is `NotRun` or `Blocked`.
 - Define workload model, user or workload unit, concurrency or arrival pattern, data shape, duration, warm-up, ramp, environment, topology, dependencies, quotas, resource limits, success criteria, stop conditions, and owner.
 - Select representative metrics contextually. Consider throughput, p50, p95, p99, error rate, CPU, memory, I/O, connection counts, queue depth, database utilization, relevant service saturation, and cost; do not require or report irrelevant metrics merely to fill a table.
 - Establish a versioned baseline before interpreting regressions where a meaningful comparison exists.
@@ -49,6 +50,7 @@ Evidence should be concrete and reproducible. Depending on scope, include:
 - known limitations, assumptions, unresolved risks, owners, and follow-up work
 - test plan, requirement and acceptance-criteria mappings, exact artifact/configuration identity, and applicability decisions
 - workload model, generators, data, duration, environment, topology, dependencies, quotas, warm-up, ramp, and stop conditions
+- per-test-type owner, execution authorization, safeguards, and stop conditions for baseline, load, stress, spike, soak or endurance, scaling, failure-under-load, and recovery-under-load tests
 - raw results and summarized throughput, latency percentiles, errors, utilization, saturation, connections, queues, database, and cost metrics selected for the system
 - baseline comparison, variability, repeated-run or confidence rationale, observed bottlenecks, and supported operating envelope
 - scaling, failure-under-load, and recovery-under-load evidence where applicable
@@ -63,6 +65,7 @@ Evidence should be concrete and reproducible. Depending on scope, include:
 - Does the evidence prove the claim rather than merely describe intent?
 - Are exceptions approved, time-bounded, and visible?
 - Is every performance-test type explicitly assessed rather than silently omitted?
+- Does every performance-test type identify its owner, execution authorization and safeguards, and safe stop conditions rather than relying on record-level assumptions?
 - Does the workload represent the claimed operating condition without exposing uncontrolled systems?
 - Are acceptance thresholds authorized and traceable instead of invented for the test?
 - Are tail latency, errors, resource saturation, dependency behavior, and cost measured only where relevant?
