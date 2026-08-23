@@ -124,12 +124,11 @@ def table_areas(text: str, heading: str) -> list[str]:
 
 class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
     def test_product_inception_lifecycle_is_explicitly_selected(self) -> None:
-        integration_surfaces = (
+        optional_adoption_surfaces = (
             ("README.md", "governance/PRODUCT_INCEPTION_LIFECYCLE.md"),
             ("profiles/README.md", "../governance/PRODUCT_INCEPTION_LIFECYCLE.md"),
-            ("governance/README.md", "PRODUCT_INCEPTION_LIFECYCLE.md"),
         )
-        for relative, target in integration_surfaces:
+        for relative, target in optional_adoption_surfaces:
             with self.subTest(surface=relative):
                 matching_lines = [
                     line
@@ -141,6 +140,14 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
                     integration = line.casefold()
                     self.assertIn("optional", integration)
                     self.assertIn("select", integration)
+
+        governance_integration = next(
+            line
+            for line in read("governance/README.md").splitlines()
+            if "PRODUCT_INCEPTION_LIFECYCLE.md" in line
+        ).casefold()
+        self.assertIn("explicitly select", governance_integration)
+        self.assertIn("not activated", governance_integration)
 
         for relative in (
             "examples/full-stack/AGENTS.md",
@@ -310,10 +317,44 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             standard_areas,
             "Privacy must remain distinct from the Security readiness area.",
         )
+        self.assertIn(
+            "Data migration",
+            standard_areas,
+            "Data migration must remain a distinct production-readiness area.",
+        )
         self.assertEqual(
             table_areas(template, "Production readiness"),
             standard_areas,
         )
+
+    def test_mandatory_sre_and_testing_changes_are_breaking_with_migration(self) -> None:
+        unreleased = h2_section(read("CHANGELOG.md"), "[Unreleased]")
+        breaking = h3_section(unreleased, "Breaking changes")
+        migration = h3_section(unreleased, "Migration notes")
+
+        for package in (
+            "Site Reliability Engineering",
+            "Testing and Quality Engineering",
+        ):
+            with self.subTest(package=package):
+                self.assertIn(package, breaking)
+        self.assertIn("must migrate", breaking)
+
+        for rule_id in ("SRE-READINESS-006", "SRE-SCALING-007"):
+            with self.subTest(rule=rule_id):
+                self.assertIn(rule_id, migration)
+        for test_type in (
+            "baseline",
+            "load",
+            "stress",
+            "spike",
+            "soak or endurance",
+            "scaling",
+            "failure-under-load",
+            "recovery-under-load",
+        ):
+            with self.subTest(test_type=test_type):
+                self.assertIn(test_type, migration)
 
     def test_readiness_template_records_overall_decision_and_authority(self) -> None:
         standard = read(

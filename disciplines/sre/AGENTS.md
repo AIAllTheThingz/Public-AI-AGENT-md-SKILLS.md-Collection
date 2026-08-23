@@ -101,7 +101,7 @@ The supporting standards extend this file. This `AGENTS.md` takes precedence if 
 
 **Requirement:** Make production readiness a separate evidence-backed decision for the exact candidate and supported operating scope.
 
-**Evidence:** Readiness record with the standard's per-area results, including Privacy separately when applicable, a separate overall `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` result, and accountable decision authority.
+**Evidence:** Readiness record with the standard's per-area results, including Data migration and Privacy separately when applicable, a separate overall `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` result, and accountable decision authority.
 
 ### SRE-SCALING-007
 

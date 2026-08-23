@@ -14,13 +14,25 @@ Release notes distinguish:
 
 ## [Unreleased]
 
+### Breaking changes
+
+- Strengthened the existing Site Reliability Engineering and Testing and Quality Engineering package contracts with mandatory production-readiness, scaling-strategy, and contextual performance-test decisions and evidence. Existing adopters of either package must migrate their tailored instructions, templates, and evidence records before claiming conformance to the updated package; the release carrying these changes must retain breaking-change classification and versioned migration guidance under [`RELEASE_POLICY.md`](RELEASE_POLICY.md).
+
+### Normative changes
+
 - Added complete baseline Product Management and User Experience discipline packages with evidence-backed requirements, acceptance, traceability, research, journey, usability, validation, and accessibility-boundary controls.
 - Integrated Product Management and User Experience as conditional profile overlays, with representative examples promoting or omitting them based on scoped product and human-interaction concerns.
 - Added a Product Inception Lifecycle with Concept, Requirements, Design, Build, production-candidate, and evidence-backed product-lifecycle gates distinct from component maturity.
-- Strengthened SRE production-readiness and scaling-strategy requirements and expanded contextual performance, load, stress, spike, soak, scaling, failure-under-load, and recovery-under-load validation.
 - Added authoritative standards-body and first-party starting points for requirements engineering, UX, reliability, scaling, and applicable cloud or Kubernetes implementation guidance without asserting compliance or certification.
 - Added authoritative first-party and standards-body starting points to the ten non-C# language package READMEs.
 - Added the official Rustonomicon to the Rust package's authoritative starting points for unsafe-code boundaries.
+
+### Migration notes
+
+- Existing SRE adopters must add `SRE-READINESS-006` and `SRE-SCALING-007` to tailored instructions, assess every production-readiness and scaling-strategy area, keep Data migration, Privacy, and Security as independent readiness decisions when applicable, and record per-area plus overall readiness evidence for the exact candidate and operating scope.
+- Existing Testing adopters must assess baseline, load, stress, spike, soak or endurance, scaling, failure-under-load, and recovery-under-load applicability; retain representative workload, environment, result, and recovery evidence for each claim; and use explicit `NotApplicable`, `NotRun`, or `Blocked` states instead of silently omitting controls.
+- Projects that did not select the SRE or Testing package have no new package-adoption action. Existing adopters may use justified `NotApplicable` decisions where the updated standards permit them; migration must not be implemented by deleting or weakening the new controls.
+- When these Unreleased changes are assigned a repository version, carry this guidance into the required `releases/migrations/<VERSION>.md` record and retain the breaking classification in that version's release notes.
 
 ## [1.0.0-rc.1] - 2026-08-16
 

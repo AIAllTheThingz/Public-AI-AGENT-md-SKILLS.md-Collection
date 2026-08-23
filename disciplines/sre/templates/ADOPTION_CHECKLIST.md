@@ -36,8 +36,9 @@ status: baseline
 ## Validation and approval
 
 - [ ] Production-readiness per-area results, separate overall result, and decision authority are defined for the exact candidate and operating scope.
+- [ ] Applicable data migrations and irreversible changes have rehearsal evidence, backup or recovery planning, irreversible-step handling, explicit go/no-go criteria, and decision authority.
 - [ ] Scaling areas are marked `Applicable`, justified `NotApplicable`, `NotRun`, `Blocked`, or `Verified` with evidence.
-- [ ] Deployment, rollback, backup, restore, recovery, observability, capacity, security, privacy, ownership, runbook, incident, cost, limitation, and risk evidence is selected proportionate to applicability.
+- [ ] Deployment, rollback, backup, restore, recovery, data-migration, observability, capacity, security, privacy, ownership, runbook, incident, cost, limitation, and risk evidence is selected proportionate to applicability.
 - [ ] Repository validation and link checking pass.
 - [ ] Project-specific validation is executable.
 - [ ] Evidence storage and completion reporting are defined.

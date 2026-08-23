@@ -30,7 +30,7 @@ Evidence should be concrete and reproducible. Depending on scope, include:
 - design, configuration, contract, diagram, or decision records
 - implementation or review evidence tied to the requirement
 - positive, negative, boundary, and failure-path tests
-- operational, security, privacy, compatibility, or recovery evidence
+- operational, data-migration, security, privacy, compatibility, or recovery evidence
 - commands run, environments used, results, and checks not run
 - known limitations, assumptions, unresolved risks, owners, and follow-up work
 

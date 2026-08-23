@@ -87,7 +87,7 @@ request
 
 Detailed roles and decision responsibilities are described in [OPERATING_MODEL.md](OPERATING_MODEL.md).
 
-Adopters may explicitly select the [Product Inception Lifecycle](PRODUCT_INCEPTION_LIFECYCLE.md) for a new product or material capability. It is optional and is not activated by repository, governance, profile, or Product Management package adoption; once selected, its gates apply to the selected scope.
+Adopters may explicitly select the [Product Inception Lifecycle](PRODUCT_INCEPTION_LIFECYCLE.md) for a new product or material capability. It is not activated by repository, governance, profile, or Product Management package adoption; once selected, its gates apply to the selected scope.
 
 ## Required roles
 
@@ -173,7 +173,7 @@ For each material change:
 2. Confirm authority.
 3. Classify risk.
 4. Identify applicable policies and standards.
-5. If the optional Product Inception Lifecycle was selected for the change, evaluate its applicable gates.
+5. If the Product Inception Lifecycle was explicitly selected for the change, evaluate its applicable gates.
 6. Define acceptance criteria and evidence.
 7. Determine whether threat modeling, specialist review, rollback, or exception handling is required.
 8. Authorize consequential execution.

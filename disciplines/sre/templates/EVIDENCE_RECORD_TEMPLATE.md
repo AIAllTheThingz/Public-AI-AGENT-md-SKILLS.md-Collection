@@ -43,6 +43,7 @@ status: baseline
 | Deployment | | | | |
 | Rollback and recovery | | | | |
 | Backup and restore | | | | |
+| Data migration | | | | |
 | Observability | | | | |
 | Capacity | | | | |
 | Security | | | | |
@@ -52,6 +53,9 @@ status: baseline
 | Cost | | | | |
 | Limitations and risks | | | | |
 
+- Data migration rehearsal and recovery evidence:
+- Irreversible-change handling and accepted risk:
+- Data migration go/no-go criteria and decision authority:
 - Overall readiness result (`Pass`, `Fail`, `Blocked`, `NotApplicable`):
 - Decision authority:
 - Decision date:
