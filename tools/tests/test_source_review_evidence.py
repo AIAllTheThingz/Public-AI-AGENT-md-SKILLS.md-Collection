@@ -19,7 +19,7 @@ NEW_BASELINE_SOURCE_REVIEWS = {
 }
 
 FINAL_2026_08_23_NORMATIVE_REVISION = (
-    "9cc342cc3f4b9c543abaedc8be5661689a4c5cdd"
+    "5597462659c63b3d7da7670dcd3604ba1f70c13f"
 )
 
 
@@ -107,6 +107,14 @@ class SourceReviewEvidenceTests(unittest.TestCase):
         for readiness_area in ("Privacy", "Data migration"):
             with self.subTest(sre_readiness_area=readiness_area):
                 self.assertIn(readiness_area, sre_review)
+        for scaling_contract in (
+            "overall scaling-strategy `Verified` claim",
+            "every applicable area is `Verified`",
+            "`Applicable`, `NotRun`, or `Blocked`",
+            "`NotApplicable` requires justification",
+        ):
+            with self.subTest(scaling_contract=scaling_contract):
+                self.assertIn(scaling_contract, sre_review)
         self.assertIn("repository-authored evidence controls", sre_review)
 
         testing_review = evidence.split(
