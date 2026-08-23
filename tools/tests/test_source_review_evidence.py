@@ -19,7 +19,7 @@ NEW_BASELINE_SOURCE_REVIEWS = {
 }
 
 FINAL_2026_08_23_NORMATIVE_REVISION = (
-    "5597462659c63b3d7da7670dcd3604ba1f70c13f"
+    "389055732b1afa0d35886b578194ae8789b40aaf"
 )
 
 
@@ -78,6 +78,10 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             "`GOV-PRODUCT-INCEPTION-001`",
             "`GOV-PRODUCT-INCEPTION-006`",
             "`GOV-PRODUCT-INCEPTION-012`",
+            "`scaled-production`",
+            "every applicable scaling area is `Verified`",
+            "`Applicable`, `NotRun`, or `Blocked` area prevents",
+            "even when the SRE package is not otherwise selected",
             "`Pass`",
             "`Fail`",
             "`Blocked`",
