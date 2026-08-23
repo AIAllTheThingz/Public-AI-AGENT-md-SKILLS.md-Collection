@@ -189,16 +189,22 @@
     "profiles/*"
   ],
   "migrationFrom0100": {
-    "breakingChanges": [],
+    "breakingChanges": [
+      "Existing Site Reliability Engineering and Testing and Quality Engineering adopters must migrate to the strengthened readiness, scaling, and contextual performance-test decision and evidence contracts.",
+      "Existing canonical-profile adopters must select Product Management or User Experience when the documented conditional predicate is satisfied."
+    ],
     "requiredActions": [
       "Update the recorded repository source from v0.10.0 to the reviewed 1.0.0-rc.1 candidate when deliberately evaluating the release candidate.",
       "Re-run repository or project validation after changing the pinned standards source.",
+      "Migrate existing SRE and Testing package selections to the strengthened readiness, scaling, and per-test accountability and safety evidence contracts.",
+      "Re-evaluate every selected canonical profile against the conditional Product Management and User Experience predicates and record either the selected overlay or a scope-specific omission rationale.",
       "Treat only languages/csharp as a stable package commitment; do not infer stable maturity for baseline packages."
     ],
     "reviewActions": [
       "C# adopters should review the newly explicit stable compatibility commitment.",
       "PowerShell adopters using Windows PowerShell 5.1 should review the additive legacy compatibility overlay.",
-      "Mixed-profile adopters using --include-profile-required should review the additive secondary-profile discipline expansion."
+      "Existing SRE and Testing adopters must review the breaking readiness, scaling, and contextual performance-test migration.",
+      "Existing profile adopters must review the conditional Product Management and User Experience overlays; --include-profile-required does not select those overlays automatically."
     ],
     "preservedContracts": [
       "published v0.10.0 root stable entry paths",

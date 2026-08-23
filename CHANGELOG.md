@@ -16,36 +16,24 @@ Release notes distinguish:
 
 ### Breaking changes
 
-- Strengthened the existing Site Reliability Engineering and Testing and Quality Engineering package contracts with mandatory production-readiness, scaling-strategy, and contextual performance-test decisions and evidence. Existing adopters of either package must migrate their tailored instructions, templates, and evidence records before claiming conformance to the updated package; the release carrying these changes must retain breaking-change classification and versioned migration guidance under [`RELEASE_POLICY.md`](RELEASE_POLICY.md).
-- Added Product Management and User Experience as conditional overlays to all 13 canonical project profiles. Profile selection alone does not select either package, but each overlay becomes mandatory when its documented product or human-experience predicate is satisfied. Because this changes previously supported profile composition from omitted to required, existing profile adopters whose scopes satisfy a predicate must migrate; the release carrying these predicates must classify them as breaking and provide versioned migration guidance under [`RELEASE_POLICY.md`](RELEASE_POLICY.md).
+- None.
 
 ### Normative changes
 
-- Added complete baseline Product Management and User Experience discipline packages with evidence-backed requirements, acceptance, traceability, research, journey, usability, validation, and accessibility-boundary controls.
-- Integrated Product Management and User Experience as conditional profile overlays, with representative examples promoting or omitting them based on scoped product and human-interaction concerns.
-- Added a Product Inception Lifecycle with Concept, Requirements, Design, Build, production-candidate, and evidence-backed product-lifecycle gates distinct from component maturity.
-- Added authoritative standards-body and first-party starting points for requirements engineering, UX, reliability, scaling, and applicable cloud or Kubernetes implementation guidance without asserting compliance or certification.
-- Added authoritative first-party and standards-body starting points to the ten non-C# language package READMEs.
-- Added the official Rustonomicon to the Rust package's authoritative starting points for unsafe-code boundaries.
+- None.
 
 ### Migration notes
 
-- Existing SRE adopters must add `SRE-READINESS-006` and `SRE-SCALING-007` to tailored instructions, assess every production-readiness and scaling-strategy area, keep Data migration, Privacy, and Security as independent readiness decisions when applicable, and record per-area plus overall readiness evidence for the exact candidate and operating scope.
-- Existing Testing adopters must assess baseline, load, stress, spike, soak or endurance, scaling, failure-under-load, and recovery-under-load applicability; record the owner, explicit execution authorization and safeguards, and safe stop conditions for each test type; retain representative workload, environment, result, and recovery evidence for each claim; and use explicit `NotApplicable`, `NotRun`, or `Blocked` states instead of silently omitting controls.
-- Projects that did not select the SRE or Testing package have no new package-adoption action. Existing adopters may use justified `NotApplicable` decisions where the updated standards permit them; migration must not be implemented by deleting or weakening the new controls.
-- Existing profile adopters of `AI_AGENT_APPLICATION`, `CLI_TOOL`, `DATA_PIPELINE`, `DESKTOP_APPLICATION`, `INTERNAL_AUTOMATION`, `MOBILE_APPLICATION`, `MULTI_TENANT_SAAS`, `PUBLIC_LIBRARY`, `SECURITY_TOOL`, `SERVERLESS_FUNCTION`, `WEB_API`, `WEB_APPLICATION`, or `WORKER_SERVICE` must re-evaluate every selected primary and secondary profile against its conditional Product Management and User Experience predicates.
-- For each affected profile scope, record Product Management as selected when the scope defines or materially changes the profile's documented product capability, outcome, requirements, supported scope, MVP boundary, acceptance criteria, or product decisions. Record User Experience as selected when the scope owns the profile's documented human goals, journeys, tasks, prompts, approvals, interactions, recovery states, interfaces, or UX-validation claims. If a predicate is not satisfied, retain a scope-specific omission rationale; profile selection by itself is not sufficient to promote either package.
-- When a predicate is satisfied, add the corresponding `product-management` or `user-experience` discipline to the project manifest and composed standards, then synchronize the canonical-profile adoption decision across the complete package README, adoption checklist and example, root and nested `AGENTS.md`, standards-selection or tailoring record, and completion evidence. Do not rely on `--include-profile-required` to select conditional overlays automatically.
-- Before claiming migration complete, validate the manifest and generated composition, confirm the selected discipline package is complete, and run `python tools/validate-standards/validate_repository.py`, `python tools/check-links/check_links.py`, and the adopting project's applicable tests. Adopters unable to complete the newly required package and evidence work must remain on their previously pinned repository revision or record the gap as `Blocked`; they must not claim conformance to the updated profile.
-- When these Unreleased changes are assigned a repository version, carry this guidance into the required `releases/migrations/<VERSION>.md` record and retain the breaking classification in that version's release notes.
+- None.
 
 ## [1.0.0-rc.1] - 2026-08-16
 
-Release candidate for the first stable repository compatibility contract. The candidate is compatible with published `v0.10.0` and does not claim final `1.0.0` readiness.
+Release candidate for the first stable repository compatibility contract. The candidate contains breaking migrations for affected SRE, Testing, and canonical-profile adopters relative to published `v0.10.0` and does not claim final `1.0.0` readiness.
 
 ### Breaking changes
 
-- None relative to published `v0.10.0`.
+- Strengthened the existing Site Reliability Engineering and Testing and Quality Engineering package contracts with mandatory production-readiness, scaling-strategy, and contextual performance-test decisions and evidence. Existing adopters of either package must migrate their tailored instructions, templates, and evidence records before claiming conformance to the updated package.
+- Added Product Management and User Experience as conditional overlays to all 13 canonical project profiles. Profile selection alone does not select either package, but each overlay becomes mandatory when its documented product or human-experience predicate is satisfied. Existing profile adopters whose scopes satisfy a predicate must migrate.
 
 ### Normative changes
 
@@ -54,6 +42,12 @@ Release candidate for the first stable repository compatibility contract. The ca
 - Explicitly kept every package not enumerated as stable outside the stable package promise while preserving ordinary compatibility and migration obligations for documented repository contracts.
 - Added the Windows PowerShell 5.1 legacy compatibility overlay while preserving PowerShell 7 as the default for new work.
 - Corrected secondary-profile discipline expansion for `generate-manifest --include-profile-required` without removing existing primary-profile selections.
+- Added complete baseline Product Management and User Experience discipline packages with evidence-backed requirements, acceptance, traceability, research, journey, usability, validation, and accessibility-boundary controls.
+- Integrated Product Management and User Experience as conditional profile overlays, with representative examples promoting or omitting them based on scoped product and human-interaction concerns.
+- Added a Product Inception Lifecycle with Concept, Requirements, Design, Build, production-candidate, and evidence-backed product-lifecycle gates distinct from component maturity.
+- Added authoritative standards-body and first-party starting points for requirements engineering, UX, reliability, scaling, and applicable cloud or Kubernetes implementation guidance without asserting compliance or certification.
+- Added authoritative first-party and standards-body starting points to the ten non-C# language package READMEs.
+- Added the official Rustonomicon to the Rust package's authoritative starting points for unsafe-code boundaries.
 
 ### Editorial changes
 
@@ -79,7 +73,14 @@ Release candidate for the first stable repository compatibility contract. The ca
 ### Migration notes
 
 - See [`releases/migrations/1.0.0-rc.1.md`](releases/migrations/1.0.0-rc.1.md).
-- Existing `v0.10.0` consumers are not required to adopt this prerelease. Evaluators should pin the exact RC source, rerun project validation, and treat only `languages/csharp` as a stable package commitment.
+- Existing SRE adopters must add `SRE-READINESS-006` and `SRE-SCALING-007` to tailored instructions, assess every production-readiness and scaling-strategy area, keep Data migration, Privacy, and Security as independent readiness decisions when applicable, and record per-area plus overall readiness evidence for the exact candidate and operating scope.
+- Existing Testing adopters must assess baseline, load, stress, spike, soak or endurance, scaling, failure-under-load, and recovery-under-load applicability; record the owner, explicit execution authorization and safeguards, and safe stop conditions for each test type; retain representative workload, environment, result, and recovery evidence for each claim; and use explicit `NotApplicable`, `NotRun`, or `Blocked` states instead of silently omitting controls.
+- Projects that did not select the SRE or Testing package have no new package-adoption action. Existing adopters may use justified `NotApplicable` decisions where the updated standards permit them; migration must not be implemented by deleting or weakening the new controls.
+- Existing profile adopters of `AI_AGENT_APPLICATION`, `CLI_TOOL`, `DATA_PIPELINE`, `DESKTOP_APPLICATION`, `INTERNAL_AUTOMATION`, `MOBILE_APPLICATION`, `MULTI_TENANT_SAAS`, `PUBLIC_LIBRARY`, `SECURITY_TOOL`, `SERVERLESS_FUNCTION`, `WEB_API`, `WEB_APPLICATION`, or `WORKER_SERVICE` must re-evaluate every selected primary and secondary profile against its conditional Product Management and User Experience predicates.
+- For each affected profile scope, record Product Management as selected when the scope defines or materially changes the profile's documented product capability, outcome, requirements, supported scope, MVP boundary, acceptance criteria, or product decisions. Record User Experience as selected when the scope owns the profile's documented human goals, journeys, tasks, prompts, approvals, interactions, recovery states, interfaces, or UX-validation claims. If a predicate is not satisfied, retain a scope-specific omission rationale; profile selection by itself is not sufficient to promote either package.
+- When a predicate is satisfied, add the corresponding `product-management` or `user-experience` discipline to the project manifest and composed standards, then synchronize the canonical-profile adoption decision across the complete package README, adoption checklist and example, root and nested `AGENTS.md`, standards-selection or tailoring record, and completion evidence. Do not rely on `--include-profile-required` to select conditional overlays automatically.
+- Before claiming migration complete, validate the manifest and generated composition, confirm the selected discipline package is complete, and run `python tools/validate-standards/validate_repository.py`, `python tools/check-links/check_links.py`, and the adopting project's applicable tests. Adopters unable to complete the newly required package and evidence work must remain on their previously pinned repository revision or record the gap as `Blocked`; they must not claim conformance to the updated profile.
+- Existing `v0.10.0` consumers are not required to adopt this prerelease. Evaluators should pin the exact RC source, complete every applicable migration above, rerun project validation, and treat only `languages/csharp` as a stable package commitment.
 
 ### Known limitations
 

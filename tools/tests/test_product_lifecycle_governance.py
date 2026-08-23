@@ -441,9 +441,11 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         )
 
     def test_mandatory_sre_and_testing_changes_are_breaking_with_migration(self) -> None:
-        unreleased = h2_section(read("CHANGELOG.md"), "[Unreleased]")
-        breaking = h3_section(unreleased, "Breaking changes")
-        migration = h3_section(unreleased, "Migration notes")
+        release = h2_section(
+            read("CHANGELOG.md"), "[1.0.0-rc.1] - 2026-08-16"
+        )
+        breaking = h3_section(release, "Breaking changes")
+        migration = h3_section(release, "Migration notes")
 
         for package in (
             "Site Reliability Engineering",
@@ -470,9 +472,11 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
                 self.assertIn(test_type, migration)
 
     def test_conditional_product_overlays_have_breaking_profile_migration(self) -> None:
-        unreleased = h2_section(read("CHANGELOG.md"), "[Unreleased]")
-        breaking = h3_section(unreleased, "Breaking changes")
-        migration = h3_section(unreleased, "Migration notes")
+        release = h2_section(
+            read("CHANGELOG.md"), "[1.0.0-rc.1] - 2026-08-16"
+        )
+        breaking = h3_section(release, "Breaking changes")
+        migration = h3_section(release, "Migration notes")
 
         for overlay in ("Product Management", "User Experience"):
             with self.subTest(overlay=overlay):
@@ -488,6 +492,19 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         self.assertIn("selected primary and secondary profile", migration)
         self.assertIn("predicate is not satisfied", migration)
         self.assertIn("omission rationale", migration)
+
+        versioned_notes = read("releases/1.0.0-rc.1.md")
+        versioned_migration = read("releases/migrations/1.0.0-rc.1.md")
+        for document in (versioned_notes, versioned_migration):
+            with self.subTest(versioned_document=document[:40]):
+                self.assertIn("Product Management", document)
+                self.assertIn("User Experience", document)
+                self.assertIn("breaking", document.casefold())
+        self.assertNotIn(
+            "The candidate is compatible with published `v0.10.0`",
+            versioned_notes,
+        )
+        self.assertNotIn("declares no breaking change", versioned_migration)
 
     def test_readiness_template_records_overall_decision_and_authority(self) -> None:
         standard = read(
