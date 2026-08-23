@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -16,6 +17,10 @@ NEW_BASELINE_SOURCE_REVIEWS = {
         "governance/PRODUCT_INCEPTION_LIFECYCLE.md"
     ),
 }
+
+FINAL_2026_08_23_NORMATIVE_REVISION = (
+    "a9cf36122f6fed7098aa35593ac6b774f3aed6ba"
+)
 
 
 class SourceReviewEvidenceTests(unittest.TestCase):
@@ -42,6 +47,63 @@ class SourceReviewEvidenceTests(unittest.TestCase):
                 self.assertTrue(evidence_path.is_file(), record["reviewEvidence"])
                 evidence = evidence_path.read_text(encoding="utf-8")
                 self.assertIn(expected_scope, evidence)
+
+    def test_final_lifecycle_and_sre_surfaces_are_in_the_durable_review(self):
+        evidence = (
+            REPO_ROOT / "source-reviews" / "2026-08-23.md"
+        ).read_text(encoding="utf-8")
+        revisions = set(
+            re.findall(
+                r"(?im)^- [^\n]*repository source revision reviewed"
+                r"[^:\n]*: `([0-9a-f]{40})`",
+                evidence,
+            )
+        )
+        self.assertEqual(revisions, {FINAL_2026_08_23_NORMATIVE_REVISION})
+        self.assertIn(
+            "Final-revision content re-review: **Performed** for all five "
+            "registered scopes",
+            evidence,
+        )
+
+        lifecycle_review = evidence.split(
+            "### Product Inception Lifecycle "
+            "(`governance/PRODUCT_INCEPTION_LIFECYCLE.md`)",
+            1,
+        )[1].split("## Authoritative sources reviewed", 1)[0]
+        for contract in (
+            "explicitly selected",
+            "Design Gate",
+            "Build Gate",
+            "`Pass`",
+            "`Fail`",
+            "`Blocked`",
+        ):
+            with self.subTest(lifecycle_contract=contract):
+                self.assertIn(contract, lifecycle_review)
+
+        sre_review = evidence.split(
+            "### Site Reliability Engineering (`disciplines/sre`)",
+            1,
+        )[1].split("### Testing and Quality Engineering", 1)[0]
+        for readiness_area in ("Privacy", "Data migration"):
+            with self.subTest(sre_readiness_area=readiness_area):
+                self.assertIn(readiness_area, sre_review)
+        self.assertIn("repository-authored evidence controls", sre_review)
+
+        for limitation in (
+            "Full ISO standards text: **NotRun**",
+            "Later direct HTTP reachability recheck of the five ISO catalog "
+            "URLs: **Blocked** by HTTP 403",
+            "No user research, participant study, usability review, product "
+            "adoption, lifecycle-gate execution",
+            "No SRE adoption, readiness decision, scaling validation, "
+            "performance test, failure test, recovery test",
+            "it did not perform a second network retrieval and does not claim "
+            "that every source remained reachable",
+        ):
+            with self.subTest(limitation=limitation):
+                self.assertIn(limitation, evidence)
 
     def test_production_registry_is_granular_and_evidence_backed(self):
         registry = json.loads((REPO_ROOT / "SOURCE_REVIEWS.json").read_text(encoding="utf-8"))
