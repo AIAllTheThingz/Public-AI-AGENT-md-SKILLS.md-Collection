@@ -84,7 +84,6 @@ profiles/multi-tenant-saas/
 
 ## Required disciplines
 
-- [Product Management](../../disciplines/product-management/)
 - [Application Security](../../disciplines/application-security/)
 - [Architecture and System Design](../../disciplines/architecture/)
 - [Testing and Quality Engineering](../../disciplines/testing/)
@@ -99,6 +98,7 @@ profiles/multi-tenant-saas/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
 - [User Experience](../../disciplines/user-experience/)
 - [Integration Engineering](../../disciplines/integration/)
 - [Data Engineering](../../disciplines/data-engineering/)
@@ -107,7 +107,7 @@ profiles/multi-tenant-saas/
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
 
-User Experience becomes required when tenants, end users, administrators, or support operators interact with a workflow or interface. API-only SaaS may justify omission, but must not infer UX validation from API testing.
+Product Management becomes required when the SaaS scope defines or materially changes a tenant or user outcome, requirement set, MVP boundary, acceptance criteria, or product decision. User Experience becomes required when tenants, end users, administrators, or support operators interact with a materially changed workflow or interface. API-only SaaS may justify UX omission, but must not infer UX validation from API testing. Profile selection alone does not make either discipline mandatory.
 
 ## Language, framework, and platform selection
 
@@ -126,7 +126,6 @@ The adopting project must declare:
 
 ## Required project decisions
 
-- product problem, tenant and user actors, desired outcomes, requirements, MVP boundary, acceptance criteria, and traceability
 - tenant identity and isolation model
 - authorization at every object boundary
 - data partitioning and lifecycle

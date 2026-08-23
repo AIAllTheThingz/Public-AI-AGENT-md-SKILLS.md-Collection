@@ -142,7 +142,7 @@ A “small” script can be high risk if it modifies production. A large documen
 5. Read the canonical profile file and complete package README.
 6. For a new product or material capability, evaluate the [Product Inception Lifecycle](../governance/PRODUCT_INCEPTION_LIFECYCLE.md).
 7. Select applicable language, discipline, framework, platform, virtualization, operating-system, and networking packages.
-8. Record required and conditional package decisions, including Product Management and User Experience applicability.
+8. Record required and conditional package decisions. Product Management and User Experience remain conditional profile overlays and are promoted only when the scoped product or human-experience concern applies.
 9. Tailor scope, owners, environments, versions, commands, evidence, and exceptions.
 10. Add nested `AGENTS.md` files where responsibility or risk changes.
 11. Complete the profile adoption and review checklists.

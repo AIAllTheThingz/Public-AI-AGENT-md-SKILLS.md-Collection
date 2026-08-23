@@ -20,7 +20,6 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Selected disciplines
 
-- [Product Management](../../../disciplines/product-management/)
 - [Architecture](../../../disciplines/architecture/)
 - [Testing](../../../disciplines/testing/)
 - [Documentation](../../../disciplines/documentation/)
@@ -29,6 +28,7 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Conditional review
 
+- [Product Management](../../../disciplines/product-management/)
 - [User Experience](../../../disciplines/user-experience/)
 - [Application Security](../../../disciplines/application-security/)
 - [Api Engineering](../../../disciplines/api-engineering/)
@@ -36,9 +36,10 @@ No production systems, identities, credentials, endpoints, data, or approval are
 - [Accessibility](../../../disciplines/accessibility/)
 - [Privacy](../../../disciplines/privacy/)
 
+This base-profile example leaves Product Management and User Experience conditional. Promote Product Management for material consumer outcomes, requirements, supported scope, or product decisions, and User Experience for an owned interactive consumer workflow.
+
 ## Project decisions
 
-- consumer problem, intended adopters, desired outcomes, requirements, supported scope, acceptance criteria, and traceability
 - public API compatibility
 - supported runtimes and platforms
 - dependency minimization

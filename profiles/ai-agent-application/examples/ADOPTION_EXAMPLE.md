@@ -20,7 +20,6 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Selected disciplines
 
-- [Product Management](../../../disciplines/product-management/)
 - [Application Security](../../../disciplines/application-security/)
 - [Architecture](../../../disciplines/architecture/)
 - [Testing](../../../disciplines/testing/)
@@ -31,6 +30,7 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Conditional review
 
+- [Product Management](../../../disciplines/product-management/)
 - [User Experience](../../../disciplines/user-experience/)
 - [Integration](../../../disciplines/integration/)
 - [Documentation](../../../disciplines/documentation/)
@@ -39,9 +39,10 @@ No production systems, identities, credentials, endpoints, data, or approval are
 - [Ci Cd](../../../disciplines/ci-cd/)
 - [Release Engineering](../../../disciplines/release-engineering/)
 
+This base-profile example leaves Product Management and User Experience conditional. Promote Product Management for material agent outcomes, requirements, bounded behavior, or product decisions, and User Experience when the changed scope owns human goals, approval, interaction, or recovery.
+
 ## Project decisions
 
-- product problem, intended users or actors, desired outcomes, requirements, bounded MVP behavior, acceptance criteria, and traceability
 - tool authorization and allowlists
 - prompt and retrieved-content trust boundaries
 - human approval for consequential actions

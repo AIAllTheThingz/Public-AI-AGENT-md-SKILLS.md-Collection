@@ -20,8 +20,6 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Selected disciplines
 
-- [Product Management](../../../disciplines/product-management/)
-- [User Experience](../../../disciplines/user-experience/)
 - [Application Security](../../../disciplines/application-security/)
 - [Architecture](../../../disciplines/architecture/)
 - [Testing](../../../disciplines/testing/)
@@ -32,16 +30,18 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Conditional review
 
+- [Product Management](../../../disciplines/product-management/)
+- [User Experience](../../../disciplines/user-experience/)
 - [Supply Chain](../../../disciplines/supply-chain/)
 - [Ci Cd](../../../disciplines/ci-cd/)
 - [Observability](../../../disciplines/observability/)
 - [Integration](../../../disciplines/integration/)
 - [Database](../../../disciplines/database/)
 
+This base-profile example leaves Product Management and User Experience conditional. An adopter promotes them when the change defines material product outcomes or requirements, or owns material journeys, interactions, recovery states, or UX claims.
+
 ## Project decisions
 
-- product problem, intended users, desired outcomes, requirements, MVP boundary, acceptance criteria, and traceability
-- research evidence state, user journeys, interaction and recovery states, UX validation, and the separate Accessibility boundary
 - local data protection
 - installer and update integrity
 - privilege and elevation boundaries

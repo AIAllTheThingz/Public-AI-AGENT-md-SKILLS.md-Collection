@@ -26,7 +26,7 @@ This document explains why the example selects each standards package. It preven
 | Profile: WEB_API | Defines the project-type overlay and common operational concerns. |
 | Language: C# | Defines compiler/language, nullability, async, API, resource, security, interop, scripting, testing, and completion expectations. |
 | Runtime: .NET | Defines SDK, target-framework, runtime, dependency, application-model, build, and publishing expectations. |
-| Discipline: Product Management | Selected because the fictitious account API defines an externally consumable capability whose requirements, acceptance criteria, scope, decisions, and traceability must be explicit. |
+| Discipline: Product Management | Promoted from the profile's conditional overlays because the fictitious account API defines an externally consumable capability whose requirements, acceptance criteria, scope, decisions, and traceability must be explicit. |
 | Discipline: Application Security | Selected because the fictitious architecture and change surface require this concern. |
 | Discipline: Architecture and System Design | Selected because the fictitious architecture and change surface require this concern. |
 | Discipline: Testing and Quality Engineering | Selected because the fictitious architecture and change surface require this concern. |

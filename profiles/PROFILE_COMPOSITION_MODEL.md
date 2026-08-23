@@ -45,6 +45,8 @@ external obligations
 - Project instructions declare actual facts, targets, owners, and commands.
 - Evidence records what was actually implemented, validated, reviewed, and approved.
 
+Product Management and User Experience are conditional profile overlays. Selecting a profile does not add either package to the required baseline. Promote each package only when the scoped project or change has its concern, and record a meaningful omission rationale when it would reasonably appear applicable.
+
 ## Primary profile
 
 The primary profile represents the main operating shape and provides the default composition.

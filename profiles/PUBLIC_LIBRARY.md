@@ -54,7 +54,6 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Required discipline overlays
 
-- `disciplines/product-management/AGENTS.md`
 - `disciplines/architecture/AGENTS.md`
 - `disciplines/testing/AGENTS.md`
 - `disciplines/documentation/AGENTS.md`
@@ -63,7 +62,8 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Conditionally required disciplines
 
-- `disciplines/user-experience/AGENTS.md`
+- [Product Management](../disciplines/product-management/)
+- [User Experience](../disciplines/user-experience/)
 - `disciplines/application-security/AGENTS.md`
 - `disciplines/api-engineering/AGENTS.md`
 - `disciplines/ci-cd/AGENTS.md`
@@ -72,11 +72,10 @@ This is a starting point only. The actual project or change must be classified u
 
 Conditional packages become required when their concern is present. Document every omission that would reasonably appear applicable.
 
-User Experience becomes required when consumers pursue material goals through interactive documentation, tooling, samples, or other governed workflows; API and documentation review alone must not be presented as observed UX evidence.
+Product Management becomes required when the library defines or materially changes a consumer outcome, requirement set, supported scope, acceptance criteria, or product decision. User Experience becomes required when consumers pursue material goals through interactive documentation, tooling, samples, or other governed workflows; API and documentation review alone must not be presented as observed UX evidence. Profile selection alone does not make either discipline mandatory.
 
 ## Required project decisions
 
-- consumer problem, intended adopters, desired outcomes, requirements, supported scope, acceptance criteria, and traceability
 - public API compatibility
 - supported runtimes and platforms
 - dependency minimization

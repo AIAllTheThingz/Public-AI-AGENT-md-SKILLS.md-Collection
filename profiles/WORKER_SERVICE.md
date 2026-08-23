@@ -65,8 +65,8 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Conditionally required disciplines
 
-- `disciplines/product-management/AGENTS.md`
-- `disciplines/user-experience/AGENTS.md`
+- [Product Management](../disciplines/product-management/)
+- [User Experience](../disciplines/user-experience/)
 - `disciplines/application-security/AGENTS.md`
 - `disciplines/database/AGENTS.md`
 - `disciplines/data-engineering/AGENTS.md`

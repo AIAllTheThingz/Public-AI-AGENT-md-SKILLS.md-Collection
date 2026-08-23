@@ -84,8 +84,6 @@ profiles/desktop-application/
 
 ## Required disciplines
 
-- [Product Management](../../disciplines/product-management/)
-- [User Experience](../../disciplines/user-experience/)
 - [Application Security](../../disciplines/application-security/)
 - [Architecture and System Design](../../disciplines/architecture/)
 - [Testing and Quality Engineering](../../disciplines/testing/)
@@ -96,6 +94,8 @@ profiles/desktop-application/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Software Supply Chain](../../disciplines/supply-chain/)
 - [CI/CD](../../disciplines/ci-cd/)
 - [Observability](../../disciplines/observability/)
@@ -103,6 +103,8 @@ profiles/desktop-application/
 - [Database Engineering](../../disciplines/database/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+Product Management becomes required when the application defines or materially changes a product capability, intended outcome, requirement set, MVP boundary, or acceptance criteria. User Experience becomes required when the scope defines or materially changes user journeys, tasks, interaction or recovery states, or UX-validation claims. Record each applicability decision; profile selection alone does not make either discipline mandatory.
 
 ## Language, framework, and platform selection
 
@@ -121,8 +123,6 @@ The adopting project must declare:
 
 ## Required project decisions
 
-- product problem, intended users, desired outcomes, requirements, MVP boundary, acceptance criteria, and traceability
-- research evidence state, user journeys, interaction and recovery states, UX validation, and the separate Accessibility boundary
 - local data protection
 - installer and update integrity
 - privilege and elevation boundaries
