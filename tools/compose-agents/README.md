@@ -9,7 +9,7 @@ status: baseline
 
 ## Purpose
 
-Create a traceable standards bundle from a reviewed project manifest, including selected virtualization, operating-system, and networking standards, without concatenating or rewriting source standards.
+Create a traceable standards bundle from a reviewed project manifest, including repository-defined governance selections and selected virtualization, operating-system, and networking standards, without concatenating or rewriting source standards.
 
 Status: **baseline**
 
@@ -46,6 +46,7 @@ python tools/compose-agents/compose_agents.py --help
 
 - manifest schema validity
 - selected package existence
+- selected `AIAllTheThingz.governanceSelections` path existence and containment under `governance/`
 - selected virtualization, operating-system, and networking package entry points
 - required governance sources
 - root-contained source paths
@@ -109,7 +110,7 @@ python tools/validate-all/run_all.py --include-tests
 
 Backward-compatible changes may add optional flags, summary fields, metadata, or new finding codes.
 
-Version 1.1 recognizes the optional `virtualization`, `operatingSystems`, and `networking` manifest arrays, includes each selected package's `AGENTS.md`, `README.md`, and `MANIFEST.md`, and reports those selections in the generated composition index. Version 1.0 manifests remain valid.
+Version 1.1 recognizes the optional `virtualization`, `operatingSystems`, and `networking` manifest arrays, includes each selected package's `AGENTS.md`, `README.md`, and `MANIFEST.md`, and reports those selections in the generated composition index. It also recognizes the repository-defined `AIAllTheThingz.governanceSelections` extension, validates each repository-relative Markdown path under `governance/`, and includes every selected governance source in the bundle and generated index. Version 1.0 manifests remain valid.
 
 Breaking changes include:
 

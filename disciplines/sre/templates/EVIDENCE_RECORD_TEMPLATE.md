@@ -85,6 +85,11 @@ status: baseline
 | Resource limits | | | | |
 | Cost per workload unit | | | | |
 
+- Overall scaling-strategy state (`Verified`, `NotRun`, `Blocked`, `NotApplicable`):
+- Decision authority:
+- Supported workload and operating envelope:
+- `NotApplicable` rationale, unresolved areas, or verification limitations:
+
 ## Checks not run
 
 | Check | Reason | Risk | Follow-up owner |

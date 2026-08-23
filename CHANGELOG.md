@@ -32,7 +32,7 @@ Release candidate for the first stable repository compatibility contract. The ca
 
 ### Breaking changes
 
-- Strengthened the existing Site Reliability Engineering and Testing and Quality Engineering package contracts with mandatory production-readiness, scaling-strategy, and contextual performance-test decisions and evidence. Existing adopters of either package must migrate their tailored instructions, templates, and evidence records before claiming conformance to the updated package.
+- Strengthened the existing Site Reliability Engineering and Testing and Quality Engineering package contracts with mandatory production-readiness, scaling-strategy, and contextual performance-test decisions and evidence. An overall scaling strategy may be `Verified` only after every applicable area is `Verified`; unresolved `Applicable`, `NotRun`, or `Blocked` areas prevent that claim. Existing adopters of either package must migrate their tailored instructions, templates, and evidence records before claiming conformance to the updated package.
 - Added Product Management and User Experience as conditional overlays to all 13 canonical project profiles. Profile selection alone does not select either package, but each overlay becomes mandatory when its documented product or human-experience predicate is satisfied. Existing profile adopters whose scopes satisfy a predicate must migrate.
 
 ### Normative changes
@@ -59,6 +59,7 @@ Release candidate for the first stable repository compatibility contract. The ca
 
 - Added package-level adoption tests for C#, PowerShell, and Terraform/OpenTofu and a complete-surface C# adoption regression.
 - Added permanent RC compatibility-gate regression coverage for version/release-state invariants, stable path/schema/template/tool inventory, package maturity boundaries, migration from `v0.10.0`, and fail-visible final-`1.0.0` prerequisites.
+- Updated `compose-agents` to validate the repository-defined `AIAllTheThingz.governanceSelections` extension and include each selected governance source in copied bundles, composition manifests, and generated indexes.
 - Preserved the existing prerelease-aware release validator and deterministic release builder rather than introducing a parallel RC mechanism.
 
 ### Security
@@ -73,7 +74,7 @@ Release candidate for the first stable repository compatibility contract. The ca
 ### Migration notes
 
 - See [`releases/migrations/1.0.0-rc.1.md`](releases/migrations/1.0.0-rc.1.md).
-- Existing SRE adopters must add `SRE-READINESS-006` and `SRE-SCALING-007` to tailored instructions, assess every production-readiness and scaling-strategy area, keep Data migration, Privacy, and Security as independent readiness decisions when applicable, and record per-area plus overall readiness evidence for the exact candidate and operating scope.
+- Existing SRE adopters must add `SRE-READINESS-006` and `SRE-SCALING-007` to tailored instructions, assess every production-readiness and scaling-strategy area, keep Data migration, Privacy, and Security as independent readiness decisions when applicable, record per-area plus overall readiness evidence for the exact candidate and operating scope, and withhold an overall scaling-strategy `Verified` claim until every applicable area is `Verified`.
 - Existing Testing adopters must assess baseline, load, stress, spike, soak or endurance, scaling, failure-under-load, and recovery-under-load applicability; record the owner, explicit execution authorization and safeguards, and safe stop conditions for each test type; retain representative workload, environment, result, and recovery evidence for each claim; and use explicit `NotApplicable`, `NotRun`, or `Blocked` states instead of silently omitting controls.
 - Projects that did not select the SRE or Testing package have no new package-adoption action. Existing adopters may use justified `NotApplicable` decisions where the updated standards permit them; migration must not be implemented by deleting or weakening the new controls.
 - Existing profile adopters of `AI_AGENT_APPLICATION`, `CLI_TOOL`, `DATA_PIPELINE`, `DESKTOP_APPLICATION`, `INTERNAL_AUTOMATION`, `MOBILE_APPLICATION`, `MULTI_TENANT_SAAS`, `PUBLIC_LIBRARY`, `SECURITY_TOOL`, `SERVERLESS_FUNCTION`, `WEB_API`, `WEB_APPLICATION`, or `WORKER_SERVICE` must re-evaluate every selected primary and secondary profile against its conditional Product Management and User Experience predicates.

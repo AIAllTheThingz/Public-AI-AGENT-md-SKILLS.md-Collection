@@ -129,7 +129,7 @@ Typical completion evidence includes:
 - defined SLOs or operating targets
 - capacity and saturation evidence
 - production-readiness per-area results, including Data migration and Privacy separately when applicable, plus a separate overall result and decision authority for the exact candidate and supported operating scope
-- scaling-strategy applicability decisions and representative verification where claimed
+- scaling-strategy applicability decisions, a separate overall state, and representative verification for every applicable area before the overall strategy is reported `Verified`
 - recovery and failover tests
 - reviewed runbooks and escalation
 - documented reliability risks

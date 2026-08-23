@@ -36,6 +36,7 @@ GOVERNANCE_SOURCES = [
     "governance/HUMAN_REVIEW_POLICY.md",
     "governance/PRODUCTION_READINESS.md",
 ]
+GOVERNANCE_SELECTION_EXTENSION = "AIAllTheThingz.governanceSelections"
 
 
 def load_manifest(path: Path, root: Path) -> dict[str, Any]:
@@ -77,6 +78,45 @@ def package_files(root: Path, collection: str, slug: str) -> list[Path]:
     return selected
 
 
+def selected_governance_files(root: Path, manifest: dict[str, Any]) -> list[Path]:
+    extensions = manifest.get("extensions", {})
+    raw_selections = extensions.get(GOVERNANCE_SELECTION_EXTENSION, [])
+    if not isinstance(raw_selections, list):
+        raise ValueError(
+            f"Manifest extension {GOVERNANCE_SELECTION_EXTENSION!r} must be an array."
+        )
+
+    governance_root = (root / "governance").resolve()
+    selected: list[Path] = []
+    for value in raw_selections:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(
+                f"Manifest extension {GOVERNANCE_SELECTION_EXTENSION!r} must contain "
+                "nonempty repository-relative paths."
+            )
+        if "\\" in value:
+            raise ValueError(
+                f"Selected governance source must use repository-relative POSIX paths: {value!r}"
+            )
+
+        relative = Path(value)
+        if relative.is_absolute():
+            raise ValueError(
+                f"Selected governance source must be repository-relative: {value!r}"
+            )
+        path = ensure_within_root(root / relative, root)
+        try:
+            path.relative_to(governance_root)
+        except ValueError as exc:
+            raise ValueError(
+                f"Selected governance source must be under governance/: {value!r}"
+            ) from exc
+        if path.suffix.casefold() != ".md" or not path.is_file():
+            raise ValueError(f"Selected governance source does not exist: {value}")
+        selected.append(path)
+    return selected
+
+
 def build_source_list(root: Path, manifest: dict[str, Any]) -> list[Path]:
     sources: list[Path] = []
     for relative in GOVERNANCE_SOURCES:
@@ -84,6 +124,7 @@ def build_source_list(root: Path, manifest: dict[str, Any]) -> list[Path]:
         if not path.is_file():
             raise ValueError(f"Required governance source is missing: {relative}")
         sources.append(path)
+    sources.extend(selected_governance_files(root, manifest))
 
     profile_path = canonical_profile_path(root, str(manifest["profile"]))
     sources.append(profile_path)
@@ -115,6 +156,9 @@ def build_source_list(root: Path, manifest: dict[str, Any]) -> list[Path]:
 
 
 def generated_agents(manifest: dict[str, Any], source_records: list[dict[str, str]]) -> str:
+    governance_selections = manifest.get("extensions", {}).get(
+        GOVERNANCE_SELECTION_EXTENSION, []
+    )
     lines = [
         "# Project Standards Composition Index",
         "",
@@ -124,6 +168,7 @@ def generated_agents(manifest: dict[str, Any], source_records: list[dict[str, st
         "",
         "## Selected composition",
         "",
+        f"- Governance selections: {', '.join(f'`{item}`' for item in governance_selections) or 'none beyond the required baseline'}",
         f"- Primary profile: `{manifest['profile']}`",
         f"- Languages: {', '.join(f'`{item}`' for item in manifest.get('languages', [])) or 'none declared'}",
         f"- Disciplines: {', '.join(f'`{item}`' for item in manifest.get('disciplines', [])) or 'none declared'}",

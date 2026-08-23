@@ -30,5 +30,6 @@ status: baseline
 - positive and negative tests pass
 - stable path remains unchanged
 - documentation and examples match behavior
+- repository-defined governance selections are validated, included, and reported
 - virtualization, operating-system, and networking package entry points are included when selected
 - version 1.0 manifests remain supported

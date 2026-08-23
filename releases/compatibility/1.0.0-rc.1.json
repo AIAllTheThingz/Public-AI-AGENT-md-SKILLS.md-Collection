@@ -196,7 +196,7 @@
     "requiredActions": [
       "Update the recorded repository source from v0.10.0 to the reviewed 1.0.0-rc.1 candidate when deliberately evaluating the release candidate.",
       "Re-run repository or project validation after changing the pinned standards source.",
-      "Migrate existing SRE and Testing package selections to the strengthened readiness, scaling, and per-test accountability and safety evidence contracts.",
+      "Migrate existing SRE and Testing package selections to the strengthened readiness, scaling, and per-test accountability and safety evidence contracts; do not report an overall scaling strategy Verified until every applicable scaling area is Verified.",
       "Re-evaluate every selected canonical profile against the conditional Product Management and User Experience predicates and record either the selected overlay or a scope-specific omission rationale.",
       "Treat only languages/csharp as a stable package commitment; do not infer stable maturity for baseline packages."
     ],

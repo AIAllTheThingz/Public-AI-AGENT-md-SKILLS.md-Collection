@@ -58,6 +58,82 @@ class ComposeAgentsTests(unittest.TestCase):
             self.assertIn("operating-systems/ubuntu/AGENTS.md", source_paths)
             self.assertIn("networking/cisco-networking/AGENTS.md", source_paths)
 
+    def test_dry_run_includes_selected_governance_sources(self):
+        completed = run_tool(
+            "tools/compose-agents/compose_agents.py",
+            "--manifest", "examples/full-stack/project-manifest.json",
+            "--dry-run",
+            "--format", "json",
+        )
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+        payload = json_result(completed)
+        source_paths = {
+            item["path"] for item in payload["metadata"]["composition"]["sources"]
+        }
+        self.assertIn("governance/PRODUCT_INCEPTION_LIFECYCLE.md", source_paths)
+
+    def test_written_index_reports_governance_selections(self):
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
+            output = Path(temp) / "bundle"
+            completed = run_tool(
+                "tools/compose-agents/compose_agents.py",
+                "--manifest", "examples/web-api/project-manifest.json",
+                "--output-dir", str(output),
+                "--no-copy-sources",
+                "--format", "json",
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            index = (output / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn(
+                "- Governance selections: "
+                "`governance/PRODUCT_INCEPTION_LIFECYCLE.md`",
+                index,
+            )
+
+    def test_rejects_governance_selection_outside_governance(self):
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
+            manifest = Path(temp) / "project-manifest.json"
+            manifest.write_text(json.dumps({
+                "schemaVersion": "1.1.0",
+                "name": "invalid-governance-selection",
+                "profile": "WEB_API",
+                "languages": ["python"],
+                "disciplines": ["testing"],
+                "extensions": {
+                    "AIAllTheThingz.governanceSelections": ["README.md"],
+                },
+            }), encoding="utf-8")
+            completed = run_tool(
+                "tools/compose-agents/compose_agents.py",
+                "--manifest", str(manifest),
+                "--dry-run",
+                "--format", "json",
+            )
+            self.assertEqual(completed.returncode, 2)
+
+    def test_rejects_missing_governance_selection(self):
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
+            manifest = Path(temp) / "project-manifest.json"
+            manifest.write_text(json.dumps({
+                "schemaVersion": "1.1.0",
+                "name": "missing-governance-selection",
+                "profile": "WEB_API",
+                "languages": ["python"],
+                "disciplines": ["testing"],
+                "extensions": {
+                    "AIAllTheThingz.governanceSelections": [
+                        "governance/DOES_NOT_EXIST.md"
+                    ],
+                },
+            }), encoding="utf-8")
+            completed = run_tool(
+                "tools/compose-agents/compose_agents.py",
+                "--manifest", str(manifest),
+                "--dry-run",
+                "--format", "json",
+            )
+            self.assertEqual(completed.returncode, 2)
+
     def test_written_index_reports_infrastructure_selections(self):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
             temp_path = Path(temp)

@@ -533,6 +533,30 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             table_areas(standard, "Required decisions"),
         )
 
+    def test_scaling_overall_verification_requires_every_applicable_area(self) -> None:
+        standard = read("disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md")
+        completion_gate = h2_section(standard, "Completion gate")
+        for required_contract in (
+            "overall scaling-strategy `Verified` claim",
+            "every applicable area to be `Verified`",
+            "`Applicable`, `NotRun`, or `Blocked` prevents",
+            "`NotApplicable` requires recorded justification",
+        ):
+            with self.subTest(required_contract=required_contract):
+                self.assertIn(required_contract, completion_gate)
+
+        scaling_record = h2_section(
+            read("disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md"),
+            "Scaling strategy",
+        )
+        self.assertIn(
+            "- Overall scaling-strategy state (`Verified`, `NotRun`, `Blocked`, "
+            "`NotApplicable`):",
+            scaling_record,
+        )
+        self.assertIn("- Decision authority:", scaling_record)
+        self.assertIn("- Supported workload and operating envelope:", scaling_record)
+
     def test_traceability_template_records_independent_stage_states(self) -> None:
         template = read(
             "disciplines/product-management/templates/EVIDENCE_RECORD_TEMPLATE.md"

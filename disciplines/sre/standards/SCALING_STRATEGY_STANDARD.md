@@ -55,4 +55,4 @@ Applicability matrix, linked capacity evidence, architecture decisions, configur
 
 ## Completion gate
 
-Do not report a scaling strategy verified from diagrams, configuration intent, vendor capability, or a single unrepresentative test. Every applicable verified decision must link to current evidence and state its supported envelope.
+Do not report a scaling strategy verified from diagrams, configuration intent, vendor capability, or a single unrepresentative test. An overall scaling-strategy `Verified` claim requires every applicable area to be `Verified` with current representative evidence and a stated supported envelope. Any area that remains `Applicable`, `NotRun`, or `Blocked` prevents the overall strategy from being reported `Verified`; `NotApplicable` requires recorded justification.
