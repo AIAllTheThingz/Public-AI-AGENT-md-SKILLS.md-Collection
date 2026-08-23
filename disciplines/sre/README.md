@@ -85,7 +85,7 @@ Start with [`AGENTS.md`](AGENTS.md). It contains the mandatory agent rules, pres
 |---|---|
 | [`SLO and Error Budget Standard`](standards/SLO_ERROR_BUDGET_STANDARD.md) | Define service indicators, objectives, measurement windows, exclusions, ownership, and decision use for reliability risk. |
 | [`Capacity and Performance Standard`](standards/CAPACITY_PERFORMANCE_STANDARD.md) | Assess demand, saturation, quotas, bottlenecks, scaling, cost, and headroom using representative evidence. |
-| [`Production Readiness Standard`](standards/PRODUCTION_READINESS_STANDARD.md) | Decide whether the exact candidate is operationally ready using deployment, recovery, observability, capacity, security, ownership, cost, limitation, and risk evidence. |
+| [`Production Readiness Standard`](standards/PRODUCTION_READINESS_STANDARD.md) | Decide whether the exact candidate is operationally ready using deployment, recovery, observability, capacity, security, applicable privacy, ownership, cost, limitation, and risk evidence. |
 | [`Scaling Strategy Standard`](standards/SCALING_STRATEGY_STANDARD.md) | Make applicable scaling implementation choices explicit without imposing complexity on simple systems. |
 | [`Resilience and Recovery Standard`](standards/RESILIENCE_RECOVERY_STANDARD.md) | Define dependency failure, redundancy, degradation, backup, restore, RTO, RPO, failover, and recovery validation. |
 | [`Incident Management Standard`](standards/INCIDENT_MANAGEMENT_STANDARD.md) | Define detection, severity, roles, communication, containment, recovery, evidence preservation, and learning. |
@@ -128,7 +128,7 @@ Typical completion evidence includes:
 
 - defined SLOs or operating targets
 - capacity and saturation evidence
-- production-readiness per-area results plus a separate overall result and decision authority for the exact candidate and supported operating scope
+- production-readiness per-area results, including Privacy separately when applicable, plus a separate overall result and decision authority for the exact candidate and supported operating scope
 - scaling-strategy applicability decisions and representative verification where claimed
 - recovery and failover tests
 - reviewed runbooks and escalation
@@ -161,6 +161,8 @@ The adopting project must also define discipline-specific validation commands an
 
 These sources are starting points, not certification, compliance, vendor endorsement, or operational evidence. Technology-specific decisions also require the current official runtime, framework, platform, and service documentation for the selected boundary.
 
+Accountable review dates and sources are recorded in [`SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json), with durable findings under [`source-reviews/`](../../source-reviews/).
+
 ## Common failure modes
 
 - creating SLOs that do not drive decisions
@@ -183,6 +185,7 @@ This package commonly composes with:
 - [`Release Engineering`](../release-engineering/)
 - [`Testing and Quality Engineering`](../testing/)
 - [`Documentation`](../documentation/)
+- [`Privacy`](../privacy/)
 
 Companion disciplines supplement this package. They do not replace its applicable rules.
 

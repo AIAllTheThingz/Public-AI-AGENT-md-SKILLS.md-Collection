@@ -153,6 +153,8 @@ The adopting project must also define discipline-specific validation commands an
 
 Use current official runtime, framework, database, queue, cloud-service, or load-tool documentation for technology-specific metrics and limits. These links are starting points; they do not establish certification, compliance, representative test execution, or production performance.
 
+Accountable review dates and sources are recorded in [`SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json), with durable findings under [`source-reviews/`](../../source-reviews/).
+
 ## Common failure modes
 
 - equating coverage percentage with quality

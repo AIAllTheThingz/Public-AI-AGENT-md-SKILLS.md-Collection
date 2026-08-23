@@ -66,7 +66,7 @@ disciplines/product-management/
 
 ## Adoption and tailoring
 
-1. Read root governance and [`PRODUCT_INCEPTION_LIFECYCLE.md`](../../governance/PRODUCT_INCEPTION_LIFECYCLE.md).
+1. Read root governance and decide whether to explicitly select the optional [`PRODUCT_INCEPTION_LIFECYCLE.md`](../../governance/PRODUCT_INCEPTION_LIFECYCLE.md); adopting Product Management alone does not activate it.
 2. Select the applicable project profile and companion disciplines.
 3. Assign owners for requirements, decisions, evidence, review, and unknowns.
 4. Tailor identifiers, evidence locations, gates, and decision authority without weakening traceability.

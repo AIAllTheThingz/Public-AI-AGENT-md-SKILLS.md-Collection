@@ -38,7 +38,7 @@ See:
 ## Start here
 
 1. Read the root [`AGENTS.md`](AGENTS.md).
-2. For a new product or material capability, follow the [`Product Inception Lifecycle`](governance/PRODUCT_INCEPTION_LIFECYCLE.md).
+2. For a new product or material capability, decide whether to explicitly select the optional [`Product Inception Lifecycle`](governance/PRODUCT_INCEPTION_LIFECYCLE.md). When selected, follow its gates and evidence requirements.
 3. Select one or more standards from the [`CATALOG.md`](CATALOG.md).
 4. Select a project profile from [`profiles/`](profiles/README.md).
 5. Copy the relevant language package from [`languages/`](languages/README.md).

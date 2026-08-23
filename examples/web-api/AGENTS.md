@@ -46,7 +46,7 @@ Report material conflicts instead of silently choosing the convenient interpreta
 - [Risk Classification](../../governance/RISK_CLASSIFICATION.md)
 - [Completion Evidence](../../governance/COMPLETION_EVIDENCE.md)
 - [Human Review Policy](../../governance/HUMAN_REVIEW_POLICY.md)
-- [Product Inception Lifecycle](../../governance/PRODUCT_INCEPTION_LIFECYCLE.md)
+- Explicitly selected for this fictitious new-product scope: [Product Inception Lifecycle](../../governance/PRODUCT_INCEPTION_LIFECYCLE.md)
 
 ### Profile
 

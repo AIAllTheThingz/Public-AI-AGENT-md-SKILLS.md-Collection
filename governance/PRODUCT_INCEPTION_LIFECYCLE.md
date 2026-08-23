@@ -20,7 +20,7 @@ Define a proportionate, evidence-based path from idea through build while preven
 
 ## Applicability
 
-This lifecycle applies to a new product, material capability, or material change in intended users, outcomes, requirements, architecture, trust boundaries, or operating model. Existing records that answer a gate count as its evidence. For small changes, record a concise gate decision that references those records.
+This lifecycle is optional and applies only when explicitly selected for a project or change. Adopting this repository, its governance, a project profile, or the Product Management package does not select it. Once selected, it governs the selected scope for a new product, material capability, or material change in intended users, outcomes, requirements, architecture, trust boundaries, or operating model. Existing records that answer a gate count as its evidence. For small changes within the selected scope, record a concise gate decision that references those records.
 
 ## Roles
 

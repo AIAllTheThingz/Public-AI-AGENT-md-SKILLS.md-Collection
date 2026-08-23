@@ -123,6 +123,36 @@ def table_areas(text: str, heading: str) -> list[str]:
 
 
 class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
+    def test_product_inception_lifecycle_is_explicitly_selected(self) -> None:
+        integration_surfaces = (
+            ("README.md", "governance/PRODUCT_INCEPTION_LIFECYCLE.md"),
+            ("profiles/README.md", "../governance/PRODUCT_INCEPTION_LIFECYCLE.md"),
+            ("governance/README.md", "PRODUCT_INCEPTION_LIFECYCLE.md"),
+        )
+        for relative, target in integration_surfaces:
+            with self.subTest(surface=relative):
+                matching_lines = [
+                    line
+                    for line in read(relative).splitlines()
+                    if target in line
+                ]
+                self.assertTrue(matching_lines)
+                for line in matching_lines:
+                    integration = line.casefold()
+                    self.assertIn("optional", integration)
+                    self.assertIn("select", integration)
+
+        for relative in (
+            "examples/full-stack/AGENTS.md",
+            "examples/web-api/AGENTS.md",
+        ):
+            with self.subTest(selected_example=relative):
+                selected = h2_section(read(relative), "Selected standards")
+                self.assertIn(
+                    "governance/PRODUCT_INCEPTION_LIFECYCLE.md",
+                    selected,
+                )
+
     def test_normal_implementation_requires_explicit_build_gate_pass(self) -> None:
         lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
         build_gate = h3_section(lifecycle, "Build Gate")
@@ -274,9 +304,15 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             "disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md"
         )
         template = read("disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md")
+        standard_areas = table_areas(standard, "Readiness areas")
+        self.assertIn(
+            "Privacy",
+            standard_areas,
+            "Privacy must remain distinct from the Security readiness area.",
+        )
         self.assertEqual(
             table_areas(template, "Production readiness"),
-            table_areas(standard, "Readiness areas"),
+            standard_areas,
         )
 
     def test_readiness_template_records_overall_decision_and_authority(self) -> None:

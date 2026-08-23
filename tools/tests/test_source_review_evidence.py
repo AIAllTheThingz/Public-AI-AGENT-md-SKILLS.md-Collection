@@ -9,6 +9,8 @@ from helpers import REPO_ROOT
 
 NEW_BASELINE_SOURCE_REVIEWS = {
     "disciplines-product-management": "disciplines/product-management",
+    "disciplines-sre": "disciplines/sre",
+    "disciplines-testing": "disciplines/testing",
     "disciplines-user-experience": "disciplines/user-experience",
     "governance-product-inception-lifecycle": (
         "governance/PRODUCT_INCEPTION_LIFECYCLE.md"
@@ -17,7 +19,7 @@ NEW_BASELINE_SOURCE_REVIEWS = {
 
 
 class SourceReviewEvidenceTests(unittest.TestCase):
-    def test_new_product_lifecycle_components_have_durable_source_reviews(self):
+    def test_new_baseline_components_have_durable_source_reviews(self):
         registry = json.loads(
             (REPO_ROOT / "SOURCE_REVIEWS.json").read_text(encoding="utf-8")
         )

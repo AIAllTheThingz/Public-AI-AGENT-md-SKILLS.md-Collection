@@ -46,6 +46,7 @@ status: baseline
 | Observability | | | | |
 | Capacity | | | | |
 | Security | | | | |
+| Privacy | | | | |
 | Failure behavior | | | | |
 | Operations | | | | |
 | Cost | | | | |

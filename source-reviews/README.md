@@ -13,7 +13,7 @@ A source review establishes only what public authoritative material was inspecte
 
 ## Current records
 
-- [`2026-08-23.md`](2026-08-23.md) — product management, user experience, and product-inception lifecycle baseline review
+- [`2026-08-23.md`](2026-08-23.md) — product management, user experience, SRE, testing, and product-inception lifecycle baseline review
 - [`2026-08-15.md`](2026-08-15.md) — first package-level source-currency review supporting the `0.10.0` release program
 
 ## Recording rules

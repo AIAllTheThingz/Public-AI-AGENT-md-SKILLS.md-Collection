@@ -84,7 +84,7 @@ Record:
 - required packages
 - conditional packages
 - omitted packages
-- applicable Product Inception gates and product lifecycle state when Product Management applies
+- whether the optional Product Inception Lifecycle was selected and, if selected, its applicable gates and product lifecycle state
 - research state and separate UX/Accessibility evidence boundaries when User Experience applies
 - scope boundaries
 - nested instruction locations
