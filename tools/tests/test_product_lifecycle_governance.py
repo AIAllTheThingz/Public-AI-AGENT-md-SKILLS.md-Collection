@@ -843,6 +843,7 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             "need not",
             "may skip",
             "may bypass",
+            "without sre",
         ):
             with self.subTest(weakening_phrase=weakening_phrase):
                 self.assertNotIn(weakening_phrase, body.casefold())
