@@ -44,7 +44,7 @@ Release candidate for the first stable repository compatibility contract. The ca
 - Corrected secondary-profile discipline expansion for `generate-manifest --include-profile-required` without removing existing primary-profile selections.
 - Added complete baseline Product Management and User Experience discipline packages with evidence-backed requirements, acceptance, traceability, explicit performed and non-run research states, journey, usability, validation, and accessibility-boundary controls.
 - Integrated Product Management and User Experience as conditional profile overlays, with representative examples promoting or omitting them based on scoped product and human-interaction concerns.
-- Added a Product Inception Lifecycle with stable normative rule IDs for its Concept, Requirements, Design, Build, prototype, production-candidate, traceability, exception, and evidence-backed product-lifecycle controls distinct from component maturity. The `scaled-production` state requires every applicable scaling area to be `Verified` and cannot bypass that boundary when the SRE package is not otherwise selected.
+- Added a Product Inception Lifecycle with stable normative rule IDs for its Concept, Requirements, Design, Build, prototype, production-candidate, traceability, exception, and evidence-backed product-lifecycle controls distinct from component maturity. Lifecycle evidence states are closed; the Build Gate requires Product Management traceability plus every other applicable package selection or justified omission; `production-candidate` requires the selected SRE package's complete readiness contract; `production` retains that boundary plus accountable approval; and `scaled-production` requires the selected SRE package's complete scaling contract.
 - Added authoritative standards-body and first-party starting points for requirements engineering, UX, reliability, scaling, and applicable cloud or Kubernetes implementation guidance without asserting compliance or certification.
 - Added authoritative first-party and standards-body starting points to the ten non-C# language package READMEs.
 - Added the official Rustonomicon to the Rust package's authoritative starting points for unsafe-code boundaries.
@@ -59,7 +59,7 @@ Release candidate for the first stable repository compatibility contract. The ca
 
 - Added package-level adoption tests for C#, PowerShell, and Terraform/OpenTofu and a complete-surface C# adoption regression.
 - Added permanent RC compatibility-gate regression coverage for version/release-state invariants, stable path/schema/template/tool inventory, package maturity boundaries, migration from `v0.10.0`, and fail-visible final-`1.0.0` prerequisites.
-- Updated `compose-agents` to validate the repository-defined `AIAllTheThingz.governanceSelections` extension and include each selected governance source in copied bundles, composition manifests, and generated indexes.
+- Updated `compose-agents` to validate the repository-defined `AIAllTheThingz.governanceSelections` extension, include each selected governance source in copied bundles, composition manifests, and generated indexes, and retain the selected lifecycle's declared Exception Process dependency in the required governance source set.
 - Preserved the existing prerelease-aware release validator and deterministic release builder rather than introducing a parallel RC mechanism.
 
 ### Security

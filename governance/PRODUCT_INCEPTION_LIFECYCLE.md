@@ -10,6 +10,8 @@ depends_on:
   - GOV-WORK
   - GOV-RISK
   - GOV-EVIDENCE
+  - GOV-PROD
+  - GOV-EXCEPTION
 ---
 
 # Product Inception Lifecycle
@@ -23,6 +25,8 @@ Define a proportionate, evidence-based path from idea through build while preven
 Normative control: [`GOV-PRODUCT-INCEPTION-001`](#gov-product-inception-001).
 
 This lifecycle applies only when explicitly selected for a project or change. Adopting this repository, its governance, a project profile, or the Product Management package does not select it. Once selected, it governs the selected scope for a new product, material capability, or material change in intended users, outcomes, requirements, architecture, trust boundaries, or operating model. Existing records that answer a gate count as its evidence. For small changes within the selected scope, record a concise gate decision that references those records.
+
+Selecting this lifecycle does not silently select a discipline package. Before the Build Gate can pass, explicitly select the Product Management package and satisfy its [Requirement Traceability Standard](../disciplines/product-management/standards/TRACEABILITY_STANDARD.md) for every material requirement. A lifecycle state that depends on another discipline contract may be assigned only after that package is explicitly selected and its referenced standard is satisfied. In particular, `production-candidate` requires the Site Reliability Engineering package and its complete [Production Readiness Standard](../disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md), and `scaled-production` additionally requires its complete [Scaling Strategy Standard](../disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md). Earlier lifecycle work may proceed without SRE when neither state is claimed and all other applicable package decisions are recorded accurately.
 
 ## Roles
 
@@ -42,7 +46,7 @@ This lifecycle applies only when explicitly selected for a project or change. Ad
 
 ### GOV-PRODUCT-INCEPTION-002
 
-**Requirement:** Record gate evidence and decisions with accurate repository-supported states, and do not treat a passing gate as proof of a later lifecycle state.
+**Requirement:** Use only `Planned`, `Implemented`, `Tested`, `Reviewed`, `OperationallyVerified`, `NotRun`, `Blocked`, or justified `NotApplicable` for lifecycle evidence states, record gate decisions separately, and do not treat a passing gate as proof of a later lifecycle state.
 
 **Expected evidence:** Dated gate record identifying the evidence state, decision, reviewer or approver, limitations, and next bounded phase.
 
@@ -66,9 +70,9 @@ This lifecycle applies only when explicitly selected for a project or change. Ad
 
 ### GOV-PRODUCT-INCEPTION-006
 
-**Requirement:** Normal production implementation must not start unless the Build Gate decision is explicitly `Pass` for the reviewed scope, package and technology selections, acceptance criteria, validation strategy, implementation plan, ownership, dependencies, rollback considerations, and evidence locations.
+**Requirement:** Normal production implementation must not start unless the Concept, Requirements, Design, and Build Gate decisions are explicitly `Pass` for the reviewed scope, every applicable package and technology selection or justified `NotApplicable` decision, acceptance criteria, validation strategy, implementation plan, ownership, dependencies, rollback considerations, and evidence locations.
 
-**Expected evidence:** Build decision of `Pass`, `Fail`, or `Blocked` identifying the reviewed scope, selections, plan, owners, validation strategy, rollback considerations, and re-review triggers.
+**Expected evidence:** Linked `Pass` decisions for the prerequisite Concept, Requirements, and Design Gates plus a Build decision of `Pass`, `Fail`, or `Blocked` identifying the reviewed scope, selected packages and reviewed omission decisions, plan, owners, validation strategy, rollback considerations, and re-review triggers.
 
 ### GOV-PRODUCT-INCEPTION-007
 
@@ -78,25 +82,25 @@ This lifecycle applies only when explicitly selected for a project or change. Ad
 
 ### GOV-PRODUCT-INCEPTION-008
 
-**Requirement:** Assign product lifecycle states only from dated evidence for the reviewed artifact and scope, with accountable ownership, limitations, and rollback or reversal considerations. Assign `scaled-production` only when every applicable scaling area is `Verified` with current representative evidence and a stated supported envelope; any `Applicable`, `NotRun`, or `Blocked` area prevents that state, and every `NotApplicable` area requires justification, whether or not the SRE package is otherwise selected.
+**Requirement:** Assign product lifecycle states only from dated evidence for the reviewed artifact and scope, with accountable ownership, limitations, and rollback or reversal considerations. Assign `scaled-production` only while the `production` evidence boundary remains satisfied and after explicitly selecting the Site Reliability Engineering package and satisfying its complete [Scaling Strategy Standard](../disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md): the overall scaling-strategy decision is `Verified`, every applicable scaling area is `Verified` with current representative evidence and a stated supported envelope, any `Applicable`, `NotRun`, or `Blocked` area prevents that state, and every `NotApplicable` area requires justification.
 
-**Expected evidence:** Lifecycle transition record naming the prior and new state, artifact or revision, owner, decision, supporting evidence, limitations, and reversal considerations; a `scaled-production` transition also links the complete scaling applicability matrix and evidence for every applicable area.
+**Expected evidence:** Lifecycle transition record naming the prior and new state, artifact or revision, owner, decision, supporting evidence, limitations, and reversal considerations; a `scaled-production` transition also retains the production approval, records the SRE package selection, and links the complete scaling applicability matrix, overall `Verified` decision, decision authority, supported envelope, and evidence for every applicable area.
 
 ### GOV-PRODUCT-INCEPTION-009
 
-**Requirement:** Transition to `production-candidate` only when the exact candidate has a passing or justified not-applicable result for every applicable readiness area and no applicable required area remains `NotRun`.
+**Requirement:** Transition to `production-candidate` only after the Build Gate and its prerequisite Concept, Requirements, and Design Gates are `Pass`, explicitly selecting the Site Reliability Engineering package, and satisfying its complete [Production Readiness Standard](../disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md) for the exact candidate and operating scope: the overall decision is `Pass`, every applicable readiness area is `Pass`, every `NotApplicable` result is justified, and no applicable area is `Fail`, `Blocked`, or `NotRun`.
 
-**Expected evidence:** Per-area `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` results for the exact candidate plus the candidate-level gate decision and remaining limitations.
+**Expected evidence:** Linked prerequisite gate decisions, SRE package selection, the standard's complete per-area `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` matrix for the exact candidate, and a separate overall decision with accountable authority, operating scope, conditions, checks not run, and remaining limitations.
 
 ### GOV-PRODUCT-INCEPTION-010
 
-**Requirement:** Maintain end-to-end product traceability and re-evaluate affected gates after a material change to users, requirements, scope, evidence, architecture, technology, data, trust, artifact, deployment, operating conditions, ownership, or risk.
+**Requirement:** Before the Build Gate can pass, explicitly select the [Product Management package](../disciplines/product-management/) and satisfy its [Requirement Traceability Standard](../disciplines/product-management/standards/TRACEABILITY_STANDARD.md) for every material requirement. Maintain that end-to-end traceability and re-evaluate affected gates after a material change to users, requirements, scope, evidence, architecture, technology, data, trust, artifact, deployment, operating conditions, ownership, or risk.
 
-**Expected evidence:** Traceability links and dated gate re-review records for every material change trigger.
+**Expected evidence:** Product Management package selection, a complete traceability matrix or equivalent links, and dated gate re-review records for every material change trigger.
 
 ### GOV-PRODUCT-INCEPTION-011
 
-**Requirement:** Do not treat implementation artifacts, prototypes, tests, or checklists as product completion or production-readiness proof, and do not use an exception to conceal a failed gate, missing evidence, or missing authority.
+**Requirement:** Do not treat implementation artifacts, prototypes, tests, or checklists as product completion or production-readiness proof, and do not use an exception to conceal a failed gate, missing evidence, or missing authority or to assign a lifecycle state whose evidence boundary is not satisfied.
 
 **Expected evidence:** Honest failed and not-run states, exact-rule exception records where applicable, and separate completion and production-readiness decisions.
 
@@ -130,7 +134,7 @@ The sequence is a decision flow, not a command to create one artifact per line. 
 
 Normative control: [`GOV-PRODUCT-INCEPTION-002`](#gov-product-inception-002).
 
-Gate records must distinguish the available evidence using repository-supported states such as `Planned`, `Implemented`, `Tested`, `Reviewed`, `OperationallyVerified`, `NotRun`, `Blocked`, and `NotApplicable`. `NotApplicable` requires rationale. A passing gate means required evidence is sufficient for the next bounded phase; it does not prove later lifecycle states.
+Lifecycle evidence records use only `Planned`, `Implemented`, `Tested`, `Reviewed`, `OperationallyVerified`, `NotRun`, `Blocked`, or `NotApplicable`. `NotApplicable` requires rationale. Gate decisions use the outcomes defined by the applicable gate and remain separate from evidence states. A passing gate means required evidence is sufficient for the next bounded phase; it does not prove later lifecycle states.
 
 ## Inception gates
 
@@ -188,9 +192,10 @@ Normative control: [`GOV-PRODUCT-INCEPTION-006`](#gov-product-inception-006).
 
 The gate requires:
 
+- `Pass` decisions for the Concept, Requirements, and Design Gates for the reviewed scope
 - approved implementation scope and explicit exclusions
 - selected applicable project profile
-- identified applicable governance, language, discipline, framework, platform, virtualization, operating-system, and networking packages
+- selected every applicable governance, language, discipline, framework, platform, virtualization, operating-system, and networking package, with a justified `NotApplicable` decision for each reviewed omission
 - selected languages, frameworks, and platforms with version or support boundaries where material
 - measurable acceptance criteria
 - validation strategy covering applicable positive, negative, security, accessibility, performance, resilience, recovery, compatibility, and operational behavior
@@ -222,34 +227,25 @@ Product lifecycle state is distinct from component maturity governed by [`MATURI
 |---|---|
 | `idea` | A proposed opportunity exists; problem evidence may be incomplete. |
 | `discovery` | Problem, users, outcomes, assumptions, and unknowns are being investigated. |
-| `defined` | Concept and requirements evidence is sufficient for reviewed design and planning. |
+| `defined` | The Concept and Requirements gates are `Pass` for the reviewed scope. |
 | `prototype` | A bounded learning artifact operates under the prototype exception. |
-| `MVP` | The minimum coherent scope is implemented or being validated against explicit criteria. |
-| `beta` | Selected users or environments exercise a bounded release with known limitations and monitoring. |
-| `production-candidate` | The candidate artifact and operating plan have passed the production-candidate gate below. |
-| `production` | Accountable approval authorizes production use within stated scope and operating conditions. |
-| `scaled-production` | Every applicable scaling area is `Verified` with current representative evidence and a stated supported envelope. Any `Applicable`, `NotRun`, or `Blocked` area prevents this state; every `NotApplicable` area has recorded justification. This boundary applies even when the SRE package is not otherwise selected. |
+| `MVP` | The Build Gate is `Pass` and the minimum coherent scope is implemented or undergoing bounded validation against explicit criteria. |
+| `beta` | The Build Gate is `Pass`; selected users or environments exercise a bounded release with known limitations, monitoring, ownership, and stop or rollback conditions. The label does not authorize production exposure, which separately requires the applicable production-readiness evidence and accountable approval. |
+| `production-candidate` | The Build Gate and its prerequisite Concept, Requirements, and Design Gates are `Pass`; the Site Reliability Engineering package is selected; and its complete Production Readiness Standard has an overall `Pass` for the exact candidate and operating scope, with every applicable area `Pass` and every `NotApplicable` area justified. |
+| `production` | The `production-candidate` evidence boundary remains satisfied and an accountable human with delegated authority approves production use within the stated artifact, scope, configuration, environment, and operating conditions. |
+| `scaled-production` | The `production` evidence boundary remains satisfied; the Site Reliability Engineering package is selected; and its complete Scaling Strategy Standard is satisfied: the overall scaling-strategy decision is `Verified`, and every applicable scaling area is `Verified` with current representative evidence and a stated supported envelope. Any `Applicable`, `NotRun`, or `Blocked` area prevents this state; every `NotApplicable` area has recorded justification. |
 | `deprecated` | New use is discouraged or prohibited and migration, support, and communication boundaries are defined. |
 | `retired` | Service and data disposition, access removal, dependencies, records, and residual obligations are closed or explicitly owned. |
 
-Transitions require dated evidence, owner, reviewed artifact or revision, decision, limitations, and rollback or reversal considerations. Skipping a state is permitted only when the resulting gate evidence is still satisfied; labels must not be awarded by schedule or aspiration.
+Transitions require dated evidence, owner, reviewed artifact or revision, decision, limitations, and rollback or reversal considerations. Skipping a state is permitted only when every evidence boundary and prerequisite for the resulting state is satisfied; labels must not be awarded by schedule, aspiration, or exception.
 
 ## Production-candidate gate
 
 Normative control: [`GOV-PRODUCT-INCEPTION-009`](#gov-product-inception-009).
 
-Before transition to `production-candidate`, the exact candidate must have applicable evidence for:
+Before transition to `production-candidate`, the Build Gate and its prerequisite Concept, Requirements, and Design Gates must be `Pass`; explicitly select the [Site Reliability Engineering package](../disciplines/sre/) and satisfy its complete [Production Readiness Standard](../disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md). The readiness record must assess every area defined by that standard—Deployment; Rollback and recovery; Backup and restore; Data migration; Observability; Capacity; Security; Privacy; Failure behavior; Operations; Cost; and Limitations and risks—rather than a locally chosen subset.
 
-- reviewed requirements and acceptance criteria
-- testing against the supported configuration and risk
-- security and privacy readiness
-- deployment and rollback
-- observability, logging, monitoring, alerting, and SLOs or operating expectations
-- backup, restore, recovery, and dependency-failure behavior
-- production readiness, operational ownership, runbooks, and incident response
-- known limitations, unresolved risks, owners, and approval conditions
-
-Each area receives `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` using existing readiness conventions. `NotRun` cannot support a pass for an applicable required area. The gate does not establish production approval or operational verification.
+Each area receives `Pass`, `Fail`, `Blocked`, or justified `NotApplicable`; `NotRun` remains an evidence state and cannot support `Pass` for an applicable area. Transition requires a separate overall `Pass` tied to the exact candidate, supported configuration, representative environment, operating scope, accountable decision authority, conditions, limitations, unresolved risks, and checks not run. This gate does not itself establish production approval or operational verification.
 
 ## Traceability and review triggers
 
@@ -264,7 +260,22 @@ Normative control: [`GOV-PRODUCT-INCEPTION-011`](#gov-product-inception-011).
 - Do not treat code, a prototype, a passing test, or a gate checklist as proof of product completion or production readiness.
 - Do not fabricate research, approval, deployment, or operational evidence.
 - Do not use an exception to conceal a failed gate or missing authority.
+- Do not use an exception to convert `Fail`, `Blocked`, `NotRun`, or missing package evidence into `Pass`, `Verified`, or a later lifecycle state; an authorized bounded activity retains its accurate lower or blocked state.
 - Approved exceptions follow [`EXCEPTION_PROCESS.md`](EXCEPTION_PROCESS.md) and retain visible failed or not-run checks.
+
+## Related policies, standards, and templates
+
+- [Organization Contract](ORGANIZATION_CONTRACT.md)
+- [Agent Working Method](AGENT_WORKING_METHOD.md)
+- [Risk Classification](RISK_CLASSIFICATION.md)
+- [Completion Evidence](COMPLETION_EVIDENCE.md)
+- [Production Readiness](PRODUCTION_READINESS.md)
+- [Exception Process](EXCEPTION_PROCESS.md)
+- [Product Management Requirement Traceability Standard](../disciplines/product-management/standards/TRACEABILITY_STANDARD.md)
+- [Product Management Evidence Record Template](../disciplines/product-management/templates/EVIDENCE_RECORD_TEMPLATE.md)
+- [SRE Production Readiness Standard](../disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md)
+- [SRE Scaling Strategy Standard](../disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md)
+- [SRE Evidence Record Template](../disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md)
 
 ## Completion boundary
 

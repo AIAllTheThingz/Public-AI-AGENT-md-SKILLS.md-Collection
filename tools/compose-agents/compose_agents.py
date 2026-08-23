@@ -32,6 +32,7 @@ GOVERNANCE_SOURCES = [
     "governance/AGENT_WORKING_METHOD.md",
     "governance/RISK_CLASSIFICATION.md",
     "governance/COMPLETION_EVIDENCE.md",
+    "governance/EXCEPTION_PROCESS.md",
     "governance/AI_GENERATED_CODE_POLICY.md",
     "governance/HUMAN_REVIEW_POLICY.md",
     "governance/PRODUCTION_READINESS.md",

@@ -625,8 +625,8 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
 
         build_rule = h3_section(lifecycle, "GOV-PRODUCT-INCEPTION-006")
         self.assertIn(
-            "Normal production implementation must not start unless the Build Gate "
-            "decision is explicitly `Pass`",
+            "Normal production implementation must not start unless the Concept, "
+            "Requirements, Design, and Build Gate decisions are explicitly `Pass`",
             build_rule,
         )
 
@@ -635,20 +635,188 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         lifecycle_rule = h3_section(lifecycle, "GOV-PRODUCT-INCEPTION-008")
         lifecycle_states = h2_section(lifecycle, "Product lifecycle states")
         for contract in (
+            "explicitly selecting the Site Reliability Engineering package",
+            "complete [Scaling Strategy Standard]",
             "every applicable scaling area is `Verified`",
             "`Applicable`, `NotRun`, or `Blocked` area prevents",
             "every `NotApplicable` area requires justification",
-            "whether or not the SRE package is otherwise selected",
         ):
             with self.subTest(contract=contract):
                 self.assertIn(contract, lifecycle_rule)
         for contract in (
-            "Every applicable scaling area is `Verified`",
+            "the Site Reliability Engineering package is selected",
+            "complete Scaling Strategy Standard is satisfied",
+            "every applicable scaling area is `Verified`",
             "Any `Applicable`, `NotRun`, or `Blocked` area prevents this state",
-            "even when the SRE package is not otherwise selected",
         ):
             with self.subTest(state_contract=contract):
                 self.assertIn(contract, lifecycle_states)
+
+    def test_later_lifecycle_states_require_complete_sre_contracts(self) -> None:
+        lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
+        readiness = read(
+            "disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md"
+        )
+        production_rule = h3_section(lifecycle, "GOV-PRODUCT-INCEPTION-009")
+        production_gate = h2_section(lifecycle, "Production-candidate gate")
+        scaling_rule = h3_section(lifecycle, "GOV-PRODUCT-INCEPTION-008")
+
+        self.assertIn("- GOV-PROD", lifecycle)
+        self.assertIn("- GOV-EXCEPTION", lifecycle)
+        for contract in (
+            "Build Gate and its prerequisite Concept, Requirements, and Design "
+            "Gates are `Pass`",
+            "explicitly selecting the Site Reliability Engineering package",
+            "complete [Production Readiness Standard]",
+            "overall decision is `Pass`",
+            "no applicable area is `Fail`, `Blocked`, or `NotRun`",
+        ):
+            with self.subTest(readiness_contract=contract):
+                self.assertIn(contract, production_rule)
+        self.assertIn("Linked prerequisite gate decisions", production_rule)
+        for readiness_area in table_areas(readiness, "Readiness areas"):
+            with self.subTest(readiness_area=readiness_area):
+                self.assertIn(readiness_area, production_gate)
+        self.assertIn("separate overall `Pass`", production_gate)
+        self.assertIn("accountable decision authority", production_gate)
+
+        for contract in (
+            "`production` evidence boundary remains satisfied",
+            "explicitly selecting the Site Reliability Engineering package",
+            "complete [Scaling Strategy Standard]",
+            "overall scaling-strategy decision is `Verified`",
+            "every applicable scaling area is `Verified`",
+            "`Applicable`, `NotRun`, or `Blocked` area prevents",
+        ):
+            with self.subTest(scaling_contract=contract):
+                self.assertIn(contract, scaling_rule)
+        for evidence_contract in (
+            "retains the production approval",
+            "overall `Verified` decision",
+            "supported envelope",
+        ):
+            with self.subTest(scaling_evidence=evidence_contract):
+                self.assertIn(evidence_contract, scaling_rule)
+
+    def test_lifecycle_states_and_exceptions_fail_closed(self) -> None:
+        lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
+        evidence_states = h2_section(lifecycle, "Evidence states")
+        lifecycle_states = h2_section(lifecycle, "Product lifecycle states")
+        exceptions = h2_section(lifecycle, "Exceptions and prohibited shortcuts")
+
+        self.assertIn("Lifecycle evidence records use only", evidence_states)
+        for state in (
+            "`Planned`",
+            "`Implemented`",
+            "`Tested`",
+            "`Reviewed`",
+            "`OperationallyVerified`",
+            "`NotRun`",
+            "`Blocked`",
+            "`NotApplicable`",
+        ):
+            with self.subTest(evidence_state=state):
+                self.assertIn(state, evidence_states)
+
+        for state_contract in (
+            "| `defined` | The Concept and Requirements gates are `Pass`",
+            "| `MVP` | The Build Gate is `Pass`",
+            "| `beta` | The Build Gate is `Pass`",
+            "The label does not authorize production exposure",
+            "| `production-candidate` | The Build Gate and its prerequisite",
+            "| `production` | The `production-candidate` evidence boundary",
+            "| `scaled-production` | The `production` evidence boundary",
+            "every evidence boundary and prerequisite for the resulting state",
+        ):
+            with self.subTest(state_contract=state_contract):
+                self.assertIn(state_contract, lifecycle_states)
+
+        self.assertIn(
+            "Do not use an exception to convert `Fail`, `Blocked`, `NotRun`, or "
+            "missing package evidence into `Pass`, `Verified`, or a later "
+            "lifecycle state",
+            exceptions,
+        )
+
+    def test_build_gate_requires_applicable_package_selection(self) -> None:
+        lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
+        build_rule = h3_section(lifecycle, "GOV-PRODUCT-INCEPTION-006")
+        traceability_rule = h3_section(lifecycle, "GOV-PRODUCT-INCEPTION-010")
+        build_gate = h2_section(lifecycle, "Inception gates")
+        applicability = h2_section(lifecycle, "Applicability")
+        self.assertIn(
+            "Concept, Requirements, Design, and Build Gate decisions are "
+            "explicitly `Pass`",
+            build_rule,
+        )
+        self.assertIn(
+            "every applicable package and technology selection or justified "
+            "`NotApplicable` decision",
+            build_rule,
+        )
+        self.assertIn(
+            "Linked `Pass` decisions for the prerequisite Concept, Requirements, "
+            "and Design Gates",
+            build_rule,
+        )
+        self.assertIn(
+            "selected every applicable governance, language, discipline, "
+            "framework, platform, virtualization, operating-system, and "
+            "networking package",
+            build_gate,
+        )
+        self.assertIn(
+            "`Pass` decisions for the Concept, Requirements, and Design Gates",
+            build_gate,
+        )
+        for contract in (
+            "Product Management package",
+            "Requirement Traceability Standard",
+            "for every material requirement",
+        ):
+            with self.subTest(traceability_contract=contract):
+                self.assertIn(contract, applicability)
+                self.assertIn(contract, traceability_rule)
+
+    def test_lifecycle_links_its_normative_dependencies(self) -> None:
+        lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
+        related = h2_section(lifecycle, "Related policies, standards, and templates")
+        for target in (
+            "ORGANIZATION_CONTRACT.md",
+            "AGENT_WORKING_METHOD.md",
+            "RISK_CLASSIFICATION.md",
+            "COMPLETION_EVIDENCE.md",
+            "PRODUCTION_READINESS.md",
+            "EXCEPTION_PROCESS.md",
+            "../disciplines/product-management/standards/TRACEABILITY_STANDARD.md",
+            "../disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md",
+            "../disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md",
+        ):
+            with self.subTest(dependency=target):
+                self.assertIn(target, related)
+
+    def test_web_api_example_does_not_claim_unavailable_later_states(self) -> None:
+        example_surfaces = (
+            "examples/web-api/README.md",
+            "examples/web-api/composition/STANDARDS_SELECTION.md",
+            "examples/web-api/docs/COMPLETION_EVIDENCE.md",
+        )
+        for relative in example_surfaces:
+            with self.subTest(surface=relative):
+                surface = read(relative)
+                self.assertIn("production-candidate", surface)
+                self.assertIn("Site Reliability Engineering", surface)
+                self.assertTrue(
+                    any(
+                        boundary in surface.casefold()
+                        for boundary in (
+                            "does not claim `production-candidate`",
+                            "claims no `production-candidate`",
+                            "no `production-candidate`",
+                        )
+                    ),
+                    f"missing explicit later-state boundary: {relative}",
+                )
 
     def test_usability_review_records_environment_and_date(self) -> None:
         plan = h2_section(

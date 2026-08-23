@@ -47,7 +47,7 @@ The schema-compatible manifest extension `AIAllTheThingz.governanceSelections` r
 
 - **User Experience:** The example exposes an API contract but owns no developer portal, console, or other human workflow. API contract and documentation review are not represented as UX validation.
 - **Database Engineering:** The composition describes a persistence adapter but does not define a concrete schema or migration surface. Add the discipline when a real database is selected.
-- **SRE:** Moderate risk and illustrative operations do not establish an on-call service objective. Add SRE when availability and recovery targets exist.
+- **Site Reliability Engineering (SRE):** Moderate risk and illustrative operations do not establish an on-call service objective, and this example claims no `production-candidate`, `production`, or `scaled-production` state. Add SRE and satisfy the complete readiness contract before `production-candidate`; also satisfy the complete scaling contract before `scaled-production`.
 - **Accessibility:** The example exposes an API only and has no user interface.
 - **Virtualization:** The example owns a container boundary, not the underlying hypervisor or hosts.
 - **Operating systems:** Host and endpoint administration are outside the fictitious API scope.

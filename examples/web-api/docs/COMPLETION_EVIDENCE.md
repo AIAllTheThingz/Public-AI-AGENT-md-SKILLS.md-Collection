@@ -31,6 +31,8 @@ The [Product Inception Lifecycle](../../../governance/PRODUCT_INCEPTION_LIFECYCL
 | Design | `NotRun` | `Blocked` | No accountable design review or approval was performed. |
 | Build | `NotRun` | `Blocked` | No accountable Build Gate review or approval was performed; normal production implementation must not start. |
 
+No `production-candidate`, `production`, or `scaled-production` state is claimed. The Site Reliability Engineering package is not selected, so the lifecycle's complete production-readiness and scaling prerequisites are unsatisfied and those later states remain unavailable.
+
 ## Files changed
 
 See [`MANIFEST.md`](../MANIFEST.md).

@@ -64,6 +64,8 @@ web-api/
 
 [`project-manifest.json`](project-manifest.json) records the selection under the schema-compatible extension `AIAllTheThingz.governanceSelections` as `governance/PRODUCT_INCEPTION_LIFECYCLE.md`. The extension supplements the standard package fields and does not redefine them.
 
+This example does not claim `production-candidate`, `production`, or `scaled-production`. Before any such transition, it must add the Site Reliability Engineering package and satisfy the lifecycle's complete production-readiness and, for `scaled-production`, scaling-strategy prerequisites; its current SRE omission cannot support those states.
+
 ## Selected profile
 
 [WEB_API](../../profiles/WEB_API.md) provides the project-type overlay. It supplements rather than replaces governance, language, discipline, framework, platform, virtualization, operating-system, and networking standards.

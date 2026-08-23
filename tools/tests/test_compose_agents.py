@@ -71,6 +71,7 @@ class ComposeAgentsTests(unittest.TestCase):
             item["path"] for item in payload["metadata"]["composition"]["sources"]
         }
         self.assertIn("governance/PRODUCT_INCEPTION_LIFECYCLE.md", source_paths)
+        self.assertIn("governance/EXCEPTION_PROCESS.md", source_paths)
 
     def test_written_index_reports_governance_selections(self):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
