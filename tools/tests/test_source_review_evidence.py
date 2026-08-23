@@ -19,7 +19,7 @@ NEW_BASELINE_SOURCE_REVIEWS = {
 }
 
 FINAL_2026_08_23_NORMATIVE_REVISION = (
-    "a9cf36122f6fed7098aa35593ac6b774f3aed6ba"
+    "06c53cdc6ef44194bec3531b230aa7db8d8f05f3"
 )
 
 
@@ -48,7 +48,7 @@ class SourceReviewEvidenceTests(unittest.TestCase):
                 evidence = evidence_path.read_text(encoding="utf-8")
                 self.assertIn(expected_scope, evidence)
 
-    def test_final_lifecycle_and_sre_surfaces_are_in_the_durable_review(self):
+    def test_final_lifecycle_sre_and_testing_surfaces_are_in_the_durable_review(self):
         evidence = (
             REPO_ROOT / "source-reviews" / "2026-08-23.md"
         ).read_text(encoding="utf-8")
@@ -90,6 +90,20 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             with self.subTest(sre_readiness_area=readiness_area):
                 self.assertIn(readiness_area, sre_review)
         self.assertIn("repository-authored evidence controls", sre_review)
+
+        testing_review = evidence.split(
+            "### Testing and Quality Engineering (`disciplines/testing`)",
+            1,
+        )[1].split("### Product Inception Lifecycle", 1)[0]
+        for control in (
+            "per-test owner",
+            "explicit execution authorization and safeguards",
+            "safe stop conditions",
+            "evidence template",
+        ):
+            with self.subTest(testing_control=control):
+                self.assertIn(control, testing_review)
+        self.assertIn("repository-authored evidence controls", testing_review)
 
         for limitation in (
             "Full ISO standards text: **NotRun**",
