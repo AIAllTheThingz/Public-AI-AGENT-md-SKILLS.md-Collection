@@ -562,14 +562,49 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         template = read(
             "disciplines/user-experience/templates/EVIDENCE_RECORD_TEMPLATE.md"
         )
+        research_standard = read(
+            "disciplines/user-experience/standards/USER_RESEARCH_STANDARD.md"
+        )
         context = h2_section(template, "Context")
         evidence = h2_section(template, "Method and evidence")
 
-        self.assertIn("- Research state:", context)
+        self.assertIn(
+            "- Research state (`Performed`, `NotRun`, `Blocked`, or "
+            "`NotApplicable`):",
+            context,
+        )
         self.assertIn("- Validation state:", context)
         self.assertIn("- Research evidence or rationale:", evidence)
         self.assertIn("- Validation evidence or rationale:", evidence)
         self.assertNotIn("Research/validation state", template)
+        for state in ("`Performed`", "`NotRun`", "`Blocked`", "`NotApplicable`"):
+            with self.subTest(research_state=state):
+                self.assertIn(state, research_standard)
+
+    def test_lifecycle_normative_controls_have_stable_rule_ids(self) -> None:
+        lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
+        expected_ids = [
+            f"GOV-PRODUCT-INCEPTION-{number:03d}" for number in range(1, 13)
+        ]
+        observed_ids = re.findall(
+            r"(?m)^### (GOV-PRODUCT-INCEPTION-\d{3})$",
+            lifecycle,
+        )
+        self.assertEqual(observed_ids, expected_ids)
+
+        for rule_id in expected_ids:
+            with self.subTest(rule_id=rule_id):
+                rule = h3_section(lifecycle, rule_id)
+                self.assertIn("**Requirement:**", rule)
+                self.assertIn("**Expected evidence:**", rule)
+                self.assertIn(f"(#{rule_id.lower()})", lifecycle)
+
+        build_rule = h3_section(lifecycle, "GOV-PRODUCT-INCEPTION-006")
+        self.assertIn(
+            "Normal production implementation must not start unless the Build Gate "
+            "decision is explicitly `Pass`",
+            build_rule,
+        )
 
     def test_usability_review_records_environment_and_date(self) -> None:
         plan = h2_section(

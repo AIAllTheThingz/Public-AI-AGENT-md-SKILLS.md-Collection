@@ -51,7 +51,7 @@ Report material conflicts instead of resolving them silently.
 
 **Requirement:** Never fabricate research, participants, observations, quotations, usability results, or user evidence; record absent research as `NotRun` or another accurate state.
 
-**Evidence:** Research plan and consented research record, or explicit `NotRun`, `Blocked`, or `NotApplicable` rationale.
+**Evidence:** A `Performed` research state backed by a research plan and consented, attributable research record, or an explicit `NotRun`, `Blocked`, or `NotApplicable` rationale.
 
 ### UX-JOURNEY-002
 

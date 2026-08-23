@@ -13,7 +13,7 @@ status: baseline
 - Intended users, goals, tasks, and context:
 - Requirements:
 - Owner, researchers, and reviewers:
-- Research state:
+- Research state (`Performed`, `NotRun`, `Blocked`, or `NotApplicable`):
 - Validation state:
 
 Research and UX validation are independent claims. Record each state from its applicable standard; `NotRun` research must not be presented as completed UX validation, and validation evidence must not imply that user research occurred.

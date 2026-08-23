@@ -53,7 +53,7 @@ disciplines/user-experience/
 
 | Standard | Purpose |
 |---|---|
-| [User Research](standards/USER_RESEARCH_STANDARD.md) | Govern research ethics, provenance, representativeness, and honest `NotRun` states. |
+| [User Research](standards/USER_RESEARCH_STANDARD.md) | Govern research ethics, provenance, representativeness, and explicit performed or non-run states. |
 | [User Journey](standards/USER_JOURNEY_STANDARD.md) | Map goals, tasks, touchpoints, states, outcomes, and recovery. |
 | [Information Architecture](standards/INFORMATION_ARCHITECTURE_STANDARD.md) | Organize, label, navigate, search, and disclose information coherently. |
 | [Interaction Design](standards/INTERACTION_DESIGN_STANDARD.md) | Define actions, feedback, states, constraints, errors, and recovery. |
@@ -66,7 +66,7 @@ disciplines/user-experience/
 
 Compose this package with [Product Management](../product-management/), [Accessibility](../accessibility/), [Architecture](../architecture/), [Testing](../testing/), [Documentation](../documentation/), and security/privacy disciplines as applicable.
 
-Actual research evidence must identify method, participants or source population without exposing sensitive identities, context, findings, limitations, date, and owner. If actual research did not occur, the state is `NotRun` unless `Blocked` or justified `NotApplicable` is more accurate. Synthetic assumptions never become observed evidence through confident wording.
+Actual research evidence must identify method, participants or source population without exposing sensitive identities, context, findings, limitations, date, and owner. Record `Performed` only when that attributable evidence exists. If actual research did not occur, the state is `NotRun` unless `Blocked` or justified `NotApplicable` is more accurate. Synthetic assumptions never become observed evidence through confident wording.
 
 Record research state and UX-validation state independently. Evidence for one claim must not be reused to imply that the other activity occurred or passed.
 

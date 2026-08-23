@@ -218,7 +218,7 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertEqual(source["tag"], "v0.10.0")
         self.assertEqual(source["commit"], CHECKPOINT_COMMIT)
         self.assertEqual(self.inventory["candidateVersion"], CANDIDATE)
-        self.assertEqual(self.inventory["compatibilityClassification"], "compatible")
+        self.assertEqual(self.inventory["compatibilityClassification"], "breaking")
 
         pinned = self.inventory["publishedCheckpointInventory"]
         self.assertEqual(pinned["path"], "releases/compatibility/0.10.0-checkpoint.json")
@@ -544,6 +544,8 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
 
     def test_migration_exercise_preserves_checkpoint_contracts(self):
         migration = self.inventory["migrationFrom0100"]
+        self.assertEqual(self.inventory["compatibilityClassification"], "breaking")
+        self.assertTrue(migration["breakingChanges"])
         breaking = "\n".join(migration["breakingChanges"])
         self.assertIn("Site Reliability Engineering", breaking)
         self.assertIn("Testing and Quality Engineering", breaking)

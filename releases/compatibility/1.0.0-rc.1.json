@@ -26,7 +26,7 @@
     "path": "releases/compatibility/0.10.0-rule-contracts.json",
     "sha256": "5f3b7a7ddd28de5a44b45f96998d7acffb2c287bad4c7699e21561a869e50c95"
   },
-  "compatibilityClassification": "compatible",
+  "compatibilityClassification": "breaking",
   "stableRootPaths": [
     "AGENTS.md",
     "README.md",

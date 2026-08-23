@@ -42,9 +42,9 @@ Release candidate for the first stable repository compatibility contract. The ca
 - Explicitly kept every package not enumerated as stable outside the stable package promise while preserving ordinary compatibility and migration obligations for documented repository contracts.
 - Added the Windows PowerShell 5.1 legacy compatibility overlay while preserving PowerShell 7 as the default for new work.
 - Corrected secondary-profile discipline expansion for `generate-manifest --include-profile-required` without removing existing primary-profile selections.
-- Added complete baseline Product Management and User Experience discipline packages with evidence-backed requirements, acceptance, traceability, research, journey, usability, validation, and accessibility-boundary controls.
+- Added complete baseline Product Management and User Experience discipline packages with evidence-backed requirements, acceptance, traceability, explicit performed and non-run research states, journey, usability, validation, and accessibility-boundary controls.
 - Integrated Product Management and User Experience as conditional profile overlays, with representative examples promoting or omitting them based on scoped product and human-interaction concerns.
-- Added a Product Inception Lifecycle with Concept, Requirements, Design, Build, production-candidate, and evidence-backed product-lifecycle gates distinct from component maturity.
+- Added a Product Inception Lifecycle with stable normative rule IDs for its Concept, Requirements, Design, Build, prototype, production-candidate, traceability, exception, and evidence-backed product-lifecycle controls distinct from component maturity.
 - Added authoritative standards-body and first-party starting points for requirements engineering, UX, reliability, scaling, and applicable cloud or Kubernetes implementation guidance without asserting compliance or certification.
 - Added authoritative first-party and standards-body starting points to the ten non-C# language package READMEs.
 - Added the official Rustonomicon to the Rust package's authoritative starting points for unsafe-code boundaries.
