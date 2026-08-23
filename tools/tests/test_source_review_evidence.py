@@ -19,7 +19,7 @@ NEW_BASELINE_SOURCE_REVIEWS = {
 }
 
 FINAL_2026_08_23_NORMATIVE_REVISION = (
-    "389055732b1afa0d35886b578194ae8789b40aaf"
+    "76ee18f1bfa3a083b3991ce2067d16f7356f2fab"
 )
 
 
@@ -78,10 +78,21 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             "`GOV-PRODUCT-INCEPTION-001`",
             "`GOV-PRODUCT-INCEPTION-006`",
             "`GOV-PRODUCT-INCEPTION-012`",
+            "closed set of lifecycle evidence states",
+            "Product Management package selection",
+            "complete requirement traceability",
+            "complete Production Readiness Standard",
+            "Data migration",
+            "Capacity",
+            "Cost",
             "`scaled-production`",
             "every applicable scaling area is `Verified`",
             "`Applicable`, `NotRun`, or `Blocked` area prevents",
-            "even when the SRE package is not otherwise selected",
+            "complete Scaling Strategy Standard",
+            "overall `Verified` decision",
+            "`beta` label does not authorize production exposure",
+            "exceptions cannot convert failed, blocked, not-run, or "
+            "missing-package evidence",
             "`Pass`",
             "`Fail`",
             "`Blocked`",
