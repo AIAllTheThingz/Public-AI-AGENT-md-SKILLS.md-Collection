@@ -19,7 +19,7 @@ NEW_BASELINE_SOURCE_REVIEWS = {
 }
 
 FINAL_2026_08_23_NORMATIVE_REVISION = (
-    "06c53cdc6ef44194bec3531b230aa7db8d8f05f3"
+    "9cc342cc3f4b9c543abaedc8be5661689a4c5cdd"
 )
 
 
@@ -75,12 +75,30 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             "explicitly selected",
             "Design Gate",
             "Build Gate",
+            "`GOV-PRODUCT-INCEPTION-001`",
+            "`GOV-PRODUCT-INCEPTION-006`",
+            "`GOV-PRODUCT-INCEPTION-012`",
             "`Pass`",
             "`Fail`",
             "`Blocked`",
         ):
             with self.subTest(lifecycle_contract=contract):
                 self.assertIn(contract, lifecycle_review)
+
+        ux_review = evidence.split(
+            "### User Experience (`disciplines/user-experience`)",
+            1,
+        )[1].split("### Site Reliability Engineering", 1)[0]
+        for research_state in (
+            "`Performed`",
+            "`NotRun`",
+            "`Blocked`",
+            "`NotApplicable`",
+        ):
+            with self.subTest(research_state=research_state):
+                self.assertIn(research_state, ux_review)
+        self.assertIn("evidence template", ux_review)
+        self.assertIn("repository-authored evidence controls", ux_review)
 
         sre_review = evidence.split(
             "### Site Reliability Engineering (`disciplines/sre`)",
