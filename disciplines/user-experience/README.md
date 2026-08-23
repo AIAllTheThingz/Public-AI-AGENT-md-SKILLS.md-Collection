@@ -68,6 +68,8 @@ Compose this package with [Product Management](../product-management/), [Accessi
 
 Actual research evidence must identify method, participants or source population without exposing sensitive identities, context, findings, limitations, date, and owner. If actual research did not occur, the state is `NotRun` unless `Blocked` or justified `NotApplicable` is more accurate. Synthetic assumptions never become observed evidence through confident wording.
 
+Record research state and UX-validation state independently. Evidence for one claim must not be reused to imply that the other activity occurred or passed.
+
 ## Authoritative starting points
 
 - [ISO 9241-210](https://www.iso.org/standard/77520.html)

@@ -10,6 +10,7 @@ status: baseline
 ## Evidence and scope
 
 - [ ] Claims identify their evidence source, interface version, users, tasks, context, and limitations.
+- [ ] Research and UX-validation states and evidence are independent; neither claim is inferred from the other.
 - [ ] `NotRun`, `Blocked`, and `NotApplicable` are used honestly; synthetic material is labelled.
 - [ ] Participant privacy, consent, recruitment, and data handling are appropriate.
 

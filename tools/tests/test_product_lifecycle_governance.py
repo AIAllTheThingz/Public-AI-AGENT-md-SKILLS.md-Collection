@@ -297,6 +297,29 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
                     r"NotRun|Blocked|NotApplicable)` \|",
                 )
 
+    def test_ux_evidence_separates_research_and_validation_records(self) -> None:
+        template = read(
+            "disciplines/user-experience/templates/EVIDENCE_RECORD_TEMPLATE.md"
+        )
+        context = h2_section(template, "Context")
+        evidence = h2_section(template, "Method and evidence")
+
+        self.assertIn("- Research state:", context)
+        self.assertIn("- Validation state:", context)
+        self.assertIn("- Research evidence or rationale:", evidence)
+        self.assertIn("- Validation evidence or rationale:", evidence)
+        self.assertNotIn("Research/validation state", template)
+
+    def test_usability_review_records_environment_and_date(self) -> None:
+        plan = h2_section(
+            read(
+                "disciplines/user-experience/templates/USABILITY_REVIEW_TEMPLATE.md"
+            ),
+            "Plan",
+        )
+        self.assertIn("- Environment:", plan)
+        self.assertIn("- Review date:", plan)
+
     def test_lifecycle_applicability_does_not_add_an_implicit_exception(self) -> None:
         lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
         applicability = re.search(

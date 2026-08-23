@@ -13,6 +13,8 @@ status: baseline
 - Users, goals, tasks, and context:
 - Research question and method:
 - Participants or evidence source:
+- Environment:
+- Review date:
 - Consent, privacy, and data handling:
 - Measures and authorized thresholds:
 - Accessibility validation location:
