@@ -10,12 +10,23 @@ import tempfile
 import unittest
 from collections import Counter
 from pathlib import Path
+from unittest import mock
 
 from helpers import REPO_ROOT
+import rc_compatibility_gate_base as compatibility
+import rc_finding_code_contracts_base as finding_codes
+import rc_normative_rule_contracts_base as normative
+import rc_parameterized_finding_codes_base as parameterized_codes
 from rc_reachability_semantics import statement_always_terminates
+import test_rc_agent_skill_entrypoints as agent_skills
 import test_rc_extended_finding_reachability as literal
+import test_rc_finding_helper_runtime as finding_runtime
+import test_rc_finding_reachability as finding_reachability
+import test_rc_parameterized_finding_helper_semantics as parameterized_helpers
 import test_rc_parameterized_finding_reachability as parameterized
+import test_rc_template_contracts as template_contracts
 import test_rc_unnumbered_governance_semantics as unnumbered
+import test_rc_writer_safety as writer_safety
 
 
 CHECKPOINT_INVENTORY_PATH = (
@@ -63,6 +74,56 @@ def _load_validate_all_module():
     finally:
         sys.dont_write_bytecode = previous
     return module
+
+
+def _load_module(name: str, relative: str):
+    module_path = REPO_ROOT / relative
+    spec = importlib.util.spec_from_file_location(name, module_path)
+    if spec is None or spec.loader is None:
+        raise AssertionError(f"cannot load {relative}")
+    module = importlib.util.module_from_spec(spec)
+    previous = sys.dont_write_bytecode
+    module_directory = str(module_path.parent)
+    sys.dont_write_bytecode = True
+    sys.path.insert(0, module_directory)
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.remove(module_directory)
+        sys.dont_write_bytecode = previous
+    return module
+
+
+def _keyword_constant(call: ast.Call, name: str):
+    for keyword in call.keywords:
+        if keyword.arg == name and isinstance(keyword.value, ast.Constant):
+            return keyword.value.value
+    return None
+
+
+def _is_git_text_subprocess(call: ast.Call, relative: Path) -> bool:
+    if not (
+        isinstance(call.func, ast.Attribute)
+        and isinstance(call.func.value, ast.Name)
+        and call.func.value.id == "subprocess"
+        and call.func.attr in {"run", "Popen"}
+        and _keyword_constant(call, "text") is True
+        and call.args
+    ):
+        return False
+
+    command = call.args[0]
+    if isinstance(command, (ast.List, ast.Tuple)) and command.elts:
+        executable = command.elts[0]
+        if isinstance(executable, ast.Constant) and isinstance(executable.value, str):
+            return executable.value.casefold() in {"git", "git.exe", "git.cmd", "git.bat"}
+        if isinstance(executable, ast.Name):
+            return executable.id == "real_git"
+    return (
+        relative.as_posix() == "tools/tests/test_validate_all.py"
+        and isinstance(command, ast.Name)
+        and command.id == "command"
+    )
 
 
 def _stable_root_contracts(text: str, path: str) -> Counter[tuple[str, str, str]]:
@@ -118,6 +179,138 @@ def _candidate_root_governance_contracts() -> Counter[tuple[str, str, str]]:
 
 
 class Pr71FinalRegressionTests(unittest.TestCase):
+    def test_git_text_subprocess_boundaries_declare_utf8(self):
+        offenders: list[str] = []
+        tools_root = REPO_ROOT / "tools"
+        for path in sorted(tools_root.rglob("*.py")):
+            relative = path.relative_to(REPO_ROOT)
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(relative))
+            for call in (node for node in ast.walk(tree) if isinstance(node, ast.Call)):
+                if not _is_git_text_subprocess(call, relative):
+                    continue
+                if _keyword_constant(call, "encoding") != "utf-8":
+                    offenders.append(f"{relative.as_posix()}:{call.lineno}")
+
+        self.assertEqual(offenders, [])
+        wrapper_test = (
+            REPO_ROOT / "tools/tests/test_validate_all_windows_wrapper.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            '"text=True, encoding=\'utf-8\', capture_output=True, check=False); "',
+            wrapper_test,
+        )
+
+    def test_checkpoint_git_sources_use_utf8_under_non_utf8_locale(self):
+        build_release = _load_module(
+            "pr71_build_release_regression",
+            "tools/release/build_release.py",
+        )
+        validate_release = _load_module(
+            "pr71_validate_release_regression",
+            "tools/release/validate_release.py",
+        )
+        validate_all = _load_validate_all_module()
+        revision = compatibility.CHECKPOINT_COMMIT
+        relative = "RELEASE_POLICY.md"
+
+        with mock.patch("locale.getencoding", return_value="cp1252"):
+            checkpoints = (
+                compatibility.git_source_at(revision, relative),
+                normative.git_source_at(revision, relative),
+                finding_codes.git_source_at(revision, relative),
+                parameterized_codes.git_source_at(revision, relative),
+                agent_skills.git_source_at(revision, relative),
+                finding_reachability.git_source_at(revision, relative),
+                parameterized_helpers.git_source_at(revision, relative),
+                template_contracts.git_source_at(revision, relative),
+                writer_safety.git_output("show", f"{revision}:{relative}"),
+                build_release.run_git(
+                    REPO_ROOT,
+                    "show",
+                    f"{revision}:{relative}",
+                ),
+                validate_release.git_output(
+                    REPO_ROOT,
+                    "show",
+                    f"{revision}:{relative}",
+                ),
+                validate_all._git(
+                    REPO_ROOT,
+                    "show",
+                    f"{revision}:{relative}",
+                ).stdout,
+            )
+            finding_runtime.run_git(
+                REPO_ROOT,
+                "show",
+                f"{revision}:{relative}",
+            )
+            object_sha = agent_skills.git_object_sha(revision, relative)
+
+        for checkpoint in checkpoints:
+            self.assertIn("\u201cProbably compatible\u201d", checkpoint)
+        self.assertRegex(object_sha, r"\A[0-9a-f]{40}\Z")
+
+    def test_checkpoint_git_source_preserves_git_errors(self):
+        asserting_helpers = (
+            compatibility.git_source_at,
+            normative.git_source_at,
+            finding_codes.git_source_at,
+            parameterized_codes.git_source_at,
+            agent_skills.git_source_at,
+            finding_reachability.git_source_at,
+            parameterized_helpers.git_source_at,
+            template_contracts.git_source_at,
+        )
+        for source_at in asserting_helpers:
+            with self.subTest(helper=source_at.__module__):
+                with self.assertRaises(AssertionError):
+                    source_at(
+                        "missing-checkpoint-revision",
+                        "RELEASE_POLICY.md",
+                    )
+
+        with self.assertRaises(AssertionError):
+            writer_safety.git_output("show", "missing-checkpoint-revision:RELEASE_POLICY.md")
+        with self.assertRaises(AssertionError):
+            agent_skills.git_object_sha(
+                "missing-checkpoint-revision",
+                "RELEASE_POLICY.md",
+            )
+        with self.assertRaises(AssertionError):
+            finding_runtime.run_git(
+                REPO_ROOT,
+                "show",
+                "missing-checkpoint-revision:RELEASE_POLICY.md",
+            )
+
+        build_release = _load_module(
+            "pr71_build_release_error_regression",
+            "tools/release/build_release.py",
+        )
+        validate_release = _load_module(
+            "pr71_validate_release_error_regression",
+            "tools/release/validate_release.py",
+        )
+        validate_all = _load_validate_all_module()
+        with self.assertRaises(RuntimeError):
+            build_release.run_git(REPO_ROOT, "show", "missing-checkpoint-revision:path")
+        self.assertIsNone(
+            validate_release.git_output(
+                REPO_ROOT,
+                "show",
+                "missing-checkpoint-revision:path",
+            )
+        )
+        self.assertNotEqual(
+            validate_all._git(
+                REPO_ROOT,
+                "show",
+                "missing-checkpoint-revision:path",
+            ).returncode,
+            0,
+        )
+
     def test_root_governance_unnumbered_controls_are_preserved(self):
         root_paths = _published_normative_stable_root_paths()
         published = _root_governance_contracts_at_checkpoint()

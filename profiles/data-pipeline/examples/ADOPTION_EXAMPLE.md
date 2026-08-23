@@ -31,6 +31,8 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Conditional review
 
+- [Product Management](../../../disciplines/product-management/)
+- [User Experience](../../../disciplines/user-experience/)
 - [Application Security](../../../disciplines/application-security/)
 - [Ci Cd](../../../disciplines/ci-cd/)
 - [Supply Chain](../../../disciplines/supply-chain/)

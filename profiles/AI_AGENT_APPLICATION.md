@@ -54,6 +54,7 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Required discipline overlays
 
+- `disciplines/product-management/AGENTS.md`
 - `disciplines/application-security/AGENTS.md`
 - `disciplines/architecture/AGENTS.md`
 - `disciplines/testing/AGENTS.md`
@@ -64,6 +65,7 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Conditionally required disciplines
 
+- `disciplines/user-experience/AGENTS.md`
 - `disciplines/integration/AGENTS.md`
 - `disciplines/documentation/AGENTS.md`
 - `disciplines/sre/AGENTS.md`
@@ -73,8 +75,11 @@ This is a starting point only. The actual project or change must be classified u
 
 Conditional packages become required when their concern is present. Document every omission that would reasonably appear applicable.
 
+User Experience becomes required when people set goals, provide context, review outputs, grant approval, recover from errors, or otherwise interact with the agent. Headless agent components may justify omission when their human workflow is governed by another scoped profile.
+
 ## Required project decisions
 
+- product problem, intended users or actors, desired outcomes, requirements, bounded MVP behavior, acceptance criteria, and traceability
 - tool authorization and allowlists
 - prompt and retrieved-content trust boundaries
 - human approval for consequential actions

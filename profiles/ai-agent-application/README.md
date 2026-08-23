@@ -85,6 +85,7 @@ profiles/ai-agent-application/
 
 ## Required disciplines
 
+- [Product Management](../../disciplines/product-management/)
 - [Application Security](../../disciplines/application-security/)
 - [Architecture and System Design](../../disciplines/architecture/)
 - [Testing and Quality Engineering](../../disciplines/testing/)
@@ -95,6 +96,7 @@ profiles/ai-agent-application/
 
 ## Conditional disciplines
 
+- [User Experience](../../disciplines/user-experience/)
 - [Integration Engineering](../../disciplines/integration/)
 - [Documentation](../../disciplines/documentation/)
 - [Site Reliability Engineering](../../disciplines/sre/)
@@ -103,6 +105,8 @@ profiles/ai-agent-application/
 - [Release Engineering](../../disciplines/release-engineering/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+User Experience becomes required when people set goals, provide context, review outputs, grant approval, recover from errors, or otherwise interact with the agent. Headless agent components may justify omission when their human workflow is governed by another scoped profile.
 
 ## Language, framework, and platform selection
 
@@ -121,6 +125,7 @@ The adopting project must declare:
 
 ## Required project decisions
 
+- product problem, intended users or actors, desired outcomes, requirements, bounded MVP behavior, acceptance criteria, and traceability
 - tool authorization and allowlists
 - prompt and retrieved-content trust boundaries
 - human approval for consequential actions

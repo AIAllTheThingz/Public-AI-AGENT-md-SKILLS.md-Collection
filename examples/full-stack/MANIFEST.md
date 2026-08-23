@@ -40,7 +40,7 @@ This manifest defines the complete file inventory and acceptance checks for the 
 
 - Profile: `WEB_APPLICATION`
 - Languages: `csharp`, `dotnet`, `javascript-typescript`
-- Disciplines: `application-security`, `architecture`, `testing`, `api-engineering`, `database`, `accessibility`, `privacy`, `observability`, `sre`, `documentation`, `ci-cd`, `supply-chain`, `release-engineering`, `integration`
+- Disciplines: `product-management`, `user-experience`, `application-security`, `architecture`, `testing`, `api-engineering`, `database`, `accessibility`, `privacy`, `observability`, `sre`, `documentation`, `ci-cd`, `supply-chain`, `release-engineering`, `integration`
 - Platforms: `containers`, `kubernetes`
 - Frameworks: `aspnet-core`, `react`
 - Risk: `high`

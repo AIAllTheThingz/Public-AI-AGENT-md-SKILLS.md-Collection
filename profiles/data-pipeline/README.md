@@ -96,6 +96,8 @@ profiles/data-pipeline/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Application Security](../../disciplines/application-security/)
 - [CI/CD](../../disciplines/ci-cd/)
 - [Software Supply Chain](../../disciplines/supply-chain/)
@@ -103,6 +105,8 @@ profiles/data-pipeline/
 - [Documentation](../../disciplines/documentation/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+Product Management becomes required when the pipeline is governed as a data product or materially changes consumer outcomes, requirements, published scope, or acceptance criteria. User Experience becomes required only when analysts, operators, or other users pursue goals through an owned workflow or interface; a headless pipeline implementing an existing data contract may justify omission.
 
 ## Language, framework, and platform selection
 

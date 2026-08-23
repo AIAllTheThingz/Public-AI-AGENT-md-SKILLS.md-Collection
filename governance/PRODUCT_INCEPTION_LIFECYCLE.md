@@ -20,7 +20,7 @@ Define a proportionate, evidence-based path from idea through build while preven
 
 ## Applicability
 
-This lifecycle applies to a new product, material capability, or material change in intended users, outcomes, requirements, architecture, trust boundaries, or operating model. Small changes may reuse existing evidence and record a concise gate decision; the lifecycle does not require duplicate documents when existing records answer the gate.
+This lifecycle applies to a new product, material capability, or material change in intended users, outcomes, requirements, architecture, trust boundaries, or operating model. Existing records that answer a gate count as its evidence. For small changes, record a concise gate decision that references those records.
 
 ## Roles
 

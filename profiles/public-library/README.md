@@ -85,6 +85,7 @@ profiles/public-library/
 
 ## Required disciplines
 
+- [Product Management](../../disciplines/product-management/)
 - [Architecture and System Design](../../disciplines/architecture/)
 - [Testing and Quality Engineering](../../disciplines/testing/)
 - [Documentation](../../disciplines/documentation/)
@@ -93,6 +94,7 @@ profiles/public-library/
 
 ## Conditional disciplines
 
+- [User Experience](../../disciplines/user-experience/)
 - [Application Security](../../disciplines/application-security/)
 - [API Engineering](../../disciplines/api-engineering/)
 - [CI/CD](../../disciplines/ci-cd/)
@@ -100,6 +102,8 @@ profiles/public-library/
 - [Privacy and Data Governance](../../disciplines/privacy/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+User Experience becomes required when consumers pursue material goals through interactive documentation, tooling, samples, or other governed workflows; API and documentation review alone must not be presented as observed UX evidence.
 
 ## Language, framework, and platform selection
 
@@ -118,6 +122,7 @@ The adopting project must declare:
 
 ## Required project decisions
 
+- consumer problem, intended adopters, desired outcomes, requirements, supported scope, acceptance criteria, and traceability
 - public API compatibility
 - supported runtimes and platforms
 - dependency minimization

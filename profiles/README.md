@@ -140,13 +140,14 @@ A “small” script can be high risk if it modifies production. A large documen
 3. Select a primary profile.
 4. Select secondary profiles only for distinct additional shapes.
 5. Read the canonical profile file and complete package README.
-6. Select applicable language, discipline, framework, platform, virtualization, operating-system, and networking packages.
-7. Record required and conditional package decisions.
-8. Tailor scope, owners, environments, versions, commands, evidence, and exceptions.
-9. Add nested `AGENTS.md` files where responsibility or risk changes.
-10. Complete the profile adoption and review checklists.
-11. Validate repository links, IDs, manifests, and project-specific behavior.
-12. Obtain accountable review.
+6. For a new product or material capability, evaluate the [Product Inception Lifecycle](../governance/PRODUCT_INCEPTION_LIFECYCLE.md).
+7. Select applicable language, discipline, framework, platform, virtualization, operating-system, and networking packages.
+8. Record required and conditional package decisions, including Product Management and User Experience applicability.
+9. Tailor scope, owners, environments, versions, commands, evidence, and exceptions.
+10. Add nested `AGENTS.md` files where responsibility or risk changes.
+11. Complete the profile adoption and review checklists.
+12. Validate repository links, IDs, manifests, and project-specific behavior.
+13. Obtain accountable review.
 
 ## Profile tailoring
 

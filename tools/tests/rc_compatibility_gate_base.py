@@ -51,6 +51,7 @@ def git_source_at(revision: str, relative: str) -> str:
     completed = subprocess.run(
         ["git", "-C", str(REPO_ROOT), "show", f"{revision}:{relative}"],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )

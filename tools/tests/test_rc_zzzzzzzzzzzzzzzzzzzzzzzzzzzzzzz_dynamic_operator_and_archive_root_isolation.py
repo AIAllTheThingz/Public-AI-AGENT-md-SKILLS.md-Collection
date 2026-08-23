@@ -52,6 +52,7 @@ def _run(real_git: str, cwd: Path, *args: str) -> subprocess.CompletedProcess[st
         [real_git, *args],
         cwd=cwd,
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -156,6 +157,7 @@ class ReleaseCandidateArchiveParentRepositoryIsolationTests(unittest.TestCase):
                 isolated = subprocess.run(
                     ["git", "-C", str(archive), "rev-parse", "--show-toplevel"],
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )
@@ -171,6 +173,7 @@ class ReleaseCandidateArchiveParentRepositoryIsolationTests(unittest.TestCase):
                         "HEAD:ARCHIVE_MARKER.txt",
                     ],
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )

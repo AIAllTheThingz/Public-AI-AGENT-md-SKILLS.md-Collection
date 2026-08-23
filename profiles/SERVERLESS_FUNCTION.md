@@ -63,6 +63,8 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Conditionally required disciplines
 
+- `disciplines/product-management/AGENTS.md`
+- `disciplines/user-experience/AGENTS.md`
 - `disciplines/architecture/AGENTS.md`
 - `disciplines/sre/AGENTS.md`
 - `disciplines/release-engineering/AGENTS.md`
@@ -70,6 +72,8 @@ This is a starting point only. The actual project or change must be classified u
 - `disciplines/data-engineering/AGENTS.md`
 
 Conditional packages become required when their concern is present. Document every omission that would reasonably appear applicable.
+
+Product Management becomes required when the function defines or materially changes a product capability, actor outcome, requirement set, or supported scope. User Experience becomes required only when this scope owns a human workflow or interface; a bounded event handler implementing an existing governed contract may justify omission.
 
 ## Required project decisions
 

@@ -20,6 +20,7 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Selected disciplines
 
+- [Product Management](../../../disciplines/product-management/)
 - [Architecture](../../../disciplines/architecture/)
 - [Testing](../../../disciplines/testing/)
 - [Documentation](../../../disciplines/documentation/)
@@ -28,6 +29,7 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Conditional review
 
+- [User Experience](../../../disciplines/user-experience/)
 - [Application Security](../../../disciplines/application-security/)
 - [Api Engineering](../../../disciplines/api-engineering/)
 - [Ci Cd](../../../disciplines/ci-cd/)
@@ -36,6 +38,7 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Project decisions
 
+- consumer problem, intended adopters, desired outcomes, requirements, supported scope, acceptance criteria, and traceability
 - public API compatibility
 - supported runtimes and platforms
 - dependency minimization

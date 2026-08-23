@@ -38,13 +38,14 @@ See:
 ## Start here
 
 1. Read the root [`AGENTS.md`](AGENTS.md).
-2. Select one or more standards from the [`CATALOG.md`](CATALOG.md).
-3. Select a project profile from [`profiles/`](profiles/README.md).
-4. Copy the relevant language package from [`languages/`](languages/README.md).
-5. Add scoped standards for applicable disciplines, platforms, virtualization systems, operating systems, networking systems, and frameworks.
-6. Tailor the result without weakening security, validation, testing, or completion-evidence requirements.
-7. Record the repository version or tag used by the adopting project.
-8. Validate the repository with the tools under [`tools/`](tools/README.md).
+2. For a new product or material capability, follow the [`Product Inception Lifecycle`](governance/PRODUCT_INCEPTION_LIFECYCLE.md).
+3. Select one or more standards from the [`CATALOG.md`](CATALOG.md).
+4. Select a project profile from [`profiles/`](profiles/README.md).
+5. Copy the relevant language package from [`languages/`](languages/README.md).
+6. Add scoped standards for applicable disciplines, platforms, virtualization systems, operating systems, networking systems, and frameworks.
+7. Tailor the result without weakening security, validation, testing, or completion-evidence requirements.
+8. Record the repository version or tag used by the adopting project.
+9. Validate the repository with the tools under [`tools/`](tools/README.md).
 
 ## Agent skill entry points
 

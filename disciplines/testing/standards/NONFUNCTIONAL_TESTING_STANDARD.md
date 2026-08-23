@@ -53,4 +53,6 @@ Evidence should be concrete and reproducible. Depending on scope, include:
 
 ## Completion gate
 
+Do not report this area complete until the applicable requirements are implemented, evidence is recorded, unsupported claims are removed, and remaining risk is stated plainly.
+
 Do not report performance or scalability validated until every applicable test type has current evidence, the workload and environment are representative of the claim, raw results are retained, recovery is evaluated where relevant, and unsupported operating conditions and remaining risk are stated plainly.

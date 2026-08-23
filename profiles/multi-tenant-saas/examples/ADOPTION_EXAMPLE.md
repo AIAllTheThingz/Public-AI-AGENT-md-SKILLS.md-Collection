@@ -20,6 +20,7 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Selected disciplines
 
+- [Product Management](../../../disciplines/product-management/)
 - [Application Security](../../../disciplines/application-security/)
 - [Architecture](../../../disciplines/architecture/)
 - [Testing](../../../disciplines/testing/)
@@ -34,6 +35,7 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Conditional review
 
+- [User Experience](../../../disciplines/user-experience/)
 - [Integration](../../../disciplines/integration/)
 - [Data Engineering](../../../disciplines/data-engineering/)
 - [Accessibility](../../../disciplines/accessibility/)
@@ -41,6 +43,7 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Project decisions
 
+- product problem, tenant and user actors, desired outcomes, requirements, MVP boundary, acceptance criteria, and traceability
 - tenant identity and isolation model
 - authorization at every object boundary
 - data partitioning and lifecycle

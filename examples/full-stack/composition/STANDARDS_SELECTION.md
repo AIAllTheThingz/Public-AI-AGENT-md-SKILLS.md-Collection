@@ -27,6 +27,8 @@ This document explains why the example selects each standards package. It preven
 | Language: C# | Defines compiler/language, nullability, async, API, resource, security, interop, scripting, testing, and completion expectations. |
 | Runtime: .NET | Defines SDK, target-framework, runtime, dependency, application-model, build, and publishing expectations. |
 | Language: JavaScript and TypeScript | Defines implementation, dependency, testing, security, documentation, and completion expectations. |
+| Discipline: Product Management | Defines the fictitious product problem, intended users, requirements, MVP boundary, acceptance criteria, decisions, and traceability. |
+| Discipline: User Experience | Governs the browser journey, interaction and recovery states, honest research state, and UX validation separately from Accessibility. |
 | Discipline: Application Security | Selected because the fictitious architecture and change surface require this concern. |
 | Discipline: Architecture and System Design | Selected because the fictitious architecture and change surface require this concern. |
 | Discipline: Testing and Quality Engineering | Selected because the fictitious architecture and change surface require this concern. |

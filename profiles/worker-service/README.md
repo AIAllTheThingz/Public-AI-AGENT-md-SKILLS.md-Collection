@@ -96,6 +96,8 @@ profiles/worker-service/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Application Security](../../disciplines/application-security/)
 - [Database Engineering](../../disciplines/database/)
 - [Data Engineering](../../disciplines/data-engineering/)
@@ -103,6 +105,8 @@ profiles/worker-service/
 - [Documentation](../../disciplines/documentation/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+Product Management becomes required when the worker defines or materially changes a product capability, user or operator outcome, requirement set, or MVP boundary. User Experience becomes required only when a human-facing operational or product workflow is part of this scope; a headless worker maintaining an existing governed contract may justify omission.
 
 ## Language, framework, and platform selection
 

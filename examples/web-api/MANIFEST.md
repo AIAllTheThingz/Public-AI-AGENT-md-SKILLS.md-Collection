@@ -38,7 +38,7 @@ This manifest defines the complete file inventory and acceptance checks for the 
 
 - Profile: `WEB_API`
 - Languages: `csharp`, `dotnet`
-- Disciplines: `application-security`, `architecture`, `testing`, `api-engineering`, `privacy`, `observability`, `ci-cd`, `supply-chain`, `documentation`, `release-engineering`
+- Disciplines: `product-management`, `application-security`, `architecture`, `testing`, `api-engineering`, `privacy`, `observability`, `ci-cd`, `supply-chain`, `documentation`, `release-engineering`
 - Platforms: `containers`
 - Frameworks: `aspnet-core`
 - Risk: `moderate`

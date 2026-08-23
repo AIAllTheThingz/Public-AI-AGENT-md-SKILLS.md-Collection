@@ -53,6 +53,7 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Required discipline overlays
 
+- `disciplines/product-management/AGENTS.md`
 - `disciplines/application-security/AGENTS.md`
 - `disciplines/architecture/AGENTS.md`
 - `disciplines/testing/AGENTS.md`
@@ -67,6 +68,7 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Conditionally required disciplines
 
+- `disciplines/user-experience/AGENTS.md`
 - `disciplines/integration/AGENTS.md`
 - `disciplines/data-engineering/AGENTS.md`
 - `disciplines/accessibility/AGENTS.md`
@@ -74,8 +76,11 @@ This is a starting point only. The actual project or change must be classified u
 
 Conditional packages become required when their concern is present. Document every omission that would reasonably appear applicable.
 
+User Experience becomes required when tenants, end users, administrators, or support operators interact with a workflow or interface. API-only SaaS may justify omission, but must not infer UX validation from API testing.
+
 ## Required project decisions
 
+- product problem, tenant and user actors, desired outcomes, requirements, MVP boundary, acceptance criteria, and traceability
 - tenant identity and isolation model
 - authorization at every object boundary
 - data partitioning and lifecycle

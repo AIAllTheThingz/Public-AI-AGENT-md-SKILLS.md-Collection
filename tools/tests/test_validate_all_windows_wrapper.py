@@ -62,7 +62,7 @@ class ValidateAllWindowsWrapperTests(unittest.TestCase):
                             "run = subprocess.run("
                             "['git', '-C', sys.argv[1], 'rev-parse', "
                             "'--show-toplevel'], "
-                            "text=True, capture_output=True, check=False); "
+                            "text=True, encoding='utf-8', capture_output=True, check=False); "
                             "print(run.stdout, end=''); "
                             "print(run.stderr, end='', file=sys.stderr); "
                             "raise SystemExit(run.returncode)"

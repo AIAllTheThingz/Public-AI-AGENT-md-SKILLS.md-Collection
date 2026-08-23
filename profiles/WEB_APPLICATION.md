@@ -54,6 +54,8 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Required discipline overlays
 
+- `disciplines/product-management/AGENTS.md`
+- `disciplines/user-experience/AGENTS.md`
 - `disciplines/application-security/AGENTS.md`
 - `disciplines/architecture/AGENTS.md`
 - `disciplines/testing/AGENTS.md`
@@ -76,6 +78,8 @@ Conditional packages become required when their concern is present. Document eve
 
 ## Required project decisions
 
+- product problem, intended users, desired outcomes, requirements, MVP boundary, acceptance criteria, and traceability
+- research evidence state, user journeys, interaction and recovery states, UX validation, and the separate Accessibility boundary
 - server-side authorization model
 - client and server trust boundaries
 - WCAG 2.2 AA or stricter accessibility target

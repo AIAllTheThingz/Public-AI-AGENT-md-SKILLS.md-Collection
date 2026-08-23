@@ -19,9 +19,17 @@ status: baseline
 
 ## Requirement traceability
 
-| Requirement | Idea/source | Architecture decision | Implementation | Test | Release/deployment | Production evidence | State | Owner |
-|---|---|---|---|---|---|---|---|---|
-| `REQ-___-___` | | | | | | | `Planned` | |
+Record one row per lifecycle stage so that each stage has an independent evidence state.
+
+| Requirement | Lifecycle stage | State | Evidence | Owner |
+|---|---|---|---|---|
+| `REQ-___-___` | Idea/source | `Planned` | | |
+| `REQ-___-___` | Requirement | `Planned` | | |
+| `REQ-___-___` | Architecture decision | `NotRun` | | |
+| `REQ-___-___` | Implementation | `NotRun` | | |
+| `REQ-___-___` | Test | `NotRun` | | |
+| `REQ-___-___` | Release/deployment | `NotRun` | | |
+| `REQ-___-___` | Production evidence | `NotRun` | | |
 
 Allowed states: `Planned`, `Implemented`, `Tested`, `Reviewed`, `OperationallyVerified`, `NotRun`, `Blocked`, `NotApplicable`. Explain every `NotApplicable` entry.
 

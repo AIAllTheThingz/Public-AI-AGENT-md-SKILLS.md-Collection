@@ -47,6 +47,7 @@ class ReleaseCandidateArchiveIndexPreservationTests(unittest.TestCase):
             initialized = subprocess.run(
                 [real_git, "init", "--bare", "--quiet", str(git_dir)],
                 text=True,
+                encoding="utf-8",
                 capture_output=True,
                 check=False,
             )
@@ -63,6 +64,7 @@ class ReleaseCandidateArchiveIndexPreservationTests(unittest.TestCase):
                 ],
                 cwd=root,
                 text=True,
+                encoding="utf-8",
                 capture_output=True,
                 check=False,
             )
@@ -83,6 +85,7 @@ class ReleaseCandidateArchiveIndexPreservationTests(unittest.TestCase):
                 ],
                 cwd=root,
                 text=True,
+                encoding="utf-8",
                 capture_output=True,
                 check=False,
             )

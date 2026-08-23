@@ -71,6 +71,7 @@ Language packages define runtime, coding, dependency, testing, security, documen
 
 ## Selected disciplines
 
+- [Product Management](../../disciplines/product-management/)
 - [Application Security](../../disciplines/application-security/)
 - [Architecture and System Design](../../disciplines/architecture/)
 - [Testing and Quality Engineering](../../disciplines/testing/)

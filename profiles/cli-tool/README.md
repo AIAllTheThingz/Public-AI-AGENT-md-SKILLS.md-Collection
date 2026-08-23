@@ -93,6 +93,8 @@ profiles/cli-tool/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Architecture and System Design](../../disciplines/architecture/)
 - [Integration Engineering](../../disciplines/integration/)
 - [Observability](../../disciplines/observability/)
@@ -100,6 +102,8 @@ profiles/cli-tool/
 - [Privacy and Data Governance](../../disciplines/privacy/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+Product Management becomes required when the CLI defines or materially changes a product capability, user outcome, requirement set, or supported scope. User Experience becomes required for material human task flows, prompts, interaction, error recovery, or usability validation; an automation-only interface maintaining an existing governed contract may justify omission.
 
 ## Language, framework, and platform selection
 

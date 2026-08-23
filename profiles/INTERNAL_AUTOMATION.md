@@ -64,6 +64,8 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Conditionally required disciplines
 
+- `disciplines/product-management/AGENTS.md`
+- `disciplines/user-experience/AGENTS.md`
 - `disciplines/architecture/AGENTS.md`
 - `disciplines/integration/AGENTS.md`
 - `disciplines/release-engineering/AGENTS.md`
@@ -71,6 +73,8 @@ This is a starting point only. The actual project or change must be classified u
 - `disciplines/privacy/AGENTS.md`
 
 Conditional packages become required when their concern is present. Document every omission that would reasonably appear applicable.
+
+Product Management becomes required when the automation defines or materially changes a governed internal product, operator outcome, requirement set, or supported scope. User Experience becomes required for material operator journeys, approvals, prompts, dashboards, or recovery workflows; bounded automation implementing an existing authorized procedure may justify omission.
 
 ## Required project decisions
 

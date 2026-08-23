@@ -95,6 +95,8 @@ profiles/internal-automation/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Architecture and System Design](../../disciplines/architecture/)
 - [Integration Engineering](../../disciplines/integration/)
 - [Release Engineering](../../disciplines/release-engineering/)
@@ -102,6 +104,8 @@ profiles/internal-automation/
 - [Privacy and Data Governance](../../disciplines/privacy/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+Product Management becomes required when the automation defines or materially changes a governed internal product, operator outcome, requirement set, or supported scope. User Experience becomes required for material operator journeys, approvals, prompts, dashboards, or recovery workflows; bounded automation implementing an existing authorized procedure may justify omission.
 
 ## Language, framework, and platform selection
 

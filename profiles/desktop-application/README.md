@@ -84,6 +84,8 @@ profiles/desktop-application/
 
 ## Required disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Application Security](../../disciplines/application-security/)
 - [Architecture and System Design](../../disciplines/architecture/)
 - [Testing and Quality Engineering](../../disciplines/testing/)
@@ -119,6 +121,8 @@ The adopting project must declare:
 
 ## Required project decisions
 
+- product problem, intended users, desired outcomes, requirements, MVP boundary, acceptance criteria, and traceability
+- research evidence state, user journeys, interaction and recovery states, UX validation, and the separate Accessibility boundary
 - local data protection
 - installer and update integrity
 - privilege and elevation boundaries

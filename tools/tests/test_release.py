@@ -355,7 +355,7 @@ class ReleaseToolTests(unittest.TestCase):
 
             manifest = json.loads((outputs[0] / "release-manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["sourceCommit"], subprocess.run(
-                ["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True, check=True
+                ["git", "rev-parse", "HEAD"], cwd=root, text=True, encoding="utf-8", capture_output=True, check=True
             ).stdout.strip())
             self.assertEqual(manifest["builderVersion"], "1.0.0")
 

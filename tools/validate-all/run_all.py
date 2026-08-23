@@ -91,6 +91,7 @@ def _git(
     return subprocess.run(
         ["git", "-C", str(root), *args],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
         env=env,
@@ -118,6 +119,7 @@ def _populate_temporary_history(
     fetched = subprocess.run(
         [real_git, f"--git-dir={git_dir}", "fetch", "--quiet", str(bundle), *refspecs],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -129,6 +131,7 @@ def _populate_temporary_history(
         completed = subprocess.run(
             [real_git, f"--git-dir={git_dir}", "cat-file", "-e", f"{commit}^{{commit}}"],
             text=True,
+            encoding="utf-8",
             capture_output=True,
             check=False,
         )
@@ -161,6 +164,7 @@ def _populate_temporary_head(
         configured = subprocess.run(
             [real_git, f"--git-dir={git_dir}", "config", "core.longpaths", "true"],
             text=True,
+            encoding="utf-8",
             capture_output=True,
             check=False,
         )
@@ -183,6 +187,7 @@ def _populate_temporary_head(
         ],
         cwd=root,
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
         env=env,
@@ -193,6 +198,7 @@ def _populate_temporary_head(
     tree = subprocess.run(
         [real_git, f"--git-dir={git_dir}", "write-tree"],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
         env=env,
@@ -222,6 +228,7 @@ def _populate_temporary_head(
             "temporary distributed-source validation tree",
         ],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
         env=commit_env,
@@ -241,6 +248,7 @@ def _populate_temporary_head(
             commit_sha,
         ],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -258,6 +266,7 @@ def _populate_temporary_head(
             "refs/heads/current-source",
         ],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -510,6 +519,7 @@ def compatibility_history(root: Path):
         initialized = subprocess.run(
             [real_git, "init", "--bare", "--quiet", str(git_dir)],
             text=True,
+            encoding="utf-8",
             capture_output=True,
             check=False,
         )

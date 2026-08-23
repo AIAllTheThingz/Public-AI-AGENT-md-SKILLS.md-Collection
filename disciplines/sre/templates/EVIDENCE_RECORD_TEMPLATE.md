@@ -40,21 +40,39 @@ status: baseline
 
 | Area | Applicability | Result (`Pass`, `Fail`, `Blocked`, `NotApplicable`) | Evidence or justification | Owner |
 |---|---|---|---|---|
-| Deployment and rollback | | | | |
-| Backup, restore, and recovery | | | | |
-| Observability, alerts, and SLOs | | | | |
-| Capacity, security, configuration, and secrets | | | | |
-| Ownership, runbooks, incident response, and cost | | | | |
-| Limitations and unresolved risk | | | | |
+| Deployment | | | | |
+| Rollback and recovery | | | | |
+| Backup and restore | | | | |
+| Observability | | | | |
+| Capacity | | | | |
+| Security | | | | |
+| Failure behavior | | | | |
+| Operations | | | | |
+| Cost | | | | |
+| Limitations and risks | | | | |
 
 ## Scaling strategy
 
 | Area | State (`Applicable`, `NotApplicable`, `NotRun`, `Blocked`, `Verified`) | Decision or evidence | Supported envelope | Owner |
 |---|---|---|---|---|
-| Horizontal/vertical scaling and state | | | | |
-| Connections, caching, async work, queues, and rate limits | | | | |
-| Partitioning, replication, reads/writes, and storage growth | | | | |
-| Network, quotas, autoscaling, cold starts, and resource limits | | | | |
+| Horizontal scaling | | | | |
+| Vertical scaling | | | | |
+| Statelessness | | | | |
+| State and sessions | | | | |
+| Connections and pooling | | | | |
+| Caching | | | | |
+| Asynchronous processing | | | | |
+| Queues and background workers | | | | |
+| Rate limiting | | | | |
+| Partitioning | | | | |
+| Replication | | | | |
+| Read/write distribution | | | | |
+| Storage growth | | | | |
+| Network saturation | | | | |
+| External quotas | | | | |
+| Autoscaling | | | | |
+| Cold starts | | | | |
+| Resource limits | | | | |
 | Cost per workload unit | | | | |
 
 ## Checks not run

@@ -26,6 +26,7 @@ This document explains why the example selects each standards package. It preven
 | Profile: WEB_API | Defines the project-type overlay and common operational concerns. |
 | Language: C# | Defines compiler/language, nullability, async, API, resource, security, interop, scripting, testing, and completion expectations. |
 | Runtime: .NET | Defines SDK, target-framework, runtime, dependency, application-model, build, and publishing expectations. |
+| Discipline: Product Management | Selected because the fictitious account API defines an externally consumable capability whose requirements, acceptance criteria, scope, decisions, and traceability must be explicit. |
 | Discipline: Application Security | Selected because the fictitious architecture and change surface require this concern. |
 | Discipline: Architecture and System Design | Selected because the fictitious architecture and change surface require this concern. |
 | Discipline: Testing and Quality Engineering | Selected because the fictitious architecture and change surface require this concern. |
@@ -41,6 +42,7 @@ This document explains why the example selects each standards package. It preven
 
 ## Meaningful omissions
 
+- **User Experience:** The example exposes an API contract but owns no developer portal, console, or other human workflow. API contract and documentation review are not represented as UX validation.
 - **Database Engineering:** The composition describes a persistence adapter but does not define a concrete schema or migration surface. Add the discipline when a real database is selected.
 - **SRE:** Moderate risk and illustrative operations do not establish an on-call service objective. Add SRE when availability and recovery targets exist.
 - **Accessibility:** The example exposes an API only and has no user interface.

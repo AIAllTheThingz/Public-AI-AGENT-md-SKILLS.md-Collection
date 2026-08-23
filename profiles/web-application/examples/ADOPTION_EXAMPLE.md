@@ -20,6 +20,8 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Selected disciplines
 
+- [Product Management](../../../disciplines/product-management/)
+- [User Experience](../../../disciplines/user-experience/)
 - [Application Security](../../../disciplines/application-security/)
 - [Architecture](../../../disciplines/architecture/)
 - [Testing](../../../disciplines/testing/)
@@ -40,6 +42,8 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Project decisions
 
+- product problem, intended users, desired outcomes, requirements, MVP boundary, acceptance criteria, and traceability
+- research evidence state, user journeys, interaction and recovery states, UX validation, and the separate Accessibility boundary
 - server-side authorization model
 - client and server trust boundaries
 - WCAG 2.2 AA or stricter accessibility target
