@@ -630,6 +630,26 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             build_rule,
         )
 
+    def test_scaled_production_requires_full_scaling_verification(self) -> None:
+        lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
+        lifecycle_rule = h3_section(lifecycle, "GOV-PRODUCT-INCEPTION-008")
+        lifecycle_states = h2_section(lifecycle, "Product lifecycle states")
+        for contract in (
+            "every applicable scaling area is `Verified`",
+            "`Applicable`, `NotRun`, or `Blocked` area prevents",
+            "every `NotApplicable` area requires justification",
+            "whether or not the SRE package is otherwise selected",
+        ):
+            with self.subTest(contract=contract):
+                self.assertIn(contract, lifecycle_rule)
+        for contract in (
+            "Every applicable scaling area is `Verified`",
+            "Any `Applicable`, `NotRun`, or `Blocked` area prevents this state",
+            "even when the SRE package is not otherwise selected",
+        ):
+            with self.subTest(state_contract=contract):
+                self.assertIn(contract, lifecycle_states)
+
     def test_usability_review_records_environment_and_date(self) -> None:
         plan = h2_section(
             read(

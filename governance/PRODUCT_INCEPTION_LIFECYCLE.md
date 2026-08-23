@@ -78,9 +78,9 @@ This lifecycle applies only when explicitly selected for a project or change. Ad
 
 ### GOV-PRODUCT-INCEPTION-008
 
-**Requirement:** Assign product lifecycle states only from dated evidence for the reviewed artifact and scope, with accountable ownership, limitations, and rollback or reversal considerations.
+**Requirement:** Assign product lifecycle states only from dated evidence for the reviewed artifact and scope, with accountable ownership, limitations, and rollback or reversal considerations. Assign `scaled-production` only when every applicable scaling area is `Verified` with current representative evidence and a stated supported envelope; any `Applicable`, `NotRun`, or `Blocked` area prevents that state, and every `NotApplicable` area requires justification, whether or not the SRE package is otherwise selected.
 
-**Expected evidence:** Lifecycle transition record naming the prior and new state, artifact or revision, owner, decision, supporting evidence, limitations, and reversal considerations.
+**Expected evidence:** Lifecycle transition record naming the prior and new state, artifact or revision, owner, decision, supporting evidence, limitations, and reversal considerations; a `scaled-production` transition also links the complete scaling applicability matrix and evidence for every applicable area.
 
 ### GOV-PRODUCT-INCEPTION-009
 
@@ -228,7 +228,7 @@ Product lifecycle state is distinct from component maturity governed by [`MATURI
 | `beta` | Selected users or environments exercise a bounded release with known limitations and monitoring. |
 | `production-candidate` | The candidate artifact and operating plan have passed the production-candidate gate below. |
 | `production` | Accountable approval authorizes production use within stated scope and operating conditions. |
-| `scaled-production` | Representative evidence supports the approved scaling strategy and expanded operating envelope. |
+| `scaled-production` | Every applicable scaling area is `Verified` with current representative evidence and a stated supported envelope. Any `Applicable`, `NotRun`, or `Blocked` area prevents this state; every `NotApplicable` area has recorded justification. This boundary applies even when the SRE package is not otherwise selected. |
 | `deprecated` | New use is discouraged or prohibited and migration, support, and communication boundaries are defined. |
 | `retired` | Service and data disposition, access removal, dependencies, records, and residual obligations are closed or explicitly owned. |
 
