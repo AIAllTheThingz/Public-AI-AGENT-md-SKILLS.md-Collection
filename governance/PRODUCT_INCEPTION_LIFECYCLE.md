@@ -94,7 +94,9 @@ The gate requires, where applicable:
 - major technology decisions with alternatives, constraints, lifecycle, and reversal implications
 - separate accessibility applicability and validation planning
 
-Each omitted area must be `NotApplicable` with justification. A pass requires reviewed design evidence and does not convert a prototype into architecture of record.
+Each omitted area must be `NotApplicable` with justification.
+
+**Decision:** `Pass`, `Fail`, or `Blocked`. A pass requires reviewed design evidence for every applicable area; it does not convert a prototype into architecture of record.
 
 ### Build Gate
 

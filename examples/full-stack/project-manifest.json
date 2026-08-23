@@ -37,5 +37,10 @@
   "operatingSystems": [],
   "networking": [],
   "risk": "high",
+  "extensions": {
+    "AIAllTheThingz.governanceSelections": [
+      "governance/PRODUCT_INCEPTION_LIFECYCLE.md"
+    ]
+  },
   "exceptions": []
 }

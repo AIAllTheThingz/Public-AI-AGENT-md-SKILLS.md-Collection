@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
 import re
 import unittest
 from pathlib import Path
+
+from jsonschema import Draft202012Validator
 
 from helpers import json_result, run_tool
 
@@ -29,6 +32,13 @@ CONDITIONAL_PRODUCT_OVERLAYS = (
     "disciplines/product-management",
     "disciplines/user-experience",
 )
+
+REPRESENTATIVE_LIFECYCLE_EXAMPLES = (
+    "full-stack",
+    "web-api",
+)
+LIFECYCLE_STANDARD = "governance/PRODUCT_INCEPTION_LIFECYCLE.md"
+LIFECYCLE_MANIFEST_EXTENSION = "AIAllTheThingz.governanceSelections"
 
 GENERAL_NONFUNCTIONAL_BEHAVIOR = (
     "Define performance, load, resilience, recovery, security, accessibility, "
@@ -183,6 +193,20 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             prototype_exception,
         )
 
+    def test_design_gate_records_an_explicit_decision(self) -> None:
+        design_gate = h3_section(
+            read("governance/PRODUCT_INCEPTION_LIFECYCLE.md"),
+            "Design Gate",
+        )
+        self.assertIn(
+            "**Decision:** `Pass`, `Fail`, or `Blocked`.",
+            design_gate,
+        )
+        self.assertIn(
+            "A pass requires reviewed design evidence for every applicable area",
+            design_gate,
+        )
+
     def test_product_and_ux_overlays_are_conditional_in_every_profile_surface(
         self,
     ) -> None:
@@ -250,6 +274,56 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
                     rf"(?m)^\| Discipline: {re.escape(discipline)} \| "
                     r"Promoted from the profile's conditional overlays\b",
                 )
+
+    def test_representative_lifecycle_selection_is_synchronized(self) -> None:
+        schema = json.loads(read("schemas/v1/project-manifest.schema.json"))
+        validator = Draft202012Validator(schema)
+
+        for example in REPRESENTATIVE_LIFECYCLE_EXAMPLES:
+            text_surfaces = (
+                (f"examples/{example}/AGENTS.md", "../../" + LIFECYCLE_STANDARD),
+                (f"examples/{example}/README.md", "../../" + LIFECYCLE_STANDARD),
+                (f"examples/{example}/MANIFEST.md", "../../" + LIFECYCLE_STANDARD),
+                (
+                    f"examples/{example}/composition/STANDARDS_SELECTION.md",
+                    "../../../" + LIFECYCLE_STANDARD,
+                ),
+                (
+                    f"examples/{example}/docs/COMPLETION_EVIDENCE.md",
+                    "../../../" + LIFECYCLE_STANDARD,
+                ),
+            )
+            for relative, link_target in text_surfaces:
+                with self.subTest(example=example, surface=relative):
+                    matching_lines = [
+                        line
+                        for line in read(relative).splitlines()
+                        if link_target in line
+                    ]
+                    self.assertTrue(matching_lines, f"missing selection: {link_target}")
+                    self.assertTrue(
+                        any("select" in line.casefold() for line in matching_lines),
+                        f"selection is not explicit: {relative}",
+                    )
+
+            manifest_path = f"examples/{example}/project-manifest.json"
+            with self.subTest(example=example, surface=manifest_path):
+                manifest = json.loads(read(manifest_path))
+                self.assertEqual(
+                    manifest.get("extensions", {}).get(
+                        LIFECYCLE_MANIFEST_EXTENSION
+                    ),
+                    [LIFECYCLE_STANDARD],
+                )
+                self.assertNotIn(
+                    "product-inception-lifecycle",
+                    manifest["disciplines"],
+                )
+                errors = sorted(
+                    validator.iter_errors(manifest),
+                    key=lambda error: list(error.absolute_path),
+                )
+                self.assertEqual(errors, [], f"{manifest_path}: {errors}")
 
     def test_nonfunctional_standard_retains_general_contract(self) -> None:
         standard = read(
