@@ -245,6 +245,25 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             table_areas(standard, "Readiness areas"),
         )
 
+    def test_readiness_template_records_overall_decision_and_authority(self) -> None:
+        standard = read(
+            "disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md"
+        )
+        decision_gate = h2_section(standard, "Decision gate")
+        outcomes = tuple(re.findall(r"(?m)^- `([^`]+)`", decision_gate))
+        self.assertEqual(outcomes, ("Pass", "Fail", "Blocked", "NotApplicable"))
+
+        readiness_record = h2_section(
+            read("disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md"),
+            "Production readiness",
+        )
+        self.assertIn(
+            "- Overall readiness result (`Pass`, `Fail`, `Blocked`, "
+            "`NotApplicable`):",
+            readiness_record,
+        )
+        self.assertIn("- Decision authority:", readiness_record)
+
     def test_scaling_template_has_one_state_per_standard_area(self) -> None:
         standard = read("disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md")
         template = read("disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md")

@@ -51,6 +51,11 @@ status: baseline
 | Cost | | | | |
 | Limitations and risks | | | | |
 
+- Overall readiness result (`Pass`, `Fail`, `Blocked`, `NotApplicable`):
+- Decision authority:
+- Decision date:
+- Approved candidate, operating scope, and conditions:
+
 ## Scaling strategy
 
 | Area | State (`Applicable`, `NotApplicable`, `NotRun`, `Blocked`, `Verified`) | Decision or evidence | Supported envelope | Owner |

@@ -128,7 +128,7 @@ Typical completion evidence includes:
 
 - defined SLOs or operating targets
 - capacity and saturation evidence
-- production-readiness decision for the exact candidate and supported operating scope
+- production-readiness per-area results plus a separate overall result and decision authority for the exact candidate and supported operating scope
 - scaling-strategy applicability decisions and representative verification where claimed
 - recovery and failover tests
 - reviewed runbooks and escalation

@@ -23,7 +23,7 @@ status: baseline
 
 ## Evidence
 
-- [ ] The production-readiness decision uses `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` and is tied to the exact candidate.
+- [ ] The separate overall production-readiness decision uses `Pass`, `Fail`, `Blocked`, or justified `NotApplicable`, records decision authority, and is tied to the exact candidate and operating scope.
 - [ ] An applicable `NotRun` readiness area did not support a pass.
 - [ ] Scaling strategy addresses each listed area contextually and does not force unjustified complexity.
 - [ ] Every `Verified` scaling claim identifies workload, environment, operating envelope, result, and cost evidence where material.
