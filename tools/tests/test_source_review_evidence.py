@@ -19,7 +19,7 @@ NEW_BASELINE_SOURCE_REVIEWS = {
 }
 
 FINAL_2026_08_23_NORMATIVE_REVISION = (
-    "151e87cce7ffd07d64538400e3a1101af9b38a0e"
+    "3935a8c4e1dd971ddcefad5c84750b630ce99cb9"
 )
 
 
@@ -79,6 +79,14 @@ class SourceReviewEvidenceTests(unittest.TestCase):
         ):
             with self.subTest(product_acceptance=acceptance_contract):
                 self.assertIn(acceptance_contract, product_review)
+        for research_contract in (
+            "independently adoptable Product Management package record research",
+            "`Performed`, `NotRun`, `Blocked`, or justified `NotApplicable`",
+            "`Performed` is reserved for research that actually occurred",
+            "does not require selecting the separately applicable User Experience package",
+        ):
+            with self.subTest(product_research=research_contract):
+                self.assertIn(research_contract, product_review)
 
         lifecycle_review = evidence.split(
             "### Product Inception Lifecycle "
@@ -104,7 +112,7 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             "Cost",
             "`scaled-production`",
             "every applicable scaling area is `Verified`",
-            "`Applicable`, `NotRun`, or `Blocked` area prevents",
+            "`Applicable`, `NotRun`, `Blocked`, or `Failed` area prevents",
             "complete Scaling Strategy Standard",
             "overall `Verified` decision",
             "`beta` label does not authorize production exposure",
@@ -157,6 +165,8 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             "overall scaling-strategy `Verified` claim",
             "every applicable area is `Verified`",
             "`Applicable`, `NotRun`, or `Blocked`",
+            "`Failed` records representative validation that executed but missed its criteria",
+            "also prevents overall verification",
             "`NotApplicable` requires justification",
         ):
             with self.subTest(scaling_contract=scaling_contract):
