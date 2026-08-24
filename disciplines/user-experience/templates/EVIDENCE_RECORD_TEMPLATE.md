@@ -14,9 +14,11 @@ status: baseline
 - Requirements:
 - Owner, researchers, and reviewers:
 - Research state (`Performed`, `NotRun`, `Blocked`, or `NotApplicable`):
-- Validation state:
+- Validation state (`Tested`, `Reviewed`, `OperationallyVerified`, `NotRun`, `Blocked`, or `NotApplicable`):
+- Overall validation outcome (`Pass`, `Fail`, `Blocked`, or `NotApplicable`):
+- Validation decision authority and date:
 
-Research and UX validation are independent claims. Record each state from its applicable standard; `NotRun` research must not be presented as completed UX validation, and validation evidence must not imply that user research occurred.
+Research and UX validation are independent claims. Record each state from its applicable standard; `NotRun` research must not be presented as completed UX validation, and validation evidence must not imply that user research occurred. Validation state and outcome are also independent: `Tested`, `Reviewed`, or `OperationallyVerified` does not imply `Pass`.
 
 ## Method and evidence
 
@@ -31,9 +33,11 @@ Research and UX validation are independent claims. Record each state from its ap
 
 ## Results
 
-| Journey/task | Finding or measure | Evidence | State | Decision | Owner |
-|---|---|---|---|---|---|
-| | | | | | |
+| Journey/task or validation method | Authorized criteria | Finding or measure | Primary evidence | State | Outcome (`Pass`, `Fail`, `Blocked`, `NotApplicable`) | Owner |
+|---|---|---|---|---|---|---|
+| | | | | | | |
+
+Use an overall `Pass` only when every applicable row has a successful `Pass` for the exact interface version and representative conditions. Align `NotApplicable` state and outcome and explain the reviewed justification. Any applicable `Fail`, `Blocked`, `NotRun`, missing, stale, or different-version result prevents a UX-validated claim.
 
 - Checks not run and reasons:
 - Excluded users or contexts:

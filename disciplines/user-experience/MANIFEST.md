@@ -30,6 +30,7 @@ status: baseline
 ## Package acceptance checks
 
 - Research evidence is attributable or carries an accurate incomplete state.
+- UX-validation state and outcome are independent, and a validated claim requires an overall `Pass` supported by every applicable method and claim.
 - Synthetic assumptions cannot masquerade as observed users or research.
 - Journeys cover goal, task, workflow, interaction, result, failure, and recovery as applicable.
 - UX does not duplicate or weaken Accessibility.

@@ -68,7 +68,7 @@ Compose this package with [Product Management](../product-management/), [Accessi
 
 Actual research evidence must identify method, participants or source population without exposing sensitive identities, context, findings, limitations, date, and owner. Record `Performed` only when that attributable evidence exists. If actual research did not occur, the state is `NotRun` unless `Blocked` or justified `NotApplicable` is more accurate. Synthetic assumptions never become observed evidence through confident wording.
 
-Record research state and UX-validation state independently. Evidence for one claim must not be reused to imply that the other activity occurred or passed.
+Record research state and UX-validation state independently. Evidence for one claim must not be reused to imply that the other activity occurred or passed. Record UX-validation state separately from per-method and overall outcome: `Tested`, `Reviewed`, or `OperationallyVerified` does not imply `Pass`, and a UX-validated claim requires an overall `Pass` supported by successful outcomes for every applicable method and claim on the exact interface version and representative conditions.
 
 ## Authoritative starting points
 

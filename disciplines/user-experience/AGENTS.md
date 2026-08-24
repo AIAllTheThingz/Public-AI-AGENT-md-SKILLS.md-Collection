@@ -73,9 +73,9 @@ Report material conflicts instead of resolving them silently.
 
 ### UX-VALIDATE-005
 
-**Requirement:** Match UX claims to representative evidence and distinguish assumptions, prototypes, implementation, testing, review, and operational use.
+**Requirement:** Match UX claims to representative evidence; distinguish assumptions, prototypes, implementation, testing, review, and operational use; record validation state separately from outcome; and claim UX validated only with an independent overall `Pass` supported by successful outcomes for every applicable validation method and claim.
 
-**Evidence:** Validation record with participants or methods, conditions, limitations, findings, and state.
+**Evidence:** Validation record with participants or methods, conditions, criteria, limitations, findings, per-method state and outcome, and separate overall outcome.
 
 ## Non-negotiable behavior
 

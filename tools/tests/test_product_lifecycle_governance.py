@@ -657,24 +657,77 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         template = read(
             "disciplines/user-experience/templates/EVIDENCE_RECORD_TEMPLATE.md"
         )
+        ux_agents = h3_section(
+            read("disciplines/user-experience/AGENTS.md"),
+            "UX-VALIDATE-005",
+        )
         research_standard = read(
             "disciplines/user-experience/standards/USER_RESEARCH_STANDARD.md"
         )
+        validation_standard = read(
+            "disciplines/user-experience/standards/UX_VALIDATION_STANDARD.md"
+        )
         context = h2_section(template, "Context")
         evidence = h2_section(template, "Method and evidence")
+        results = h2_section(template, "Results")
 
         self.assertIn(
             "- Research state (`Performed`, `NotRun`, `Blocked`, or "
             "`NotApplicable`):",
             context,
         )
-        self.assertIn("- Validation state:", context)
+        self.assertIn(
+            "- Validation state (`Tested`, `Reviewed`, `OperationallyVerified`, "
+            "`NotRun`, `Blocked`, or `NotApplicable`):",
+            context,
+        )
+        self.assertIn(
+            "- Overall validation outcome (`Pass`, `Fail`, `Blocked`, or "
+            "`NotApplicable`):",
+            context,
+        )
+        self.assertIn("- Validation decision authority and date:", context)
         self.assertIn("- Research evidence or rationale:", evidence)
         self.assertIn("- Validation evidence or rationale:", evidence)
         self.assertNotIn("Research/validation state", template)
         for state in ("`Performed`", "`NotRun`", "`Blocked`", "`NotApplicable`"):
             with self.subTest(research_state=state):
                 self.assertIn(state, research_standard)
+        for contract in (
+            "validation state separately from outcome",
+            "independent overall `Pass`",
+            "successful outcomes for every applicable validation method and claim",
+        ):
+            with self.subTest(ux_rule_contract=contract):
+                self.assertIn(contract, ux_agents)
+        for contract in (
+            "independent `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` "
+            "outcome",
+            "Execution or evidence state does not imply `Pass`",
+            "Any applicable `Fail`, `Blocked`, `NotRun`, missing, stale, or "
+            "different-version result prevents the overall pass",
+            "separate overall validation outcome is not `Pass`",
+        ):
+            with self.subTest(ux_validation_contract=contract):
+                self.assertIn(contract, validation_standard)
+        for column in (
+            "Authorized criteria",
+            "Primary evidence",
+            "State",
+            "Outcome (`Pass`, `Fail`, `Blocked`, `NotApplicable`)",
+            "Owner",
+        ):
+            with self.subTest(ux_result_column=column):
+                self.assertIn(column, results)
+        self.assertIn(
+            "`Tested`, `Reviewed`, or `OperationallyVerified` does not imply `Pass`",
+            context,
+        )
+        self.assertIn(
+            "Any applicable `Fail`, `Blocked`, `NotRun`, missing, stale, or "
+            "different-version result prevents a UX-validated claim",
+            results,
+        )
 
     def test_lifecycle_normative_controls_have_stable_rule_ids(self) -> None:
         lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")

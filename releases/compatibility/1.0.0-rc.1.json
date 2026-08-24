@@ -198,6 +198,7 @@
       "Re-run repository or project validation after changing the pinned standards source.",
       "Migrate existing SRE and Testing package selections to the strengthened readiness, scaling, and per-test execution-state, outcome, accountability, and safety evidence contracts; do not report an overall scaling strategy Verified until every applicable scaling area is Verified, or performance/scalability validated until every applicable test type is Tested with outcome Pass.",
       "Re-evaluate every selected canonical profile against the conditional Product Management and User Experience predicates and record either the selected overlay or a scope-specific omission rationale.",
+      "For a selected User Experience overlay, record validation state separately from per-method and overall outcome and do not report UX validated unless the overall outcome is Pass and every applicable method and claim succeeds for the exact version and representative conditions.",
       "Treat only languages/csharp as a stable package commitment; do not infer stable maturity for baseline packages."
     ],
     "reviewActions": [
