@@ -21,13 +21,17 @@ status: baseline
 
 ## Results
 
-| Task | Outcome | Errors/assistance | Measure | Finding | Severity | Evidence |
-|---|---|---|---|---|---|---|
-| | | | | | | |
+| Task or validation method | Observed task result | Authorized criteria | Validation outcome (`Pass`, `Fail`, `Blocked`, `NotApplicable`) | Errors/assistance | Measure | Finding | Severity | Primary evidence |
+|---|---|---|---|---|---|---|---|---|
+| | | | | | | | | |
 
 - Conflicting or inconclusive findings:
 - Limitations and excluded populations:
 - Synthetic assumptions:
 - Checks not run and reasons:
 - Decisions, owners, and revalidation triggers:
-- Evidence state:
+- Validation state (`Tested`, `Reviewed`, `OperationallyVerified`, `NotRun`, `Blocked`, or `NotApplicable`):
+- Overall validation outcome (`Pass`, `Fail`, `Blocked`, or `NotApplicable`):
+- Validation decision authority:
+
+Validation state does not imply outcome. Use an overall `Pass` only when every applicable validation method and claim has a successful `Pass` for the exact interface version and representative conditions. Align `NotApplicable` state and outcome and explain the reviewed justification. Any applicable `Fail`, `Blocked`, `NotRun`, missing, stale, or different-version result prevents a UX-validated claim.

@@ -946,14 +946,38 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
                 )
 
     def test_usability_review_records_environment_and_date(self) -> None:
-        plan = h2_section(
-            read(
-                "disciplines/user-experience/templates/USABILITY_REVIEW_TEMPLATE.md"
-            ),
-            "Plan",
+        template = read(
+            "disciplines/user-experience/templates/USABILITY_REVIEW_TEMPLATE.md"
         )
+        plan = h2_section(template, "Plan")
+        results = h2_section(template, "Results")
         self.assertIn("- Environment:", plan)
         self.assertIn("- Review date:", plan)
+        for column in (
+            "Observed task result",
+            "Authorized criteria",
+            "Validation outcome (`Pass`, `Fail`, `Blocked`, `NotApplicable`)",
+            "Primary evidence",
+        ):
+            with self.subTest(usability_result_column=column):
+                self.assertIn(column, results)
+        self.assertIn(
+            "- Validation state (`Tested`, `Reviewed`, `OperationallyVerified`, "
+            "`NotRun`, `Blocked`, or `NotApplicable`):",
+            results,
+        )
+        self.assertIn(
+            "- Overall validation outcome (`Pass`, `Fail`, `Blocked`, or "
+            "`NotApplicable`):",
+            results,
+        )
+        self.assertIn("- Validation decision authority:", results)
+        self.assertIn("Validation state does not imply outcome", results)
+        self.assertIn(
+            "Any applicable `Fail`, `Blocked`, `NotRun`, missing, stale, or "
+            "different-version result prevents a UX-validated claim",
+            results,
+        )
 
     def test_lifecycle_applicability_does_not_add_an_implicit_exception(self) -> None:
         lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
