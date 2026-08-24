@@ -19,7 +19,7 @@ NEW_BASELINE_SOURCE_REVIEWS = {
 }
 
 FINAL_2026_08_23_NORMATIVE_REVISION = (
-    "b39540402fc8983c40d9d51c1da1f12a532c743d"
+    "bec06af4ce605178ed2a1fdcb718722cd507dfc3"
 )
 
 
@@ -131,6 +131,18 @@ class SourceReviewEvidenceTests(unittest.TestCase):
                 self.assertIn(research_state, ux_review)
         self.assertIn("evidence template", ux_review)
         self.assertIn("repository-authored evidence controls", ux_review)
+        for validation_contract in (
+            "UX-validation execution or evidence state separate from per-method "
+            "and overall outcome",
+            "`Tested`, `Reviewed`, or `OperationallyVerified` does not imply `Pass`",
+            "requires a separate overall `Pass` supported by successful outcomes "
+            "for every applicable method and claim",
+            "Any applicable failed, blocked, not-run, missing, stale, or "
+            "different-version result prevents the claim",
+            "fail-closed outcome controls are repository-authored",
+        ):
+            with self.subTest(ux_validation=validation_contract):
+                self.assertIn(validation_contract, ux_review)
 
         sre_review = evidence.split(
             "### Site Reliability Engineering (`disciplines/sre`)",
