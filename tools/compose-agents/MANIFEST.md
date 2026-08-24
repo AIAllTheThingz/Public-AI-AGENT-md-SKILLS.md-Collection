@@ -31,5 +31,6 @@ status: baseline
 - stable path remains unchanged
 - documentation and examples match behavior
 - repository-defined governance selections are validated, included, and reported
+- recognized governance selections include their required linked contracts without implying additional package selection
 - virtualization, operating-system, and networking package entry points are included when selected
 - version 1.0 manifests remain supported

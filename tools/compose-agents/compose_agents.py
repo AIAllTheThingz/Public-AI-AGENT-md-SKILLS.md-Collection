@@ -38,6 +38,20 @@ GOVERNANCE_SOURCES = [
     "governance/PRODUCTION_READINESS.md",
 ]
 GOVERNANCE_SELECTION_EXTENSION = "AIAllTheThingz.governanceSelections"
+GOVERNANCE_SELECTION_DEPENDENCIES = {
+    "governance/PRODUCT_INCEPTION_LIFECYCLE.md": (
+        "MATURITY_POLICY.md",
+        "SOURCE_REVIEWS.json",
+        "source-reviews/README.md",
+        "disciplines/product-management/README.md",
+        "disciplines/product-management/standards/TRACEABILITY_STANDARD.md",
+        "disciplines/product-management/templates/EVIDENCE_RECORD_TEMPLATE.md",
+        "disciplines/sre/README.md",
+        "disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md",
+        "disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md",
+        "disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md",
+    ),
+}
 
 
 def load_manifest(path: Path, root: Path) -> dict[str, Any]:
@@ -115,6 +129,15 @@ def selected_governance_files(root: Path, manifest: dict[str, Any]) -> list[Path
         if path.suffix.casefold() != ".md" or not path.is_file():
             raise ValueError(f"Selected governance source does not exist: {value}")
         selected.append(path)
+
+        for dependency in GOVERNANCE_SELECTION_DEPENDENCIES.get(value, ()):
+            dependency_path = ensure_within_root(root / dependency, root)
+            if not dependency_path.is_file():
+                raise ValueError(
+                    f"Required dependency for selected governance source {value!r} "
+                    f"is missing: {dependency}"
+                )
+            selected.append(dependency_path)
     return selected
 
 

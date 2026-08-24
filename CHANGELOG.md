@@ -59,7 +59,7 @@ Release candidate for the first stable repository compatibility contract. The ca
 
 - Added package-level adoption tests for C#, PowerShell, and Terraform/OpenTofu and a complete-surface C# adoption regression.
 - Added permanent RC compatibility-gate regression coverage for version/release-state invariants, stable path/schema/template/tool inventory, package maturity boundaries, migration from `v0.10.0`, and fail-visible final-`1.0.0` prerequisites.
-- Updated `compose-agents` to validate the repository-defined `AIAllTheThingz.governanceSelections` extension, include each selected governance source in copied bundles, composition manifests, and generated indexes, and retain the selected lifecycle's declared Exception Process dependency in the required governance source set.
+- Updated `compose-agents` to validate the repository-defined `AIAllTheThingz.governanceSelections` extension, include each selected governance source in copied bundles, composition manifests, and generated indexes, retain the selected lifecycle's declared Exception Process dependency in the required governance source set, and copy the Product Inception Lifecycle's required Product Management traceability and SRE readiness and scaling contracts plus directly referenced evidence and provenance records without implying package selection.
 - Preserved the existing prerelease-aware release validator and deterministic release builder rather than introducing a parallel RC mechanism.
 
 ### Security

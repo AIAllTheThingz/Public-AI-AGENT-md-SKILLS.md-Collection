@@ -72,6 +72,40 @@ class ComposeAgentsTests(unittest.TestCase):
         }
         self.assertIn("governance/PRODUCT_INCEPTION_LIFECYCLE.md", source_paths)
         self.assertIn("governance/EXCEPTION_PROCESS.md", source_paths)
+        for dependency in (
+            "MATURITY_POLICY.md",
+            "SOURCE_REVIEWS.json",
+            "source-reviews/README.md",
+            "disciplines/product-management/README.md",
+            "disciplines/product-management/standards/TRACEABILITY_STANDARD.md",
+            "disciplines/product-management/templates/EVIDENCE_RECORD_TEMPLATE.md",
+            "disciplines/sre/README.md",
+            "disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md",
+            "disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md",
+            "disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md",
+        ):
+            with self.subTest(governance_dependency=dependency):
+                self.assertIn(dependency, source_paths)
+
+    def test_copy_sources_includes_lifecycle_required_contracts(self):
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
+            output = Path(temp) / "bundle"
+            completed = run_tool(
+                "tools/compose-agents/compose_agents.py",
+                "--manifest", "examples/web-api/project-manifest.json",
+                "--output-dir", str(output),
+                "--format", "json",
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            for dependency in (
+                "disciplines/product-management/standards/TRACEABILITY_STANDARD.md",
+                "disciplines/product-management/templates/EVIDENCE_RECORD_TEMPLATE.md",
+                "disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md",
+                "disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md",
+                "disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md",
+            ):
+                with self.subTest(copied_lifecycle_contract=dependency):
+                    self.assertTrue((output / "sources" / dependency).is_file())
 
     def test_written_index_reports_governance_selections(self):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
