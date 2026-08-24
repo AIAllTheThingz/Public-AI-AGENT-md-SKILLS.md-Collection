@@ -19,7 +19,7 @@ NEW_BASELINE_SOURCE_REVIEWS = {
 }
 
 FINAL_2026_08_23_NORMATIVE_REVISION = (
-    "bec06af4ce605178ed2a1fdcb718722cd507dfc3"
+    "151e87cce7ffd07d64538400e3a1101af9b38a0e"
 )
 
 
@@ -139,6 +139,8 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             "for every applicable method and claim",
             "Any applicable failed, blocked, not-run, missing, stale, or "
             "different-version result prevents the claim",
+            "standalone usability review template record per-method outcome, "
+            "separate overall outcome, decision authority",
             "fail-closed outcome controls are repository-authored",
         ):
             with self.subTest(ux_validation=validation_contract):
