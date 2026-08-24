@@ -190,13 +190,13 @@
   ],
   "migrationFrom0100": {
     "breakingChanges": [
-      "Existing Site Reliability Engineering and Testing and Quality Engineering adopters must migrate to the strengthened readiness, scaling, and contextual performance-test decision and evidence contracts.",
+      "Existing Site Reliability Engineering and Testing and Quality Engineering adopters must migrate to the strengthened readiness, scaling, and contextual performance-test decision and evidence contracts, including separate performance-test execution states and outcomes.",
       "Existing canonical-profile adopters must select Product Management or User Experience when the documented conditional predicate is satisfied."
     ],
     "requiredActions": [
       "Update the recorded repository source from v0.10.0 to the reviewed 1.0.0-rc.1 candidate when deliberately evaluating the release candidate.",
       "Re-run repository or project validation after changing the pinned standards source.",
-      "Migrate existing SRE and Testing package selections to the strengthened readiness, scaling, and per-test accountability and safety evidence contracts; do not report an overall scaling strategy Verified until every applicable scaling area is Verified.",
+      "Migrate existing SRE and Testing package selections to the strengthened readiness, scaling, and per-test execution-state, outcome, accountability, and safety evidence contracts; do not report an overall scaling strategy Verified until every applicable scaling area is Verified, or performance/scalability validated until every applicable test type is Tested with outcome Pass.",
       "Re-evaluate every selected canonical profile against the conditional Product Management and User Experience predicates and record either the selected overlay or a scope-specific omission rationale.",
       "Treat only languages/csharp as a stable package commitment; do not infer stable maturity for baseline packages."
     ],

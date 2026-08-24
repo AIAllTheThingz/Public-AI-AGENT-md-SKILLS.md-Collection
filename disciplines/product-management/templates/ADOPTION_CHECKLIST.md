@@ -21,5 +21,6 @@ status: baseline
 ## Evidence
 
 - [ ] Traceability covers applicable lifecycle stages and uses honest states.
+- [ ] Acceptance results are recorded separately from evidence states; every accepted requirement has a current explicit `Pass` for each applicable criterion on the exact reviewed artifact and conditions.
 - [ ] Research and operational claims are supported or marked `NotRun`, `Blocked`, or `NotApplicable` with rationale.
 - [ ] Evidence locations, review triggers, exceptions, and remaining risks are defined.

@@ -87,7 +87,7 @@ request
 
 Detailed roles and decision responsibilities are described in [OPERATING_MODEL.md](OPERATING_MODEL.md).
 
-Adopters may explicitly select the [Product Inception Lifecycle](PRODUCT_INCEPTION_LIFECYCLE.md) for a new product or material capability. It is not activated by repository, governance, profile, or Product Management package adoption; once selected, its gates apply to the selected scope. Product Management and its complete traceability standard are required before the Build Gate can pass. The later `production-candidate` and `scaled-production` states require explicit Site Reliability Engineering package selection and satisfaction of its complete readiness and scaling standards; lifecycle selection alone does not supply those contracts.
+Adopters may explicitly select the [Product Inception Lifecycle](PRODUCT_INCEPTION_LIFECYCLE.md) for a new product or material capability. It is not activated by repository, governance, profile, or Product Management package adoption; once selected, its gates apply to the selected scope. Product Management and its complete traceability standard are required before the Build Gate can pass. `production-candidate` additionally requires every material requirement to be implemented, every applicable functional and nonfunctional acceptance criterion to have a current explicit `Pass` for the exact candidate and conditions, and explicit Site Reliability Engineering package selection with its complete readiness standard. `scaled-production` additionally requires the complete SRE scaling standard; lifecycle selection alone does not supply those contracts.
 
 ## Required roles
 

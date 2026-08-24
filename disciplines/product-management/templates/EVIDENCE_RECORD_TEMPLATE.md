@@ -33,6 +33,16 @@ Record one row per lifecycle stage so that each stage has an independent evidenc
 
 Allowed states: `Planned`, `Implemented`, `Tested`, `Reviewed`, `OperationallyVerified`, `NotRun`, `Blocked`, `NotApplicable`. Explain every `NotApplicable` entry.
 
+## Acceptance validation
+
+Record acceptance separately from execution or evidence state. `Tested` and the presence of output do not imply `Pass`.
+
+| Requirement | Acceptance criterion | Result (`Pass`, `Fail`, `Blocked`, `NotRun`, `NotApplicable`) | Exact artifact and conditions | Validation method | Primary evidence | Owner |
+|---|---|---|---|---|---|---|
+| `REQ-___-___` | | | | | | |
+
+Every `NotApplicable` result requires reviewed justification. A requirement is accepted only when every applicable criterion has a current explicit `Pass` for the exact reviewed artifact and conditions.
+
 ## Decisions and limitations
 
 - MVP inclusions and exclusions:

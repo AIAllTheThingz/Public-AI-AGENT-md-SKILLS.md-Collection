@@ -68,9 +68,9 @@ Report material conflicts instead of resolving them silently.
 
 ### PROD-ACCEPT-004
 
-**Requirement:** Define measurable acceptance criteria before claiming a requirement is satisfied.
+**Requirement:** Define measurable acceptance criteria before claiming a requirement is satisfied, record acceptance separately from execution or evidence state, and accept a requirement only when every applicable criterion has a current explicit `Pass` for the reviewed artifact and conditions.
 
-**Evidence:** Criteria mapped to requirements and validation evidence.
+**Evidence:** Acceptance matrix mapping criteria to requirements, exact artifact and conditions, validation method, result, primary evidence, and owner.
 
 ### PROD-TRACE-005
 

@@ -13,7 +13,7 @@ This example is fictitious and demonstrates composition, not evidence of a real 
 
 The fictional **Northstar Community Library** is considering a self-service hold-renewal capability. It records the problem and intended patrons, but no direct research has occurred, so research evidence is `NotRun`. Assumptions about patron demand remain assumptions.
 
-The project creates `REQ-FUNC-001` for eligible renewal behavior and `REQ-NFR-001` for applicable response expectations, each with acceptance criteria. It excludes fee payment from MVP and records that exclusion explicitly.
+The project creates `REQ-FUNC-001` for eligible renewal behavior and `REQ-NFR-001` for applicable response expectations, each with acceptance criteria. It records a separate result for each criterion so `Tested` cannot imply `Pass`; a production-candidate claim would require every applicable criterion to have a current explicit `Pass` for the exact candidate and conditions. It excludes fee payment from MVP and records that exclusion explicitly.
 
 ## Composition and traceability
 

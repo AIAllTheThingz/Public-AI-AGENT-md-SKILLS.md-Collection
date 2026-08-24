@@ -344,6 +344,7 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         standard = read(
             "disciplines/testing/standards/NONFUNCTIONAL_TESTING_STANDARD.md"
         )
+        testing_agents = read("disciplines/testing/AGENTS.md")
         required_behavior = h2_section(standard, "Required behavior")
         for test_type in (
             "baseline",
@@ -366,6 +367,14 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         ):
             with self.subTest(evidence_state=state):
                 self.assertIn(state, required_behavior)
+        for outcome in ("`Pass`", "`Fail`", "`Blocked`", "`NotApplicable`"):
+            with self.subTest(performance_outcome=outcome):
+                self.assertIn(outcome, required_behavior)
+        self.assertIn("### TEST-PERFORMANCE-006", testing_agents)
+        self.assertIn(
+            "execution state separately from outcome",
+            h3_section(testing_agents, "TEST-PERFORMANCE-006"),
+        )
 
         completion_gate = h2_section(standard, "Completion gate")
         self.assertIn(
@@ -376,7 +385,13 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         )
         self.assertIn(
             "Do not report performance or scalability validated until every "
-            "applicable test type has current evidence",
+            "applicable test type has state `Tested` and a separate current "
+            "explicit outcome of `Pass`",
+            completion_gate,
+        )
+        self.assertIn(
+            "Any applicable `Fail`, `Blocked`, `NotRun`, missing, stale, or "
+            "different-artifact result prevents the validated claim",
             completion_gate,
         )
 
@@ -393,9 +408,11 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         self.assertGreaterEqual(len(table), 10)
         header = table[0]
         for required_column in (
+            "Outcome (`Pass`, `Fail`, `Blocked`, `NotApplicable`)",
             "Owner",
             "Authorization and safeguards",
             "Stop conditions",
+            "Primary evidence/result",
         ):
             with self.subTest(column=required_column):
                 self.assertIn(required_column, header)
@@ -418,6 +435,60 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         for row in rows:
             with self.subTest(test_type=row[0]):
                 self.assertEqual(len(row), len(header))
+        self.assertIn("`Tested` records execution evidence and does not imply `Pass`", performance)
+
+    def test_acceptance_decisions_are_separate_from_evidence_states(self) -> None:
+        lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
+        product_agents = h3_section(
+            read("disciplines/product-management/AGENTS.md"),
+            "PROD-ACCEPT-004",
+        )
+        acceptance_standard = read(
+            "disciplines/product-management/standards/ACCEPTANCE_CRITERIA_STANDARD.md"
+        )
+        evidence_template = h2_section(
+            read("disciplines/product-management/templates/EVIDENCE_RECORD_TEMPLATE.md"),
+            "Acceptance validation",
+        )
+        production_rule = h3_section(lifecycle, "GOV-PRODUCT-INCEPTION-009")
+        production_gate = h2_section(lifecycle, "Production-candidate gate")
+
+        for contract in (
+            "acceptance separately from execution or evidence state",
+            "every applicable criterion has a current explicit `Pass`",
+        ):
+            with self.subTest(product_acceptance=contract):
+                self.assertIn(contract, product_agents)
+        for contract in (
+            "an execution or evidence state such as `Tested` or `Reviewed` is not "
+            "an acceptance result",
+            "Every applicable criterion must have a current explicit `Pass`",
+        ):
+            with self.subTest(acceptance_standard_contract=contract):
+                self.assertIn(contract, acceptance_standard)
+        for result in ("`Pass`", "`Fail`", "`Blocked`", "`NotRun`", "`NotApplicable`"):
+            with self.subTest(acceptance_result=result):
+                self.assertIn(result, evidence_template)
+        self.assertIn("`Tested` and the presence of output do not imply `Pass`", evidence_template)
+
+        for contract in (
+            "every material requirement is implemented",
+            "every applicable functional and nonfunctional acceptance criterion",
+            "current explicit `Pass`",
+            "Any acceptance criterion with a `Fail`, `Blocked`, `NotRun`, missing, "
+            "stale, or different-candidate result prevents the transition",
+        ):
+            with self.subTest(lifecycle_acceptance=contract):
+                self.assertIn(contract, production_rule)
+        self.assertIn(
+            "`Tested`, `Reviewed`, or the presence of test output does not imply `Pass`",
+            production_gate,
+        )
+        self.assertIn(
+            "Production-readiness results do not replace functional or nonfunctional "
+            "acceptance decisions",
+            production_gate,
+        )
 
     def test_readiness_template_has_one_result_per_standard_area(self) -> None:
         standard = read(
@@ -666,10 +737,13 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         for contract in (
             "Build Gate and its prerequisite Concept, Requirements, and Design "
             "Gates are `Pass`",
-            "explicitly selecting the Site Reliability Engineering package",
+            "every material requirement is implemented",
+            "every applicable functional and nonfunctional acceptance criterion",
+            "current explicit `Pass`",
+            "Site Reliability Engineering package is explicitly selected",
             "complete [Production Readiness Standard]",
-            "overall decision is `Pass`",
-            "no applicable area is `Fail`, `Blocked`, or `NotRun`",
+            "readiness overall decision must be `Pass`",
+            "no applicable area may be `Fail`, `Blocked`, or `NotRun`",
         ):
             with self.subTest(readiness_contract=contract):
                 self.assertIn(contract, production_rule)

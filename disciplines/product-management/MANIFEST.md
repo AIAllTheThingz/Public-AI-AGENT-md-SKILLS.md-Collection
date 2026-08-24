@@ -33,6 +33,7 @@ status: baseline
 - Stable requirement and rule identifiers are unique.
 - Facts, assumptions, constraints, and unknowns are distinguishable.
 - Requirements are testable, reviewable, traceable, and evidence-backed.
+- Acceptance decisions are separate from evidence states, and `Tested` is not treated as `Pass`.
 - MVP boundaries and exclusions are explicit.
 - Traceability does not infer completion from code existence.
 - Templates use placeholders and examples are fictitious.

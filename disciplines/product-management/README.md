@@ -76,7 +76,7 @@ Typical companions are [User Experience](../user-experience/), [Architecture](..
 
 ## Evidence model
 
-Traceability records must distinguish `Planned`, `Implemented`, `Tested`, `Reviewed`, `OperationallyVerified`, `NotRun`, `Blocked`, and `NotApplicable`. A state describes available evidence; it is not approval and must not be inferred from another state.
+Traceability records must distinguish `Planned`, `Implemented`, `Tested`, `Reviewed`, `OperationallyVerified`, `NotRun`, `Blocked`, and `NotApplicable`. A state describes available evidence; it is not approval and must not be inferred from another state. Acceptance is a separate per-criterion decision: `Tested` or `Reviewed` does not imply `Pass`, and a requirement is accepted only when every applicable criterion has a current explicit `Pass` for the exact reviewed artifact and conditions.
 
 ## Authoritative starting points
 

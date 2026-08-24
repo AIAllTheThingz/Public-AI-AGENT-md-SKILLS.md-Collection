@@ -122,7 +122,7 @@ Typical completion evidence includes:
 
 - risk-based test strategy
 - repeatable test results
-- performance-test applicability decisions with per-test owners, explicit execution authorization and safeguards, safe stop conditions, representative workload and environment, selected latency/throughput/error/resource/saturation/cost evidence, and supported operating envelope
+- performance-test applicability and execution states with separate per-test `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` outcomes, owners, explicit execution authorization and safeguards, safe stop conditions, representative workload and environment, selected latency/throughput/error/resource/saturation/cost evidence, and supported operating envelope
 - negative and failure-path coverage
 - regression evidence
 - documented gaps and unsupported environments
@@ -163,6 +163,7 @@ Accountable review dates and sources are recorded in [`SOURCE_REVIEWS.json`](../
 - skipping negative and failure cases
 - weakening tests to make CI green
 - claiming performance from an unrepresentative happy-path benchmark
+- treating a `Tested` execution state or failed result as a passing performance-validation decision
 - reporting averages while hiding tail latency, errors, saturation, or incomplete recovery
 
 Other common mistakes include copying only selected controls without documenting omissions, declaring success without evidence, treating a scanner or checklist as proof by itself, and assuming the package removes the need for human accountability.

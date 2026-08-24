@@ -36,7 +36,7 @@ status: baseline
 ## Validation and approval
 
 - [ ] Baseline, load, stress, spike, soak/endurance, scaling, failure-under-load, and recovery-under-load applicability is recorded.
-- [ ] Each performance-test type records its owner, workload, environment, metrics, thresholds, explicit execution authorization and safeguards, safe stop conditions, and evidence retention proportionate to risk.
+- [ ] Each performance-test type records its applicability and execution state, separate `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` outcome, owner, workload, environment, metrics, thresholds, explicit execution authorization and safeguards, safe stop conditions, and evidence retention proportionate to risk.
 - [ ] Repository validation and link checking pass.
 - [ ] Project-specific validation is executable.
 - [ ] Evidence storage and completion reporting are defined.

@@ -23,7 +23,7 @@ status: baseline
 
 ## Evidence
 
-- [ ] Every performance-test type identifies its owner, exact artifact, configuration, workload, data, environment, topology, duration, dependencies, explicit execution authorization and safeguards, safe stop conditions, and result window or records why the test is `NotRun`, `Blocked`, or `NotApplicable`.
+- [ ] Every performance-test type identifies its execution state; separate `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` outcome; owner; exact artifact; configuration; workload; data; environment; topology; duration; dependencies; explicit execution authorization and safeguards; safe stop conditions; and result window. `Tested` is not treated as `Pass`.
 - [ ] Selected throughput, p50/p95/p99, error, CPU, memory, I/O, connection, queue, database, saturation, and cost metrics are relevant; omissions are contextual, not hidden.
 - [ ] Scaling, failure-under-load, and recovery-under-load claims are supported where applicable.
 - [ ] Raw results and supported operating envelope are retained; unrepresentative evidence is not generalized.
