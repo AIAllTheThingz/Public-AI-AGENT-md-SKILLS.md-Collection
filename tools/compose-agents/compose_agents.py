@@ -96,7 +96,7 @@ def package_files(root: Path, collection: str, slug: str) -> list[Path]:
     return selected
 
 
-def selected_governance_files(root: Path, manifest: dict[str, Any]) -> list[Path]:
+def selected_governance_sources(root: Path, manifest: dict[str, Any]) -> list[Path]:
     extensions = manifest.get("extensions", {})
     raw_selections = extensions.get(GOVERNANCE_SELECTION_EXTENSION, [])
     if not isinstance(raw_selections, list):
@@ -133,6 +133,16 @@ def selected_governance_files(root: Path, manifest: dict[str, Any]) -> list[Path
             raise ValueError(f"Selected governance source does not exist: {value}")
         selected.append(path)
 
+    return selected
+
+
+def governance_files_for_selections(
+    root: Path, selected_sources: list[Path]
+) -> list[Path]:
+    selected: list[Path] = []
+    for path in selected_sources:
+        selected.append(path)
+
         canonical_selection = path.relative_to(root).as_posix()
         for dependency in GOVERNANCE_SELECTION_DEPENDENCIES.get(
             canonical_selection, ()
@@ -147,14 +157,20 @@ def selected_governance_files(root: Path, manifest: dict[str, Any]) -> list[Path
     return selected
 
 
-def build_source_list(root: Path, manifest: dict[str, Any]) -> list[Path]:
+def build_source_list(
+    root: Path,
+    manifest: dict[str, Any],
+    governance_sources: list[Path] | None = None,
+) -> list[Path]:
     sources: list[Path] = []
     for relative in GOVERNANCE_SOURCES:
         path = root / relative
         if not path.is_file():
             raise ValueError(f"Required governance source is missing: {relative}")
         sources.append(path)
-    sources.extend(selected_governance_files(root, manifest))
+    if governance_sources is None:
+        governance_sources = selected_governance_sources(root, manifest)
+    sources.extend(governance_files_for_selections(root, governance_sources))
 
     profile_path = canonical_profile_path(root, str(manifest["profile"]))
     sources.append(profile_path)
@@ -185,10 +201,11 @@ def build_source_list(root: Path, manifest: dict[str, Any]) -> list[Path]:
     return [unique[key] for key in sorted(unique)]
 
 
-def generated_agents(manifest: dict[str, Any], source_records: list[dict[str, str]]) -> str:
-    governance_selections = manifest.get("extensions", {}).get(
-        GOVERNANCE_SELECTION_EXTENSION, []
-    )
+def generated_agents(
+    manifest: dict[str, Any],
+    source_records: list[dict[str, str]],
+    governance_selections: list[str],
+) -> str:
     lines = [
         "# Project Standards Composition Index",
         "",
@@ -248,7 +265,11 @@ def run(args: argparse.Namespace) -> ToolResult:
     root = args.root.resolve()
     manifest_path = args.manifest if args.manifest.is_absolute() else root / args.manifest
     manifest = load_manifest(manifest_path, root)
-    sources = build_source_list(root, manifest)
+    governance_sources = selected_governance_sources(root, manifest)
+    governance_selections = [
+        path.relative_to(root).as_posix() for path in governance_sources
+    ]
+    sources = build_source_list(root, manifest, governance_sources)
     source_records = [
         {"path": path.relative_to(root).as_posix(), "sha256": sha256_file(path)}
         for path in sources
@@ -275,7 +296,10 @@ def run(args: argparse.Namespace) -> ToolResult:
         with tempfile.TemporaryDirectory(prefix="compose-agents-", dir=staging_parent) as temp:
             staging = Path(temp) / "bundle"
             staging.mkdir()
-            (staging / "AGENTS.md").write_text(generated_agents(manifest, source_records), encoding="utf-8")
+            (staging / "AGENTS.md").write_text(
+                generated_agents(manifest, source_records, governance_selections),
+                encoding="utf-8",
+            )
             (staging / "COMPOSITION_MANIFEST.json").write_text(json.dumps(composition, indent=2) + "\n", encoding="utf-8")
             (staging / "README.md").write_text(
                 "# Standards Bundle\n\n"

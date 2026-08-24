@@ -31,6 +31,6 @@ status: baseline
 - stable path remains unchanged
 - documentation and examples match behavior
 - repository-defined governance selections are validated, included, and reported
-- recognized governance selections are canonicalized and include their transitive required linked contracts without implying additional package selection
+- recognized governance selections are canonicalized consistently in dependency lookup, source inventory, copied paths, and generated indexes, and include their transitive required linked contracts without implying additional package selection
 - virtualization, operating-system, and networking package entry points are included when selected
 - version 1.0 manifests remain supported

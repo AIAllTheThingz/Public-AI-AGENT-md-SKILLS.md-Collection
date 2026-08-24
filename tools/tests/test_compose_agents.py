@@ -115,6 +115,7 @@ class ComposeAgentsTests(unittest.TestCase):
     def test_normalizes_governance_selection_before_dependency_lookup(self):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
             manifest = Path(temp) / "project-manifest.json"
+            output = Path(temp) / "bundle"
             manifest.write_text(json.dumps({
                 "schemaVersion": "1.1.0",
                 "name": "normalized-governance-selection",
@@ -130,7 +131,8 @@ class ComposeAgentsTests(unittest.TestCase):
             completed = run_tool(
                 "tools/compose-agents/compose_agents.py",
                 "--manifest", str(manifest),
-                "--dry-run",
+                "--output-dir", str(output),
+                "--no-copy-sources",
                 "--format", "json",
             )
             self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
@@ -143,6 +145,16 @@ class ComposeAgentsTests(unittest.TestCase):
                 source_paths,
             )
             self.assertIn("source-reviews/2026-08-23.md", source_paths)
+            index = (output / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn(
+                "- Governance selections: "
+                "`governance/PRODUCT_INCEPTION_LIFECYCLE.md`",
+                index,
+            )
+            self.assertNotIn(
+                "governance/sub/../PRODUCT_INCEPTION_LIFECYCLE.md",
+                index,
+            )
 
     def test_written_index_reports_governance_selections(self):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:

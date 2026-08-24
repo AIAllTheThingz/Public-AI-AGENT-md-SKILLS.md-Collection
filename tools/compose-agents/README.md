@@ -47,7 +47,7 @@ python tools/compose-agents/compose_agents.py --help
 - manifest schema validity
 - selected package existence
 - selected `AIAllTheThingz.governanceSelections` path existence and containment under `governance/`
-- canonicalized, transitive dependency closure for recognized governance selections, including the Product Inception Lifecycle's Product Management traceability, SRE capacity, readiness, and scaling contracts, and referenced source-review evidence
+- canonicalized governance selections in dependency lookup, source inventory, copied paths, and the generated index, with transitive closure including the Product Inception Lifecycle's Product Management traceability, SRE capacity, readiness, and scaling contracts, and referenced source-review evidence
 - selected virtualization, operating-system, and networking package entry points
 - required governance sources
 - root-contained source paths
