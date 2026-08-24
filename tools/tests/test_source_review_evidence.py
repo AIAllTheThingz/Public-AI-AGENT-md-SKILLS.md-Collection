@@ -19,7 +19,7 @@ NEW_BASELINE_SOURCE_REVIEWS = {
 }
 
 FINAL_2026_08_23_NORMATIVE_REVISION = (
-    "59ba753f64c10a7dc36fcc981ecd6227b648f96e"
+    "b39540402fc8983c40d9d51c1da1f12a532c743d"
 )
 
 
@@ -66,6 +66,20 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             evidence,
         )
 
+        product_review = evidence.split(
+            "### Product Management (`disciplines/product-management`)",
+            1,
+        )[1].split("### User Experience", 1)[0]
+        for acceptance_contract in (
+            "separates acceptance decisions from execution and evidence states",
+            "`Pass`, `Fail`, `Blocked`, `NotRun`, or justified `NotApplicable`",
+            "`Tested`, `Reviewed`, implementation presence, or output presence "
+            "does not imply acceptance",
+            "repository-authored fail-closed evidence controls",
+        ):
+            with self.subTest(product_acceptance=acceptance_contract):
+                self.assertIn(acceptance_contract, product_review)
+
         lifecycle_review = evidence.split(
             "### Product Inception Lifecycle "
             "(`governance/PRODUCT_INCEPTION_LIFECYCLE.md`)",
@@ -81,6 +95,9 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             "closed set of lifecycle evidence states",
             "Product Management package selection",
             "complete requirement traceability",
+            "every applicable functional and nonfunctional acceptance criterion",
+            "current explicit `Pass`",
+            "readiness evidence does not replace acceptance evidence",
             "complete Production Readiness Standard",
             "Data migration",
             "Capacity",
@@ -137,9 +154,16 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             1,
         )[1].split("### Product Inception Lifecycle", 1)[0]
         for control in (
+            "numbered package rule",
             "per-test owner",
             "explicit execution authorization and safeguards",
             "safe stop conditions",
+            "execution state",
+            "separate `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` "
+            "outcome",
+            "`Tested` does not imply `Pass`",
+            "Any applicable failed, blocked, not-run, missing, stale, or "
+            "different-artifact result prevents that claim",
             "evidence template",
         ):
             with self.subTest(testing_control=control):
