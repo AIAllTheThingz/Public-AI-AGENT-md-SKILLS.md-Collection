@@ -48,6 +48,7 @@ python tools/compose-agents/compose_agents.py --help
 - selected package existence
 - selected `AIAllTheThingz.governanceSelections` path existence and containment under `governance/`
 - canonicalized governance selections in dependency lookup, source inventory, copied paths, and the generated index, with transitive closure including the Product Inception Lifecycle's Product Management traceability, SRE capacity, readiness, and scaling contracts, and referenced source-review evidence
+- missing required dependencies for a recognized governance selection are reported as actionable `INPUT_ERROR` findings with exit code `2`
 - selected virtualization, operating-system, and networking package entry points
 - required governance sources
 - root-contained source paths

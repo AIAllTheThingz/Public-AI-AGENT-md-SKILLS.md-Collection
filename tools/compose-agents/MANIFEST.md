@@ -32,5 +32,6 @@ status: baseline
 - documentation and examples match behavior
 - repository-defined governance selections are validated, included, and reported
 - recognized governance selections are canonicalized consistently in dependency lookup, source inventory, copied paths, and generated indexes, and include their transitive required linked contracts without implying additional package selection
+- missing recognized governance dependencies produce `INPUT_ERROR` and exit code `2`
 - virtualization, operating-system, and networking package entry points are included when selected
 - version 1.0 manifests remain supported

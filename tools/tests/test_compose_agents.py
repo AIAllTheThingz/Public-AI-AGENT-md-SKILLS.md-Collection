@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -154,6 +155,60 @@ class ComposeAgentsTests(unittest.TestCase):
             self.assertNotIn(
                 "governance/sub/../PRODUCT_INCEPTION_LIFECYCLE.md",
                 index,
+            )
+
+    def test_missing_lifecycle_dependency_is_an_input_error(self):
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
+            temp_path = Path(temp)
+            schema = temp_path / "schemas" / "v1" / "project-manifest.schema.json"
+            schema.parent.mkdir(parents=True)
+            shutil.copy2(
+                REPO_ROOT / "schemas" / "v1" / "project-manifest.schema.json",
+                schema,
+            )
+            for relative in (
+                "governance/ORGANIZATION_CONTRACT.md",
+                "governance/AGENT_WORKING_METHOD.md",
+                "governance/RISK_CLASSIFICATION.md",
+                "governance/COMPLETION_EVIDENCE.md",
+                "governance/EXCEPTION_PROCESS.md",
+                "governance/AI_GENERATED_CODE_POLICY.md",
+                "governance/HUMAN_REVIEW_POLICY.md",
+                "governance/PRODUCTION_READINESS.md",
+                "governance/PRODUCT_INCEPTION_LIFECYCLE.md",
+            ):
+                path = temp_path / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("# Test source\n", encoding="utf-8")
+
+            manifest = temp_path / "project-manifest.json"
+            manifest.write_text(json.dumps({
+                "schemaVersion": "1.1.0",
+                "name": "missing-lifecycle-dependency",
+                "profile": "WEB_API",
+                "languages": ["python"],
+                "disciplines": ["testing"],
+                "extensions": {
+                    "AIAllTheThingz.governanceSelections": [
+                        "governance/PRODUCT_INCEPTION_LIFECYCLE.md"
+                    ],
+                },
+            }), encoding="utf-8")
+            completed = run_tool(
+                "tools/compose-agents/compose_agents.py",
+                "--manifest", str(manifest),
+                "--dry-run",
+                "--format", "json",
+                root=temp_path,
+            )
+            self.assertEqual(completed.returncode, 2, completed.stdout + completed.stderr)
+            payload = json_result(completed)
+            self.assertEqual(payload["findings"][0]["code"], "INPUT_ERROR")
+            self.assertIn(
+                "Required dependency for selected governance source "
+                "'governance/PRODUCT_INCEPTION_LIFECYCLE.md' is missing: "
+                "MATURITY_POLICY.md",
+                payload["findings"][0]["message"],
             )
 
     def test_written_index_reports_governance_selections(self):

@@ -150,7 +150,8 @@ def governance_files_for_selections(
             dependency_path = ensure_within_root(root / dependency, root)
             if not dependency_path.is_file():
                 raise ValueError(
-                    f"Required dependency for selected governance source {value!r} "
+                    "Required dependency for selected governance source "
+                    f"{canonical_selection!r} "
                     f"is missing: {dependency}"
                 )
             selected.append(dependency_path)
