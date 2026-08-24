@@ -47,9 +47,12 @@ GOVERNANCE_SELECTION_DEPENDENCIES = {
         "disciplines/product-management/standards/TRACEABILITY_STANDARD.md",
         "disciplines/product-management/templates/EVIDENCE_RECORD_TEMPLATE.md",
         "disciplines/sre/README.md",
+        "disciplines/sre/standards/CAPACITY_PERFORMANCE_STANDARD.md",
         "disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md",
         "disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md",
         "disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md",
+        "source-reviews/2026-08-15.md",
+        "source-reviews/2026-08-23.md",
     ),
 }
 
@@ -130,7 +133,10 @@ def selected_governance_files(root: Path, manifest: dict[str, Any]) -> list[Path
             raise ValueError(f"Selected governance source does not exist: {value}")
         selected.append(path)
 
-        for dependency in GOVERNANCE_SELECTION_DEPENDENCIES.get(value, ()):
+        canonical_selection = path.relative_to(root).as_posix()
+        for dependency in GOVERNANCE_SELECTION_DEPENDENCIES.get(
+            canonical_selection, ()
+        ):
             dependency_path = ensure_within_root(root / dependency, root)
             if not dependency_path.is_file():
                 raise ValueError(

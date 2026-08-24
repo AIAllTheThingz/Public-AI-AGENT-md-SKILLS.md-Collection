@@ -80,9 +80,12 @@ class ComposeAgentsTests(unittest.TestCase):
             "disciplines/product-management/standards/TRACEABILITY_STANDARD.md",
             "disciplines/product-management/templates/EVIDENCE_RECORD_TEMPLATE.md",
             "disciplines/sre/README.md",
+            "disciplines/sre/standards/CAPACITY_PERFORMANCE_STANDARD.md",
             "disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md",
             "disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md",
             "disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md",
+            "source-reviews/2026-08-15.md",
+            "source-reviews/2026-08-23.md",
         ):
             with self.subTest(governance_dependency=dependency):
                 self.assertIn(dependency, source_paths)
@@ -100,12 +103,46 @@ class ComposeAgentsTests(unittest.TestCase):
             for dependency in (
                 "disciplines/product-management/standards/TRACEABILITY_STANDARD.md",
                 "disciplines/product-management/templates/EVIDENCE_RECORD_TEMPLATE.md",
+                "disciplines/sre/standards/CAPACITY_PERFORMANCE_STANDARD.md",
                 "disciplines/sre/standards/PRODUCTION_READINESS_STANDARD.md",
                 "disciplines/sre/standards/SCALING_STRATEGY_STANDARD.md",
                 "disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md",
+                "source-reviews/2026-08-23.md",
             ):
                 with self.subTest(copied_lifecycle_contract=dependency):
                     self.assertTrue((output / "sources" / dependency).is_file())
+
+    def test_normalizes_governance_selection_before_dependency_lookup(self):
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
+            manifest = Path(temp) / "project-manifest.json"
+            manifest.write_text(json.dumps({
+                "schemaVersion": "1.1.0",
+                "name": "normalized-governance-selection",
+                "profile": "WEB_API",
+                "languages": ["python"],
+                "disciplines": ["testing"],
+                "extensions": {
+                    "AIAllTheThingz.governanceSelections": [
+                        "governance/sub/../PRODUCT_INCEPTION_LIFECYCLE.md"
+                    ],
+                },
+            }), encoding="utf-8")
+            completed = run_tool(
+                "tools/compose-agents/compose_agents.py",
+                "--manifest", str(manifest),
+                "--dry-run",
+                "--format", "json",
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            payload = json_result(completed)
+            source_paths = {
+                item["path"] for item in payload["metadata"]["composition"]["sources"]
+            }
+            self.assertIn(
+                "disciplines/sre/standards/CAPACITY_PERFORMANCE_STANDARD.md",
+                source_paths,
+            )
+            self.assertIn("source-reviews/2026-08-23.md", source_paths)
 
     def test_written_index_reports_governance_selections(self):
         with tempfile.TemporaryDirectory(dir=REPO_ROOT) as temp:
