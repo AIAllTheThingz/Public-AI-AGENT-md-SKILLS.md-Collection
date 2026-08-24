@@ -17,4 +17,4 @@ The project creates `REQ-FUNC-001` for eligible renewal behavior and `REQ-NFR-00
 
 ## Composition and traceability
 
-The project composes Product Management with User Experience, Accessibility, Architecture, Application Security, Testing, and SRE as applicable. Its traceability record links the brief, requirements, ADR, change, tests, candidate deployment, and later operational evidence. Before deployment, production evidence remains `NotRun`; implementation evidence is not promoted to `OperationallyVerified`.
+The project composes Product Management with User Experience, Accessibility, Architecture, Application Security, Testing, and SRE as applicable. Its traceability record links the brief, requirements, ADR, change, tests, candidate deployment, and later operational evidence. Before deployment, production evidence remains `NotRun`; implementation, readiness, or approval evidence is not promoted to `OperationallyVerified`, and no `production` state is claimed without a successful exact-artifact deployment record and post-deployment verification for the stated production scope.

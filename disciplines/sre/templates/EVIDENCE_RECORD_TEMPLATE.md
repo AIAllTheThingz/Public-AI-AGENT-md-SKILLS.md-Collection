@@ -61,6 +61,19 @@ status: baseline
 - Decision date:
 - Approved candidate, operating scope, and conditions:
 
+## Production transition evidence
+
+- Exact approved artifact, source revision, and configuration:
+- Production environment, operating scope, and approved conditions:
+- Accountable production approval authority and date:
+- Deployment record, owner, start time, and completion time:
+- Deployment outcome and primary evidence:
+- Post-deployment health, monitoring, and representative operational evidence:
+- Rollback or recovery readiness:
+- Deployment or production-verification evidence state (`OperationallyVerified`, `NotRun`, or `Blocked`):
+
+The readiness decision and its Deployment-area result authorize or assess a candidate; they do not prove that the exact approved artifact was successfully deployed and is operating in the stated production scope. Record `OperationallyVerified` only from current primary deployment and post-deployment evidence. Failed, blocked, not-run, missing, stale, different-artifact, or different-scope evidence cannot support `production`.
+
 ## Scaling strategy
 
 | Area | State (`Applicable`, `NotApplicable`, `NotRun`, `Blocked`, `Failed`, `Verified`) | Authorized criteria and decision evidence | Supported envelope | Owner |

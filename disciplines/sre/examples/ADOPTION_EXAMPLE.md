@@ -49,7 +49,7 @@ It does not remove shared controls merely because they are inconvenient.
 - a production-readiness record tied to the fictitious candidate, with every applicable area assessed, Data migration, Security, and Privacy recorded separately when applicable, migration rehearsal plus irreversible-step handling and explicit go/no-go criteria where applicable, and no pass inferred from deployment, backup, or restore alone
 - a scaling applicability matrix that justifies simple single-instance choices, records representative validation that misses criteria as `Failed`, leaves unexecuted scaling validation as `NotRun`, and therefore does not report the overall scaling strategy `Verified` while either state exists
 
-The example does not claim `OperationallyVerified`: no real production service or representative production workload exists.
+The example does not claim `OperationallyVerified` or a `production` lifecycle state: no real production service, successful exact-artifact production deployment, post-deployment verification, or representative production workload exists. Its readiness record and any approval cannot substitute for those missing deployment facts.
 
 The completion report also lists checks not run, known limitations, accepted exceptions, residual risks, and follow-up owners.
 

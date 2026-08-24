@@ -141,6 +141,8 @@ Typical completion evidence includes:
 
 Evidence must distinguish **planned**, **implemented**, **tested**, **reviewed**, and **operationally verified**. These are not interchangeable states, despite humanity's recurring attempts to treat them as synonyms.
 
+When the explicitly selected Product Inception Lifecycle is used, a readiness `Pass` and accountable approval remain distinct from production deployment evidence. A `production` state requires current primary evidence that the exact approved artifact and configuration were successfully deployed into and are operating within the stated production environment and scope, with post-deployment verification and rollback or recovery readiness.
+
 ## Validation
 
 Validate the standards repository itself with:

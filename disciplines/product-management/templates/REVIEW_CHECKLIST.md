@@ -22,3 +22,4 @@ status: baseline
 - [ ] No state is inferred from another and code existence is not treated as completion.
 - [ ] Missing, blocked, inapplicable, synthetic, or unverified evidence is labelled accurately.
 - [ ] Product Management research provenance uses only `Performed`, `NotRun`, `Blocked`, or justified `NotApplicable`; `Performed` has attributable completed research evidence, and UX applicability is decided separately.
+- [ ] A `production` lifecycle state is not inferred from candidate approval or readiness; it identifies the exact approved artifact, configuration, production environment and scope, completed deployment record and outcome, post-deployment verification, approval authority, and rollback or recovery readiness.

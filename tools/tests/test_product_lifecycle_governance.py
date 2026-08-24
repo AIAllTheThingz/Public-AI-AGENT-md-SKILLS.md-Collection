@@ -884,6 +884,57 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             with self.subTest(scaling_evidence=evidence_contract):
                 self.assertIn(evidence_contract, scaling_rule)
 
+    def test_production_requires_exact_artifact_deployment_evidence(self) -> None:
+        lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
+        lifecycle_rule = h3_section(lifecycle, "GOV-PRODUCT-INCEPTION-008")
+        lifecycle_states = h2_section(lifecycle, "Product lifecycle states")
+        production_transition = h2_section(lifecycle, "Production transition")
+        product_evidence = h2_section(
+            read("disciplines/product-management/templates/EVIDENCE_RECORD_TEMPLATE.md"),
+            "Production transition",
+        )
+        sre_evidence = h2_section(
+            read("disciplines/sre/templates/EVIDENCE_RECORD_TEMPLATE.md"),
+            "Production transition evidence",
+        )
+
+        for contract in (
+            "complete `production-candidate` boundary remains satisfied",
+            "accountable delegated approval is recorded",
+            "exact approved artifact and configuration were successfully deployed",
+            "are operating within the stated production environment and scope",
+            "failed, blocked, not-run, missing, stale, or different-artifact",
+            "prevents `production`",
+        ):
+            with self.subTest(production_rule=contract):
+                self.assertIn(contract, lifecycle_rule)
+        for contract in (
+            "successfully deployed into and are operating within the stated production",
+            "failed, blocked, not-run, missing, stale, or different-artifact",
+        ):
+            with self.subTest(production_state=contract):
+                self.assertIn(contract, lifecycle_states)
+        for contract in (
+            "deployment identifier",
+            "start and completion time",
+            "post-deployment health or monitoring verification",
+            "rollback or recovery readiness",
+            "readiness `Pass`, approval to deploy, deployment plan",
+            "does not establish the `production` state",
+        ):
+            with self.subTest(production_transition=contract):
+                self.assertIn(contract, production_transition)
+        for template in (product_evidence, sre_evidence):
+            for contract in (
+                "Exact approved artifact, source revision, and configuration",
+                "Deployment record, owner, start time, and completion time",
+                "Post-deployment health, monitoring, and representative operational evidence",
+                "Rollback or recovery readiness",
+                "`OperationallyVerified`, `NotRun`, or `Blocked`",
+            ):
+                with self.subTest(template_contract=contract):
+                    self.assertIn(contract, template)
+
     def test_lifecycle_states_and_exceptions_fail_closed(self) -> None:
         lifecycle = read("governance/PRODUCT_INCEPTION_LIFECYCLE.md")
         evidence_states = h2_section(lifecycle, "Evidence states")
