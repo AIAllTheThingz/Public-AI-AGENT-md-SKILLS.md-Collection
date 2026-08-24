@@ -19,7 +19,7 @@ NEW_BASELINE_SOURCE_REVIEWS = {
 }
 
 FINAL_2026_08_23_NORMATIVE_REVISION = (
-    "3935a8c4e1dd971ddcefad5c84750b630ce99cb9"
+    "63eb0027e21e0ecd6b9776b387ccdfd4625a18ce"
 )
 
 
@@ -84,6 +84,8 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             "`Performed`, `NotRun`, `Blocked`, or justified `NotApplicable`",
             "`Performed` is reserved for research that actually occurred",
             "does not require selecting the separately applicable User Experience package",
+            "production-transition record identifies the exact approved artifact",
+            "deployment record and outcome, post-deployment operational evidence",
         ):
             with self.subTest(product_research=research_contract):
                 self.assertIn(research_contract, product_review)
@@ -113,6 +115,9 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             "`scaled-production`",
             "every applicable scaling area is `Verified`",
             "`Applicable`, `NotRun`, `Blocked`, or `Failed` area prevents",
+            "exact approved artifact and configuration were successfully deployed",
+            "failed, blocked, not-run, missing, stale, or different-artifact "
+            "deployment or production-verification evidence prevents",
             "complete Scaling Strategy Standard",
             "overall `Verified` decision",
             "`beta` label does not authorize production exposure",
@@ -168,6 +173,8 @@ class SourceReviewEvidenceTests(unittest.TestCase):
             "`Failed` records representative validation that executed but missed its criteria",
             "also prevents overall verification",
             "`NotApplicable` requires justification",
+            "candidate readiness `Pass` and its Deployment-area result from evidence",
+            "exact approved artifact was actually deployed and is operating",
         ):
             with self.subTest(scaling_contract=scaling_contract):
                 self.assertIn(scaling_contract, sre_review)
