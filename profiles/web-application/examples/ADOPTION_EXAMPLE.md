@@ -32,11 +32,15 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Conditional review
 
+- [Product Management](../../../disciplines/product-management/)
+- [User Experience](../../../disciplines/user-experience/)
 - [Api Engineering](../../../disciplines/api-engineering/)
 - [Database](../../../disciplines/database/)
 - [Integration](../../../disciplines/integration/)
 - [Sre](../../../disciplines/sre/)
 - [Documentation](../../../disciplines/documentation/)
+
+This base-profile example leaves Product Management and User Experience conditional. An adopter promotes them when the change defines material product outcomes or requirements, or owns material journeys, interactions, recovery states, or UX claims.
 
 ## Project decisions
 

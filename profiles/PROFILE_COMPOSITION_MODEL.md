@@ -33,6 +33,8 @@ external obligations
 
 - Governance controls authority, risk, evidence, exceptions, review, and production readiness.
 - Profiles describe project shape and expected package composition.
+- Product Management governs product definition, requirements, scope, acceptance, decisions, and traceability when a product or material capability is in scope.
+- User Experience governs research, journeys, tasks, workflows, interactions, usability, and UX validation when people pursue goals through an owned experience; Accessibility remains a separate applicable discipline.
 - Languages control implementation conventions and runtime behavior.
 - Disciplines control cross-cutting engineering work.
 - Frameworks specialize application behavior.
@@ -42,6 +44,8 @@ external obligations
 - Networking packages control device, controller, routing, switching, policy, fabric, firmware, and network-recovery boundaries.
 - Project instructions declare actual facts, targets, owners, and commands.
 - Evidence records what was actually implemented, validated, reviewed, and approved.
+
+Product Management and User Experience are conditional profile overlays. Selecting a profile does not add either package to the required baseline. Promote each package only when the scoped project or change has its concern, and record a meaningful omission rationale when it would reasonably appear applicable.
 
 ## Primary profile
 
@@ -80,6 +84,8 @@ Record:
 - required packages
 - conditional packages
 - omitted packages
+- whether the optional Product Inception Lifecycle was selected and, if selected, its applicable gates and product lifecycle state
+- research state and separate UX/Accessibility evidence boundaries when User Experience applies
 - scope boundaries
 - nested instruction locations
 - risk classification

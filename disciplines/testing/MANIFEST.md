@@ -29,6 +29,7 @@ status: baseline
 - `AGENTS.md` preserves stable discipline rule identifiers and references the supporting standards.
 - `README.md` explains scope, adoption, tailoring, evidence, validation, companion disciplines, and limitations.
 - Every supporting standard has unique front matter and a completion gate.
+- Performance-test execution states and outcomes are recorded separately, and a validated claim requires every applicable outcome to be `Pass`.
 - Templates contain placeholders rather than environment-specific production values.
 - The example uses fictitious context and demonstrates composition rather than claiming universal applicability.
 - Relative Markdown links resolve.

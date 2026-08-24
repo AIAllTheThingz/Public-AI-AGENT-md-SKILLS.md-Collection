@@ -98,12 +98,16 @@ profiles/multi-tenant-saas/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Integration Engineering](../../disciplines/integration/)
 - [Data Engineering](../../disciplines/data-engineering/)
 - [Accessibility](../../disciplines/accessibility/)
 - [Documentation](../../disciplines/documentation/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+Product Management becomes required when the SaaS scope defines or materially changes a tenant or user outcome, requirement set, MVP boundary, acceptance criteria, or product decision. User Experience becomes required when tenants, end users, administrators, or support operators interact with a materially changed workflow or interface. API-only SaaS may justify UX omission, but must not infer UX validation from API testing. Profile selection alone does not make either discipline mandatory.
 
 ## Language, framework, and platform selection
 

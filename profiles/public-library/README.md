@@ -93,6 +93,8 @@ profiles/public-library/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Application Security](../../disciplines/application-security/)
 - [API Engineering](../../disciplines/api-engineering/)
 - [CI/CD](../../disciplines/ci-cd/)
@@ -100,6 +102,8 @@ profiles/public-library/
 - [Privacy and Data Governance](../../disciplines/privacy/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+Product Management becomes required when the library defines or materially changes a consumer outcome, requirement set, supported scope, acceptance criteria, or product decision. User Experience becomes required when consumers pursue material goals through interactive documentation, tooling, samples, or other governed workflows; API and documentation review alone must not be presented as observed UX evidence. Profile selection alone does not make either discipline mandatory.
 
 ## Language, framework, and platform selection
 

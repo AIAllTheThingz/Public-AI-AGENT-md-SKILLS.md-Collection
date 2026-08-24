@@ -18,7 +18,20 @@ The example documentation was created and repository-level structure and link ch
 
 ## Summary
 
-The example defines a fictitious `WEB_API` composition with risk `moderate`, selected standards, root and nested instructions, architecture, risk, test, operations, and schema-shaped evidence.
+The example defines a fictitious `WEB_API` composition with risk `moderate`, explicitly selects the Product Inception Lifecycle, and records selected standards, root and nested instructions, architecture, risk, test, operations, and schema-shaped evidence.
+
+## Product inception lifecycle
+
+The [Product Inception Lifecycle](../../../governance/PRODUCT_INCEPTION_LIFECYCLE.md) is explicitly selected for this fictitious new-product scope. Selection is not a gate pass, and the prototype exception is not invoked.
+
+| Gate | Evidence state | Decision | Rationale |
+|---|---|---|---|
+| Concept | `NotRun` | `Blocked` | No accountable concept review or approval was performed. |
+| Requirements | `NotRun` | `Blocked` | No accountable requirements review or approval was performed. |
+| Design | `NotRun` | `Blocked` | No accountable design review or approval was performed. |
+| Build | `NotRun` | `Blocked` | No accountable Build Gate review or approval was performed; normal production implementation must not start. |
+
+No `production-candidate`, `production`, or `scaled-production` state is claimed. The Site Reliability Engineering package is not selected, so the lifecycle's complete production-readiness and scaling prerequisites are unsatisfied and those later states remain unavailable.
 
 ## Files changed
 

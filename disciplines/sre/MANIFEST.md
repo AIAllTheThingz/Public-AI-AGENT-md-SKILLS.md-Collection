@@ -13,6 +13,8 @@ status: baseline
 - `MANIFEST.md`
 - `standards/SLO_ERROR_BUDGET_STANDARD.md`
 - `standards/CAPACITY_PERFORMANCE_STANDARD.md`
+- `standards/PRODUCTION_READINESS_STANDARD.md`
+- `standards/SCALING_STRATEGY_STANDARD.md`
 - `standards/RESILIENCE_RECOVERY_STANDARD.md`
 - `standards/INCIDENT_MANAGEMENT_STANDARD.md`
 - `standards/RUNBOOK_ONCALL_STANDARD.md`

@@ -94,6 +94,8 @@ profiles/serverless-function/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Architecture and System Design](../../disciplines/architecture/)
 - [Site Reliability Engineering](../../disciplines/sre/)
 - [Release Engineering](../../disciplines/release-engineering/)
@@ -101,6 +103,8 @@ profiles/serverless-function/
 - [Data Engineering](../../disciplines/data-engineering/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+Product Management becomes required when the function defines or materially changes a product capability, actor outcome, requirement set, or supported scope. User Experience becomes required only when this scope owns a human workflow or interface; a bounded event handler implementing an existing governed contract may justify omission.
 
 ## Language, framework, and platform selection
 

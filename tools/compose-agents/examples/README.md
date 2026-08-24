@@ -19,7 +19,7 @@ python tools/compose-agents/compose_agents.py --manifest project-manifest.json -
 
 ## Expected behavior
 
-Examples use fictitious or repository-local inputs. Schema 1.1 manifests may select virtualization, operating-system, and networking packages; the composed bundle records and copies their standard entry points. Review the command before execution and use dry-run for writing tools.
+Examples use fictitious or repository-local inputs. Schema 1.1 manifests may select virtualization, operating-system, and networking packages. The repository-defined `AIAllTheThingz.governanceSelections` extension may select repository-relative Markdown sources under `governance/`. The composed bundle canonicalizes those paths and records and copies the selected governance sources, recognized transitive dependencies, and selected package entry points. A copied dependency remains reference material and does not silently select its discipline package. Review the command before execution and use dry-run for writing tools.
 
 ## Boundary
 

@@ -34,10 +34,14 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Conditional review
 
+- [Product Management](../../../disciplines/product-management/)
+- [User Experience](../../../disciplines/user-experience/)
 - [Integration](../../../disciplines/integration/)
 - [Data Engineering](../../../disciplines/data-engineering/)
 - [Accessibility](../../../disciplines/accessibility/)
 - [Documentation](../../../disciplines/documentation/)
+
+This base-profile example leaves Product Management and User Experience conditional. Promote Product Management for material tenant or user outcomes, requirements, scope, or product decisions, and User Experience for an owned tenant, end-user, administrator, or support workflow.
 
 ## Project decisions
 

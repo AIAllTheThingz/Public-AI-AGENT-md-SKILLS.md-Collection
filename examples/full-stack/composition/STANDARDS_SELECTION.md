@@ -23,10 +23,13 @@ This document explains why the example selects each standards package. It preven
 | Package | Rationale |
 |---|---|
 | Governance | Organization-wide behavior, risk, evidence, exceptions, security, and review apply to every example. |
+| Governance: [Product Inception Lifecycle](../../../governance/PRODUCT_INCEPTION_LIFECYCLE.md) | Explicitly selected because the example models a fictitious new product and its path from inception through build. The selection activates lifecycle gates for this scope but does not imply a gate result. |
 | Profile: WEB_APPLICATION | Defines the project-type overlay and common operational concerns. |
 | Language: C# | Defines compiler/language, nullability, async, API, resource, security, interop, scripting, testing, and completion expectations. |
 | Runtime: .NET | Defines SDK, target-framework, runtime, dependency, application-model, build, and publishing expectations. |
 | Language: JavaScript and TypeScript | Defines implementation, dependency, testing, security, documentation, and completion expectations. |
+| Discipline: Product Management | Promoted from the profile's conditional overlays because this example defines a fictitious product problem, intended users, requirements, MVP boundary, acceptance criteria, decisions, and traceability. |
+| Discipline: User Experience | Promoted from the profile's conditional overlays because this example owns a browser journey, interaction and recovery states, honest research state, and UX validation separately from Accessibility. |
 | Discipline: Application Security | Selected because the fictitious architecture and change surface require this concern. |
 | Discipline: Architecture and System Design | Selected because the fictitious architecture and change surface require this concern. |
 | Discipline: Testing and Quality Engineering | Selected because the fictitious architecture and change surface require this concern. |
@@ -45,6 +48,8 @@ This document explains why the example selects each standards package. It preven
 | Platform: Kubernetes | Selected because the example is packaged or operated on this platform. |
 | Framework: ASP.NET Core | Adds framework-specific implementation and security expectations. |
 | Framework: React | Adds framework-specific implementation and security expectations. |
+
+The schema-compatible manifest extension `AIAllTheThingz.governanceSelections` records this selection as `governance/PRODUCT_INCEPTION_LIFECYCLE.md`. It supplements the standard package fields; it does not treat governance as a discipline or create a new top-level manifest field.
 
 ## Meaningful omissions
 

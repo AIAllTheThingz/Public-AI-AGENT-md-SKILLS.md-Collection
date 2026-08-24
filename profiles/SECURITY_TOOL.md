@@ -66,6 +66,8 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Conditionally required disciplines
 
+- [Product Management](../disciplines/product-management/)
+- [User Experience](../disciplines/user-experience/)
 - `disciplines/ci-cd/AGENTS.md`
 - `disciplines/integration/AGENTS.md`
 - `disciplines/sre/AGENTS.md`
@@ -73,6 +75,8 @@ This is a starting point only. The actual project or change must be classified u
 - `disciplines/database/AGENTS.md`
 
 Conditional packages become required when their concern is present. Document every omission that would reasonably appear applicable.
+
+Product Management becomes required when the tool defines or materially changes a product capability, analyst or operator outcome, requirement set, or supported scope. User Experience becomes required for material analyst, operator, remediation, approval, or recovery workflows; a headless scanner implementing an existing governed contract may justify omission.
 
 ## Required project decisions
 

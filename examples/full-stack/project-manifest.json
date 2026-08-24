@@ -8,6 +8,8 @@
     "javascript-typescript"
   ],
   "disciplines": [
+    "product-management",
+    "user-experience",
     "application-security",
     "architecture",
     "testing",
@@ -35,5 +37,10 @@
   "operatingSystems": [],
   "networking": [],
   "risk": "high",
+  "extensions": {
+    "AIAllTheThingz.governanceSelections": [
+      "governance/PRODUCT_INCEPTION_LIFECYCLE.md"
+    ]
+  },
   "exceptions": []
 }

@@ -51,6 +51,7 @@ def git_source_at(revision: str, relative: str) -> str:
     completed = subprocess.run(
         ["git", "-C", str(REPO_ROOT), "show", f"{revision}:{relative}"],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -217,7 +218,7 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertEqual(source["tag"], "v0.10.0")
         self.assertEqual(source["commit"], CHECKPOINT_COMMIT)
         self.assertEqual(self.inventory["candidateVersion"], CANDIDATE)
-        self.assertEqual(self.inventory["compatibilityClassification"], "compatible")
+        self.assertEqual(self.inventory["compatibilityClassification"], "breaking")
 
         pinned = self.inventory["publishedCheckpointInventory"]
         self.assertEqual(pinned["path"], "releases/compatibility/0.10.0-checkpoint.json")
@@ -543,13 +544,20 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
 
     def test_migration_exercise_preserves_checkpoint_contracts(self):
         migration = self.inventory["migrationFrom0100"]
-        self.assertEqual(migration["breakingChanges"], [])
-        self.assertGreaterEqual(len(migration["requiredActions"]), 3)
+        self.assertEqual(self.inventory["compatibilityClassification"], "breaking")
+        self.assertTrue(migration["breakingChanges"])
+        breaking = "\n".join(migration["breakingChanges"])
+        self.assertIn("Site Reliability Engineering", breaking)
+        self.assertIn("Testing and Quality Engineering", breaking)
+        self.assertIn("Product Management", breaking)
+        self.assertIn("User Experience", breaking)
+        self.assertGreaterEqual(len(migration["requiredActions"]), 5)
         self.assertGreaterEqual(len(migration["preservedContracts"]), 6)
         notes = (REPO_ROOT / "releases" / "migrations" / f"{CANDIDATE}.md").read_text(encoding="utf-8")
         self.assertIn("# Migration to 1.0.0-rc.1 from 0.10.0", notes)
         self.assertIn("## Required actions", notes)
-        self.assertIn("None relative to published `v0.10.0`", notes)
+        self.assertIn("The candidate is breaking", notes)
+        self.assertNotIn("declares no breaking change", notes)
         self.assertIn("Final `1.0.0` has not yet been approved or published", notes)
 
     def test_release_validator_accepts_rc_tag_contract(self):

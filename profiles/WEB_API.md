@@ -66,6 +66,8 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Conditionally required disciplines
 
+- [Product Management](../disciplines/product-management/)
+- [User Experience](../disciplines/user-experience/)
 - `disciplines/database/AGENTS.md`
 - `disciplines/integration/AGENTS.md`
 - `disciplines/sre/AGENTS.md`
@@ -73,6 +75,8 @@ This is a starting point only. The actual project or change must be classified u
 - `disciplines/data-engineering/AGENTS.md`
 
 Conditional packages become required when their concern is present. Document every omission that would reasonably appear applicable.
+
+Product Management becomes required when the API defines or materially changes a product capability, user or actor outcome, requirement set, or MVP boundary. User Experience becomes required when human consumers pursue governed goals through developer portals, consoles, interactive workflows, or other interfaces; ordinary maintenance against existing approved requirements does not force either discipline.
 
 ## Required project decisions
 

@@ -60,6 +60,7 @@ class ReleaseCandidateArchiveHeadHistoryTests(unittest.TestCase):
                         "HEAD:languages/csharp/standards",
                     ],
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )
@@ -75,6 +76,7 @@ class ReleaseCandidateArchiveHeadHistoryTests(unittest.TestCase):
                         f"{CSHARP_PROMOTION_COMMIT}:languages/csharp/standards",
                     ],
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )
@@ -100,6 +102,7 @@ class ReleaseCandidateArchiveHeadHistoryTests(unittest.TestCase):
                 initialized = subprocess.run(
                     ["git", "-C", str(fixture), "init", "--quiet"],
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )
@@ -110,6 +113,7 @@ class ReleaseCandidateArchiveHeadHistoryTests(unittest.TestCase):
                 top_level = subprocess.run(
                     ["git", "-C", str(fixture), "rev-parse", "--show-toplevel"],
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )
@@ -120,6 +124,7 @@ class ReleaseCandidateArchiveHeadHistoryTests(unittest.TestCase):
                     ["git", "-C", str(fixture), "config", "user.name", "RC fixture"],
                     check=True,
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                 )
                 subprocess.run(
@@ -133,6 +138,7 @@ class ReleaseCandidateArchiveHeadHistoryTests(unittest.TestCase):
                     ],
                     check=True,
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                 )
                 (fixture / "marker.txt").write_text("fixture repository\n", encoding="utf-8")
@@ -140,17 +146,20 @@ class ReleaseCandidateArchiveHeadHistoryTests(unittest.TestCase):
                     ["git", "-C", str(fixture), "add", "marker.txt"],
                     check=True,
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                 )
                 subprocess.run(
                     ["git", "-C", str(fixture), "commit", "--quiet", "-m", "fixture"],
                     check=True,
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                 )
                 committed = subprocess.run(
                     ["git", "-C", str(fixture), "rev-parse", "HEAD"],
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )
@@ -166,6 +175,7 @@ class ReleaseCandidateArchiveHeadHistoryTests(unittest.TestCase):
                         "HEAD:languages/csharp/standards",
                     ],
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )

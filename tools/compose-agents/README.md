@@ -9,7 +9,7 @@ status: baseline
 
 ## Purpose
 
-Create a traceable standards bundle from a reviewed project manifest, including selected virtualization, operating-system, and networking standards, without concatenating or rewriting source standards.
+Create a traceable standards bundle from a reviewed project manifest, including repository-defined governance selections and selected virtualization, operating-system, and networking standards, without concatenating or rewriting source standards.
 
 Status: **baseline**
 
@@ -46,6 +46,9 @@ python tools/compose-agents/compose_agents.py --help
 
 - manifest schema validity
 - selected package existence
+- selected `AIAllTheThingz.governanceSelections` path existence and containment under `governance/`
+- canonicalized governance selections in dependency lookup, source inventory, copied paths, and the generated index, with transitive closure including the Product Inception Lifecycle's Product Management traceability, SRE capacity, readiness, and scaling contracts, and referenced source-review evidence
+- missing required dependencies for a recognized governance selection are reported as actionable `INPUT_ERROR` findings with exit code `2`
 - selected virtualization, operating-system, and networking package entry points
 - required governance sources
 - root-contained source paths
@@ -109,7 +112,7 @@ python tools/validate-all/run_all.py --include-tests
 
 Backward-compatible changes may add optional flags, summary fields, metadata, or new finding codes.
 
-Version 1.1 recognizes the optional `virtualization`, `operatingSystems`, and `networking` manifest arrays, includes each selected package's `AGENTS.md`, `README.md`, and `MANIFEST.md`, and reports those selections in the generated composition index. Version 1.0 manifests remain valid.
+Version 1.1 recognizes the optional `virtualization`, `operatingSystems`, and `networking` manifest arrays, includes each selected package's `AGENTS.md`, `README.md`, and `MANIFEST.md`, and reports those selections in the generated composition index. It also recognizes the repository-defined `AIAllTheThingz.governanceSelections` extension, validates and canonicalizes each repository-relative Markdown path under `governance/`, and includes every selected governance source plus the transitive dependency closure for recognized selections in the bundle and generated index. For the Product Inception Lifecycle, that closure includes the Product Management traceability contract, SRE capacity, production-readiness and scaling contracts, their evidence templates and package entry points, and referenced maturity and durable source-review records; copying those dependencies does not silently select a discipline package or establish a gate result. Version 1.0 manifests remain valid.
 
 Breaking changes include:
 

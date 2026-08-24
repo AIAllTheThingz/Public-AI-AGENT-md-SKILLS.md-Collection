@@ -36,6 +36,27 @@ status: baseline
 |---|---|---|---|
 | | | | |
 
+## Performance validation
+
+| Test type | State (`Applicable`, `NotApplicable`, `NotRun`, `Blocked`, `Tested`) | Outcome (`Pass`, `Fail`, `Blocked`, `NotApplicable`) | Owner | Workload/environment | Criteria | Authorization and safeguards | Stop conditions | Primary evidence/result |
+|---|---|---|---|---|---|---|---|---|
+| Baseline | | | | | | | | |
+| Load | | | | | | | | |
+| Stress | | | | | | | | |
+| Spike | | | | | | | | |
+| Soak/endurance | | | | | | | | |
+| Scaling | | | | | | | | |
+| Failure under load | | | | | | | | |
+| Recovery under load | | | | | | | | |
+
+`Tested` records execution evidence and does not imply `Pass`. Use `Pass` only when current primary evidence meets the authorized criteria for the exact artifact and representative conditions. Record outcome `Blocked` for any applicable type that is not successfully decided; align `NotApplicable` state and outcome and explain the rationale.
+
+Selected metrics and rationale: throughput; p50/p95/p99; error rate; CPU; memory; I/O; connections; queue depth; database utilization; service saturation; cost.
+
+- Exact artifact, configuration, data, topology, duration, tools, and versions:
+- Raw result location and supported operating envelope:
+- Recovery observations, limitations, and unsafe/unexecuted scenarios:
+
 ## Checks not run
 
 | Check | Reason | Risk | Follow-up owner |

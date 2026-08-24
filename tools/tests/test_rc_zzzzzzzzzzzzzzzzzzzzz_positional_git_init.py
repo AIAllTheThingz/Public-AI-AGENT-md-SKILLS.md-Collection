@@ -29,6 +29,7 @@ class ReleaseCandidatePositionalGitInitTests(unittest.TestCase):
                     ["git", "init", "--quiet", str(fixture)],
                     cwd=root,
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )
@@ -39,6 +40,7 @@ class ReleaseCandidatePositionalGitInitTests(unittest.TestCase):
                 top_level = subprocess.run(
                     ["git", "-C", str(fixture), "rev-parse", "--show-toplevel"],
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )
@@ -56,6 +58,7 @@ class ReleaseCandidatePositionalGitInitTests(unittest.TestCase):
                         "HEAD:languages/csharp/standards",
                     ],
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )
@@ -78,6 +81,7 @@ class ReleaseCandidatePositionalGitInitTests(unittest.TestCase):
                     ["git", "init", "--quiet"],
                     cwd=root,
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )

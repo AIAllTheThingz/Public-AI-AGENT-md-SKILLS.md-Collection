@@ -154,6 +154,7 @@ def git_output(root: Path, *args: str) -> str | None:
     completed = subprocess.run(
         ["git", "-C", str(root), *args],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )

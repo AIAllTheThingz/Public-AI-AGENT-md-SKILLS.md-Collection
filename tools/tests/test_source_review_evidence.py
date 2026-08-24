@@ -1,13 +1,220 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from pathlib import Path
 
 from helpers import REPO_ROOT
 
 
+NEW_BASELINE_SOURCE_REVIEWS = {
+    "disciplines-product-management": "disciplines/product-management",
+    "disciplines-sre": "disciplines/sre",
+    "disciplines-testing": "disciplines/testing",
+    "disciplines-user-experience": "disciplines/user-experience",
+    "governance-product-inception-lifecycle": (
+        "governance/PRODUCT_INCEPTION_LIFECYCLE.md"
+    ),
+}
+
+FINAL_2026_08_23_NORMATIVE_REVISION = (
+    "63eb0027e21e0ecd6b9776b387ccdfd4625a18ce"
+)
+
+
 class SourceReviewEvidenceTests(unittest.TestCase):
+    def test_new_baseline_components_have_durable_source_reviews(self):
+        registry = json.loads(
+            (REPO_ROOT / "SOURCE_REVIEWS.json").read_text(encoding="utf-8")
+        )
+        records = {record["id"]: record for record in registry["records"]}
+
+        for record_id, expected_scope in NEW_BASELINE_SOURCE_REVIEWS.items():
+            with self.subTest(record=record_id):
+                record = records.get(record_id)
+                self.assertIsNotNone(record, f"missing source-review record: {record_id}")
+                assert record is not None
+                self.assertEqual(record["scope"], expected_scope)
+                self.assertEqual(record["maturity"], "baseline")
+                self.assertIsNotNone(record["lastReviewed"])
+                self.assertEqual(
+                    record["reviewEvidence"],
+                    f"source-reviews/{record['lastReviewed']}.md",
+                )
+
+                evidence_path = REPO_ROOT / record["reviewEvidence"]
+                self.assertTrue(evidence_path.is_file(), record["reviewEvidence"])
+                evidence = evidence_path.read_text(encoding="utf-8")
+                self.assertIn(expected_scope, evidence)
+
+    def test_final_lifecycle_sre_and_testing_surfaces_are_in_the_durable_review(self):
+        evidence = (
+            REPO_ROOT / "source-reviews" / "2026-08-23.md"
+        ).read_text(encoding="utf-8")
+        revisions = set(
+            re.findall(
+                r"(?im)^- [^\n]*repository source revision reviewed"
+                r"[^:\n]*: `([0-9a-f]{40})`",
+                evidence,
+            )
+        )
+        self.assertEqual(revisions, {FINAL_2026_08_23_NORMATIVE_REVISION})
+        self.assertIn(
+            "Final-revision content re-review: **Performed** for all five "
+            "registered scopes",
+            evidence,
+        )
+
+        product_review = evidence.split(
+            "### Product Management (`disciplines/product-management`)",
+            1,
+        )[1].split("### User Experience", 1)[0]
+        for acceptance_contract in (
+            "separates acceptance decisions from execution and evidence states",
+            "`Pass`, `Fail`, `Blocked`, `NotRun`, or justified `NotApplicable`",
+            "`Tested`, `Reviewed`, implementation presence, or output presence "
+            "does not imply acceptance",
+            "repository-authored fail-closed evidence controls",
+        ):
+            with self.subTest(product_acceptance=acceptance_contract):
+                self.assertIn(acceptance_contract, product_review)
+        for research_contract in (
+            "independently adoptable Product Management package record research",
+            "`Performed`, `NotRun`, `Blocked`, or justified `NotApplicable`",
+            "`Performed` is reserved for research that actually occurred",
+            "does not require selecting the separately applicable User Experience package",
+            "production-transition record identifies the exact approved artifact",
+            "deployment record and outcome, post-deployment operational evidence",
+        ):
+            with self.subTest(product_research=research_contract):
+                self.assertIn(research_contract, product_review)
+
+        lifecycle_review = evidence.split(
+            "### Product Inception Lifecycle "
+            "(`governance/PRODUCT_INCEPTION_LIFECYCLE.md`)",
+            1,
+        )[1].split("## Authoritative sources reviewed", 1)[0]
+        for contract in (
+            "explicitly selected",
+            "Design Gate",
+            "Build Gate",
+            "`GOV-PRODUCT-INCEPTION-001`",
+            "`GOV-PRODUCT-INCEPTION-006`",
+            "`GOV-PRODUCT-INCEPTION-012`",
+            "closed set of lifecycle evidence states",
+            "Product Management package selection",
+            "complete requirement traceability",
+            "every applicable functional and nonfunctional acceptance criterion",
+            "current explicit `Pass`",
+            "readiness evidence does not replace acceptance evidence",
+            "complete Production Readiness Standard",
+            "Data migration",
+            "Capacity",
+            "Cost",
+            "`scaled-production`",
+            "every applicable scaling area is `Verified`",
+            "`Applicable`, `NotRun`, `Blocked`, or `Failed` area prevents",
+            "exact approved artifact and configuration were successfully deployed",
+            "failed, blocked, not-run, missing, stale, or different-artifact "
+            "deployment or production-verification evidence prevents",
+            "complete Scaling Strategy Standard",
+            "overall `Verified` decision",
+            "`beta` label does not authorize production exposure",
+            "exceptions cannot convert failed, blocked, not-run, or "
+            "missing-package evidence",
+            "`Pass`",
+            "`Fail`",
+            "`Blocked`",
+        ):
+            with self.subTest(lifecycle_contract=contract):
+                self.assertIn(contract, lifecycle_review)
+
+        ux_review = evidence.split(
+            "### User Experience (`disciplines/user-experience`)",
+            1,
+        )[1].split("### Site Reliability Engineering", 1)[0]
+        for research_state in (
+            "`Performed`",
+            "`NotRun`",
+            "`Blocked`",
+            "`NotApplicable`",
+        ):
+            with self.subTest(research_state=research_state):
+                self.assertIn(research_state, ux_review)
+        self.assertIn("evidence template", ux_review)
+        self.assertIn("repository-authored evidence controls", ux_review)
+        for validation_contract in (
+            "UX-validation execution or evidence state separate from per-method "
+            "and overall outcome",
+            "`Tested`, `Reviewed`, or `OperationallyVerified` does not imply `Pass`",
+            "requires a separate overall `Pass` supported by successful outcomes "
+            "for every applicable method and claim",
+            "Any applicable failed, blocked, not-run, missing, stale, or "
+            "different-version result prevents the claim",
+            "standalone usability review template record per-method outcome, "
+            "separate overall outcome, decision authority",
+            "fail-closed outcome controls are repository-authored",
+        ):
+            with self.subTest(ux_validation=validation_contract):
+                self.assertIn(validation_contract, ux_review)
+
+        sre_review = evidence.split(
+            "### Site Reliability Engineering (`disciplines/sre`)",
+            1,
+        )[1].split("### Testing and Quality Engineering", 1)[0]
+        for readiness_area in ("Privacy", "Data migration"):
+            with self.subTest(sre_readiness_area=readiness_area):
+                self.assertIn(readiness_area, sre_review)
+        for scaling_contract in (
+            "overall scaling-strategy `Verified` claim",
+            "every applicable area is `Verified`",
+            "`Applicable`, `NotRun`, or `Blocked`",
+            "`Failed` records representative validation that executed but missed its criteria",
+            "also prevents overall verification",
+            "`NotApplicable` requires justification",
+            "candidate readiness `Pass` and its Deployment-area result from evidence",
+            "exact approved artifact was actually deployed and is operating",
+        ):
+            with self.subTest(scaling_contract=scaling_contract):
+                self.assertIn(scaling_contract, sre_review)
+        self.assertIn("repository-authored evidence controls", sre_review)
+
+        testing_review = evidence.split(
+            "### Testing and Quality Engineering (`disciplines/testing`)",
+            1,
+        )[1].split("### Product Inception Lifecycle", 1)[0]
+        for control in (
+            "numbered package rule",
+            "per-test owner",
+            "explicit execution authorization and safeguards",
+            "safe stop conditions",
+            "execution state",
+            "separate `Pass`, `Fail`, `Blocked`, or justified `NotApplicable` "
+            "outcome",
+            "`Tested` does not imply `Pass`",
+            "Any applicable failed, blocked, not-run, missing, stale, or "
+            "different-artifact result prevents that claim",
+            "evidence template",
+        ):
+            with self.subTest(testing_control=control):
+                self.assertIn(control, testing_review)
+        self.assertIn("repository-authored evidence controls", testing_review)
+
+        for limitation in (
+            "Full ISO standards text: **NotRun**",
+            "Later direct HTTP reachability recheck of the five ISO catalog "
+            "URLs: **Blocked** by HTTP 403",
+            "No user research, participant study, usability review, product "
+            "adoption, lifecycle-gate execution",
+            "No SRE adoption, readiness decision, scaling validation, "
+            "performance test, failure test, recovery test",
+            "it did not perform a second network retrieval and does not claim "
+            "that every source remained reachable",
+        ):
+            with self.subTest(limitation=limitation):
+                self.assertIn(limitation, evidence)
+
     def test_production_registry_is_granular_and_evidence_backed(self):
         registry = json.loads((REPO_ROOT / "SOURCE_REVIEWS.json").read_text(encoding="utf-8"))
         records = registry["records"]

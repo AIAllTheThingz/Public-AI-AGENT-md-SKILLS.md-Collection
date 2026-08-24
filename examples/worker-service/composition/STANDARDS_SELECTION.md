@@ -40,6 +40,8 @@ This document explains why the example selects each standards package. It preven
 
 ## Meaningful omissions
 
+- **Product Management:** The example worker implements an existing fictional message-processing contract and does not define a new product, material user outcome, requirement set, or MVP boundary.
+- **User Experience:** The worker is headless and owns no human workflow or interface; operational runbooks and telemetry are not represented as UX validation.
 - **API Engineering:** The worker consumes messages and calls APIs but does not expose a public API contract. Integration Engineering governs its boundaries.
 - **Database Engineering:** No persistent relational schema is defined.
 - **Privacy:** The fictitious payload is synthetic. Add Privacy whenever personal, sensitive, or regulated data is processed.

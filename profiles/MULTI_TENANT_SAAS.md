@@ -67,12 +67,16 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Conditionally required disciplines
 
+- [Product Management](../disciplines/product-management/)
+- [User Experience](../disciplines/user-experience/)
 - `disciplines/integration/AGENTS.md`
 - `disciplines/data-engineering/AGENTS.md`
 - `disciplines/accessibility/AGENTS.md`
 - `disciplines/documentation/AGENTS.md`
 
 Conditional packages become required when their concern is present. Document every omission that would reasonably appear applicable.
+
+Product Management becomes required when the SaaS scope defines or materially changes a tenant or user outcome, requirement set, MVP boundary, acceptance criteria, or product decision. User Experience becomes required when tenants, end users, administrators, or support operators interact with a materially changed workflow or interface. API-only SaaS may justify UX omission, but must not infer UX validation from API testing. Profile selection alone does not make either discipline mandatory.
 
 ## Required project decisions
 

@@ -93,6 +93,7 @@ class ValidateAllTests(unittest.TestCase):
                     completed = subprocess.run(
                         ["git", "-C", str(root), "cat-file", "-e", f"{commit}^{{commit}}"],
                         text=True,
+                        encoding="utf-8",
                         capture_output=True,
                         check=False,
                     )
@@ -110,6 +111,7 @@ class ValidateAllTests(unittest.TestCase):
                         command,
                         cwd=fixture,
                         text=True,
+                        encoding="utf-8",
                         capture_output=True,
                         check=False,
                     )
@@ -123,6 +125,7 @@ class ValidateAllTests(unittest.TestCase):
                         command,
                         cwd=fixture,
                         text=True,
+                        encoding="utf-8",
                         capture_output=True,
                         check=False,
                     )
@@ -154,6 +157,7 @@ class ValidateAllTests(unittest.TestCase):
                     command,
                     cwd=root,
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )
@@ -168,6 +172,7 @@ class ValidateAllTests(unittest.TestCase):
                     command,
                     cwd=root,
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )
@@ -182,6 +187,7 @@ class ValidateAllTests(unittest.TestCase):
                     completed = subprocess.run(
                         ["git", "-C", str(root), "cat-file", "-e", f"{commit}^{{commit}}"],
                         text=True,
+                        encoding="utf-8",
                         capture_output=True,
                         check=False,
                     )
@@ -197,6 +203,7 @@ class ValidateAllTests(unittest.TestCase):
                 completed = subprocess.run(
                     ["git", "-C", str(root), "show-ref", "--verify", "--quiet", ref],
                     text=True,
+                    encoding="utf-8",
                     capture_output=True,
                     check=False,
                 )

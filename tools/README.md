@@ -42,7 +42,7 @@ The tools are deliberately conservative. They validate implemented contracts and
 | [Validate Release](release/) | `validate_release.py` | read-only | Validate VERSION, changelog, release notes, migration notes, release policy, maturity policy, workflow, publication state, and tag matching. |
 | [Build Release](release/) | `build_release.py` | writes output | Build deterministic archives, SHA-256 checksums, release notes, migration notes, and a release manifest. |
 | [Generate Manifest](generate-manifest/) | `generate_manifest.py` | writes output | Produce a schema-valid project manifest from explicit profile, language, discipline, framework, platform, virtualization, operating-system, and networking selections. |
-| [Compose Agents](compose-agents/) | `compose_agents.py` | writes output | Create a traceable standards bundle, including selected virtualization, operating-system, and networking packages, without flattening or rewriting source standards. |
+| [Compose Agents](compose-agents/) | `compose_agents.py` | writes output | Create a traceable standards bundle, including repository-defined governance selections with recognized required-contract dependencies and selected virtualization, operating-system, and networking packages, without flattening or rewriting source standards. |
 | [Validate All](validate-all/) | `run_all.py` | read-only | Run and aggregate the complete validation pipeline. |
 
 See [`TOOL_CATALOG.md`](TOOL_CATALOG.md) for inputs, outputs, dependencies, and ownership.

@@ -18,6 +18,8 @@ This package is a **baseline**, not a claim of universal completeness. The adopt
 
 - service objectives and error budgets
 - capacity and performance
+- production readiness
+- explicit scaling implementation strategy
 - resilience and recovery
 - incident management
 - on-call and runbooks
@@ -55,6 +57,8 @@ disciplines/sre/
 ├── standards/
 │   ├── SLO_ERROR_BUDGET_STANDARD.md
 │   ├── CAPACITY_PERFORMANCE_STANDARD.md
+│   ├── PRODUCTION_READINESS_STANDARD.md
+│   ├── SCALING_STRATEGY_STANDARD.md
 │   ├── RESILIENCE_RECOVERY_STANDARD.md
 │   ├── INCIDENT_MANAGEMENT_STANDARD.md
 │   ├── RUNBOOK_ONCALL_STANDARD.md
@@ -81,6 +85,8 @@ Start with [`AGENTS.md`](AGENTS.md). It contains the mandatory agent rules, pres
 |---|---|
 | [`SLO and Error Budget Standard`](standards/SLO_ERROR_BUDGET_STANDARD.md) | Define service indicators, objectives, measurement windows, exclusions, ownership, and decision use for reliability risk. |
 | [`Capacity and Performance Standard`](standards/CAPACITY_PERFORMANCE_STANDARD.md) | Assess demand, saturation, quotas, bottlenecks, scaling, cost, and headroom using representative evidence. |
+| [`Production Readiness Standard`](standards/PRODUCTION_READINESS_STANDARD.md) | Decide whether the exact candidate is operationally ready using deployment, recovery, data-migration, observability, capacity, security, applicable privacy, ownership, cost, limitation, and risk evidence. |
+| [`Scaling Strategy Standard`](standards/SCALING_STRATEGY_STANDARD.md) | Make applicable scaling implementation choices explicit without imposing complexity on simple systems. |
 | [`Resilience and Recovery Standard`](standards/RESILIENCE_RECOVERY_STANDARD.md) | Define dependency failure, redundancy, degradation, backup, restore, RTO, RPO, failover, and recovery validation. |
 | [`Incident Management Standard`](standards/INCIDENT_MANAGEMENT_STANDARD.md) | Define detection, severity, roles, communication, containment, recovery, evidence preservation, and learning. |
 | [`Runbook and On-Call Standard`](standards/RUNBOOK_ONCALL_STANDARD.md) | Provide actionable diagnostics, safe procedures, escalation, access requirements, rollback, and ownership. |
@@ -122,6 +128,8 @@ Typical completion evidence includes:
 
 - defined SLOs or operating targets
 - capacity and saturation evidence
+- production-readiness per-area results, including Data migration and Privacy separately when applicable, plus a separate overall result and decision authority for the exact candidate and supported operating scope
+- scaling-strategy applicability decisions with `Failed` distinct from unresolved work, a separate overall state, and representative verification satisfying authorized criteria for every applicable area before the overall strategy is reported `Verified`
 - recovery and failover tests
 - reviewed runbooks and escalation
 - documented reliability risks
@@ -132,6 +140,8 @@ Typical completion evidence includes:
 - known limitations, unresolved risks, owners, and follow-up actions
 
 Evidence must distinguish **planned**, **implemented**, **tested**, **reviewed**, and **operationally verified**. These are not interchangeable states, despite humanity's recurring attempts to treat them as synonyms.
+
+When the explicitly selected Product Inception Lifecycle is used, a readiness `Pass` and accountable approval remain distinct from production deployment evidence. A `production` state requires current primary evidence that the exact approved artifact and configuration were successfully deployed into and are operating within the stated production environment and scope, with post-deployment verification and rollback or recovery readiness.
 
 ## Validation
 
@@ -144,6 +154,17 @@ python tools/check-links/check_links.py
 
 The adopting project must also define discipline-specific validation commands and review procedures. This package intentionally does not invent tool names, environments, credentials, endpoints, data sets, or production targets.
 
+## Authoritative starting points
+
+- [Google Site Reliability Engineering book](https://sre.google/sre-book/table-of-contents/)
+- [Google Site Reliability Workbook](https://sre.google/workbook/table-of-contents/)
+- [Kubernetes resource management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) and [Horizontal Pod Autoscaling](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/) when Kubernetes applies
+- [AWS Well-Architected Reliability Pillar](https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html), [Azure Well-Architected Reliability guidance](https://learn.microsoft.com/en-us/azure/well-architected/reliability/), or [Google Cloud Well-Architected Reliability pillar](https://docs.cloud.google.com/architecture/framework/reliability) only for the applicable cloud context
+
+These sources are starting points, not certification, compliance, vendor endorsement, or operational evidence. Technology-specific decisions also require the current official runtime, framework, platform, and service documentation for the selected boundary.
+
+Accountable review dates and sources are recorded in [`SOURCE_REVIEWS.json`](../../SOURCE_REVIEWS.json), with durable findings under [`source-reviews/`](../../source-reviews/).
+
 ## Common failure modes
 
 - creating SLOs that do not drive decisions
@@ -151,6 +172,8 @@ The adopting project must also define discipline-specific validation commands an
 - assuming backups are recoverable
 - writing runbooks that require tribal knowledge
 - treating every incident as operator error
+- treating deployment success as production readiness
+- forcing distributed infrastructure onto a workload that does not require it
 
 Other common mistakes include copying only selected controls without documenting omissions, declaring success without evidence, treating a scanner or checklist as proof by itself, and assuming the package removes the need for human accountability.
 
@@ -164,6 +187,7 @@ This package commonly composes with:
 - [`Release Engineering`](../release-engineering/)
 - [`Testing and Quality Engineering`](../testing/)
 - [`Documentation`](../documentation/)
+- [`Privacy`](../privacy/)
 
 Companion disciplines supplement this package. They do not replace its applicable rules.
 

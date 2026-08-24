@@ -97,6 +97,8 @@ profiles/security-tool/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [CI/CD](../../disciplines/ci-cd/)
 - [Integration Engineering](../../disciplines/integration/)
 - [Site Reliability Engineering](../../disciplines/sre/)
@@ -104,6 +106,8 @@ profiles/security-tool/
 - [Database Engineering](../../disciplines/database/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+Product Management becomes required when the tool defines or materially changes a product capability, analyst or operator outcome, requirement set, or supported scope. User Experience becomes required for material analyst, operator, remediation, approval, or recovery workflows; a headless scanner implementing an existing governed contract may justify omission.
 
 ## Language, framework, and platform selection
 

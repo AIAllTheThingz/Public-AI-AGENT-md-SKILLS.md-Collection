@@ -3,6 +3,146 @@
   "defaultReviewIntervalDays": 180,
   "records": [
     {
+      "id": "disciplines-product-management",
+      "scope": "disciplines/product-management",
+      "maturity": "baseline",
+      "owner": "Engineering discipline maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": "2026-08-23",
+      "reviewEvidence": "source-reviews/2026-08-23.md",
+      "authoritativeSources": [
+        {
+          "name": "ISO/IEC/IEEE 29148 requirements engineering catalog entry",
+          "url": "https://www.iso.org/standard/72089.html"
+        },
+        {
+          "name": "ISO/IEC/IEEE 15288 system life cycle processes catalog entry",
+          "url": "https://www.iso.org/standard/81702.html"
+        },
+        {
+          "name": "ISO/IEC 25010 product quality model catalog entry",
+          "url": "https://www.iso.org/standard/78176.html"
+        }
+      ],
+      "notes": "Official public ISO catalog metadata and abstracts were reviewed for the package's requirements, lifecycle, and quality-model starting points. Full ISO standards text was not accessed, and the package does not claim clause-level conformance or certification."
+    },
+    {
+      "id": "disciplines-user-experience",
+      "scope": "disciplines/user-experience",
+      "maturity": "baseline",
+      "owner": "Engineering discipline maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": "2026-08-23",
+      "reviewEvidence": "source-reviews/2026-08-23.md",
+      "authoritativeSources": [
+        {
+          "name": "ISO 9241-210 human-centred design catalog entry",
+          "url": "https://www.iso.org/standard/77520.html"
+        },
+        {
+          "name": "ISO 9241-11 usability definitions and concepts catalog entry",
+          "url": "https://www.iso.org/standard/63500.html"
+        },
+        {
+          "name": "W3C Web Content Accessibility Guidelines 2.2",
+          "url": "https://www.w3.org/TR/WCAG22/"
+        },
+        {
+          "name": "WAI-ARIA Authoring Practices Guide",
+          "url": "https://www.w3.org/WAI/ARIA/apg/"
+        }
+      ],
+      "notes": "Official ISO public catalog metadata and public W3C guidance were reviewed for human-centred design, usability, and the UX/accessibility boundary. Full ISO standards text was not accessed; UX evidence remains separate from accessibility conformance evidence."
+    },
+    {
+      "id": "disciplines-sre",
+      "scope": "disciplines/sre",
+      "maturity": "baseline",
+      "owner": "Engineering discipline maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": "2026-08-23",
+      "reviewEvidence": "source-reviews/2026-08-23.md",
+      "authoritativeSources": [
+        {
+          "name": "Google Site Reliability Engineering book",
+          "url": "https://sre.google/sre-book/table-of-contents/"
+        },
+        {
+          "name": "Google Site Reliability Workbook",
+          "url": "https://sre.google/workbook/table-of-contents/"
+        },
+        {
+          "name": "Kubernetes resource management documentation",
+          "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+        },
+        {
+          "name": "Kubernetes Horizontal Pod Autoscaling documentation",
+          "url": "https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/"
+        },
+        {
+          "name": "AWS Well-Architected Reliability Pillar",
+          "url": "https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html"
+        },
+        {
+          "name": "Microsoft Azure Well-Architected Reliability guidance",
+          "url": "https://learn.microsoft.com/en-us/azure/well-architected/reliability/"
+        },
+        {
+          "name": "Google Cloud Well-Architected Reliability pillar",
+          "url": "https://docs.cloud.google.com/architecture/framework/reliability"
+        }
+      ],
+      "notes": "Current public primary guidance was reviewed for SLOs, monitoring, overload and failure handling, launches, capacity, resource limits, autoscaling, recovery, and cloud-context reliability. The package remains platform-neutral; source review does not establish operational readiness or validate a workload."
+    },
+    {
+      "id": "disciplines-testing",
+      "scope": "disciplines/testing",
+      "maturity": "baseline",
+      "owner": "Engineering discipline maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": "2026-08-23",
+      "reviewEvidence": "source-reviews/2026-08-23.md",
+      "authoritativeSources": [
+        {
+          "name": "Google Site Reliability Engineering book",
+          "url": "https://sre.google/sre-book/table-of-contents/"
+        },
+        {
+          "name": "Google Site Reliability Workbook",
+          "url": "https://sre.google/workbook/table-of-contents/"
+        },
+        {
+          "name": "Kubernetes resource management documentation",
+          "url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+        },
+        {
+          "name": "Kubernetes Horizontal Pod Autoscaling documentation",
+          "url": "https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/"
+        }
+      ],
+      "notes": "Current public primary guidance was reviewed for representative performance context, resource limits, capacity signals, autoscaling behavior, failure handling, and recovery. The package's performance-test taxonomy and evidence states are repository-authored and do not imply that any test ran or a production envelope was validated."
+    },
+    {
+      "id": "governance-product-inception-lifecycle",
+      "scope": "governance/PRODUCT_INCEPTION_LIFECYCLE.md",
+      "maturity": "baseline",
+      "owner": "Governance maintainers",
+      "reviewIntervalDays": 180,
+      "lastReviewed": "2026-08-23",
+      "reviewEvidence": "source-reviews/2026-08-23.md",
+      "authoritativeSources": [
+        {
+          "name": "ISO/IEC/IEEE 29148 requirements engineering catalog entry",
+          "url": "https://www.iso.org/standard/72089.html"
+        },
+        {
+          "name": "ISO/IEC/IEEE 15288 system life cycle processes catalog entry",
+          "url": "https://www.iso.org/standard/81702.html"
+        }
+      ],
+      "notes": "Official public ISO catalog metadata and abstracts were reviewed for requirements and system-lifecycle framing. The repository's optional selection boundary, named gates, evidence decisions, authorization boundary, and prototype exception are repository governance controls rather than claims about ISO requirements."
+    },
+    {
       "id": "languages-powershell",
       "scope": "languages/powershell",
       "maturity": "baseline",

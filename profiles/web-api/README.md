@@ -97,6 +97,8 @@ profiles/web-api/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Database Engineering](../../disciplines/database/)
 - [Integration Engineering](../../disciplines/integration/)
 - [Site Reliability Engineering](../../disciplines/sre/)
@@ -104,6 +106,8 @@ profiles/web-api/
 - [Data Engineering](../../disciplines/data-engineering/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+Product Management becomes required when the API defines or materially changes a product capability, user or actor outcome, requirement set, or MVP boundary. User Experience becomes required when human consumers pursue governed goals through developer portals, consoles, interactive workflows, or other interfaces; ordinary maintenance against existing approved requirements does not force either discipline.
 
 ## Language, framework, and platform selection
 

@@ -46,6 +46,7 @@ Report material conflicts instead of silently choosing the convenient interpreta
 - [Risk Classification](../../governance/RISK_CLASSIFICATION.md)
 - [Completion Evidence](../../governance/COMPLETION_EVIDENCE.md)
 - [Human Review Policy](../../governance/HUMAN_REVIEW_POLICY.md)
+- Explicitly selected for this fictitious new-product scope: [Product Inception Lifecycle](../../governance/PRODUCT_INCEPTION_LIFECYCLE.md)
 
 ### Profile
 
@@ -59,6 +60,8 @@ Report material conflicts instead of silently choosing the convenient interpreta
 
 ### Disciplines
 
+- [`product-management`](../../disciplines/product-management/)
+- [`user-experience`](../../disciplines/user-experience/)
 - [`application-security`](../../disciplines/application-security/)
 - [`architecture`](../../disciplines/architecture/)
 - [`testing`](../../disciplines/testing/)

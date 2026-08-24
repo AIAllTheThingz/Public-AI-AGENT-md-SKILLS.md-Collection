@@ -19,6 +19,7 @@ def git_source_at(commit: str, relative: str) -> str:
     completed = subprocess.run(
         ["git", "-C", str(REPO_ROOT), "show", f"{commit}:{relative}"],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )
@@ -31,6 +32,7 @@ def git_object_sha(commit: str, relative: str) -> str:
     completed = subprocess.run(
         ["git", "-C", str(REPO_ROOT), "rev-parse", f"{commit}:{relative}"],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )

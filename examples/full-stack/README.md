@@ -58,6 +58,12 @@ full-stack/
 └── scoped directories containing nested AGENTS.md files
 ```
 
+## Selected governance
+
+[Product Inception Lifecycle](../../governance/PRODUCT_INCEPTION_LIFECYCLE.md) is explicitly selected because this example models a fictitious new product and its path from inception through build. Selection activates the lifecycle gates for this example; it does not imply that any gate passed.
+
+[`project-manifest.json`](project-manifest.json) records the selection under the schema-compatible extension `AIAllTheThingz.governanceSelections` as `governance/PRODUCT_INCEPTION_LIFECYCLE.md`. The extension supplements the standard package fields and does not redefine them.
+
 ## Selected profile
 
 [WEB_APPLICATION](../../profiles/WEB_APPLICATION.md) provides the project-type overlay. It supplements rather than replaces governance, language, discipline, framework, platform, virtualization, operating-system, and networking standards.
@@ -72,6 +78,8 @@ Language packages define runtime, coding, dependency, testing, security, documen
 
 ## Selected disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Application Security](../../disciplines/application-security/)
 - [Architecture and System Design](../../disciplines/architecture/)
 - [Testing and Quality Engineering](../../disciplines/testing/)
@@ -200,7 +208,7 @@ Example digests, commits, runs, timestamps, and reviewers are fictitious or expl
 
 1. Replace the fictitious project name and summary.
 2. Reclassify risk using actual impact and reversibility.
-3. Re-select the profile, languages, disciplines, frameworks, platforms, virtualization systems, operating systems, and networking systems.
+3. Re-select governance lifecycles, the profile, languages, disciplines, frameworks, platforms, virtualization systems, operating systems, and networking systems.
 4. Replace architecture and trust-boundary assumptions with reviewed facts.
 5. Define actual owners and approval paths.
 6. Replace example commands with repository commands.
@@ -234,6 +242,7 @@ Do not copy:
 Before using the composition:
 
 - [ ] The manifest matches the actual project.
+- [ ] Every selected governance lifecycle is applicable and has an explicit evidence state and gate decision where required.
 - [ ] Every selected standard is applicable.
 - [ ] Every omitted standard has a defensible reason.
 - [ ] Root and nested instructions do not conflict.

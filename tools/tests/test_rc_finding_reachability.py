@@ -17,6 +17,7 @@ def git_output(*args: str) -> str:
     completed = subprocess.run(
         ["git", "-C", str(REPO_ROOT), *args],
         text=True,
+        encoding="utf-8",
         capture_output=True,
         check=False,
     )

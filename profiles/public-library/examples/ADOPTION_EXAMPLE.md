@@ -28,11 +28,15 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Conditional review
 
+- [Product Management](../../../disciplines/product-management/)
+- [User Experience](../../../disciplines/user-experience/)
 - [Application Security](../../../disciplines/application-security/)
 - [Api Engineering](../../../disciplines/api-engineering/)
 - [Ci Cd](../../../disciplines/ci-cd/)
 - [Accessibility](../../../disciplines/accessibility/)
 - [Privacy](../../../disciplines/privacy/)
+
+This base-profile example leaves Product Management and User Experience conditional. Promote Product Management for material consumer outcomes, requirements, supported scope, or product decisions, and User Experience for an owned interactive consumer workflow.
 
 ## Project decisions
 

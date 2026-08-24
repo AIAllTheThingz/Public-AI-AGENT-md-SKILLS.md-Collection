@@ -65,6 +65,8 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Conditionally required disciplines
 
+- [Product Management](../disciplines/product-management/)
+- [User Experience](../disciplines/user-experience/)
 - `disciplines/application-security/AGENTS.md`
 - `disciplines/ci-cd/AGENTS.md`
 - `disciplines/supply-chain/AGENTS.md`
@@ -72,6 +74,8 @@ This is a starting point only. The actual project or change must be classified u
 - `disciplines/documentation/AGENTS.md`
 
 Conditional packages become required when their concern is present. Document every omission that would reasonably appear applicable.
+
+Product Management becomes required when the pipeline is governed as a data product or materially changes consumer outcomes, requirements, published scope, or acceptance criteria. User Experience becomes required only when analysts, operators, or other users pursue goals through an owned workflow or interface; a headless pipeline implementing an existing data contract may justify omission.
 
 ## Required project decisions
 

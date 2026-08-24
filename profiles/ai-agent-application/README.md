@@ -95,6 +95,8 @@ profiles/ai-agent-application/
 
 ## Conditional disciplines
 
+- [Product Management](../../disciplines/product-management/)
+- [User Experience](../../disciplines/user-experience/)
 - [Integration Engineering](../../disciplines/integration/)
 - [Documentation](../../disciplines/documentation/)
 - [Site Reliability Engineering](../../disciplines/sre/)
@@ -103,6 +105,8 @@ profiles/ai-agent-application/
 - [Release Engineering](../../disciplines/release-engineering/)
 
 A conditional discipline becomes required when its concern exists. “Another team handles that” is a responsibility statement only when the boundary and evidence are explicit.
+
+Product Management becomes required when the agent scope defines or materially changes a product capability, intended outcome, requirement set, bounded MVP behavior, acceptance criteria, or product decision. User Experience becomes required when people set goals, provide context, review outputs, grant approval, recover from errors, or otherwise interact with materially changed agent behavior. Headless agent components may justify UX omission when their human workflow is governed by another scoped profile. Profile selection alone does not make either discipline mandatory.
 
 ## Language, framework, and platform selection
 

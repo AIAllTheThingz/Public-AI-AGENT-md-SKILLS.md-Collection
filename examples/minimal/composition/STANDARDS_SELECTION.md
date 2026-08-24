@@ -31,6 +31,8 @@ This document explains why the example selects each standards package. It preven
 
 ## Meaningful omissions
 
+- **Product Management:** The example is a bounded transformation implementing an existing fictional command contract; it does not define a new product, material capability, outcome, requirement set, or MVP boundary.
+- **User Experience:** The example has no material interactive journey beyond explicit command arguments and structured output. If prompts, multi-step human workflows, or usability claims enter scope, UX becomes required.
 - **Application Security:** The example has no network service or protected business operation, but input validation and secret handling still apply through language and governance standards.
 - **Observability:** A local CLI may use structured output and exit codes without adopting a service telemetry package.
 - **SRE:** No service availability, on-call, or recovery objective is claimed.

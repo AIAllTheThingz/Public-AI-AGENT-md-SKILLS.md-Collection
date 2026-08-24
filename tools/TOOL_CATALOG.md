@@ -57,7 +57,7 @@ Use `validate-release` when changing VERSION, changelog, maturity, deprecation, 
 
 Use `build-release` only after the versioned release files have been reviewed and validation passes.
 
-Use `generate-manifest` when beginning a project composition. Use `compose-agents` only after the generated manifest is reviewed and accepted as a correct selection record.
+Use `generate-manifest` when beginning a project composition. Use `compose-agents` only after the generated manifest, including any repository-defined governance selections, is reviewed and accepted as a correct selection record. Recognized governance selections are canonicalized and carry their transitive required linked contracts into the bundle as reference dependencies; copied dependencies do not silently add a package selection or establish a gate result.
 
 ## Ownership
 

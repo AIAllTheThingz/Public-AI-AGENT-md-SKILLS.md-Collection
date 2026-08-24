@@ -30,12 +30,16 @@ No production systems, identities, credentials, endpoints, data, or approval are
 
 ## Conditional review
 
+- [Product Management](../../../disciplines/product-management/)
+- [User Experience](../../../disciplines/user-experience/)
 - [Integration](../../../disciplines/integration/)
 - [Documentation](../../../disciplines/documentation/)
 - [Sre](../../../disciplines/sre/)
 - [Data Engineering](../../../disciplines/data-engineering/)
 - [Ci Cd](../../../disciplines/ci-cd/)
 - [Release Engineering](../../../disciplines/release-engineering/)
+
+This base-profile example leaves Product Management and User Experience conditional. Promote Product Management for material agent outcomes, requirements, bounded behavior, or product decisions, and User Experience when the changed scope owns human goals, approval, interaction, or recovery.
 
 ## Project decisions
 

@@ -4,8 +4,11 @@ import ast
 import copy
 import hashlib
 import json
+import tempfile
+from pathlib import Path
 
 import rc_finding_code_contracts_base as base
+import test_rc_finding_helper_runtime as finding_runtime
 
 _MUTATING_METHODS = {
     "append",
@@ -32,7 +35,17 @@ _BEHAVIOR_BOUND_FINDING_CONTEXTS = {
             "public code behavior with direct two-sided runtime coverage rather than freezing "
             "the implementation AST."
         ),
-    }
+    },
+    "RELEASE_HEAD_TAG_MISSING": {
+        "sourcePath": "tools/release/validate_release.py",
+        "function": "run",
+        "reason": (
+            "The explicit UTF-8 Git-output boundary changes the private git_output helper "
+            "AST without changing the public finding contract. Preserve the public code "
+            "with direct two-sided runtime coverage instead of freezing locale-dependent "
+            "subprocess decoding."
+        ),
+    },
 }
 
 
@@ -522,6 +535,48 @@ class ReleaseCandidateFindingCodeContractTests(base.ReleaseCandidateFindingCodeC
             finding["code"] for finding in with_discipline_payload.get("findings", [])
         }
         self.assertNotIn("MANIFEST_NO_DISCIPLINES", with_discipline_codes)
+
+    def test_release_head_tag_missing_is_behavior_bound(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            finding_runtime.write_release_fixture(root)
+
+            missing = base.run_tool(
+                "tools/release/validate_release.py",
+                "--format",
+                "json",
+                "--root",
+                str(root),
+                "--require-head-tag",
+            )
+            self.assertEqual(missing.returncode, 1, missing.stdout + missing.stderr)
+            missing_codes = {
+                finding["code"]
+                for finding in base.json_result(missing).get("findings", [])
+            }
+            self.assertIn("RELEASE_HEAD_TAG_MISSING", missing_codes)
+
+            finding_runtime.run_git(root, "init")
+            finding_runtime.run_git(root, "config", "user.email", "rc-test@example.invalid")
+            finding_runtime.run_git(root, "config", "user.name", "RC Compatibility Test")
+            finding_runtime.run_git(root, "add", ".")
+            finding_runtime.run_git(root, "commit", "-m", "fixture")
+            finding_runtime.run_git(root, "tag", "v1.0.0-rc.1")
+
+            tagged = base.run_tool(
+                "tools/release/validate_release.py",
+                "--format",
+                "json",
+                "--root",
+                str(root),
+                "--require-head-tag",
+            )
+            self.assertEqual(tagged.returncode, 0, tagged.stdout + tagged.stderr)
+            tagged_codes = {
+                finding["code"]
+                for finding in base.json_result(tagged).get("findings", [])
+            }
+            self.assertNotIn("RELEASE_HEAD_TAG_MISSING", tagged_codes)
 
     def test_same_shaped_locals_keep_distinct_semantic_identities(self):
         original = '''

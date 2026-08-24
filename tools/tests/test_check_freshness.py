@@ -328,17 +328,26 @@ class CheckFreshnessTests(unittest.TestCase):
             )
 
     def test_repository_registry_is_valid_and_truthful_about_live_checks(self):
+        registry = json.loads(
+            (REPO_ROOT / "SOURCE_REVIEWS.json").read_text(encoding="utf-8")
+        )
+        as_of = max(
+            record["lastReviewed"]
+            for record in registry["records"]
+            if record["lastReviewed"] is not None
+        )
         completed = run_tool(
             "tools/check-freshness/check_freshness.py",
             "--format",
             "json",
             "--as-of",
-            "2026-08-15",
+            as_of,
         )
         payload = json_result(completed)
 
         self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
         self.assertEqual(payload["status"], "passed")
+        self.assertEqual(payload["summary"]["asOf"], as_of)
         self.assertEqual(payload["summary"]["freshnessState"], "NotRun")
         self.assertEqual(payload["summary"]["liveSourceVerification"], "NotRun")
         self.assertGreater(payload["summary"]["records"], 0)

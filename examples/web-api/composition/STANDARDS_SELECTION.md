@@ -23,9 +23,11 @@ This document explains why the example selects each standards package. It preven
 | Package | Rationale |
 |---|---|
 | Governance | Organization-wide behavior, risk, evidence, exceptions, security, and review apply to every example. |
+| Governance: [Product Inception Lifecycle](../../../governance/PRODUCT_INCEPTION_LIFECYCLE.md) | Explicitly selected because the example models a fictitious new API product and its path from inception through build. The selection activates lifecycle gates for this scope but does not imply a gate result. |
 | Profile: WEB_API | Defines the project-type overlay and common operational concerns. |
 | Language: C# | Defines compiler/language, nullability, async, API, resource, security, interop, scripting, testing, and completion expectations. |
 | Runtime: .NET | Defines SDK, target-framework, runtime, dependency, application-model, build, and publishing expectations. |
+| Discipline: Product Management | Promoted from the profile's conditional overlays because the fictitious account API defines an externally consumable capability whose requirements, acceptance criteria, scope, decisions, and traceability must be explicit. |
 | Discipline: Application Security | Selected because the fictitious architecture and change surface require this concern. |
 | Discipline: Architecture and System Design | Selected because the fictitious architecture and change surface require this concern. |
 | Discipline: Testing and Quality Engineering | Selected because the fictitious architecture and change surface require this concern. |
@@ -39,10 +41,13 @@ This document explains why the example selects each standards package. It preven
 | Platform: Containers | Selected because the example is packaged or operated on this platform. |
 | Framework: ASP.NET Core | Adds framework-specific implementation and security expectations. |
 
+The schema-compatible manifest extension `AIAllTheThingz.governanceSelections` records this selection as `governance/PRODUCT_INCEPTION_LIFECYCLE.md`. It supplements the standard package fields; it does not treat governance as a discipline or create a new top-level manifest field.
+
 ## Meaningful omissions
 
+- **User Experience:** The example exposes an API contract but owns no developer portal, console, or other human workflow. API contract and documentation review are not represented as UX validation.
 - **Database Engineering:** The composition describes a persistence adapter but does not define a concrete schema or migration surface. Add the discipline when a real database is selected.
-- **SRE:** Moderate risk and illustrative operations do not establish an on-call service objective. Add SRE when availability and recovery targets exist.
+- **Site Reliability Engineering (SRE):** Moderate risk and illustrative operations do not establish an on-call service objective, and this example claims no `production-candidate`, `production`, or `scaled-production` state. Add SRE and satisfy the complete readiness contract before `production-candidate`; also satisfy the complete scaling contract before `scaled-production`.
 - **Accessibility:** The example exposes an API only and has no user interface.
 - **Virtualization:** The example owns a container boundary, not the underlying hypervisor or hosts.
 - **Operating systems:** Host and endpoint administration are outside the fictitious API scope.

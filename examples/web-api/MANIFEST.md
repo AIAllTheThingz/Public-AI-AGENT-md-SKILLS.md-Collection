@@ -36,9 +36,10 @@ This manifest defines the complete file inventory and acceptance checks for the 
 
 ## Composition
 
+- Explicit governance selection: [Product Inception Lifecycle](../../governance/PRODUCT_INCEPTION_LIFECYCLE.md)
 - Profile: `WEB_API`
 - Languages: `csharp`, `dotnet`
-- Disciplines: `application-security`, `architecture`, `testing`, `api-engineering`, `privacy`, `observability`, `ci-cd`, `supply-chain`, `documentation`, `release-engineering`
+- Disciplines: `product-management`, `application-security`, `architecture`, `testing`, `api-engineering`, `privacy`, `observability`, `ci-cd`, `supply-chain`, `documentation`, `release-engineering`
 - Platforms: `containers`
 - Frameworks: `aspnet-core`
 - Risk: `moderate`
@@ -47,6 +48,8 @@ This manifest defines the complete file inventory and acceptance checks for the 
 
 - [ ] Every listed file exists.
 - [ ] `project-manifest.json` matches the documented composition.
+- [ ] The namespaced governance selection matches `AGENTS.md`, `README.md`, the selection rationale, tailoring decisions, and completion evidence.
+- [ ] Any `production-candidate`, `production`, or `scaled-production` claim adds the Site Reliability Engineering package and satisfies the lifecycle's complete readiness and scaling prerequisites.
 - [ ] Root and nested `AGENTS.md` files are consistent.
 - [ ] Standards selection explains inclusion and meaningful omission.
 - [ ] Tailoring decisions identify fictitious facts, owners, assumptions, and open decisions.

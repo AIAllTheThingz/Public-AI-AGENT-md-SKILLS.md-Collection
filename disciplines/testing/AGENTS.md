@@ -93,6 +93,12 @@ The supporting standards extend this file. This `AGENTS.md` takes precedence if 
 
 **Evidence:** Diff and test review.
 
+### TEST-PERFORMANCE-006
+
+**Requirement:** Record performance-test execution state separately from outcome, and report performance or scalability validated only when every applicable test type has a current explicit `Pass` against its authorized acceptance criteria for the exact artifact and representative conditions.
+
+**Evidence:** Per-test matrix records applicability, execution state, outcome, criteria, exact artifact and environment, primary evidence, owner, authorization, safeguards, and stop conditions.
+
 ## Non-negotiable behavior
 
 - Inspect existing code, configuration, contracts, tests, documentation, ownership, and operational context before changing anything.

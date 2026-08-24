@@ -64,6 +64,8 @@ This is a starting point only. The actual project or change must be classified u
 
 ## Conditionally required disciplines
 
+- [Product Management](../disciplines/product-management/)
+- [User Experience](../disciplines/user-experience/)
 - `disciplines/integration/AGENTS.md`
 - `disciplines/documentation/AGENTS.md`
 - `disciplines/sre/AGENTS.md`
@@ -72,6 +74,8 @@ This is a starting point only. The actual project or change must be classified u
 - `disciplines/release-engineering/AGENTS.md`
 
 Conditional packages become required when their concern is present. Document every omission that would reasonably appear applicable.
+
+Product Management becomes required when the agent scope defines or materially changes a product capability, intended outcome, requirement set, bounded MVP behavior, acceptance criteria, or product decision. User Experience becomes required when people set goals, provide context, review outputs, grant approval, recover from errors, or otherwise interact with materially changed agent behavior. Headless agent components may justify UX omission when their human workflow is governed by another scoped profile. Profile selection alone does not make either discipline mandatory.
 
 ## Required project decisions
 

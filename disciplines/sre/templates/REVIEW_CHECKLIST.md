@@ -23,6 +23,14 @@ status: baseline
 
 ## Evidence
 
+- [ ] The separate overall production-readiness decision uses `Pass`, `Fail`, `Blocked`, or justified `NotApplicable`, records decision authority, and is tied to the exact candidate and operating scope.
+- [ ] Data migration has its own readiness result and evidence or justified `NotApplicable` rationale; applicable migrations and irreversible changes include rehearsal, backup or recovery planning, irreversible-step handling, and explicit go/no-go criteria and authority rather than being inferred from backup, restore, or deployment evidence.
+- [ ] Privacy has its own readiness result and evidence or justified `NotApplicable` rationale rather than being inferred from Security.
+- [ ] An applicable `NotRun` readiness area did not support a pass.
+- [ ] A readiness `Pass` or Deployment-area `Pass` is not treated as proof of production use; any `production` claim has a successful deployment record and post-deployment operational verification for the exact approved artifact, configuration, environment, and scope.
+- [ ] Scaling strategy addresses each listed area contextually and does not force unjustified complexity.
+- [ ] Every `Verified` scaling claim identifies workload, environment, operating envelope, result, and cost evidence where material.
+- [ ] Tested scaling failure is recorded as `Failed`, distinct from unresolved `Applicable`, `NotRun`, or `Blocked` work; any `Applicable`, `NotRun`, `Blocked`, or `Failed` area prevents an overall `Verified` claim.
 - [ ] Evidence maps to each material claim.
 - [ ] Positive, negative, boundary, and failure behavior was verified proportionate to risk.
 - [ ] Commands, environments, results, and checks not run are recorded.

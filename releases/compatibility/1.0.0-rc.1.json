@@ -26,7 +26,7 @@
     "path": "releases/compatibility/0.10.0-rule-contracts.json",
     "sha256": "5f3b7a7ddd28de5a44b45f96998d7acffb2c287bad4c7699e21561a869e50c95"
   },
-  "compatibilityClassification": "compatible",
+  "compatibilityClassification": "breaking",
   "stableRootPaths": [
     "AGENTS.md",
     "README.md",
@@ -189,16 +189,23 @@
     "profiles/*"
   ],
   "migrationFrom0100": {
-    "breakingChanges": [],
+    "breakingChanges": [
+      "Existing Site Reliability Engineering and Testing and Quality Engineering adopters must migrate to the strengthened readiness, scaling, and contextual performance-test decision and evidence contracts, including separate performance-test execution states and outcomes.",
+      "Existing canonical-profile adopters must select Product Management or User Experience when the documented conditional predicate is satisfied."
+    ],
     "requiredActions": [
       "Update the recorded repository source from v0.10.0 to the reviewed 1.0.0-rc.1 candidate when deliberately evaluating the release candidate.",
       "Re-run repository or project validation after changing the pinned standards source.",
+      "Migrate existing SRE and Testing package selections to the strengthened readiness, scaling, and per-test execution-state, outcome, accountability, and safety evidence contracts; record scaling validation that misses authorized criteria as Failed rather than unresolved, and do not report an overall scaling strategy Verified until every applicable scaling area is Verified with no Applicable, NotRun, Blocked, or Failed area, or performance/scalability validated until every applicable test type is Tested with outcome Pass.",
+      "Re-evaluate every selected canonical profile against the conditional Product Management and User Experience predicates and record either the selected overlay or a scope-specific omission rationale.",
+      "For a selected User Experience overlay, record validation state separately from per-method and overall outcome and do not report UX validated unless the overall outcome is Pass and every applicable method and claim succeeds for the exact version and representative conditions.",
       "Treat only languages/csharp as a stable package commitment; do not infer stable maturity for baseline packages."
     ],
     "reviewActions": [
       "C# adopters should review the newly explicit stable compatibility commitment.",
       "PowerShell adopters using Windows PowerShell 5.1 should review the additive legacy compatibility overlay.",
-      "Mixed-profile adopters using --include-profile-required should review the additive secondary-profile discipline expansion."
+      "Existing SRE and Testing adopters must review the breaking readiness, scaling, and contextual performance-test migration.",
+      "Existing profile adopters must review the conditional Product Management and User Experience overlays; --include-profile-required does not select those overlays automatically."
     ],
     "preservedContracts": [
       "published v0.10.0 root stable entry paths",

@@ -17,6 +17,7 @@ Tailoring records project facts and stricter requirements. It must not quietly d
 - Project name: `example-full-stack`
 - Profile: `WEB_APPLICATION`
 - Risk: `high`
+- Product Inception Lifecycle: explicitly selected for this fictitious new-product scope
 - Production environments: none
 - Production access: prohibited
 - Data: The fictitious application models user profiles and transaction-like records. All values are synthetic; the example intentionally contains no production data or secrets.
@@ -53,6 +54,7 @@ Out of scope:
 - Root and nested instructions must remain consistent.
 - Any real adoption must replace project facts and evidence.
 - The example must pass repository structure and link validation.
+- Lifecycle selection must not be represented as a gate pass; each gate remains blocked until its required evidence receives accountable review.
 
 ## Conditionally applicable controls
 
@@ -73,6 +75,7 @@ No control is marked permanently inapplicable. Controls omitted from the manifes
 - Support ownership
 - Recovery objectives
 - Compliance obligations
+- Product Inception Lifecycle gate evidence and accountable decision authority
 
 ## Exceptions
 

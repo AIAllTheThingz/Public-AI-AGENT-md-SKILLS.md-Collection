@@ -38,13 +38,14 @@ See:
 ## Start here
 
 1. Read the root [`AGENTS.md`](AGENTS.md).
-2. Select one or more standards from the [`CATALOG.md`](CATALOG.md).
-3. Select a project profile from [`profiles/`](profiles/README.md).
-4. Copy the relevant language package from [`languages/`](languages/README.md).
-5. Add scoped standards for applicable disciplines, platforms, virtualization systems, operating systems, networking systems, and frameworks.
-6. Tailor the result without weakening security, validation, testing, or completion-evidence requirements.
-7. Record the repository version or tag used by the adopting project.
-8. Validate the repository with the tools under [`tools/`](tools/README.md).
+2. For a new product or material capability, decide whether to explicitly select the optional [`Product Inception Lifecycle`](governance/PRODUCT_INCEPTION_LIFECYCLE.md). When selected, follow its gates and evidence requirements; select Product Management and satisfy traceability before passing the Build Gate; require every applicable acceptance criterion to have a current explicit `Pass` for the exact candidate; then select Site Reliability Engineering and satisfy its complete readiness and scaling contracts before claiming `production-candidate` or `scaled-production`.
+3. Select one or more standards from the [`CATALOG.md`](CATALOG.md).
+4. Select a project profile from [`profiles/`](profiles/README.md).
+5. Copy the relevant language package from [`languages/`](languages/README.md).
+6. Add scoped standards for applicable disciplines, platforms, virtualization systems, operating systems, networking systems, and frameworks.
+7. Tailor the result without weakening security, validation, testing, or completion-evidence requirements.
+8. Record the repository version or tag used by the adopting project.
+9. Validate the repository with the tools under [`tools/`](tools/README.md).
 
 ## Agent skill entry points
 
@@ -64,8 +65,8 @@ The skills are progressive-disclosure routers. They load only the packages relev
 
 | Area | Purpose |
 |---|---|
-| [`governance/`](governance/README.md) | Organization-wide agent behavior, risk, exceptions, evidence, and review |
-| [`disciplines/`](disciplines/README.md) | Security, architecture, testing, APIs, data, accessibility, operations, and delivery |
+| [`governance/`](governance/README.md) | Organization-wide agent behavior, product inception, risk, exceptions, evidence, and review |
+| [`disciplines/`](disciplines/README.md) | Product management, UX, security, architecture, testing, APIs, data, accessibility, operations, and delivery |
 | [`languages/`](languages/README.md) | Copyable language-specific standards packages |
 | [`platforms/`](platforms/README.md) | Containers, Kubernetes, infrastructure as code, and cloud platforms |
 | [`virtualization/`](virtualization/README.md) | Hypervisors, virtualization managers, clusters, hosts, guests, virtual networking and storage, recovery, and migration |

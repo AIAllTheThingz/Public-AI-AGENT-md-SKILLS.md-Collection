@@ -1,0 +1,20 @@
+---
+id: DISC-EX-PROD-ADOPTION
+title: Product Management Adoption Example
+version: 0.1.0
+status: baseline
+---
+
+# Product Management Adoption Example
+
+This example is fictitious and demonstrates composition, not evidence of a real product decision.
+
+## Example context
+
+The fictional **Northstar Community Library** is considering a self-service hold-renewal capability. It records the problem and intended patrons, but no direct research has occurred, so the standalone Product Management research state is `NotRun`. `Performed` would require attributable completed actual research evidence; `Blocked` and justified `NotApplicable` remain the other supported states. Assumptions about patron demand remain assumptions, and User Experience applicability is decided separately.
+
+The project creates `REQ-FUNC-001` for eligible renewal behavior and `REQ-NFR-001` for applicable response expectations, each with acceptance criteria. It records a separate result for each criterion so `Tested` cannot imply `Pass`; a production-candidate claim would require every applicable criterion to have a current explicit `Pass` for the exact candidate and conditions. It excludes fee payment from MVP and records that exclusion explicitly.
+
+## Composition and traceability
+
+The project composes Product Management with User Experience, Accessibility, Architecture, Application Security, Testing, and SRE as applicable. Its traceability record links the brief, requirements, ADR, change, tests, candidate deployment, and later operational evidence. Before deployment, production evidence remains `NotRun`; implementation, readiness, or approval evidence is not promoted to `OperationallyVerified`, and no `production` state is claimed without a successful exact-artifact deployment record and post-deployment verification for the stated production scope.
