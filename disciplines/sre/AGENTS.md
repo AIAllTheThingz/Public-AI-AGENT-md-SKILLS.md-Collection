@@ -105,7 +105,7 @@ The supporting standards extend this file. This `AGENTS.md` takes precedence if 
 
 ### SRE-SCALING-007
 
-**Requirement:** Record and validate the simplest applicable scaling implementation decisions against the workload and operating envelope. Do not report the overall scaling strategy `Verified` until every applicable area is `Verified`; `Applicable`, `NotRun`, or `Blocked` areas remain unresolved.
+**Requirement:** Record and validate the simplest applicable scaling implementation decisions against the workload and operating envelope. Record representative validation that misses authorized criteria as `Failed`, distinct from unresolved `Applicable`, `NotRun`, or `Blocked` work. Do not report the overall scaling strategy `Verified` until every applicable area is `Verified`; any `Applicable`, `NotRun`, `Blocked`, or `Failed` area prevents that claim.
 
 **Evidence:** Scaling-strategy applicability matrix, separate overall state, and representative validation evidence for every applicable area.
 

@@ -47,7 +47,7 @@ It does not remove shared controls merely because they are inconvenient.
 - reviewed runbooks and escalation
 - documented reliability risks
 - a production-readiness record tied to the fictitious candidate, with every applicable area assessed, Data migration, Security, and Privacy recorded separately when applicable, migration rehearsal plus irreversible-step handling and explicit go/no-go criteria where applicable, and no pass inferred from deployment, backup, or restore alone
-- a scaling applicability matrix that justifies simple single-instance choices, leaves unexecuted scaling validation as `NotRun`, and therefore does not report the overall scaling strategy `Verified`
+- a scaling applicability matrix that justifies simple single-instance choices, records representative validation that misses criteria as `Failed`, leaves unexecuted scaling validation as `NotRun`, and therefore does not report the overall scaling strategy `Verified` while either state exists
 
 The example does not claim `OperationallyVerified`: no real production service or representative production workload exists.
 

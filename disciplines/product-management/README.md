@@ -78,6 +78,8 @@ Typical companions are [User Experience](../user-experience/), [Architecture](..
 
 Traceability records must distinguish `Planned`, `Implemented`, `Tested`, `Reviewed`, `OperationallyVerified`, `NotRun`, `Blocked`, and `NotApplicable`. A state describes available evidence; it is not approval and must not be inferred from another state. Acceptance is a separate per-criterion decision: `Tested` or `Reviewed` does not imply `Pass`, and a requirement is accepted only when every applicable criterion has a current explicit `Pass` for the exact reviewed artifact and conditions.
 
+Product Management research provenance uses `Performed`, `NotRun`, `Blocked`, or justified `NotApplicable`. `Performed` requires completed actual research with attributable evidence. These standalone states do not silently select User Experience; apply the UX package independently when its documented predicate is satisfied.
+
 ## Authoritative starting points
 
 - [ISO/IEC/IEEE 29148](https://www.iso.org/standard/72089.html)

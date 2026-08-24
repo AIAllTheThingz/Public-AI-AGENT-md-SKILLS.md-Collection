@@ -526,7 +526,11 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
                 self.assertIn(package, breaking)
         self.assertIn("must migrate", breaking)
 
-        for rule_id in ("SRE-READINESS-006", "SRE-SCALING-007"):
+        for rule_id in (
+            "SRE-READINESS-006",
+            "SRE-SCALING-007",
+            "TEST-PERFORMANCE-006",
+        ):
             with self.subTest(rule=rule_id):
                 self.assertIn(rule_id, migration)
         for test_type in (
@@ -610,7 +614,8 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
         for required_contract in (
             "overall scaling-strategy `Verified` claim",
             "every applicable area to be `Verified`",
-            "`Applicable`, `NotRun`, or `Blocked` prevents",
+            "`Applicable`, `NotRun`, `Blocked`, or `Failed` prevents",
+            "`Failed` must remain distinct from unresolved work",
             "`NotApplicable` requires recorded justification",
         ):
             with self.subTest(required_contract=required_contract):
@@ -621,12 +626,65 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             "Scaling strategy",
         )
         self.assertIn(
-            "- Overall scaling-strategy state (`Verified`, `NotRun`, `Blocked`, "
-            "`NotApplicable`):",
+            "- Overall scaling-strategy state (`Verified`, `Failed`, `NotRun`, "
+            "`Blocked`, `NotApplicable`):",
+            scaling_record,
+        )
+        self.assertIn(
+            "State (`Applicable`, `NotApplicable`, `NotRun`, `Blocked`, `Failed`, "
+            "`Verified`)",
+            scaling_record,
+        )
+        self.assertIn(
+            "Use `Failed` when representative validation executes but misses "
+            "authorized criteria",
             scaling_record,
         )
         self.assertIn("- Decision authority:", scaling_record)
         self.assertIn("- Supported workload and operating envelope:", scaling_record)
+
+        scaling_rule = h3_section(
+            read("disciplines/sre/AGENTS.md"),
+            "SRE-SCALING-007",
+        )
+        self.assertIn(
+            "Record representative validation that misses authorized criteria as "
+            "`Failed`",
+            scaling_rule,
+        )
+        self.assertIn(
+            "any `Applicable`, `NotRun`, `Blocked`, or `Failed` area prevents",
+            scaling_rule,
+        )
+
+    def test_product_brief_defines_standalone_research_states(self) -> None:
+        brief = h2_section(
+            read("disciplines/product-management/templates/PRODUCT_BRIEF_TEMPLATE.md"),
+            "Scope and evidence",
+        )
+        outcome_standard = read(
+            "disciplines/product-management/standards/USER_OUTCOME_STANDARD.md"
+        )
+        evidence = h2_section(
+            read("disciplines/product-management/templates/EVIDENCE_RECORD_TEMPLATE.md"),
+            "Context",
+        )
+        for state in ("`Performed`", "`NotRun`", "`Blocked`", "`NotApplicable`"):
+            with self.subTest(product_research_state=state):
+                self.assertIn(state, brief)
+                self.assertIn(state, outcome_standard)
+                self.assertIn(state, evidence)
+        self.assertIn("- Research evidence or rationale:", brief)
+        self.assertIn(
+            "Use `Performed` only when actual research was completed and "
+            "attributable evidence exists",
+            brief,
+        )
+        self.assertIn(
+            "Product Management can record these states without selecting the "
+            "separate User Experience package",
+            brief,
+        )
 
     def test_traceability_template_records_independent_stage_states(self) -> None:
         template = read(
@@ -762,7 +820,7 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             "explicitly selecting the Site Reliability Engineering package",
             "complete [Scaling Strategy Standard]",
             "every applicable scaling area is `Verified`",
-            "`Applicable`, `NotRun`, or `Blocked` area prevents",
+            "`Applicable`, `NotRun`, `Blocked`, or `Failed` area prevents",
             "every `NotApplicable` area requires justification",
         ):
             with self.subTest(contract=contract):
@@ -771,7 +829,8 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             "the Site Reliability Engineering package is selected",
             "complete Scaling Strategy Standard is satisfied",
             "every applicable scaling area is `Verified`",
-            "Any `Applicable`, `NotRun`, or `Blocked` area prevents this state",
+            "Any `Applicable`, `NotRun`, `Blocked`, or `Failed` area prevents this "
+            "state",
         ):
             with self.subTest(state_contract=contract):
                 self.assertIn(contract, lifecycle_states)
@@ -813,7 +872,7 @@ class ProductLifecycleGovernanceRegressionTests(unittest.TestCase):
             "complete [Scaling Strategy Standard]",
             "overall scaling-strategy decision is `Verified`",
             "every applicable scaling area is `Verified`",
-            "`Applicable`, `NotRun`, or `Blocked` area prevents",
+            "`Applicable`, `NotRun`, `Blocked`, or `Failed` area prevents",
         ):
             with self.subTest(scaling_contract=contract):
                 self.assertIn(contract, scaling_rule)

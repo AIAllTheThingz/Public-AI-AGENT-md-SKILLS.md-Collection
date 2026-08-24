@@ -63,7 +63,7 @@ status: baseline
 
 ## Scaling strategy
 
-| Area | State (`Applicable`, `NotApplicable`, `NotRun`, `Blocked`, `Verified`) | Decision or evidence | Supported envelope | Owner |
+| Area | State (`Applicable`, `NotApplicable`, `NotRun`, `Blocked`, `Failed`, `Verified`) | Authorized criteria and decision evidence | Supported envelope | Owner |
 |---|---|---|---|---|
 | Horizontal scaling | | | | |
 | Vertical scaling | | | | |
@@ -85,10 +85,12 @@ status: baseline
 | Resource limits | | | | |
 | Cost per workload unit | | | | |
 
-- Overall scaling-strategy state (`Verified`, `NotRun`, `Blocked`, `NotApplicable`):
+- Overall scaling-strategy state (`Verified`, `Failed`, `NotRun`, `Blocked`, `NotApplicable`):
 - Decision authority:
 - Supported workload and operating envelope:
 - `NotApplicable` rationale, unresolved areas, or verification limitations:
+
+Use `Failed` when representative validation executes but misses authorized criteria; do not record tested failure as merely `Applicable`, `NotRun`, or `Blocked`. Any `Applicable`, `NotRun`, `Blocked`, or `Failed` area prevents an overall `Verified` state.
 
 ## Checks not run
 

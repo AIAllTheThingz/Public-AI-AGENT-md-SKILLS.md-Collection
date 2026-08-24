@@ -22,5 +22,5 @@ status: baseline
 
 - [ ] Traceability covers applicable lifecycle stages and uses honest states.
 - [ ] Acceptance results are recorded separately from evidence states; every accepted requirement has a current explicit `Pass` for each applicable criterion on the exact reviewed artifact and conditions.
-- [ ] Research and operational claims are supported or marked `NotRun`, `Blocked`, or `NotApplicable` with rationale.
+- [ ] Research provenance is `Performed` only with attributable completed research evidence, or accurately `NotRun`, `Blocked`, or justified `NotApplicable`; no standalone Product Management record invents a state or implies that User Experience was selected.
 - [ ] Evidence locations, review triggers, exceptions, and remaining risks are defined.

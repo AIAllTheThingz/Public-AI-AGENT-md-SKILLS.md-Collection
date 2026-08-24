@@ -29,7 +29,7 @@ status: baseline
 - [ ] An applicable `NotRun` readiness area did not support a pass.
 - [ ] Scaling strategy addresses each listed area contextually and does not force unjustified complexity.
 - [ ] Every `Verified` scaling claim identifies workload, environment, operating envelope, result, and cost evidence where material.
-- [ ] The overall scaling strategy is `Verified` only when every applicable area is `Verified`; any `Applicable`, `NotRun`, or `Blocked` area prevents that overall claim.
+- [ ] Tested scaling failure is recorded as `Failed`, distinct from unresolved `Applicable`, `NotRun`, or `Blocked` work; any `Applicable`, `NotRun`, `Blocked`, or `Failed` area prevents an overall `Verified` claim.
 - [ ] Evidence maps to each material claim.
 - [ ] Positive, negative, boundary, and failure behavior was verified proportionate to risk.
 - [ ] Commands, environments, results, and checks not run are recorded.

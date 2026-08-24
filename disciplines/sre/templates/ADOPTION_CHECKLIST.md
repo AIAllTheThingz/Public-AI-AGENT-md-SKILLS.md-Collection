@@ -37,8 +37,8 @@ status: baseline
 
 - [ ] Production-readiness per-area results, separate overall result, and decision authority are defined for the exact candidate and operating scope.
 - [ ] Applicable data migrations and irreversible changes have rehearsal evidence, backup or recovery planning, irreversible-step handling, explicit go/no-go criteria, and decision authority.
-- [ ] Scaling areas are marked `Applicable`, justified `NotApplicable`, `NotRun`, `Blocked`, or `Verified` with evidence.
-- [ ] The overall scaling-strategy state and decision authority are recorded, and the strategy is not `Verified` while any applicable area remains `Applicable`, `NotRun`, or `Blocked`.
+- [ ] Scaling areas are marked `Applicable`, justified `NotApplicable`, `NotRun`, `Blocked`, `Failed`, or `Verified` with authorized criteria and decision evidence; tested failure is recorded as `Failed`, not unresolved.
+- [ ] The overall scaling-strategy state and decision authority are recorded, and the strategy is not `Verified` while any applicable area is `Applicable`, `NotRun`, `Blocked`, or `Failed`.
 - [ ] Deployment, rollback, backup, restore, recovery, data-migration, observability, capacity, security, privacy, ownership, runbook, incident, cost, limitation, and risk evidence is selected proportionate to applicability.
 - [ ] Repository validation and link checking pass.
 - [ ] Project-specific validation is executable.

@@ -15,7 +15,7 @@ This standard composes with [`CAPACITY_PERFORMANCE_STANDARD.md`](CAPACITY_PERFOR
 
 ## Applicability model
 
-Evaluate each area as `Applicable`, `NotApplicable` with justification, `NotRun`, `Blocked`, or `Verified`. `Verified` requires representative evidence for the stated workload and environment. A simple single-instance system may correctly mark many areas `NotApplicable` when its operating envelope and rationale are explicit.
+Evaluate each area as `Applicable`, `NotApplicable` with justification, `NotRun`, `Blocked`, `Failed`, or `Verified`. Use `Failed` when representative validation executes but shows that the strategy is unsafe or misses its authorized criteria; do not collapse tested failure into an unresolved state. `Verified` requires representative evidence that satisfies the authorized criteria for the stated workload and environment. A simple single-instance system may correctly mark many areas `NotApplicable` when its operating envelope and rationale are explicit.
 
 ## Required decisions
 
@@ -55,4 +55,4 @@ Applicability matrix, linked capacity evidence, architecture decisions, configur
 
 ## Completion gate
 
-Do not report a scaling strategy verified from diagrams, configuration intent, vendor capability, or a single unrepresentative test. An overall scaling-strategy `Verified` claim requires every applicable area to be `Verified` with current representative evidence and a stated supported envelope. Any area that remains `Applicable`, `NotRun`, or `Blocked` prevents the overall strategy from being reported `Verified`; `NotApplicable` requires recorded justification.
+Do not report a scaling strategy verified from diagrams, configuration intent, vendor capability, or a single unrepresentative test. An overall scaling-strategy `Verified` claim requires every applicable area to be `Verified` with current representative evidence that satisfies its authorized criteria and a stated supported envelope. Any area that is `Applicable`, `NotRun`, `Blocked`, or `Failed` prevents the overall strategy from being reported `Verified`; `Failed` must remain distinct from unresolved work, and `NotApplicable` requires recorded justification.

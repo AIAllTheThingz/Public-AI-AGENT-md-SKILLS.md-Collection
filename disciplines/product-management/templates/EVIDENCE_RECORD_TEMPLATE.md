@@ -16,6 +16,8 @@ status: baseline
 - Problem and intended outcome:
 - Intended users or actors:
 - Facts, assumptions, constraints, and unknowns:
+- Research state (`Performed`, `NotRun`, `Blocked`, or `NotApplicable`):
+- Research evidence or rationale:
 
 ## Requirement traceability
 

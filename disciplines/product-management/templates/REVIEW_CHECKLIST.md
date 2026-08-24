@@ -21,3 +21,4 @@ status: baseline
 - [ ] Traceability links idea, requirement, architecture, implementation, test, release or deployment, and production evidence as applicable.
 - [ ] No state is inferred from another and code existence is not treated as completion.
 - [ ] Missing, blocked, inapplicable, synthetic, or unverified evidence is labelled accurately.
+- [ ] Product Management research provenance uses only `Performed`, `NotRun`, `Blocked`, or justified `NotApplicable`; `Performed` has attributable completed research evidence, and UX applicability is decided separately.
