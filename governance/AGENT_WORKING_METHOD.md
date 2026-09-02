@@ -1,7 +1,7 @@
 ---
 id: GOV-WORK
 title: Agent Working Method
-version: 0.2.0
+version: 0.3.0
 status: baseline
 applies_to:
   - all-projects
@@ -90,12 +90,40 @@ This policy applies to:
 
 **Expected evidence:** Final diff review appears in completion evidence.
 
+### GOV-WORK-011
+
+**Requirement:** Do not repeat a failed or indeterminate action unless a causally relevant material change—new evidence, changed input/configuration/state, corrected assumption, or materially different implementation or validation method—creates a concrete reason it may succeed; consequential mutations require actual-state reconciliation and confirmation that authorization and recovery controls remain valid; rewording, rerunning, changing tools or agents, or delegating the same approach is not material change.
+
+**Expected evidence:** Failure or indeterminate result, material change and causal rationale, and any required state reconciliation and authorization/recovery confirmation are recorded.
+
+### GOV-WORK-012
+
+**Requirement:** For the same failed objective or underlying blocker within the active execution sequence, allow the initial attempt plus at most two justified retries across tools, tasks, sessions, and agents; at the boundary stop the repeated approach, diagnose and use a new evidence-based hypothesis or materially different strategy, or report unresolved; relabeling or delegating cannot reset the budget.
+
+**Expected evidence:** An attempt and retry ledger carries the objective or blocker, count, justification, actors, and boundary disposition across tools, tasks, sessions, and agents.
+
+### GOV-WORK-013
+
+**Requirement:** Stop/report or adopt a new evidence-based hypothesis when successive actions across approaches or agents make no relevant, nonduplicative progress toward acceptance criteria or narrowing the blocker; changing commands, tools, agents, or strategies, producing different but irrelevant output, unrelated scope expansion, or speculative implementation is not progress; route non-blocking out-of-scope findings through the applicable authorized channel under GOV-WORK-003 rather than adding them to active scope.
+
+**Expected evidence:** A progress record maps successive actions to acceptance criteria or blocker narrowing, records the stop or new hypothesis, and records authorized routing of non-blocking out-of-scope findings.
+
+### GOV-WORK-014
+
+**Requirement:** Delegate only when it adds meaningful value through different specialization, independent review, alternative implementation or validation strategy, security or testing focus, or a different evidence source; handoff carries failure evidence, blocker, retry count, and unresolved state; delegation cannot repeat a failed approach or bypass or reset retry or no-progress boundaries.
+
+**Expected evidence:** Delegation record states the meaningful value, carries failure evidence, blocker, retry count, and unresolved state, and confirms retry and no-progress boundaries remain in force.
+
 ## Decision gates
 
 - Discovery complete before planning.
 - Risk and acceptance criteria defined before implementation.
 - Validation complete before completion reporting.
 - Authorization and rollback readiness confirmed before consequential execution.
+- Failed or indeterminate actions are not repeated without a recorded causal material change and required state reconciliation.
+- Retry budget and boundary disposition are confirmed before another attempt.
+- Progress toward acceptance or blocker narrowing is confirmed; otherwise stop/report or adopt an evidence-based hypothesis.
+- Delegation value, handoff state, and retry/no-progress boundaries are confirmed before handoff.
 
 ## Required records and evidence
 
@@ -106,6 +134,7 @@ This policy applies to:
 - Validation commands and results
 - Final diff review
 - Limitations and remaining risks
+- Failure or indeterminate results, material-change rationale, state reconciliation, retry budget, progress/blocker disposition, and delegation/handoff evidence are recorded.
 
 ## Exceptions and prohibited shortcuts
 

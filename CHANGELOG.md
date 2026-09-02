@@ -16,15 +16,15 @@ Release notes distinguish:
 
 ### Breaking changes
 
-- None.
+- Added mandatory all-project anti-looping and execution-discipline obligations GOV-WORK-011 through GOV-WORK-014 to the Agent Working Method; existing adopters must migrate their working methods and evidence records.
 
 ### Normative changes
 
-- None.
+- Added GOV-WORK-011 through GOV-WORK-014 covering causally justified retries, bounded execution retries, no-progress and stagnation handling, and value-bearing delegation with carried failure state.
 
 ### Migration notes
 
-- None.
+- Existing adopters must add GOV-WORK-011 through GOV-WORK-014, retain GOV-WORK-003 scope discipline, and carry retry state and unresolved blocker evidence across delegation.
 
 ## [1.0.0-rc.1] - 2026-08-16
 
