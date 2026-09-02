@@ -221,44 +221,6 @@ def run(args: argparse.Namespace) -> ToolResult:
                 unsafe_names.add(name)
                 continue
 
-    if not historical_valid.is_file():
-        findings.append(Finding(
-            "SCHEMA_POSITIVE_EXAMPLE_MISSING",
-            "Missing preserved v1 positive example.",
-            path=historical_valid.relative_to(root).as_posix(),
-        ))
-    if not historical_invalid.is_file():
-        findings.append(Finding(
-            "SCHEMA_NEGATIVE_EXAMPLE_MISSING",
-            "Missing preserved v1 negative example.",
-            path=historical_invalid.relative_to(root).as_posix(),
-        ))
-
-    if (
-        v1_completion_schema.is_file()
-        and "completion-result" not in unsafe_names
-    ):
-        try:
-            historical_schema = load_json(v1_completion_schema)
-            Draft202012Validator.check_schema(historical_schema)
-        except (json.JSONDecodeError, jsonschema.SchemaError):
-            pass
-        else:
-            if historical_valid.is_file():
-                positive_count += 1
-                findings.extend(
-                    instance_findings(
-                        historical_valid, v1_completion_schema, root, True
-                    )
-                )
-            if historical_invalid.is_file():
-                negative_count += 1
-                findings.extend(
-                    instance_findings(
-                        historical_invalid, v1_completion_schema, root, False
-                    )
-                )
-
     for path, schema_path in repository_instances:
         schema_name = schema_path.name.removesuffix(".schema.json")
         if schema_path.is_file() and schema_name not in unsafe_names:
@@ -313,16 +275,24 @@ def run(args: argparse.Namespace) -> ToolResult:
         example_root = schema_root / "examples" / name
         valid_example = example_root / "valid.example.json"
         invalid_example = example_root / "invalid.example.json"
-        if valid_example.is_file() and current_versioned.is_file():
-            positive_count += 1
-            findings.extend(instance_findings(valid_example, current_versioned, root, True))
-        else:
-            findings.append(Finding("SCHEMA_POSITIVE_EXAMPLE_MISSING", "Missing positive example.", path=valid_example.relative_to(root).as_posix()))
-        if invalid_example.is_file() and current_versioned.is_file():
-            negative_count += 1
-            findings.extend(instance_findings(invalid_example, current_versioned, root, False))
-        else:
-            findings.append(Finding("SCHEMA_NEGATIVE_EXAMPLE_MISSING", "Missing negative example.", path=invalid_example.relative_to(root).as_posix()))
+        positive_examples = [(valid_example, current_versioned)]
+        negative_examples = [(invalid_example, current_versioned)]
+        if name == "completion-result":
+            positive_examples.append((historical_valid, v1_completion_schema))
+            negative_examples.append((historical_invalid, v1_completion_schema))
+
+        for example, schema_path in positive_examples:
+            if example.is_file() and schema_path.is_file():
+                positive_count += 1
+                findings.extend(instance_findings(example, schema_path, root, True))
+            else:
+                findings.append(Finding("SCHEMA_POSITIVE_EXAMPLE_MISSING", "Missing positive example.", path=example.relative_to(root).as_posix()))
+        for example, schema_path in negative_examples:
+            if example.is_file() and schema_path.is_file():
+                negative_count += 1
+                findings.extend(instance_findings(example, schema_path, root, False))
+            else:
+                findings.append(Finding("SCHEMA_NEGATIVE_EXAMPLE_MISSING", "Missing negative example.", path=example.relative_to(root).as_posix()))
 
     return ToolResult.from_findings(
         tool=TOOL,
