@@ -556,6 +556,7 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertGreaterEqual(len(migration["requiredActions"]), 5)
         required_actions = "\n".join(migration["requiredActions"])
         self.assertIn("stop all further execution attempts", required_actions)
+        self.assertIn("report unresolved", required_actions)
         self.assertIn(
             "separate authorization from an accountable requester or owner",
             required_actions,
