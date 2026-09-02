@@ -264,6 +264,29 @@ class ValidateSchemasTests(unittest.TestCase):
         instance["executionDiscipline"]["retryLedger"] = {}
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
+    def test_reported_failures_require_a_failed_or_indeterminate_attempt(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = [
+            "Fictitious validation failed."
+        ]
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Successful", "initial-attempt", "objective-completed"
+                    )
+                }
+            )
+        )
+        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
+    def test_delegation_boundaries_must_be_preserved(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["delegationHandoff"][
+            "boundariesPreserved"
+        ] = False
+        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
     def test_failed_budgeted_attempt_cannot_claim_completion(self):
         schema, instance = completion_v2()
         instance["executionDiscipline"]["retryLedger"] = retry_ledger(
@@ -510,6 +533,41 @@ class ValidateSchemasTests(unittest.TestCase):
                 and item["path"] == "schemas/v1/completion-result.schema.json"
             ]
             self.assertEqual(len(matching), 1)
+
+    def test_remote_ref_schema_is_skipped_for_discovered_repository_instance(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+            path = root / "schemas" / "v2" / "completion-result.schema.json"
+            text = path.read_text(encoding="utf-8").replace(
+                '"type": "object"',
+                '"$ref": "https://example.invalid/remote.json",\n  "type": "object"',
+                1,
+            )
+            path.write_text(text, encoding="utf-8")
+
+            instance = json.loads(
+                (
+                    root / "schemas/examples/completion-result/valid.example.json"
+                ).read_text(encoding="utf-8")
+            )
+            evidence = root / "evidence" / "completion-result.example.json"
+            evidence.parent.mkdir()
+            evidence.write_text(json.dumps(instance), encoding="utf-8")
+
+            completed = run_tool(
+                "tools/validate-schemas/validate_schemas.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            self.assertEqual(completed.returncode, 1)
+            result = json_result(completed)
+            self.assertEqual(result["status"], "failed")
+            codes = {item["code"] for item in result["findings"]}
+            self.assertIn("SCHEMA_REMOTE_REF", codes)
+            self.assertNotIn("INTERNAL_ERROR", codes)
+            self.assertEqual(result["summary"]["repositoryInstances"], 1)
 
 
 if __name__ == "__main__":
