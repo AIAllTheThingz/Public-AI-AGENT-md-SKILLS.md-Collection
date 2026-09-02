@@ -558,7 +558,7 @@ Approval must come from an accountable human with delegated authority.
             template,
         )
         self.assertIn(
-            "A sequence ending `reported-unresolved` cannot contain a successful non-consuming action",
+            "A sequence ending `reported-unresolved` records successful evidence gathered before the terminal attempt in `preTerminalNonConsumingActions` and leaves `nonConsumingActions` empty",
             template,
         )
 

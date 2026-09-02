@@ -43,6 +43,7 @@
               "terminalDisposition": "reported-unresolved"
             }
           },
+          "preTerminalNonConsumingActions": [],
           "nonConsumingActions": []
         }
       }

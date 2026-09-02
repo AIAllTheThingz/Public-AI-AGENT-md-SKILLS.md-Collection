@@ -54,6 +54,7 @@
             "summary": "Not applicable; no delegation occurred.",
             "boundariesPreserved": true
           },
+          "preTerminalNonConsumingActions": [],
           "nonConsumingActions": [
             {
               "action": "Run repository structure and identifier validation",

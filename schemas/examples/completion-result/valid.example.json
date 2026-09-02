@@ -30,6 +30,7 @@
             "summary": "Not applicable; no delegation occurred.",
             "boundariesPreserved": true
           },
+          "preTerminalNonConsumingActions": [],
           "nonConsumingActions": [
             {
               "action": "Run evidence-only schema validation",

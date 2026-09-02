@@ -18,7 +18,7 @@ It demonstrates `schemaVersion: "2.0.0"` and required `executionDiscipline` evid
 
 ## Authorized reset positive example
 
-[`valid-reset.example.json`](valid-reset.example.json) must validate against the rolling and v2 schemas. It uses one `retryLedger` map keyed by objective, stores the failure summary in that objective's `failedOrIndeterminateOutcomes` array, preserves the stopped and reported first sequence and its delegated handoff under `priorUnresolvedSequences`, then records a non-delegated current sequence with separate authorization and material-change evidence before completing the objective.
+[`valid-reset.example.json`](valid-reset.example.json) must validate against the rolling and v2 schemas. It uses one `retryLedger` map keyed by objective, stores the failure summary in that objective's `failedOrIndeterminateOutcomes` array, preserves successful evidence gathered before the stop in `preTerminalNonConsumingActions`, and retains the stopped first sequence and its delegated handoff under `priorUnresolvedSequences`. It then records a non-delegated current sequence with separate authorization and material-change evidence before completing the objective.
 
 ## Preserved v1 compatibility examples
 
@@ -36,7 +36,7 @@ The [`invalid-v1.example.json`](invalid-v1.example.json) compatibility fixture m
 
 [`invalid-delegation-count.example.json`](invalid-delegation-count.example.json) is intentionally invalid because the handoff is embedded in a sequence containing `retry2`, but it understates that same sequence's evidence with `retryCount: 0` instead of the required value `2`.
 
-[`invalid-post-terminal-action.example.json`](invalid-post-terminal-action.example.json) is intentionally invalid because a sequence that ends `reported-unresolved` includes a later successful `nonConsumingActions` entry. Terminal unresolved sequences require that array to be empty, so further action needs a separately authorized reset sequence.
+[`invalid-post-terminal-action.example.json`](invalid-post-terminal-action.example.json) is intentionally invalid because a sequence that ends `reported-unresolved` includes a later successful `nonConsumingActions` entry. Terminal unresolved sequences store only earlier evidence in `preTerminalNonConsumingActions` and require `nonConsumingActions` to be empty, so further action needs a separately authorized reset sequence.
 
 ## Boundary
 

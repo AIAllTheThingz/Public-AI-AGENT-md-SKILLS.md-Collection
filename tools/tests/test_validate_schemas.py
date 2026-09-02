@@ -50,6 +50,7 @@ def retry_sequence(
     attempts: dict,
     *,
     sequence_id: str = "sequence-1",
+    pre_terminal_non_consuming_actions: list[dict] | None = None,
     non_consuming_actions: list[dict] | None = None,
     reset_authorization: dict | None = None,
     delegation_handoff: dict | None = None,
@@ -63,6 +64,7 @@ def retry_sequence(
             "summary": "Not applicable; no delegation occurred.",
             "boundariesPreserved": True,
         },
+        "preTerminalNonConsumingActions": pre_terminal_non_consuming_actions or [],
         "nonConsumingActions": non_consuming_actions or [],
     }
     if reset_authorization is not None:
@@ -757,6 +759,12 @@ class ValidateSchemasTests(unittest.TestCase):
         self.assertTrue(
             objective["priorUnresolvedSequences"][0]["delegationHandoff"]["delegated"]
         )
+        self.assertEqual(
+            objective["priorUnresolvedSequences"][0][
+                "preTerminalNonConsumingActions"
+            ][0]["result"],
+            "Successful",
+        )
         self.assertFalse(
             objective["currentSequence"]["delegationHandoff"]["delegated"]
         )
@@ -786,6 +794,24 @@ class ValidateSchemasTests(unittest.TestCase):
             any(
                 error.validator == "maxItems"
                 and list(error.absolute_path)[-1:] == ["nonConsumingActions"]
+                for error in errors
+            )
+        )
+
+    def test_pre_terminal_action_array_is_reserved_for_unresolved_sequences(self):
+        schema, instance = completion_v2()
+        objective = next(
+            iter(instance["executionDiscipline"]["retryLedger"].values())
+        )
+        objective["currentSequence"]["preTerminalNonConsumingActions"] = [
+            ledger_action("Successful", "non-consuming", "not-terminal")
+        ]
+        errors = list(Draft202012Validator(schema).iter_errors(instance))
+        self.assertTrue(
+            any(
+                error.validator == "maxItems"
+                and list(error.absolute_path)[-1:]
+                == ["preTerminalNonConsumingActions"]
                 for error in errors
             )
         )

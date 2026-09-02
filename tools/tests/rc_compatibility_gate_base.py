@@ -607,7 +607,11 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
             required_actions,
         )
         self.assertIn(
-            "prohibit nonConsumingActions in a sequence ending reported-unresolved",
+            "store successful evidence gathered before the stop in preTerminalNonConsumingActions",
+            required_actions,
+        )
+        self.assertIn(
+            "prohibit nonConsumingActions so further action requires a separately authorized reset sequence",
             required_actions,
         )
         self.assertIn(

@@ -45,6 +45,7 @@
                 "terminalDisposition": "reported-unresolved"
               }
             },
+            "preTerminalNonConsumingActions": [],
             "nonConsumingActions": []
           }
         }
@@ -78,6 +79,7 @@
               "terminalDisposition": "objective-completed"
             }
           },
+          "preTerminalNonConsumingActions": [],
           "nonConsumingActions": []
         }
       }

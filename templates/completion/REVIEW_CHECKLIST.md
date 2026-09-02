@@ -40,7 +40,7 @@ status: baseline
 - [ ] Every retry records a causally relevant material change and why it may now succeed; every prior retry sequence remains present, and each sequence after the first records the prior stop/report, separate accountable authorization, material-change evidence, and causal rationale.
 - [ ] Retry counting distinguishes failed or indeterminate read-only execution from successful evidence-only discovery, reconciliation, or validation; exhaustion and any reset basis are explicit.
 - [ ] Every prior and current sequence has an explicit per-sequence delegation handoff; delegated work includes meaningful value, failure evidence from the containing objective's outcomes, blocker, retry count equal to that same sequence's recorded retry depth, unresolved state with that sequence ending `reported-unresolved`, and confirmation that retry/no-progress boundaries remain enforced and were not reset or bypassed. Prior-sequence handoffs remain preserved after an authorized reset.
-- [ ] A sequence ending `reported-unresolved` has no `nonConsumingActions`; any further action appears only in a separately authorized reset sequence.
+- [ ] A sequence ending `reported-unresolved` stores earlier successful evidence in `preTerminalNonConsumingActions` and has no `nonConsumingActions`; other sequences leave the pre-terminal array empty, and any action after the stop appears only in a separately authorized reset sequence.
 
 ## Validation
 

@@ -570,6 +570,26 @@
         }
       }
     },
+    "nonConsumingAction": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ledgerAction"
+        },
+        {
+          "properties": {
+            "budgetPosition": {
+              "const": "non-consuming"
+            },
+            "result": {
+              "const": "Successful"
+            },
+            "terminalDisposition": {
+              "const": "not-terminal"
+            }
+          }
+        }
+      ]
+    },
     "retrySequence": {
       "type": "object",
       "description": "One execution sequence. It contains a budgeted initial attempt (and any retries), one or more successful non-consuming evidence actions, or both; an evidence-only sequence does not fabricate a budgeted attempt.",
@@ -577,6 +597,7 @@
       "required": [
         "sequenceId",
         "delegationHandoff",
+        "preTerminalNonConsumingActions",
         "nonConsumingActions"
       ],
       "properties": {
@@ -774,27 +795,18 @@
             }
           ]
         },
+        "preTerminalNonConsumingActions": {
+          "type": "array",
+          "description": "Successful evidence actions performed before this sequence's terminal reported-unresolved attempt. This array is empty for sequences that do not end reported-unresolved.",
+          "items": {
+            "$ref": "#/$defs/nonConsumingAction"
+          }
+        },
         "nonConsumingActions": {
           "type": "array",
+          "description": "Successful evidence actions in a sequence that has not ended reported-unresolved. This array must be empty when the sequence reports unresolved.",
           "items": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/ledgerAction"
-              },
-              {
-                "properties": {
-                  "budgetPosition": {
-                    "const": "non-consuming"
-                  },
-                  "result": {
-                    "const": "Successful"
-                  },
-                  "terminalDisposition": {
-                    "const": "not-terminal"
-                  }
-                }
-              }
-            ]
+            "$ref": "#/$defs/nonConsumingAction"
           }
         }
       },
@@ -889,6 +901,13 @@
           "then": {
             "properties": {
               "nonConsumingActions": {
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "preTerminalNonConsumingActions": {
                 "maxItems": 0
               }
             }
@@ -1000,6 +1019,26 @@
               },
               "required": [
                 "nonConsumingActions"
+              ]
+            },
+            {
+              "properties": {
+                "preTerminalNonConsumingActions": {
+                  "contains": {
+                    "properties": {
+                      "result": {
+                        "const": "Successful"
+                      }
+                    },
+                    "required": [
+                      "result"
+                    ]
+                  },
+                  "minContains": 1
+                }
+              },
+              "required": [
+                "preTerminalNonConsumingActions"
               ]
             }
           ]
