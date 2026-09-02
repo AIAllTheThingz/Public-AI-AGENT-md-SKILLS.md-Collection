@@ -183,6 +183,39 @@ class ValidateSchemasTests(unittest.TestCase):
         }
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
+    def test_retry_after_reported_unresolved_is_invalid(self):
+        cases = (
+            {
+                "initialAttempt": ledger_action(
+                    "Failed", "initial-attempt", "reported-unresolved"
+                ),
+                "retry1": ledger_action(
+                    "Successful", "retry-1", "objective-completed"
+                ),
+            },
+            {
+                "initialAttempt": ledger_action(
+                    "Failed", "initial-attempt", "retry-authorized"
+                ),
+                "retry1": ledger_action(
+                    "Failed", "retry-1", "reported-unresolved"
+                ),
+                "retry2": ledger_action(
+                    "Successful", "retry-2", "objective-completed"
+                ),
+            },
+        )
+        for attempts in cases:
+            with self.subTest(attempts=tuple(attempts)):
+                schema, instance = completion_v2()
+                instance["executionDiscipline"]["retryLedger"] = {
+                    "fictitious objective": {
+                        "attempts": attempts,
+                        "nonConsumingActions": [],
+                    }
+                }
+                self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
     def test_unknown_attempt_position_is_invalid(self):
         schema, instance = completion_v2()
         instance["executionDiscipline"]["retryLedger"] = {

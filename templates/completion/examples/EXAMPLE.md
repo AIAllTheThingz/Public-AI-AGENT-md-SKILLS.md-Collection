@@ -55,7 +55,7 @@ Authorization/recovery continuity for consequential mutations: Confirmed authori
 | Objective/blocker | Action | Actor | Execution context | Start | End | Observable-effects reconciliation | Result | Budget position/count | Justification | Terminal disposition |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Completion record migration | Validate completion fixture | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `template-validator`; task `PR-EXAMPLE-0042` | 2026-08-16T10:00:00Z | 2026-08-16T10:00:01Z | No target-state mutation; failed output reconciled | Failed | Initial attempt (1 budget-consuming action) | Detected v1 fixture against the current v2 contract | Retry justified after correcting the fixture |
-| Completion record migration | Validate corrected completion fixture | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `template-validator`; task `PR-EXAMPLE-0042` | 2026-08-16T10:02:00Z | 2026-08-16T10:02:01Z | Corrected fixture output reconciled; no target-state mutation | Successful | Retry 1 (second execution action) | Corrected producer fixture using reviewed facts | Objective complete |
+| Completion record migration | Validate corrected completion fixture | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `template-validator`; task `PR-EXAMPLE-0042` | 2026-08-16T10:02:00Z | 2026-08-16T10:02:01Z | Corrected fixture output reconciled; no target-state mutation | Successful | Retry 1 (successful objective-clearing action) | Corrected producer fixture using reviewed facts | Objective complete |
 
 Reset basis: None; no new execution sequence was authorized.
 

@@ -52,7 +52,7 @@ template_type: completion-report
 {{FAILED_OR_INDETERMINATE_OUTCOMES}}
 - Authorization/recovery continuity for consequential mutations:
 {{AUTHORIZATION_RECOVERY_CONTINUITY}}
-- Retry ledger, one row per budget-consuming action (execution context is the command sequence, plan, workflow, tool, agent, strategy, task, or session as applicable):
+- Retry ledger, one row per budget-consuming action and each subsequent Successful objective-clearing action recorded at its current retry position (execution context is the command sequence, plan, workflow, tool, agent, strategy, task, or session as applicable):
 
 | Objective/blocker | Action | Actor | Execution context | Start | End | Observable-effects reconciliation | Result | Budget position/count | Justification | Terminal disposition |
 |---|---|---|---|---|---|---|---|---|---|---|

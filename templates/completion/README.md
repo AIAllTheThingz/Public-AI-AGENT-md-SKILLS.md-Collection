@@ -78,7 +78,7 @@ Only the following placeholders are valid in this template:
 | `{{VALIDATION_NOT_PERFORMED}}` | Checks not run with reasons. |
 | `{{FAILED_OR_INDETERMINATE_OUTCOMES}}` | Failed or indeterminate execution outcomes for the objective or blocker, including actual-state reconciliation. |
 | `{{AUTHORIZATION_RECOVERY_CONTINUITY}}` | Confirmation that authorization and recovery controls remain valid for consequential mutations. |
-| `{{RETRY_LEDGER_ROWS}}` | One row per budget-consuming action with the retry ledger fields and terminal disposition. |
+| `{{RETRY_LEDGER_ROWS}}` | One row per budget-consuming action and each subsequent successful objective-clearing action at its current retry position, with the retry ledger fields and terminal disposition. |
 | `{{RESET_BASIS}}` | Prior stop/report, separate accountable authorization, and material blocker or relevant scope or system-state change supporting any new budget. |
 | `{{PROGRESS_OR_BLOCKER_NARROWING}}` | Evidence of relevant progress toward acceptance criteria or narrowing the blocker. |
 | `{{DELEGATION_HANDOFF}}` | Delegation value, failure evidence, blocker, retry count, and unresolved state. |

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0.0",
   "status": "partially-validated",
-  "summary": "Plausible v2 record with an invalid failed-attempt disposition.",
+  "summary": "Plausible v2 record that retries after reporting the objective unresolved.",
   "filesChanged": [
     "README.md"
   ],
@@ -12,7 +12,7 @@
     }
   ],
   "limitations": [
-    "This intentionally invalid example claims completion after a failed attempt."
+    "This intentionally invalid example continues after a terminal unresolved disposition."
   ],
   "executionDiscipline": {
     "failedOrIndeterminateOutcomes": [
@@ -34,6 +34,20 @@
             "result": "Failed",
             "budgetPosition": "initial-attempt",
             "justification": "Initial validation attempt.",
+            "terminalDisposition": "reported-unresolved"
+          },
+          "retry1": {
+            "action": "Retry fictitious schema validation",
+            "actor": "fictitious-agent",
+            "executionContext": {
+              "tool": "fictitious-validator"
+            },
+            "startedAt": "2026-01-01T00:02:00Z",
+            "endedAt": "2026-01-01T00:03:00Z",
+            "effectsReconciliation": "No state changed.",
+            "result": "Successful",
+            "budgetPosition": "retry-1",
+            "justification": "Invalid retry after a terminal disposition.",
             "terminalDisposition": "objective-completed"
           }
         },
@@ -41,7 +55,7 @@
       }
     },
     "resetBasis": "Not applicable; no reset occurred.",
-    "progressOrBlockerNarrowing": "The validation blocker remains unresolved.",
+    "progressOrBlockerNarrowing": "The record invalidly continues after declaring the blocker unresolved.",
     "delegationHandoff": {
       "summary": "Not applicable; no delegation occurred.",
       "boundariesPreserved": true

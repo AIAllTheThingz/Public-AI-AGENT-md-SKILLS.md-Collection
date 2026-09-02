@@ -158,6 +158,19 @@ def run(args: argparse.Namespace) -> ToolResult:
 
     versioned_schema_count = sum(len(majors) for majors in VERSIONED_SCHEMA_MAJORS.values())
 
+    repository_instances: list[tuple[Path, Path]] = []
+    if not args.skip_repository_instances:
+        for path in sorted(root.rglob("*.json")):
+            if schema_root in path.parents or (root / "tools" / "contracts") in path.parents:
+                continue
+            schema_name = discover(path)
+            if schema_name is None:
+                continue
+            repository_instances.append(
+                (path, instance_schema_path(load_json(path), schema_root, schema_name))
+            )
+    instance_count = len(repository_instances)
+
     historical_valid = schema_root / "examples" / "completion-result" / "valid-v1.example.json"
     v1_completion_schema = versioned_schema_path(schema_root, "completion-result", 1)
     if historical_valid.is_file() and v1_completion_schema.is_file():
@@ -230,17 +243,9 @@ def run(args: argparse.Namespace) -> ToolResult:
         else:
             findings.append(Finding("SCHEMA_NEGATIVE_EXAMPLE_MISSING", "Missing negative example.", path=invalid_example.relative_to(root).as_posix()))
 
-    if not args.skip_repository_instances:
-        for path in sorted(root.rglob("*.json")):
-            if schema_root in path.parents or (root / "tools" / "contracts") in path.parents:
-                continue
-            schema_name = discover(path)
-            if schema_name is None:
-                continue
-            instance_count += 1
-            schema_path = instance_schema_path(load_json(path), schema_root, schema_name)
-            if schema_path.is_file():
-                findings.extend(instance_findings(path, schema_path, root, True))
+    for path, schema_path in repository_instances:
+        if schema_path.is_file():
+            findings.extend(instance_findings(path, schema_path, root, True))
 
     return ToolResult.from_findings(
         tool=TOOL,

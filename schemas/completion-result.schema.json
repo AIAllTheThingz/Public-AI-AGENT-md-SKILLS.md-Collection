@@ -433,6 +433,9 @@
                           "Failed",
                           "Indeterminate"
                         ]
+                      },
+                      "terminalDisposition": {
+                        "const": "retry-authorized"
                       }
                     },
                     "required": [
@@ -461,6 +464,9 @@
                           "Failed",
                           "Indeterminate"
                         ]
+                      },
+                      "terminalDisposition": {
+                        "const": "retry-authorized"
                       }
                     },
                     "required": [

@@ -571,6 +571,8 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
             "Failed or Indeterminate read-only execution",
             required_actions,
         )
+        self.assertIn("any execution action", required_actions)
+        self.assertNotIn("consequential execution action", required_actions)
         self.assertIn("successful evidence-only", required_actions)
         self.assertIn("executionDiscipline", required_actions)
         review_actions = "\n".join(migration["reviewActions"])

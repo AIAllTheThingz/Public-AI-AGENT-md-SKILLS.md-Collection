@@ -237,10 +237,15 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
             completion["obligations"]["human review"],
         )
 
-        candidate_completion = template_contract(
-            (REPO_ROOT / completion_path).read_text(encoding="utf-8")
+        candidate_completion_text = (REPO_ROOT / completion_path).read_text(
+            encoding="utf-8"
         )
+        candidate_completion = template_contract(candidate_completion_text)
         self.assertIn("execution discipline", candidate_completion["sections"])
+        self.assertIn(
+            "one row per budget-consuming action and each subsequent Successful objective-clearing action",
+            candidate_completion_text,
+        )
         for placeholder in (
             "FAILED_OR_INDETERMINATE_OUTCOMES",
             "AUTHORIZATION_RECOVERY_CONTINUITY",
