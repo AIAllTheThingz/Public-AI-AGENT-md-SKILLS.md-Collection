@@ -632,6 +632,44 @@ class ValidateSchemasTests(unittest.TestCase):
                 "schemas/v2/completion-result.schema.json",
             )
 
+    def test_malformed_completion_major_uses_current_schema_without_crashing(self):
+        versions = ("².0.0", f"{'9' * 5000}.0.0")
+        for version in versions:
+            with self.subTest(version=version[:20]), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+                instance = json.loads(
+                    (
+                        root
+                        / "schemas/examples/completion-result/valid.example.json"
+                    ).read_text(encoding="utf-8")
+                )
+                instance["schemaVersion"] = version
+                evidence = root / "evidence" / "completion-result.example.json"
+                evidence.parent.mkdir()
+                evidence.write_text(json.dumps(instance), encoding="utf-8")
+
+                completed = run_tool(
+                    "tools/validate-schemas/validate_schemas.py",
+                    "--format",
+                    "json",
+                    root=root,
+                )
+                self.assertEqual(completed.returncode, 1)
+                result = json_result(completed)
+                codes = {item["code"] for item in result["findings"]}
+                self.assertNotIn("INTERNAL_ERROR", codes)
+                matching = [
+                    item
+                    for item in result["findings"]
+                    if item["path"] == "evidence/completion-result.example.json"
+                ]
+                self.assertEqual(len(matching), 1)
+                self.assertEqual(
+                    matching[0]["details"]["schema"],
+                    "schemas/v2/completion-result.schema.json",
+                )
+
     def test_unversioned_completion_uses_current_schema(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

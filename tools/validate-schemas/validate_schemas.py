@@ -87,7 +87,14 @@ def instance_schema_path(instance: Any, schema_root: Path, name: str) -> Path:
     if isinstance(instance, dict) and "schemaVersion" in instance:
         value = instance["schemaVersion"]
         prefix = value.split(".", 1)[0] if isinstance(value, str) else ""
-        major = int(prefix) if prefix.isdigit() else -1
+        major = next(
+            (
+                supported
+                for supported in VERSIONED_SCHEMA_MAJORS[name]
+                if prefix == str(supported)
+            ),
+            -1,
+        )
     if major not in VERSIONED_SCHEMA_MAJORS[name]:
         major = CURRENT_SCHEMA_MAJORS[name]
     return versioned_schema_path(schema_root, name, major)
