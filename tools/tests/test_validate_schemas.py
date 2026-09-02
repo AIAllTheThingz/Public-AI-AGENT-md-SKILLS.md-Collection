@@ -605,6 +605,41 @@ class ValidateSchemasTests(unittest.TestCase):
             self.assertNotIn("INTERNAL_ERROR", codes)
             self.assertEqual(result["summary"]["repositoryInstances"], 1)
 
+    def test_remote_ref_is_scanned_before_schema_meta_validation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+            path = root / "schemas" / "v2" / "completion-result.schema.json"
+            schema = json.loads(path.read_text(encoding="utf-8"))
+            schema["$ref"] = "https://example.invalid/remote.json"
+            schema["properties"]["summary"]["type"] = 123
+            path.write_text(json.dumps(schema), encoding="utf-8")
+
+            instance = json.loads(
+                (
+                    root
+                    / "schemas/examples/completion-result/valid.example.json"
+                ).read_text(encoding="utf-8")
+            )
+            evidence = root / "evidence" / "completion-result.example.json"
+            evidence.parent.mkdir()
+            evidence.write_text(json.dumps(instance), encoding="utf-8")
+
+            completed = run_tool(
+                "tools/validate-schemas/validate_schemas.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            self.assertEqual(completed.returncode, 1)
+            result = json_result(completed)
+            self.assertEqual(result["status"], "failed")
+            codes = {item["code"] for item in result["findings"]}
+            self.assertIn("SCHEMA_INVALID", codes)
+            self.assertIn("SCHEMA_REMOTE_REF", codes)
+            self.assertNotIn("INTERNAL_ERROR", codes)
+            self.assertEqual(result["summary"]["repositoryInstances"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -205,11 +205,14 @@ def run(args: argparse.Namespace) -> ToolResult:
                 continue
             try:
                 schema = load_json(path)
-                Draft202012Validator.check_schema(schema)
-            except (json.JSONDecodeError, jsonschema.SchemaError):
+            except json.JSONDecodeError:
                 continue
             if remote_refs(schema):
                 unsafe_names.add(name)
+            try:
+                Draft202012Validator.check_schema(schema)
+            except jsonschema.SchemaError:
+                continue
 
     if (
         historical_valid.is_file()
@@ -239,12 +242,16 @@ def run(args: argparse.Namespace) -> ToolResult:
             if not path.is_file():
                 findings.append(Finding("SCHEMA_MISSING", f"Missing {kind} schema.", path=path.relative_to(root).as_posix()))
                 continue
+            schema_invalid = False
             try:
                 schema = load_json(path)
+                refs = remote_refs(schema)
                 Draft202012Validator.check_schema(schema)
             except (json.JSONDecodeError, jsonschema.SchemaError) as exc:
+                schema_invalid = isinstance(exc, jsonschema.SchemaError)
                 findings.append(Finding("SCHEMA_INVALID", str(exc), path=path.relative_to(root).as_posix()))
-                continue
+                if not schema_invalid:
+                    continue
             schema_id = schema.get("$id")
             if not isinstance(schema_id, str) or not schema_id:
                 findings.append(Finding("SCHEMA_ID_MISSING", "Schema lacks a non-empty $id.", path=path.relative_to(root).as_posix()))
@@ -256,7 +263,6 @@ def run(args: argparse.Namespace) -> ToolResult:
                 ))
             else:
                 schema_ids[schema_id] = path.relative_to(root).as_posix()
-            refs = remote_refs(schema)
             if refs:
                 unsafe_names.add(name)
             for location, ref in refs:
