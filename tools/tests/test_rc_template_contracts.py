@@ -246,6 +246,9 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
             "one row per budget-consuming action and each subsequent Successful objective-clearing action",
             candidate_completion_text,
         )
+        self.assertIn("| Objective/blocker | Sequence | Sequence reset evidence |", candidate_completion_text)
+        self.assertIn("each sequence after the first requires", candidate_completion_text)
+        self.assertIn("prior sequence stop/report", candidate_completion_text)
         for placeholder in (
             "FAILED_OR_INDETERMINATE_OUTCOMES",
             "AUTHORIZATION_RECOVERY_CONTINUITY",

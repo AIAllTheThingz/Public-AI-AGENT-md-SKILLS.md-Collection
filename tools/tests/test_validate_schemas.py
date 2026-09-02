@@ -40,6 +40,27 @@ def ledger_action(result: str, budget_position: str, terminal_disposition: str) 
     }
 
 
+def retry_sequence(
+    attempts: dict,
+    *,
+    sequence_id: str = "sequence-1",
+    non_consuming_actions: list[dict] | None = None,
+    reset_authorization: dict | None = None,
+) -> dict:
+    sequence = {
+        "sequenceId": sequence_id,
+        "attempts": attempts,
+        "nonConsumingActions": non_consuming_actions or [],
+    }
+    if reset_authorization is not None:
+        sequence["resetAuthorization"] = reset_authorization
+    return sequence
+
+
+def retry_ledger(*sequences: dict) -> dict:
+    return {"fictitious objective": {"sequences": list(sequences)}}
+
+
 class ValidateSchemasTests(unittest.TestCase):
     def test_repository_schema_system_passes(self):
         completed = run_tool("tools/validate-schemas/validate_schemas.py", "--format", "json")
@@ -88,6 +109,27 @@ class ValidateSchemasTests(unittest.TestCase):
             schema.pop(metadata, None)
         self.assertEqual(rolling, schema)
 
+    def test_authorized_retry_reset_fixture_is_valid(self):
+        instance = json.loads(
+            (REPO_ROOT / "schemas/examples/completion-result/valid-reset.example.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for relative in (
+            "schemas/completion-result.schema.json",
+            "schemas/v2/completion-result.schema.json",
+        ):
+            with self.subTest(schema=relative):
+                schema = json.loads((REPO_ROOT / relative).read_text(encoding="utf-8"))
+                self.assertEqual(
+                    list(
+                        Draft202012Validator(
+                            schema, format_checker=FormatChecker()
+                        ).iter_errors(instance)
+                    ),
+                    [],
+                )
+
     def test_completion_result_v2_requires_execution_discipline(self):
         schema = json.loads(
             (REPO_ROOT / "schemas/v2/completion-result.schema.json").read_text(
@@ -105,31 +147,30 @@ class ValidateSchemasTests(unittest.TestCase):
 
     def test_failed_retry_cannot_be_non_consuming(self):
         schema, instance = completion_v2()
-        instance["executionDiscipline"]["retryLedger"] = {
-            "fictitious objective": {
-                "attempts": {},
-                "nonConsumingActions": [
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {},
+                non_consuming_actions=[
                     ledger_action("Failed", "non-consuming", "not-terminal")
                 ],
-            }
-        }
+            )
+        )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_failed_initial_then_successful_retry_is_valid(self):
         schema, instance = completion_v2()
-        instance["executionDiscipline"]["retryLedger"] = {
-            "fictitious objective": {
-                "attempts": {
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
                     "initialAttempt": ledger_action(
                         "Failed", "initial-attempt", "retry-authorized"
                     ),
                     "retry1": ledger_action(
                         "Successful", "retry-1", "objective-completed"
                     ),
-                },
-                "nonConsumingActions": [],
-            }
-        }
+                }
+            )
+        )
         self.assertEqual(
             list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(instance)),
             [],
@@ -137,50 +178,47 @@ class ValidateSchemasTests(unittest.TestCase):
 
     def test_failed_budgeted_attempt_cannot_claim_completion(self):
         schema, instance = completion_v2()
-        instance["executionDiscipline"]["retryLedger"] = {
-            "fictitious objective": {
-                "attempts": {
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
                     "initialAttempt": ledger_action(
                         "Failed", "initial-attempt", "objective-completed"
                     )
-                },
-                "nonConsumingActions": [],
-            }
-        }
+                }
+            )
+        )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_retry2_without_retry1_is_invalid(self):
         schema, instance = completion_v2()
-        instance["executionDiscipline"]["retryLedger"] = {
-            "fictitious objective": {
-                "attempts": {
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
                     "initialAttempt": ledger_action(
                         "Failed", "initial-attempt", "retry-authorized"
                     ),
                     "retry2": ledger_action(
                         "Failed", "retry-2", "reported-unresolved"
                     ),
-                },
-                "nonConsumingActions": [],
-            }
-        }
+                }
+            )
+        )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_retry1_after_successful_initial_is_invalid(self):
         schema, instance = completion_v2()
-        instance["executionDiscipline"]["retryLedger"] = {
-            "fictitious objective": {
-                "attempts": {
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
                     "initialAttempt": ledger_action(
                         "Successful", "initial-attempt", "objective-completed"
                     ),
                     "retry1": ledger_action(
                         "Failed", "retry-1", "retry-authorized"
                     ),
-                },
-                "nonConsumingActions": [],
-            }
-        }
+                }
+            )
+        )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_retry_after_reported_unresolved_is_invalid(self):
@@ -208,29 +246,46 @@ class ValidateSchemasTests(unittest.TestCase):
         for attempts in cases:
             with self.subTest(attempts=tuple(attempts)):
                 schema, instance = completion_v2()
-                instance["executionDiscipline"]["retryLedger"] = {
-                    "fictitious objective": {
-                        "attempts": attempts,
-                        "nonConsumingActions": [],
-                    }
-                }
+                instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+                    retry_sequence(attempts)
+                )
                 self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
+    def test_second_retry_sequence_requires_reset_authorization(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Failed", "initial-attempt", "reported-unresolved"
+                    )
+                }
+            ),
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Successful", "initial-attempt", "objective-completed"
+                    )
+                },
+                sequence_id="sequence-2",
+            ),
+        )
+        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_unknown_attempt_position_is_invalid(self):
         schema, instance = completion_v2()
-        instance["executionDiscipline"]["retryLedger"] = {
-            "fictitious objective": {
-                "attempts": {
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
                     "initialAttempt": ledger_action(
                         "Failed", "initial-attempt", "retry-authorized"
                     ),
                     "retry3": ledger_action(
                         "Failed", "retry-2", "reported-unresolved"
                     ),
-                },
-                "nonConsumingActions": [],
-            }
-        }
+                }
+            )
+        )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_unsupported_completion_major_uses_current_schema(self):

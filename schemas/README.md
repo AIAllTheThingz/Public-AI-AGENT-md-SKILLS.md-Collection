@@ -55,7 +55,7 @@ The six original filenames remain intact.
 
 The current completion-result rolling and v2 contracts require `executionDiscipline` and use `schemaVersion: "2.0.0"`. The v1 completion-result contract remains supported and unchanged for historical or pinned consumers. The other five contracts remain version 1.
 
-Within a v2 retry ledger, a retry requires the preceding failed or indeterminate attempt to use `retry-authorized`; `reported-unresolved` is terminal. Successful objective-clearing actions remain recorded at their current retry position.
+Within a v2 retry ledger, each objective contains one or more preserved sequences. A retry requires the preceding failed or indeterminate attempt to use `retry-authorized`; `reported-unresolved` is terminal within that sequence. Every sequence after the first requires evidence of the prior sequence's stop/report, separate accountable authorization, and the material blocker or relevant scope or system-state change. Successful objective-clearing actions remain recorded at their current retry position.
 
 The completion-result v1-to-v2 upgrade is breaking because it adds required execution-discipline evidence. Existing v1 completion records remain valid when evaluated against the preserved v1 contract; they are not silently reinterpreted as v2.
 

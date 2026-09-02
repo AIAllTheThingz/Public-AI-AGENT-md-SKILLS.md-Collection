@@ -173,6 +173,48 @@ def run(args: argparse.Namespace) -> ToolResult:
 
     historical_valid = schema_root / "examples" / "completion-result" / "valid-v1.example.json"
     v1_completion_schema = versioned_schema_path(schema_root, "completion-result", 1)
+    if not v1_completion_schema.is_file():
+        findings.append(Finding(
+            "SCHEMA_MISSING",
+            "Missing versioned-v1 schema.",
+            path=v1_completion_schema.relative_to(root).as_posix(),
+        ))
+    else:
+        try:
+            v1_schema = load_json(v1_completion_schema)
+            Draft202012Validator.check_schema(v1_schema)
+        except (json.JSONDecodeError, jsonschema.SchemaError) as exc:
+            findings.append(Finding(
+                "SCHEMA_INVALID",
+                str(exc),
+                path=v1_completion_schema.relative_to(root).as_posix(),
+            ))
+        else:
+            v1_schema_id = v1_schema.get("$id")
+            if not isinstance(v1_schema_id, str) or not v1_schema_id:
+                findings.append(Finding(
+                    "SCHEMA_ID_MISSING",
+                    "Schema lacks a non-empty $id.",
+                    path=v1_completion_schema.relative_to(root).as_posix(),
+                ))
+            elif v1_schema_id in schema_ids:
+                findings.append(Finding(
+                    "SCHEMA_ID_DUPLICATE",
+                    f"Schema $id is also used by {schema_ids[v1_schema_id]}: {v1_schema_id}",
+                    path=v1_completion_schema.relative_to(root).as_posix(),
+                ))
+            else:
+                schema_ids[v1_schema_id] = v1_completion_schema.relative_to(root).as_posix()
+            v1_refs = remote_refs(v1_schema)
+            if v1_refs:
+                unsafe_names.add("completion-result")
+            for location, ref in v1_refs:
+                findings.append(Finding(
+                    "SCHEMA_REMOTE_REF",
+                    f"Remote $ref is not allowed in offline repository validation: {ref}",
+                    path=v1_completion_schema.relative_to(root).as_posix(),
+                    details={"pointer": location},
+                ))
     if historical_valid.is_file() and v1_completion_schema.is_file():
         positive_count += 1
         findings.extend(instance_findings(historical_valid, v1_completion_schema, root, True))
@@ -182,11 +224,10 @@ def run(args: argparse.Namespace) -> ToolResult:
         current_versioned = versioned_schema_path(
             schema_root, name, CURRENT_SCHEMA_MAJORS[name]
         )
-        versioned_paths = [
-            (versioned_schema_path(schema_root, name, major), f"versioned-v{major}")
-            for major in VERSIONED_SCHEMA_MAJORS[name]
-        ]
-        for path, kind in [(rolling, "rolling"), *versioned_paths]:
+        for path, kind in (
+            (rolling, "rolling"),
+            (current_versioned, f"versioned-v{CURRENT_SCHEMA_MAJORS[name]}"),
+        ):
             if not path.is_file():
                 findings.append(Finding("SCHEMA_MISSING", f"Missing {kind} schema.", path=path.relative_to(root).as_posix()))
                 continue

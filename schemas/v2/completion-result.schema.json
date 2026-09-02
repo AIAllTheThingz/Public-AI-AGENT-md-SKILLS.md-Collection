@@ -157,7 +157,7 @@
         "resetBasis": {
           "type": "string",
           "minLength": 1,
-          "description": "Not applicable is permitted when no reset occurred."
+          "description": "Summary of any retry-budget reset. Each sequence after the first records its own prior stop/report, authorization, and material-change evidence. Not applicable is permitted when no reset occurred."
         },
         "progressOrBlockerNarrowing": {
           "type": "string",
@@ -337,14 +337,50 @@
         }
       ]
     },
-    "objectiveRetryLedger": {
+    "resetAuthorization": {
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "priorSequenceStopReport",
+        "authorizedBy",
+        "authorizationEvidence",
+        "materialChange"
+      ],
+      "properties": {
+        "priorSequenceStopReport": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authorizedBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authorizationEvidence": {
+          "type": "string",
+          "minLength": 1
+        },
+        "materialChange": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "retrySequence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequenceId",
         "attempts",
         "nonConsumingActions"
       ],
       "properties": {
+        "sequenceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resetAuthorization": {
+          "$ref": "#/$defs/resetAuthorization"
+        },
         "attempts": {
           "type": "object",
           "additionalProperties": false,
@@ -499,6 +535,53 @@
                 }
               }
             ]
+          }
+        }
+      }
+    },
+    "initialRetrySequence": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/retrySequence"
+        },
+        {
+          "not": {
+            "required": [
+              "resetAuthorization"
+            ]
+          }
+        }
+      ]
+    },
+    "resetRetrySequence": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/retrySequence"
+        },
+        {
+          "required": [
+            "resetAuthorization"
+          ]
+        }
+      ]
+    },
+    "objectiveRetryLedger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequences"
+      ],
+      "properties": {
+        "sequences": {
+          "type": "array",
+          "minItems": 1,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/initialRetrySequence"
+            }
+          ],
+          "items": {
+            "$ref": "#/$defs/resetRetrySequence"
           }
         }
       }

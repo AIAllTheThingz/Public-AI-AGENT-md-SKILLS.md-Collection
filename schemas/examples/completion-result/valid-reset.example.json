@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "2.0.0",
+  "status": "validated",
+  "summary": "Illustrative record with an authorized retry-budget reset.",
+  "filesChanged": [
+    "README.md"
+  ],
+  "risk": "low",
+  "validation": [
+    {
+      "name": "Schema validation",
+      "result": "passed",
+      "evidence": "example only"
+    }
+  ],
+  "limitations": [
+    "This is fictitious structural evidence only."
+  ],
+  "reviewer": "fictitious-reviewer",
+  "executionDiscipline": {
+    "failedOrIndeterminateOutcomes": [
+      "The first sequence stopped and reported the objective unresolved after the source fixture was unavailable."
+    ],
+    "authorizationRecoveryContinuity": "No consequential mutation occurred; authorization remained scoped to the fictitious validation objective.",
+    "retryLedger": {
+      "validate the fictitious completion record": {
+        "sequences": [
+          {
+            "sequenceId": "sequence-1",
+            "attempts": {
+              "initialAttempt": {
+                "action": "Run fictitious schema validation",
+                "actor": "fictitious-agent",
+                "executionContext": {
+                  "tool": "fictitious-validator"
+                },
+                "startedAt": "2026-01-01T00:00:00Z",
+                "endedAt": "2026-01-01T00:01:00Z",
+                "effectsReconciliation": "No state changed; the missing fixture was confirmed.",
+                "result": "Failed",
+                "budgetPosition": "initial-attempt",
+                "justification": "Initial validation attempt.",
+                "terminalDisposition": "reported-unresolved"
+              }
+            },
+            "nonConsumingActions": []
+          },
+          {
+            "sequenceId": "sequence-2",
+            "resetAuthorization": {
+              "priorSequenceStopReport": "Sequence 1 stopped and reported the validation objective unresolved.",
+              "authorizedBy": "fictitious-owner",
+              "authorizationEvidence": "Fictitious decision record RESET-001.",
+              "materialChange": "The missing source fixture became available."
+            },
+            "attempts": {
+              "initialAttempt": {
+                "action": "Validate the available fictitious fixture",
+                "actor": "fictitious-agent",
+                "executionContext": {
+                  "tool": "fictitious-validator"
+                },
+                "startedAt": "2026-01-01T01:00:00Z",
+                "endedAt": "2026-01-01T01:01:00Z",
+                "effectsReconciliation": "No state changed; successful output was reconciled.",
+                "result": "Successful",
+                "budgetPosition": "initial-attempt",
+                "justification": "A separately authorized sequence began after the material blocker changed.",
+                "terminalDisposition": "objective-completed"
+              }
+            },
+            "nonConsumingActions": []
+          }
+        ]
+      }
+    },
+    "resetBasis": "Sequence 2 was separately authorized after sequence 1 stopped and reported unresolved and the missing source fixture became available.",
+    "progressOrBlockerNarrowing": "The source fixture became available and the validation objective completed.",
+    "delegationHandoff": {
+      "summary": "Not applicable; no delegation occurred.",
+      "boundariesPreserved": true
+    },
+    "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
+  }
+}

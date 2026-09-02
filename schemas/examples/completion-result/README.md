@@ -16,6 +16,10 @@ status: baseline
 
 It demonstrates `schemaVersion: "2.0.0"` and required `executionDiscipline` evidence for a current completion record.
 
+## Authorized reset positive example
+
+[`valid-reset.example.json`](valid-reset.example.json) must validate against the rolling and v2 schemas. It preserves the stopped and reported first sequence, then records separate authorization and material-change evidence on the second sequence before completing the objective.
+
 ## Preserved v1 compatibility example
 
 The [`valid-v1.example.json`](valid-v1.example.json) compatibility fixture must validate against the unchanged [`../../v1/completion-result.schema.json`](../../v1/completion-result.schema.json). It remains available for historical records and pinned v1 consumers and is not expected to satisfy v2.
