@@ -1,7 +1,7 @@
 ---
 id: GOV-TPL-EVID-001
 title: Completion Evidence Template
-version: 0.2.0
+version: 0.3.0
 status: baseline
 ---
 
@@ -25,6 +25,15 @@ status: baseline
 
 | Check | Command or source | Result | Evidence | Limitations |
 |---|---|---|---|---|
+
+## Execution discipline
+
+- Failed or indeterminate outcomes, actual-state reconciliation, and confirmation that authorization and recovery controls remain valid for consequential mutations:
+- Retry ledger for the objective or blocker across the active task or change and all tools, tasks, sessions, agents, and strategies (budget, justifications, terminal disposition):
+- Reset basis, if any (prior sequence stopped and reported, accountable requester or owner authorization, material blocker or relevant scope or system-state change):
+- Progress or blocker narrowing:
+- Delegation handoff (value, failure evidence, blocker, retry count, unresolved state):
+- Authorized routing of non-blocking out-of-scope findings:
 
 ## Review and authorization
 

@@ -1,7 +1,7 @@
 ---
 id: GOV-TPL-ADOPT-001
 title: Governance Adoption Checklist
-version: 0.2.0
+version: 0.3.0
 status: baseline
 ---
 
@@ -34,6 +34,9 @@ status: baseline
 - [ ] Review and approval record available
 - [ ] Exception record available
 - [ ] Vulnerability triage and closure records available
+- [ ] GOV-WORK-011..014 records selected for failed or indeterminate outcomes, reconciliation, authorization/recovery-control continuity for consequential mutations, retry ledger/budget, terminal disposition/reset basis, progress/blocker narrowing, delegation handoff, and authorized out-of-scope routing
+- [ ] Retry ledger spans the objective or blocker across the active task or change and all tools, tasks, sessions, agents, and strategies; exhaustion stops further attempts and records unresolved
+- [ ] A new budget requires the prior sequence to stop and report, separate accountable requester or owner authorization, and recorded material blocker or relevant scope or system-state change
 
 ## Integration
 

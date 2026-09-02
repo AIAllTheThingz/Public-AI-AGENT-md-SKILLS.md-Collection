@@ -98,15 +98,15 @@ This policy applies to:
 
 ### GOV-WORK-012
 
-**Requirement:** For the same failed objective or underlying blocker within the active execution sequence, allow the initial attempt plus at most two justified retries across tools, tasks, sessions, and agents; at the boundary stop the repeated approach, diagnose and use a new evidence-based hypothesis or materially different strategy, or report unresolved; relabeling or delegating cannot reset the budget.
+**Requirement:** For the same objective or underlying blocker across the whole active task or change and across all tools, tasks, sessions, agents, and strategies, allow the initial attempt plus at most two justified retries; once exhausted, stop all further execution attempts for that objective or blocker and report unresolved; a new tool, strategy, hypothesis, agent, or delegation does not reset the budget; a new budget exists only after the prior sequence stopped and reported, an accountable requester or owner separately authorizes a new execution sequence, and recorded evidence shows that the underlying blocker or relevant scope or system state materially changed.
 
-**Expected evidence:** An attempt and retry ledger carries the objective or blocker, count, justification, actors, and boundary disposition across tools, tasks, sessions, and agents.
+**Expected evidence:** A retry ledger carries the objective or blocker, active task or change, all attempts and actors across tools, tasks, sessions, agents, and strategies, each retry's justification, and terminal unresolved disposition; any reset records the prior stop and report, accountable requester or owner authorization, and material blocker or relevant scope or system-state change.
 
 ### GOV-WORK-013
 
-**Requirement:** Stop/report or adopt a new evidence-based hypothesis when successive actions across approaches or agents make no relevant, nonduplicative progress toward acceptance criteria or narrowing the blocker; changing commands, tools, agents, or strategies, producing different but irrelevant output, unrelated scope expansion, or speculative implementation is not progress; route non-blocking out-of-scope findings through the applicable authorized channel under GOV-WORK-003 rather than adding them to active scope.
+**Requirement:** Within any remaining GOV-WORK-012 budget, stop/report or adopt a new evidence-based hypothesis when successive actions across approaches or agents make no relevant, nonduplicative progress toward acceptance criteria or narrowing the blocker; after that budget is exhausted, stop all further execution attempts and report unresolved; changing commands, tools, agents, or strategies, producing different but irrelevant output, unrelated scope expansion, or speculative implementation is not progress; route non-blocking out-of-scope findings through the applicable authorized channel under GOV-WORK-003 rather than adding them to active scope.
 
-**Expected evidence:** A progress record maps successive actions to acceptance criteria or blocker narrowing, records the stop or new hypothesis, and records authorized routing of non-blocking out-of-scope findings.
+**Expected evidence:** A progress record maps successive actions to acceptance criteria or blocker narrowing within any remaining GOV-WORK-012 budget, records the stop or new hypothesis or exhausted unresolved disposition, and records authorized routing of non-blocking out-of-scope findings.
 
 ### GOV-WORK-014
 
@@ -121,8 +121,8 @@ This policy applies to:
 - Validation complete before completion reporting.
 - Authorization and rollback readiness confirmed before consequential execution.
 - Failed or indeterminate actions are not repeated without a recorded causal material change and required state reconciliation.
-- Retry budget and boundary disposition are confirmed before another attempt.
-- Progress toward acceptance or blocker narrowing is confirmed; otherwise stop/report or adopt an evidence-based hypothesis.
+- GOV-WORK-012 retry budget is confirmed before another attempt; when exhausted, all further attempts for the objective or blocker stop until the prior sequence is stopped and reported, an accountable requester or owner separately authorizes a new sequence, and recorded evidence shows a material blocker or relevant scope or system-state change.
+- GOV-WORK-013 progress is assessed within the remaining GOV-WORK-012 budget; no relevant progress requires stop/report or a new evidence-based hypothesis, while an exhausted budget requires stopping all attempts and reporting unresolved.
 - Delegation value, handoff state, and retry/no-progress boundaries are confirmed before handoff.
 
 ## Required records and evidence

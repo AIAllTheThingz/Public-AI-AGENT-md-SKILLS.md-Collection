@@ -191,7 +191,8 @@
   "migrationFrom0100": {
     "breakingChanges": [
       "Existing Site Reliability Engineering and Testing and Quality Engineering adopters must migrate to the strengthened readiness, scaling, and contextual performance-test decision and evidence contracts, including separate performance-test execution states and outcomes.",
-      "Existing canonical-profile adopters must select Product Management or User Experience when the documented conditional predicate is satisfied."
+      "Existing canonical-profile adopters must select Product Management or User Experience when the documented conditional predicate is satisfied.",
+      "All existing Agent Working Method adopters must adopt GOV-WORK-011 through GOV-WORK-014: the same objective or blocker retry budget spans the whole active task or change and all tools, tasks, sessions, agents, and strategies; exhaustion is terminal, with reset only after the prior sequence stops and reports, an accountable requester or owner separately authorizes it, and evidence records a material blocker or relevant scope or system-state change."
     ],
     "requiredActions": [
       "Update the recorded repository source from v0.10.0 to the reviewed 1.0.0-rc.1 candidate when deliberately evaluating the release candidate.",
@@ -199,13 +200,15 @@
       "Migrate existing SRE and Testing package selections to the strengthened readiness, scaling, and per-test execution-state, outcome, accountability, and safety evidence contracts; record scaling validation that misses authorized criteria as Failed rather than unresolved, and do not report an overall scaling strategy Verified until every applicable scaling area is Verified with no Applicable, NotRun, Blocked, or Failed area, or performance/scalability validated until every applicable test type is Tested with outcome Pass.",
       "Re-evaluate every selected canonical profile against the conditional Product Management and User Experience predicates and record either the selected overlay or a scope-specific omission rationale.",
       "For a selected User Experience overlay, record validation state separately from per-method and overall outcome and do not report UX validated unless the overall outcome is Pass and every applicable method and claim succeeds for the exact version and representative conditions.",
-      "Treat only languages/csharp as a stable package commitment; do not infer stable maturity for baseline packages."
+      "Treat only languages/csharp as a stable package commitment; do not infer stable maturity for baseline packages.",
+      "Add GOV-WORK-011 through GOV-WORK-014 and retain GOV-WORK-003 scope discipline; track the same objective or blocker across the whole active task or change and all tools, tasks, sessions, agents, and strategies; carry failure, reconciliation, progress, and delegation handoff evidence; stop all further execution attempts when the initial attempt plus two retries are exhausted, and reset only after the prior sequence stops and reports, separate authorization from an accountable requester or owner, and recorded material blocker or relevant scope or system-state change."
     ],
     "reviewActions": [
       "C# adopters should review the newly explicit stable compatibility commitment.",
       "PowerShell adopters using Windows PowerShell 5.1 should review the additive legacy compatibility overlay.",
       "Existing SRE and Testing adopters must review the breaking readiness, scaling, and contextual performance-test migration.",
-      "Existing profile adopters must review the conditional Product Management and User Experience overlays; --include-profile-required does not select those overlays automatically."
+      "Existing profile adopters must review the conditional Product Management and User Experience overlays; --include-profile-required does not select those overlays automatically.",
+      "Review GOV-WORK-011 through GOV-WORK-014 migration boundaries and evidence, including terminal retry exhaustion, reset authorization and material change, scope routing, progress, and delegation handoff."
     ],
     "preservedContracts": [
       "published v0.10.0 root stable entry paths",

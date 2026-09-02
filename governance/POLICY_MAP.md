@@ -1,7 +1,7 @@
 ---
 id: GOV-MAP-001
 title: Governance Policy Map
-version: 0.2.0
+version: 0.3.0
 status: baseline
 ---
 
@@ -57,6 +57,8 @@ When explicitly selected, the [Product Inception Lifecycle](PRODUCT_INCEPTION_LI
 | Secure Development Policy | threat, security tests, dependency and residual-risk evidence |
 | Threat Modeling Policy | threat model, mitigations, validation, residual risk |
 | Vulnerability Response | triage, affected scope, containment, fix, closure, lessons |
+
+Agent Working Method GOV-WORK-011 through GOV-WORK-014 records include failed or indeterminate outcomes, actual-state reconciliation, confirmation that authorization and recovery controls remain valid for consequential mutations, a retry ledger with budget, terminal disposition and any reset basis, progress or blocker narrowing, and delegation handoff evidence.
 
 ## Decision relationships
 

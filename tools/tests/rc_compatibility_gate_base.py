@@ -551,11 +551,25 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertIn("Testing and Quality Engineering", breaking)
         self.assertIn("Product Management", breaking)
         self.assertIn("User Experience", breaking)
+        self.assertIn("GOV-WORK-011", breaking)
+        self.assertIn("GOV-WORK-014", breaking)
         self.assertGreaterEqual(len(migration["requiredActions"]), 5)
+        required_actions = "\n".join(migration["requiredActions"])
+        self.assertIn("stop all further execution attempts", required_actions)
+        self.assertIn(
+            "separate authorization from an accountable requester or owner",
+            required_actions,
+        )
+        self.assertIn(
+            "material blocker or relevant scope or system-state change",
+            required_actions,
+        )
         self.assertGreaterEqual(len(migration["preservedContracts"]), 6)
         notes = (REPO_ROOT / "releases" / "migrations" / f"{CANDIDATE}.md").read_text(encoding="utf-8")
         self.assertIn("# Migration to 1.0.0-rc.1 from 0.10.0", notes)
         self.assertIn("## Required actions", notes)
+        self.assertIn("GOV-WORK-011", notes)
+        self.assertIn("GOV-WORK-014", notes)
         self.assertIn("The candidate is breaking", notes)
         self.assertNotIn("declares no breaking change", notes)
         self.assertIn("Final `1.0.0` has not yet been approved or published", notes)

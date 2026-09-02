@@ -16,15 +16,15 @@ Release notes distinguish:
 
 ### Breaking changes
 
-- Added mandatory all-project anti-looping and execution-discipline obligations GOV-WORK-011 through GOV-WORK-014 to the Agent Working Method; existing adopters must migrate their working methods and evidence records.
+- None.
 
 ### Normative changes
 
-- Added GOV-WORK-011 through GOV-WORK-014 covering causally justified retries, bounded execution retries, no-progress and stagnation handling, and value-bearing delegation with carried failure state.
+- None.
 
 ### Migration notes
 
-- Existing adopters must add GOV-WORK-011 through GOV-WORK-014, retain GOV-WORK-003 scope discipline, and carry retry state and unresolved blocker evidence across delegation.
+- None.
 
 ## [1.0.0-rc.1] - 2026-08-16
 
@@ -34,9 +34,11 @@ Release candidate for the first stable repository compatibility contract. The ca
 
 - Strengthened the existing Site Reliability Engineering and Testing and Quality Engineering package contracts with mandatory production-readiness, scaling-strategy, and contextual performance-test decisions and evidence. Scaling validation that misses authorized criteria is `Failed`, distinct from unresolved work; an overall scaling strategy may be `Verified` only after every applicable area is `Verified`. Performance-test execution state is separate from outcome and a validated claim requires every applicable test type to have a current explicit `Pass`; unresolved, failed, not-run, or blocked evidence prevents those claims. Existing adopters of either package must migrate their tailored instructions, templates, and evidence records before claiming conformance to the updated package.
 - Added Product Management and User Experience as conditional overlays to all 13 canonical project profiles. Profile selection alone does not select either package, but each overlay becomes mandatory when its documented product or human-experience predicate is satisfied. Existing profile adopters whose scopes satisfy a predicate must migrate.
+- Added mandatory all-project anti-looping and execution-discipline obligations GOV-WORK-011 through GOV-WORK-014 to the Agent Working Method; the retry budget follows the same objective or underlying blocker across the whole active task or change, and existing adopters must migrate their working methods and evidence records.
 
 ### Normative changes
 
+- Added GOV-WORK-011 through GOV-WORK-014 covering causally justified retries, a bounded retry budget across all tools, tasks, sessions, agents, and strategies, no-progress handling within the remaining budget, and delegation with carried failure state and terminal-boundary discipline.
 - Promoted the C# language package from `baseline` to `stable` using evidence-backed maturity review, complete package-surface binding, two representative downstream adoptions, current source review, compatibility inventory, and independent specialist approval.
 - Defined the intended `1.0.0` stable compatibility surface for root paths, identifiers, schemas, original stable templates, executable tool entry points/output contracts, release artifacts, and the C# stable package boundary.
 - Explicitly kept every package not enumerated as stable outside the stable package promise while preserving ordinary compatibility and migration obligations for documented repository contracts.
@@ -84,6 +86,7 @@ Release candidate for the first stable repository compatibility contract. The ca
 - When a predicate is satisfied, add the corresponding `product-management` or `user-experience` discipline to the project manifest and composed standards, then synchronize the canonical-profile adoption decision across the complete package README, adoption checklist and example, root and nested `AGENTS.md`, standards-selection or tailoring record, and completion evidence. Do not rely on `--include-profile-required` to select conditional overlays automatically.
 - Before claiming migration complete, validate the manifest and generated composition, confirm the selected discipline package is complete, and run `python tools/validate-standards/validate_repository.py`, `python tools/check-links/check_links.py`, and the adopting project's applicable tests. Adopters unable to complete the newly required package and evidence work must remain on their previously pinned repository revision or record the gap as `Blocked`; they must not claim conformance to the updated profile.
 - Existing `v0.10.0` consumers are not required to adopt this prerelease. Evaluators should pin the exact RC source, complete every applicable migration above, rerun project validation, and treat only `languages/csharp` as a stable package commitment.
+- Existing Agent Working Method adopters must add GOV-WORK-011 through GOV-WORK-014; retain GOV-WORK-003 scope discipline; carry the retry ledger across the objective or blocker, active task or change, tools, tasks, sessions, agents, and strategies; stop all attempts and report unresolved on exhaustion; and create a new budget only after the prior sequence stopped and reported, an accountable requester or owner separately authorized a new sequence, and evidence recorded a material blocker or relevant scope or system-state change.
 
 ### Known limitations
 
