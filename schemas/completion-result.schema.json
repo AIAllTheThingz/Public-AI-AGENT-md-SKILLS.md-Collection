@@ -384,6 +384,9 @@
         "attempts": {
           "type": "object",
           "additionalProperties": false,
+          "required": [
+            "initialAttempt"
+          ],
           "properties": {
             "initialAttempt": {
               "allOf": [

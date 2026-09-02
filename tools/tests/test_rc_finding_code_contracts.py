@@ -46,6 +46,27 @@ _BEHAVIOR_BOUND_FINDING_CONTEXTS = {
             "subprocess decoding."
         ),
     },
+    **{
+        code: {
+            "sourcePath": "tools/validate-schemas/validate_schemas.py",
+            "function": "run",
+            "reason": (
+                "Completion-result current-major routing intentionally expands versioned-schema "
+                "validation. Direct positive and negative validator tests preserve each public "
+                "code while allowing repository-instance finalization to prevent post-emission loss."
+            ),
+        }
+        for code in (
+            "SCHEMA_MISSING",
+            "SCHEMA_INVALID",
+            "SCHEMA_ID_MISSING",
+            "SCHEMA_ID_DUPLICATE",
+            "SCHEMA_REMOTE_REF",
+            "SCHEMA_VERSION_MISMATCH",
+            "SCHEMA_POSITIVE_EXAMPLE_MISSING",
+            "SCHEMA_NEGATIVE_EXAMPLE_MISSING",
+        )
+    },
 }
 
 
