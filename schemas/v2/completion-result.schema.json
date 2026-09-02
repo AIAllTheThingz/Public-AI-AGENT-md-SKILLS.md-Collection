@@ -143,7 +143,7 @@
         },
         "retryLedger": {
           "type": "object",
-          "description": "Per-objective retry evidence. A non-empty failedOrIndeterminateOutcomes array requires at least one objective ledger containing a Failed or Indeterminate attempt. When that outcomes array is empty, no supplied objective ledger may contain a Failed or Indeterminate attempt.",
+          "description": "Per-objective retry evidence. A passed validation requires at least one Successful ledger action. A non-empty failedOrIndeterminateOutcomes array requires at least one objective ledger containing a Failed or Indeterminate attempt. When that outcomes array is empty, no supplied objective ledger may contain a Failed or Indeterminate attempt.",
           "propertyNames": {
             "type": "string",
             "minLength": 1
@@ -295,7 +295,16 @@
           "executionDiscipline": {
             "properties": {
               "retryLedger": {
-                "minProperties": 1
+                "minProperties": 1,
+                "not": {
+                  "patternProperties": {
+                    "^.+$": {
+                      "not": {
+                        "$ref": "#/$defs/objectiveRetryLedgerWithSuccess"
+                      }
+                    }
+                  }
+                }
               }
             },
             "required": [
@@ -753,6 +762,99 @@
         }
       ]
     },
+    "retrySequenceWithSuccess": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/retrySequence"
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "attempts": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "initialAttempt": {
+                          "properties": {
+                            "result": {
+                              "const": "Successful"
+                            }
+                          },
+                          "required": [
+                            "result"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "initialAttempt"
+                      ]
+                    },
+                    {
+                      "properties": {
+                        "retry1": {
+                          "properties": {
+                            "result": {
+                              "const": "Successful"
+                            }
+                          },
+                          "required": [
+                            "result"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "retry1"
+                      ]
+                    },
+                    {
+                      "properties": {
+                        "retry2": {
+                          "properties": {
+                            "result": {
+                              "const": "Successful"
+                            }
+                          },
+                          "required": [
+                            "result"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "retry2"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "attempts"
+              ]
+            },
+            {
+              "properties": {
+                "nonConsumingActions": {
+                  "contains": {
+                    "properties": {
+                      "result": {
+                        "const": "Successful"
+                      }
+                    },
+                    "required": [
+                      "result"
+                    ]
+                  },
+                  "minContains": 1
+                }
+              },
+              "required": [
+                "nonConsumingActions"
+              ]
+            }
+          ]
+        }
+      ]
+    },
     "retrySequenceWithFailure": {
       "allOf": [
         {
@@ -1029,6 +1131,40 @@
               }
             }
           }
+        }
+      ]
+    },
+    "objectiveRetryLedgerWithSuccess": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/objectiveRetryLedger"
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "priorUnresolvedSequences": {
+                  "contains": {
+                    "$ref": "#/$defs/retrySequenceWithSuccess"
+                  },
+                  "minContains": 1
+                }
+              },
+              "required": [
+                "priorUnresolvedSequences"
+              ]
+            },
+            {
+              "properties": {
+                "currentSequence": {
+                  "$ref": "#/$defs/retrySequenceWithSuccess"
+                }
+              },
+              "required": [
+                "currentSequence"
+              ]
+            }
+          ]
         }
       ]
     },
