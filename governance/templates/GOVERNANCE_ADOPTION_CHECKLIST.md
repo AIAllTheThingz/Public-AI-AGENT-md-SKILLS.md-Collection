@@ -36,6 +36,7 @@ status: baseline
 - [ ] Vulnerability triage and closure records available
 - [ ] GOV-WORK-011..014 records selected for failed or indeterminate outcomes, reconciliation, authorization/recovery-control continuity for consequential mutations, retry ledger/budget, terminal disposition/reset basis, progress/blocker narrowing, delegation handoff, and authorized out-of-scope routing
 - [ ] Retry ledger spans the objective or blocker across the active task or change and all tools, tasks, sessions, agents, and strategies; exhaustion stops further attempts and records unresolved
+- [ ] Count each budget-consuming attempt as one consequential action ending after observable effects are reconciled with a Failed or Indeterminate result; each subsequent consequential action counts as a retry even within the same command sequence, plan, workflow, tool, agent, or strategy; read-only discovery, reconciliation, and non-state-changing validation do not consume budget, and Successful ends the objective or blocker
 - [ ] A new budget requires the prior sequence to stop and report, separate accountable requester or owner authorization, and recorded material blocker or relevant scope or system-state change
 
 ## Integration
