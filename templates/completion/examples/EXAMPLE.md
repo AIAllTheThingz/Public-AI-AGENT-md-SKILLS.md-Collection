@@ -48,7 +48,7 @@ No copied-template adoption test was run in a real project.
 
 ## Execution discipline
 
-Failed or indeterminate outcomes, keyed objective `Completion record migration`: One objective-directed read-only validation returned `Failed` because the fixture still used the v1 completion contract; the same objective's table rows provide its complete failure-bearing retry ledger, observable output was reconciled, and the producer fixture was corrected.
+Failed or indeterminate outcomes, keyed objective `Completion record migration`: One objective-directed read-only validation returned `Failed` because the fixture still used the v1 completion contract. In schema-backed JSON, one `retryLedger` map keyed by objective stores this summary in that objective's non-empty `failedOrIndeterminateOutcomes` array alongside the table's retry evidence; the observable output was reconciled and the producer fixture was corrected.
 
 Authorization/recovery continuity for consequential mutations: Confirmed authorization and recovery controls remained valid; the correction was limited to the fictitious fixture.
 

@@ -28,10 +28,10 @@
   ],
   "reviewer": "fictitious-governance-reviewer",
   "executionDiscipline": {
-    "failedOrIndeterminateOutcomes": {},
     "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
     "retryLedger": {
       "validate the fictitious governance change": {
+        "failedOrIndeterminateOutcomes": [],
         "priorUnresolvedSequences": [],
         "currentSequence": {
           "sequenceId": "sequence-1",

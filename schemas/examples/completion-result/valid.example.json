@@ -18,10 +18,10 @@
   ],
   "reviewer": "fictitious-reviewer",
   "executionDiscipline": {
-    "failedOrIndeterminateOutcomes": {},
     "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
     "retryLedger": {
       "validate the illustrative completion record": {
+        "failedOrIndeterminateOutcomes": [],
         "priorUnresolvedSequences": [],
         "currentSequence": {
           "sequenceId": "sequence-1",

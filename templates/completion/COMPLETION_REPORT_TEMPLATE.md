@@ -48,7 +48,7 @@ template_type: completion-report
 
 ## Execution discipline
 
-- Failed or indeterminate outcomes, keyed by objective so every objective includes its outcome summaries and complete failure-bearing retry ledger:
+- Failed or indeterminate outcomes, recorded inside the same retry-ledger entry keyed by objective:
 {{FAILED_OR_INDETERMINATE_OUTCOMES}}
 - Authorization/recovery continuity for consequential mutations:
 {{AUTHORIZATION_RECOVERY_CONTINUITY}}
@@ -58,7 +58,7 @@ template_type: completion-report
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 {{RETRY_LEDGER_ROWS}}
 
-For schema-backed JSON, embed each failure-bearing objective ledger under the matching `failedOrIndeterminateOutcomes` key and reserve the separate `retryLedger` field for success/evidence-only objectives. The rendered table above may present rows from both locations together.
+For schema-backed JSON, use one `retryLedger` map keyed by objective. Each objective ledger contains its own `failedOrIndeterminateOutcomes` array: it is non-empty exactly when that same ledger contains a Failed or Indeterminate attempt. No second objective map exists, so an objective cannot be split across ledgers. The rendered summary and table above describe the same per-objective records.
 
 - Reset basis, if any:
 {{RESET_BASIS}}

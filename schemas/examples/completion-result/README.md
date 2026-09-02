@@ -18,7 +18,7 @@ It demonstrates `schemaVersion: "2.0.0"` and required `executionDiscipline` evid
 
 ## Authorized reset positive example
 
-[`valid-reset.example.json`](valid-reset.example.json) must validate against the rolling and v2 schemas. Under one `failedOrIndeterminateOutcomes` objective key, it co-locates the failure summary and complete retry ledger, preserves the stopped and reported first sequence under `priorUnresolvedSequences`, then records separate authorization and material-change evidence on `currentSequence` before completing the objective.
+[`valid-reset.example.json`](valid-reset.example.json) must validate against the rolling and v2 schemas. It uses one `retryLedger` map keyed by objective, stores the failure summary in that objective's `failedOrIndeterminateOutcomes` array, preserves the stopped and reported first sequence under `priorUnresolvedSequences`, then records separate authorization and material-change evidence on `currentSequence` before completing the objective.
 
 ## Preserved v1 compatibility examples
 
@@ -28,7 +28,7 @@ The [`invalid-v1.example.json`](invalid-v1.example.json) compatibility fixture m
 
 ## Negative example
 
-[`invalid.example.json`](invalid.example.json) is intentionally invalid under the current v2 contract because it reports failures for two objectives but supplies the required per-objective retry ledger for only one. Every failed-or-indeterminate outcome key must carry its own non-empty summaries and failure-bearing retry evidence.
+[`invalid.example.json`](invalid.example.json) is intentionally invalid under the current v2 contract because it duplicates the same objective across the removed top-level `failedOrIndeterminateOutcomes` map and the authoritative `retryLedger`. Current records use one `retryLedger` map keyed by objective, with each objective's own `failedOrIndeterminateOutcomes` array, so a failure ledger and a success-only ledger cannot split one objective and bypass reset authorization.
 
 ## Boundary
 

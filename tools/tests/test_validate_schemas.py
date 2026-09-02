@@ -57,23 +57,14 @@ def retry_sequence(
     return sequence
 
 
-def retry_ledger(*sequences: dict) -> dict:
+def retry_ledger(*sequences: dict, outcomes: tuple[str, ...] = ()) -> dict:
     if not sequences:
         return {}
     return {
         "fictitious objective": {
+            "failedOrIndeterminateOutcomes": list(outcomes),
             "priorUnresolvedSequences": list(sequences[:-1]),
             "currentSequence": sequences[-1],
-        }
-    }
-
-
-def failed_outcomes(ledger: dict, *outcomes: str) -> dict:
-    [(objective, retry_evidence)] = ledger.items()
-    return {
-        objective: {
-            "outcomes": list(outcomes),
-            "retryLedger": retry_evidence,
         }
     }
 
@@ -197,6 +188,22 @@ class ValidateSchemasTests(unittest.TestCase):
                     [],
                 )
 
+    def test_split_objective_negative_fixture_is_rejected(self):
+        schema, _ = completion_v2()
+        instance = json.loads(
+            (REPO_ROOT / "schemas/examples/completion-result/invalid.example.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        errors = list(Draft202012Validator(schema).iter_errors(instance))
+        self.assertTrue(
+            any(
+                error.validator == "additionalProperties"
+                and list(error.absolute_path) == ["executionDiscipline"]
+                for error in errors
+            )
+        )
+
     def test_multiple_authorized_retry_resets_are_valid(self):
         schema, instance = completion_v2()
         reset = {
@@ -231,14 +238,10 @@ class ValidateSchemasTests(unittest.TestCase):
                 sequence_id="sequence-3",
                 reset_authorization=reset,
             ),
-        )
-        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = (
-            failed_outcomes(
-                instance["executionDiscipline"]["retryLedger"],
+            outcomes=(
                 "Two prior fictitious sequences reported the objective unresolved.",
-            )
+            ),
         )
-        instance["executionDiscipline"]["retryLedger"] = {}
         self.assertEqual(
             list(
                 Draft202012Validator(
@@ -303,15 +306,11 @@ class ValidateSchemasTests(unittest.TestCase):
                         "Successful", "retry-1", "objective-completed"
                     ),
                 }
-            )
-        )
-        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = (
-            failed_outcomes(
-                instance["executionDiscipline"]["retryLedger"],
+            ),
+            outcomes=(
                 "Fictitious initial validation failed before the retry succeeded.",
-            )
+            ),
         )
-        instance["executionDiscipline"]["retryLedger"] = {}
         self.assertEqual(
             list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(instance)),
             [],
@@ -370,15 +369,11 @@ class ValidateSchemasTests(unittest.TestCase):
                         "Failed", "initial-attempt", "reported-unresolved"
                     )
                 }
-            )
-        )
-        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = (
-            failed_outcomes(
-                instance["executionDiscipline"]["retryLedger"],
+            ),
+            outcomes=(
                 "Fictitious validation attempt failed.",
-            )
+            ),
         )
-        instance["executionDiscipline"]["retryLedger"] = {}
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_failed_validation_requires_a_reported_failure(self):
@@ -396,23 +391,20 @@ class ValidateSchemasTests(unittest.TestCase):
             ],
         )
         del evidence_sequence["attempts"]
-        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = {
-            "failing objective": {
-                "outcomes": ["Fictitious validation failed."],
-                "retryLedger": {
-                    "priorUnresolvedSequences": [],
-                    "currentSequence": retry_sequence(
-                        {
-                            "initialAttempt": ledger_action(
-                                "Failed", "initial-attempt", "reported-unresolved"
-                            )
-                        }
-                    ),
-                },
-            }
-        }
         instance["executionDiscipline"]["retryLedger"] = {
+            "failing objective": {
+                "failedOrIndeterminateOutcomes": ["Fictitious validation failed."],
+                "priorUnresolvedSequences": [],
+                "currentSequence": retry_sequence(
+                    {
+                        "initialAttempt": ledger_action(
+                            "Failed", "initial-attempt", "reported-unresolved"
+                        )
+                    }
+                ),
+            },
             "evidence-only objective": {
+                "failedOrIndeterminateOutcomes": [],
                 "priorUnresolvedSequences": [],
                 "currentSequence": evidence_sequence,
             },
@@ -453,35 +445,45 @@ class ValidateSchemasTests(unittest.TestCase):
             with self.subTest(attempts=tuple(attempts)):
                 schema, instance = completion_v2()
                 instance["executionDiscipline"]["retryLedger"] = retry_ledger(
-                    retry_sequence(attempts)
+                    retry_sequence(attempts),
+                    outcomes=("Fictitious execution attempt failed.",),
                 )
                 self.assertTrue(
                     list(Draft202012Validator(schema).iter_errors(instance))
                 )
 
-    def test_each_failed_outcome_requires_its_retry_ledger(self):
+    def test_each_objective_ledger_requires_its_outcome_array(self):
         schema, instance = completion_v2()
-        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = {
+        instance["executionDiscipline"]["retryLedger"] = {
             "first objective": {
-                "outcomes": ["Fictitious first validation failed."],
-                "retryLedger": retry_ledger(
-                    retry_sequence(
-                        {
-                            "initialAttempt": ledger_action(
-                                "Failed", "initial-attempt", "reported-unresolved"
-                            )
-                        }
-                    )
-                )["fictitious objective"],
+                "failedOrIndeterminateOutcomes": [
+                    "Fictitious first validation failed."
+                ],
+                "priorUnresolvedSequences": [],
+                "currentSequence": retry_sequence(
+                    {
+                        "initialAttempt": ledger_action(
+                            "Failed", "initial-attempt", "reported-unresolved"
+                        )
+                    }
+                ),
             },
             "second objective": {
-                "outcomes": ["Fictitious second validation failed."]
+                "priorUnresolvedSequences": [],
+                "currentSequence": retry_sequence(
+                    {
+                        "initialAttempt": ledger_action(
+                            "Successful", "initial-attempt", "objective-completed"
+                        )
+                    }
+                ),
             },
         }
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_multiple_failed_outcomes_each_with_a_retry_ledger_are_valid(self):
         schema, instance = completion_v2()
+        instance["validation"][0]["result"] = "failed"
         failure_evidence = retry_ledger(
             retry_sequence(
                 {
@@ -489,17 +491,16 @@ class ValidateSchemasTests(unittest.TestCase):
                         "Failed", "initial-attempt", "reported-unresolved"
                     )
                 }
-            )
+            ),
+            outcomes=("Fictitious validation failed.",),
         )["fictitious objective"]
-        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = {
-            "first objective": {
-                "outcomes": ["Fictitious first validation failed."],
-                "retryLedger": failure_evidence,
-            },
-            "second objective": {
-                "outcomes": ["Fictitious second validation failed."],
-                "retryLedger": json.loads(json.dumps(failure_evidence)),
-            },
+        second_failure_evidence = json.loads(json.dumps(failure_evidence))
+        second_failure_evidence["failedOrIndeterminateOutcomes"] = [
+            "Fictitious second validation failed."
+        ]
+        instance["executionDiscipline"]["retryLedger"] = {
+            "first objective": failure_evidence,
+            "second objective": second_failure_evidence,
         }
         self.assertEqual(
             list(
@@ -525,17 +526,15 @@ class ValidateSchemasTests(unittest.TestCase):
 
     def test_reported_failures_require_a_failed_or_indeterminate_attempt(self):
         schema, instance = completion_v2()
-        success_ledger = retry_ledger(
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
             retry_sequence(
                 {
                     "initialAttempt": ledger_action(
                         "Successful", "initial-attempt", "objective-completed"
                     )
                 }
-            )
-        )
-        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = (
-            failed_outcomes(success_ledger, "Fictitious validation failed.")
+            ),
+            outcomes=("Fictitious validation failed.",),
         )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
@@ -555,7 +554,8 @@ class ValidateSchemasTests(unittest.TestCase):
                         "Failed", "initial-attempt", "objective-completed"
                     )
                 }
-            )
+            ),
+            outcomes=("Fictitious execution attempt failed.",),
         )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
@@ -571,7 +571,8 @@ class ValidateSchemasTests(unittest.TestCase):
                         "Failed", "retry-2", "reported-unresolved"
                     ),
                 }
-            )
+            ),
+            outcomes=("Fictitious execution attempts failed.",),
         )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
@@ -587,7 +588,8 @@ class ValidateSchemasTests(unittest.TestCase):
                         "Failed", "retry-1", "retry-authorized"
                     ),
                 }
-            )
+            ),
+            outcomes=("Fictitious retry failed.",),
         )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
@@ -617,7 +619,8 @@ class ValidateSchemasTests(unittest.TestCase):
             with self.subTest(attempts=tuple(attempts)):
                 schema, instance = completion_v2()
                 instance["executionDiscipline"]["retryLedger"] = retry_ledger(
-                    retry_sequence(attempts)
+                    retry_sequence(attempts),
+                    outcomes=("Fictitious execution attempt failed.",),
                 )
                 self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
@@ -639,6 +642,7 @@ class ValidateSchemasTests(unittest.TestCase):
                 },
                 sequence_id="sequence-2",
             ),
+            outcomes=("Fictitious first sequence failed.",),
         )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
@@ -681,7 +685,8 @@ class ValidateSchemasTests(unittest.TestCase):
                         "Failed", "retry-2", "reported-unresolved"
                     ),
                 }
-            )
+            ),
+            outcomes=("Fictitious execution attempts failed.",),
         )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 

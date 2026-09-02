@@ -42,10 +42,10 @@
   ],
   "reviewer": "not-assigned",
   "executionDiscipline": {
-    "failedOrIndeterminateOutcomes": {},
     "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
     "retryLedger": {
       "validate the documentation-only standards example": {
+        "failedOrIndeterminateOutcomes": [],
         "priorUnresolvedSequences": [],
         "currentSequence": {
           "sequenceId": "sequence-1",

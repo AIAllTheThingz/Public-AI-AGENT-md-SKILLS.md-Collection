@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0.0",
   "status": "partially-validated",
-  "summary": "Plausible v2 record that reports failures for two objectives but supplies retry evidence for only one.",
+  "summary": "Invalid v2 record that attempts to split one objective across independent failure and success ledgers.",
   "filesChanged": [
     "README.md"
   ],
@@ -12,7 +12,7 @@
     }
   ],
   "limitations": [
-    "The second reported failure intentionally omits its required per-objective retry ledger."
+    "The same objective is intentionally duplicated across the obsolete outcome map and the authoritative retry ledger."
   ],
   "executionDiscipline": {
     "failedOrIndeterminateOutcomes": {
@@ -37,37 +37,42 @@
                 "result": "Failed",
                 "budgetPosition": "initial-attempt",
                 "justification": "Initial validation attempt.",
-                "terminalDisposition": "retry-authorized"
-              },
-              "retry1": {
-                "action": "Retry fictitious schema validation",
-                "actor": "fictitious-agent",
-                "executionContext": {
-                  "tool": "fictitious-validator"
-                },
-                "startedAt": "2026-01-01T00:02:00Z",
-                "endedAt": "2026-01-01T00:03:00Z",
-                "effectsReconciliation": "No state changed.",
-                "result": "Successful",
-                "budgetPosition": "retry-1",
-                "justification": "Authorized retry after the failed initial attempt.",
-                "terminalDisposition": "objective-completed"
+                "terminalDisposition": "reported-unresolved"
               }
             },
             "nonConsumingActions": []
           }
         }
-      },
-      "scan the fictitious completion artifact": {
-        "outcomes": [
-          "The fictitious artifact scan failed."
-        ]
       }
     },
     "authorizationRecoveryContinuity": "No consequential mutation occurred.",
-    "retryLedger": {},
+    "retryLedger": {
+      "validate the fictitious completion record": {
+        "priorUnresolvedSequences": [],
+        "currentSequence": {
+          "sequenceId": "sequence-1",
+          "attempts": {
+            "initialAttempt": {
+              "action": "Claim a successful validation in a separate ledger",
+              "actor": "fictitious-agent",
+              "executionContext": {
+                "tool": "fictitious-validator"
+              },
+              "startedAt": "2026-01-01T00:02:00Z",
+              "endedAt": "2026-01-01T00:03:00Z",
+              "effectsReconciliation": "No state changed.",
+              "result": "Successful",
+              "budgetPosition": "initial-attempt",
+              "justification": "Illustrates the prohibited split-ledger bypass.",
+              "terminalDisposition": "objective-completed"
+            }
+          },
+          "nonConsumingActions": []
+        }
+      }
+    },
     "resetBasis": "Not applicable; no reset occurred.",
-    "progressOrBlockerNarrowing": "The first objective completed, but the second failure lacks its required execution evidence.",
+    "progressOrBlockerNarrowing": "The record attempts to bypass reset authorization by duplicating one objective across two maps.",
     "delegationHandoff": {
       "summary": "Not applicable; no delegation occurred.",
       "boundariesPreserved": true

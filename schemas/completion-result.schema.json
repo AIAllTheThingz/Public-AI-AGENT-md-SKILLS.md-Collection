@@ -121,7 +121,6 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "failedOrIndeterminateOutcomes",
         "authorizationRecoveryContinuity",
         "retryLedger",
         "resetBasis",
@@ -130,34 +129,20 @@
         "outOfScopeRouting"
       ],
       "properties": {
-        "failedOrIndeterminateOutcomes": {
-          "type": "object",
-          "description": "Failure reports keyed by objective. Every reported objective embeds its own failure-bearing retry ledger so no outcome can be detached from its execution evidence.",
-          "propertyNames": {
-            "type": "string",
-            "minLength": 1
-          },
-          "patternProperties": {
-            "^.+$": {
-              "$ref": "#/$defs/failedOutcomeRecord"
-            }
-          },
-          "additionalProperties": false
-        },
         "authorizationRecoveryContinuity": {
           "type": "string",
           "minLength": 1
         },
         "retryLedger": {
           "type": "object",
-          "description": "Per-objective retry evidence for objectives without failed or indeterminate attempts. Failure-bearing objectives are recorded with their outcome summaries under failedOrIndeterminateOutcomes. A passed validation requires at least one Successful action across both locations.",
+          "description": "The single authoritative map of per-objective retry evidence. Each objective ledger carries its own failed or indeterminate outcome summaries, preventing one objective from being split across independent maps.",
           "propertyNames": {
             "type": "string",
             "minLength": 1
           },
           "patternProperties": {
             "^.+$": {
-              "$ref": "#/$defs/objectiveRetryLedgerWithoutFailure"
+              "$ref": "#/$defs/objectiveRetryLedger"
             }
           },
           "additionalProperties": false
@@ -257,45 +242,22 @@
       "then": {
         "properties": {
           "executionDiscipline": {
-            "anyOf": [
-              {
-                "properties": {
-                  "retryLedger": {
-                    "minProperties": 1,
-                    "not": {
-                      "patternProperties": {
-                        "^.+$": {
-                          "not": {
-                            "$ref": "#/$defs/objectiveRetryLedgerWithSuccess"
-                          }
-                        }
+            "properties": {
+              "retryLedger": {
+                "minProperties": 1,
+                "not": {
+                  "patternProperties": {
+                    "^.+$": {
+                      "not": {
+                        "$ref": "#/$defs/objectiveRetryLedgerWithSuccess"
                       }
                     }
                   }
-                },
-                "required": [
-                  "retryLedger"
-                ]
-              },
-              {
-                "properties": {
-                  "failedOrIndeterminateOutcomes": {
-                    "minProperties": 1,
-                    "not": {
-                      "patternProperties": {
-                        "^.+$": {
-                          "not": {
-                            "$ref": "#/$defs/failedOutcomeRecordWithSuccess"
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "required": [
-                  "failedOrIndeterminateOutcomes"
-                ]
+                }
               }
+            },
+            "required": [
+              "retryLedger"
             ]
           }
         }
@@ -325,12 +287,21 @@
         "properties": {
           "executionDiscipline": {
             "properties": {
-              "failedOrIndeterminateOutcomes": {
-                "minProperties": 1
+              "retryLedger": {
+                "minProperties": 1,
+                "not": {
+                  "patternProperties": {
+                    "^.+$": {
+                      "not": {
+                        "$ref": "#/$defs/objectiveRetryLedgerWithFailure"
+                      }
+                    }
+                  }
+                }
               }
             },
             "required": [
-              "failedOrIndeterminateOutcomes"
+              "retryLedger"
             ]
           }
         }
@@ -1066,15 +1037,25 @@
         }
       ]
     },
-    "objectiveRetryLedger": {
+    "objectiveRetryLedgerCore": {
       "type": "object",
-      "description": "Preserves zero or more prior sequences that ended reported-unresolved and exactly one current sequence. A current sequence after any prior sequence requires reset authorization.",
+      "description": "One objective's outcome summaries and retry evidence. Preserves zero or more prior sequences that ended reported-unresolved and exactly one current sequence.",
       "additionalProperties": false,
       "required": [
+        "failedOrIndeterminateOutcomes",
         "priorUnresolvedSequences",
         "currentSequence"
       ],
       "properties": {
+        "failedOrIndeterminateOutcomes": {
+          "type": "array",
+          "description": "Failed or indeterminate outcome summaries for this same objective. This array is non-empty exactly when this ledger contains a Failed or Indeterminate attempt.",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
         "priorUnresolvedSequences": {
           "type": "array",
           "description": "Preserved earlier sequences in chronological order; every item must end Failed or Indeterminate with reported-unresolved.",
@@ -1121,6 +1102,64 @@
         }
       ]
     },
+    "objectiveRetryLedgerCoreWithFailure": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/objectiveRetryLedgerCore"
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "priorUnresolvedSequences": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "priorUnresolvedSequences"
+              ]
+            },
+            {
+              "properties": {
+                "currentSequence": {
+                  "$ref": "#/$defs/retrySequenceWithFailure"
+                }
+              },
+              "required": [
+                "currentSequence"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "objectiveRetryLedger": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/objectiveRetryLedgerCore"
+        },
+        {
+          "if": {
+            "properties": {
+              "failedOrIndeterminateOutcomes": {
+                "minItems": 1
+              }
+            },
+            "required": [
+              "failedOrIndeterminateOutcomes"
+            ]
+          },
+          "then": {
+            "$ref": "#/$defs/objectiveRetryLedgerCoreWithFailure"
+          },
+          "else": {
+            "not": {
+              "$ref": "#/$defs/objectiveRetryLedgerCoreWithFailure"
+            }
+          }
+        }
+      ]
+    },
     "objectiveRetryLedgerWithSuccess": {
       "allOf": [
         {
@@ -1161,79 +1200,7 @@
           "$ref": "#/$defs/objectiveRetryLedger"
         },
         {
-          "anyOf": [
-            {
-              "properties": {
-                "priorUnresolvedSequences": {
-                  "minItems": 1
-                }
-              },
-              "required": [
-                "priorUnresolvedSequences"
-              ]
-            },
-            {
-              "properties": {
-                "currentSequence": {
-                  "$ref": "#/$defs/retrySequenceWithFailure"
-                }
-              },
-              "required": [
-                "currentSequence"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "objectiveRetryLedgerWithoutFailure": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/objectiveRetryLedger"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/objectiveRetryLedgerWithFailure"
-          }
-        }
-      ]
-    },
-    "failedOutcomeRecord": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "outcomes",
-        "retryLedger"
-      ],
-      "properties": {
-        "outcomes": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "retryLedger": {
-          "$ref": "#/$defs/objectiveRetryLedgerWithFailure"
-        }
-      }
-    },
-    "failedOutcomeRecordWithSuccess": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/failedOutcomeRecord"
-        },
-        {
-          "properties": {
-            "retryLedger": {
-              "$ref": "#/$defs/objectiveRetryLedgerWithSuccess"
-            }
-          },
-          "required": [
-            "retryLedger"
-          ]
+          "$ref": "#/$defs/objectiveRetryLedgerCoreWithFailure"
         }
       ]
     }
