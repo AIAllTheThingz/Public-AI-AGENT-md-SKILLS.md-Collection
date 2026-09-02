@@ -162,7 +162,7 @@ def run(args: argparse.Namespace) -> ToolResult:
     positive_count = 0
     negative_count = 0
     instance_count = 0
-    unsafe_names: set[str] = set()
+    unsafe_schema_paths: set[Path] = set()
 
     versioned_schema_count = sum(len(majors) for majors in VERSIONED_SCHEMA_MAJORS.values())
 
@@ -215,22 +215,21 @@ def run(args: argparse.Namespace) -> ToolResult:
             try:
                 schema = load_json(path)
             except json.JSONDecodeError:
-                unsafe_names.add(name)
+                unsafe_schema_paths.add(path)
                 continue
             if not isinstance(schema, dict):
-                unsafe_names.add(name)
+                unsafe_schema_paths.add(path)
                 continue
             if remote_refs(schema):
-                unsafe_names.add(name)
+                unsafe_schema_paths.add(path)
             try:
                 Draft202012Validator.check_schema(schema)
             except jsonschema.SchemaError:
-                unsafe_names.add(name)
+                unsafe_schema_paths.add(path)
                 continue
 
     for path, schema_path in repository_instances:
-        schema_name = schema_path.name.removesuffix(".schema.json")
-        if schema_path.is_file() and schema_name not in unsafe_names:
+        if schema_path.is_file() and schema_path not in unsafe_schema_paths:
             findings.extend(instance_findings(path, schema_path, root, True))
 
     for name, rolling, current_versioned, schema_paths, version_mismatch in schema_groups:
@@ -260,7 +259,7 @@ def run(args: argparse.Namespace) -> ToolResult:
             else:
                 schema_ids[schema_id] = path.relative_to(root).as_posix()
             if refs:
-                unsafe_names.add(name)
+                unsafe_schema_paths.add(path)
             for location, ref in refs:
                 findings.append(Finding(
                     "SCHEMA_REMOTE_REF",
@@ -276,9 +275,6 @@ def run(args: argparse.Namespace) -> ToolResult:
                 path=rolling.relative_to(root).as_posix(),
             ))
 
-        if name in unsafe_names:
-            continue
-
         example_root = schema_root / "examples" / name
         valid_example = example_root / "valid.example.json"
         invalid_example = example_root / "invalid.example.json"
@@ -290,14 +286,16 @@ def run(args: argparse.Namespace) -> ToolResult:
 
         for example, schema_path in positive_examples:
             if example.is_file() and schema_path.is_file():
-                positive_count += 1
-                findings.extend(instance_findings(example, schema_path, root, True))
+                if schema_path not in unsafe_schema_paths:
+                    positive_count += 1
+                    findings.extend(instance_findings(example, schema_path, root, True))
             else:
                 findings.append(Finding("SCHEMA_POSITIVE_EXAMPLE_MISSING", "Missing positive example.", path=example.relative_to(root).as_posix()))
         for example, schema_path in negative_examples:
             if example.is_file() and schema_path.is_file():
-                negative_count += 1
-                findings.extend(instance_findings(example, schema_path, root, False))
+                if schema_path not in unsafe_schema_paths:
+                    negative_count += 1
+                    findings.extend(instance_findings(example, schema_path, root, False))
             else:
                 findings.append(Finding("SCHEMA_NEGATIVE_EXAMPLE_MISSING", "Missing negative example.", path=example.relative_to(root).as_posix()))
 

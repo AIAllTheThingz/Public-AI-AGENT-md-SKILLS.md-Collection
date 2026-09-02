@@ -866,6 +866,50 @@ class ValidateSchemasTests(unittest.TestCase):
             self.assertNotIn("INTERNAL_ERROR", codes)
             self.assertEqual(result["summary"]["repositoryInstances"], 1)
 
+    def test_meta_invalid_v1_schema_does_not_hide_invalid_v2_instance(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+            path = root / "schemas" / "v1" / "completion-result.schema.json"
+            schema = json.loads(path.read_text(encoding="utf-8"))
+            schema["properties"]["summary"]["type"] = 123
+            path.write_text(json.dumps(schema), encoding="utf-8")
+
+            instance = json.loads(
+                (
+                    root
+                    / "schemas/examples/completion-result/valid.example.json"
+                ).read_text(encoding="utf-8")
+            )
+            del instance["executionDiscipline"]
+            evidence = root / "evidence" / "completion-result.example.json"
+            evidence.parent.mkdir()
+            evidence.write_text(json.dumps(instance), encoding="utf-8")
+
+            completed = run_tool(
+                "tools/validate-schemas/validate_schemas.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            self.assertEqual(completed.returncode, 1)
+            result = json_result(completed)
+            codes = {item["code"] for item in result["findings"]}
+            self.assertIn("SCHEMA_INVALID", codes)
+            self.assertNotIn("INTERNAL_ERROR", codes)
+            matching = [
+                item
+                for item in result["findings"]
+                if item["code"] == "SCHEMA_INSTANCE_INVALID"
+                and item["path"] == "evidence/completion-result.example.json"
+            ]
+            self.assertEqual(len(matching), 1)
+            self.assertEqual(
+                matching[0]["details"]["schema"],
+                "schemas/v2/completion-result.schema.json",
+            )
+            self.assertEqual(result["summary"]["repositoryInstances"], 1)
+
     def test_boolean_schema_returns_structured_findings(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
