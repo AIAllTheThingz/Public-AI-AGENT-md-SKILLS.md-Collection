@@ -28,7 +28,7 @@
   ],
   "reviewer": "fictitious-governance-reviewer",
   "executionDiscipline": {
-    "failedOrIndeterminateOutcomes": [],
+    "failedOrIndeterminateOutcomes": {},
     "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
     "retryLedger": {
       "validate the fictitious governance change": {

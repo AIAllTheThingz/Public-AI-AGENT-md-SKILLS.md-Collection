@@ -497,6 +497,23 @@ Approval must come from an accountable human with delegated authority.
             [],
         )
 
+    def test_completion_failure_outcomes_are_keyed_to_their_ledgers(self):
+        sources = {
+            relative: (REPO_ROOT / relative).read_text(encoding="utf-8")
+            for relative in (
+                "templates/completion/COMPLETION_REPORT_TEMPLATE.md",
+                "templates/completion/README.md",
+                "templates/completion/REVIEW_CHECKLIST.md",
+                "templates/completion/examples/EXAMPLE.md",
+                "governance/templates/COMPLETION_EVIDENCE_TEMPLATE.md",
+            )
+        }
+        for relative, text in sources.items():
+            with self.subTest(relative=relative):
+                self.assertIn("keyed", text)
+                self.assertIn("objective", text)
+                self.assertIn("failure-bearing retry ledger", text)
+
 
 if __name__ == "__main__":
     unittest.main()

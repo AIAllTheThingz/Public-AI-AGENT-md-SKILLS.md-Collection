@@ -18,7 +18,7 @@
   ],
   "reviewer": "fictitious-reviewer",
   "executionDiscipline": {
-    "failedOrIndeterminateOutcomes": [],
+    "failedOrIndeterminateOutcomes": {},
     "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
     "retryLedger": {
       "validate the illustrative completion record": {

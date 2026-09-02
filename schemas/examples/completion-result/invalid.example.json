@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0.0",
   "status": "partially-validated",
-  "summary": "Plausible v2 record that retries after reporting the objective unresolved.",
+  "summary": "Plausible v2 record that reports failures for two objectives but supplies retry evidence for only one.",
   "filesChanged": [
     "README.md"
   ],
@@ -12,54 +12,62 @@
     }
   ],
   "limitations": [
-    "This intentionally invalid example continues after a terminal unresolved disposition."
+    "The second reported failure intentionally omits its required per-objective retry ledger."
   ],
   "executionDiscipline": {
-    "failedOrIndeterminateOutcomes": [
-      "The fictitious validation attempt failed."
-    ],
-    "authorizationRecoveryContinuity": "No consequential mutation occurred.",
-    "retryLedger": {
+    "failedOrIndeterminateOutcomes": {
       "validate the fictitious completion record": {
-        "priorUnresolvedSequences": [],
-        "currentSequence": {
-          "sequenceId": "sequence-1",
-          "attempts": {
-            "initialAttempt": {
-              "action": "Run fictitious schema validation",
-              "actor": "fictitious-agent",
-              "executionContext": {
-                "tool": "fictitious-validator"
+        "outcomes": [
+          "The fictitious validation attempt failed."
+        ],
+        "retryLedger": {
+          "priorUnresolvedSequences": [],
+          "currentSequence": {
+            "sequenceId": "sequence-1",
+            "attempts": {
+              "initialAttempt": {
+                "action": "Run fictitious schema validation",
+                "actor": "fictitious-agent",
+                "executionContext": {
+                  "tool": "fictitious-validator"
+                },
+                "startedAt": "2026-01-01T00:00:00Z",
+                "endedAt": "2026-01-01T00:01:00Z",
+                "effectsReconciliation": "No state changed.",
+                "result": "Failed",
+                "budgetPosition": "initial-attempt",
+                "justification": "Initial validation attempt.",
+                "terminalDisposition": "retry-authorized"
               },
-              "startedAt": "2026-01-01T00:00:00Z",
-              "endedAt": "2026-01-01T00:01:00Z",
-              "effectsReconciliation": "No state changed.",
-              "result": "Failed",
-              "budgetPosition": "initial-attempt",
-              "justification": "Initial validation attempt.",
-              "terminalDisposition": "reported-unresolved"
+              "retry1": {
+                "action": "Retry fictitious schema validation",
+                "actor": "fictitious-agent",
+                "executionContext": {
+                  "tool": "fictitious-validator"
+                },
+                "startedAt": "2026-01-01T00:02:00Z",
+                "endedAt": "2026-01-01T00:03:00Z",
+                "effectsReconciliation": "No state changed.",
+                "result": "Successful",
+                "budgetPosition": "retry-1",
+                "justification": "Authorized retry after the failed initial attempt.",
+                "terminalDisposition": "objective-completed"
+              }
             },
-            "retry1": {
-              "action": "Retry fictitious schema validation",
-              "actor": "fictitious-agent",
-              "executionContext": {
-                "tool": "fictitious-validator"
-              },
-              "startedAt": "2026-01-01T00:02:00Z",
-              "endedAt": "2026-01-01T00:03:00Z",
-              "effectsReconciliation": "No state changed.",
-              "result": "Successful",
-              "budgetPosition": "retry-1",
-              "justification": "Invalid retry after a terminal disposition.",
-              "terminalDisposition": "objective-completed"
-            }
-          },
-          "nonConsumingActions": []
+            "nonConsumingActions": []
+          }
         }
+      },
+      "scan the fictitious completion artifact": {
+        "outcomes": [
+          "The fictitious artifact scan failed."
+        ]
       }
     },
+    "authorizationRecoveryContinuity": "No consequential mutation occurred.",
+    "retryLedger": {},
     "resetBasis": "Not applicable; no reset occurred.",
-    "progressOrBlockerNarrowing": "The record invalidly continues after declaring the blocker unresolved.",
+    "progressOrBlockerNarrowing": "The first objective completed, but the second failure lacks its required execution evidence.",
     "delegationHandoff": {
       "summary": "Not applicable; no delegation occurred.",
       "boundariesPreserved": true

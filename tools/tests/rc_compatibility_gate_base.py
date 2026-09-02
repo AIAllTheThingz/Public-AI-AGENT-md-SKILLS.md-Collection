@@ -583,6 +583,14 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
             "at least one Successful ledger action for any reported passed validation",
             required_actions,
         )
+        self.assertIn(
+            "key every failed or indeterminate outcome by objective",
+            required_actions,
+        )
+        self.assertIn(
+            "failure-bearing retry ledger together under that failedOrIndeterminateOutcomes key",
+            required_actions,
+        )
         self.assertIn("per-objective sequences", required_actions)
         self.assertIn("prior sequence stop/report", required_actions)
         self.assertIn("separate accountable authorization", required_actions)

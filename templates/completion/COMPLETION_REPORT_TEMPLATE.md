@@ -48,7 +48,7 @@ template_type: completion-report
 
 ## Execution discipline
 
-- Failed or indeterminate outcomes:
+- Failed or indeterminate outcomes, keyed by objective so every objective includes its outcome summaries and complete failure-bearing retry ledger:
 {{FAILED_OR_INDETERMINATE_OUTCOMES}}
 - Authorization/recovery continuity for consequential mutations:
 {{AUTHORIZATION_RECOVERY_CONTINUITY}}
@@ -57,6 +57,8 @@ template_type: completion-report
 | Objective/blocker | Sequence | Sequence reset evidence | Action | Actor | Execution context | Start | End | Observable-effects reconciliation | Result | Budget position/count | Justification | Terminal disposition |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 {{RETRY_LEDGER_ROWS}}
+
+For schema-backed JSON, embed each failure-bearing objective ledger under the matching `failedOrIndeterminateOutcomes` key and reserve the separate `retryLedger` field for success/evidence-only objectives. The rendered table above may present rows from both locations together.
 
 - Reset basis, if any:
 {{RESET_BASIS}}

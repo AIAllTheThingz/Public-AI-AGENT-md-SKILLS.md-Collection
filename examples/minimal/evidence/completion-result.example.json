@@ -42,7 +42,7 @@
   ],
   "reviewer": "not-assigned",
   "executionDiscipline": {
-    "failedOrIndeterminateOutcomes": [],
+    "failedOrIndeterminateOutcomes": {},
     "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
     "retryLedger": {
       "validate the documentation-only standards example": {
