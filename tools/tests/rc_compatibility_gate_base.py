@@ -575,6 +575,10 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertNotIn("consequential execution action", required_actions)
         self.assertIn("successful evidence-only", required_actions)
         self.assertIn("executionDiscipline", required_actions)
+        self.assertIn(
+            "at least one passed validation before using validated status",
+            required_actions,
+        )
         self.assertIn("per-objective sequences", required_actions)
         self.assertIn("prior sequence stop/report", required_actions)
         self.assertIn("separate accountable authorization", required_actions)

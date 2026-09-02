@@ -812,6 +812,37 @@ class ValidateSchemasTests(unittest.TestCase):
             self.assertNotIn("INTERNAL_ERROR", codes)
             self.assertEqual(result["summary"]["repositoryInstances"], 1)
 
+    def test_boolean_schema_returns_structured_findings(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+            path = root / "schemas" / "v2" / "completion-result.schema.json"
+            path.write_text("true\n", encoding="utf-8")
+
+            instance = json.loads(
+                (
+                    root
+                    / "schemas/examples/completion-result/valid.example.json"
+                ).read_text(encoding="utf-8")
+            )
+            evidence = root / "evidence" / "completion-result.example.json"
+            evidence.parent.mkdir()
+            evidence.write_text(json.dumps(instance), encoding="utf-8")
+
+            completed = run_tool(
+                "tools/validate-schemas/validate_schemas.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            self.assertEqual(completed.returncode, 1)
+            result = json_result(completed)
+            codes = {item["code"] for item in result["findings"]}
+            self.assertIn("SCHEMA_ID_MISSING", codes)
+            self.assertIn("SCHEMA_VERSION_MISMATCH", codes)
+            self.assertNotIn("INTERNAL_ERROR", codes)
+            self.assertEqual(result["summary"]["repositoryInstances"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

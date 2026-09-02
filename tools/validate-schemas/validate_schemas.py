@@ -70,10 +70,11 @@ def pointer(parts: list[Any]) -> str:
     return "/" + "/".join(str(part).replace("~", "~0").replace("/", "~1") for part in parts)
 
 
-def normalized(schema: dict[str, Any]) -> dict[str, Any]:
+def normalized(schema: Any) -> Any:
     value = json.loads(json.dumps(schema))
-    value.pop("$id", None)
-    value.pop("x-versionedSchema", None)
+    if isinstance(value, dict):
+        value.pop("$id", None)
+        value.pop("x-versionedSchema", None)
     return value
 
 
@@ -209,6 +210,9 @@ def run(args: argparse.Namespace) -> ToolResult:
             except json.JSONDecodeError:
                 unsafe_names.add(name)
                 continue
+            if not isinstance(schema, dict):
+                unsafe_names.add(name)
+                continue
             if remote_refs(schema):
                 unsafe_names.add(name)
             try:
@@ -275,7 +279,7 @@ def run(args: argparse.Namespace) -> ToolResult:
                 findings.append(Finding("SCHEMA_INVALID", str(exc), path=path.relative_to(root).as_posix()))
                 if not schema_invalid:
                     continue
-            schema_id = schema.get("$id")
+            schema_id = schema.get("$id") if isinstance(schema, dict) else None
             if not isinstance(schema_id, str) or not schema_id:
                 findings.append(Finding("SCHEMA_ID_MISSING", "Schema lacks a non-empty $id.", path=path.relative_to(root).as_posix()))
             elif schema_id in schema_ids:
