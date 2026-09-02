@@ -143,6 +143,7 @@
         },
         "retryLedger": {
           "type": "object",
+          "description": "Per-objective retry evidence. A non-empty failedOrIndeterminateOutcomes array requires at least one objective ledger.",
           "propertyNames": {
             "type": "string",
             "minLength": 1
@@ -184,7 +185,28 @@
           "type": "string",
           "minLength": 1
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "failedOrIndeterminateOutcomes": {
+                "minItems": 1
+              }
+            },
+            "required": [
+              "failedOrIndeterminateOutcomes"
+            ]
+          },
+          "then": {
+            "properties": {
+              "retryLedger": {
+                "minProperties": 1
+              }
+            }
+          }
+        }
+      ]
     },
     "extensions": {
       "type": "object",
@@ -514,6 +536,54 @@
                   }
                 }
               }
+            },
+            {
+              "if": {
+                "properties": {
+                  "initialAttempt": {
+                    "properties": {
+                      "terminalDisposition": {
+                        "const": "retry-authorized"
+                      }
+                    },
+                    "required": [
+                      "terminalDisposition"
+                    ]
+                  }
+                },
+                "required": [
+                  "initialAttempt"
+                ]
+              },
+              "then": {
+                "required": [
+                  "retry1"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "retry1": {
+                    "properties": {
+                      "terminalDisposition": {
+                        "const": "retry-authorized"
+                      }
+                    },
+                    "required": [
+                      "terminalDisposition"
+                    ]
+                  }
+                },
+                "required": [
+                  "retry1"
+                ]
+              },
+              "then": {
+                "required": [
+                  "retry2"
+                ]
+              }
             }
           ]
         },
@@ -568,26 +638,177 @@
         }
       ]
     },
+    "unresolvedRetrySequence": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/retrySequence"
+        },
+        {
+          "properties": {
+            "attempts": {
+              "anyOf": [
+                {
+                  "required": [
+                    "retry2"
+                  ],
+                  "properties": {
+                    "retry2": {
+                      "properties": {
+                        "result": {
+                          "enum": [
+                            "Failed",
+                            "Indeterminate"
+                          ]
+                        },
+                        "terminalDisposition": {
+                          "const": "reported-unresolved"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "terminalDisposition"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "not": {
+                    "required": [
+                      "retry2"
+                    ]
+                  },
+                  "required": [
+                    "retry1"
+                  ],
+                  "properties": {
+                    "retry1": {
+                      "properties": {
+                        "result": {
+                          "enum": [
+                            "Failed",
+                            "Indeterminate"
+                          ]
+                        },
+                        "terminalDisposition": {
+                          "const": "reported-unresolved"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "terminalDisposition"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "not": {
+                    "required": [
+                      "retry1"
+                    ]
+                  },
+                  "properties": {
+                    "initialAttempt": {
+                      "properties": {
+                        "result": {
+                          "enum": [
+                            "Failed",
+                            "Indeterminate"
+                          ]
+                        },
+                        "terminalDisposition": {
+                          "const": "reported-unresolved"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "terminalDisposition"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "initialAttempt"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "initialUnresolvedRetrySequence": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/initialRetrySequence"
+        },
+        {
+          "$ref": "#/$defs/unresolvedRetrySequence"
+        }
+      ]
+    },
+    "resetUnresolvedRetrySequence": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/resetRetrySequence"
+        },
+        {
+          "$ref": "#/$defs/unresolvedRetrySequence"
+        }
+      ]
+    },
     "objectiveRetryLedger": {
       "type": "object",
+      "description": "Preserves zero or more prior sequences that ended reported-unresolved and exactly one current sequence. A current sequence after any prior sequence requires reset authorization.",
       "additionalProperties": false,
       "required": [
-        "sequences"
+        "priorUnresolvedSequences",
+        "currentSequence"
       ],
       "properties": {
-        "sequences": {
+        "priorUnresolvedSequences": {
           "type": "array",
-          "minItems": 1,
+          "description": "Preserved earlier sequences in chronological order; every item must end Failed or Indeterminate with reported-unresolved.",
           "prefixItems": [
             {
-              "$ref": "#/$defs/initialRetrySequence"
+              "$ref": "#/$defs/initialUnresolvedRetrySequence"
             }
           ],
           "items": {
-            "$ref": "#/$defs/resetRetrySequence"
+            "$ref": "#/$defs/resetUnresolvedRetrySequence"
+          }
+        },
+        "currentSequence": {
+          "description": "The latest sequence for the objective. It is the initial sequence when no prior unresolved sequence exists and otherwise must carry reset authorization.",
+          "$ref": "#/$defs/retrySequence"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "priorUnresolvedSequences": {
+                "maxItems": 0
+              }
+            },
+            "required": [
+              "priorUnresolvedSequences"
+            ]
+          },
+          "then": {
+            "properties": {
+              "currentSequence": {
+                "$ref": "#/$defs/initialRetrySequence"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "currentSequence": {
+                "$ref": "#/$defs/resetRetrySequence"
+              }
+            }
           }
         }
-      }
+      ]
     }
   },
   "x-schemaVersion": "2.0.0",

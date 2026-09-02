@@ -55,7 +55,7 @@ Disabling validation is not remediation.
 - Validate retained historical or pinned v1 completion-result records against the unchanged `schemas/v1/completion-result.schema.json` contract and explicitly declare `schemaVersion: "1.0.0"` when repository instance discovery is used.
 - Validate the other contracts against their current `schemas/v1/` major paths.
 - Repository instance discovery selects the current major when `schemaVersion` is omitted; do not rely on omission to identify a v1 historical record.
-- For completion-result v2 retry ledgers, preserve one or more sequences per objective; require `retry-authorized` on the preceding failed or indeterminate attempt before `retry1` or `retry2`, reject execution after `reported-unresolved` within a sequence, and require prior stop/report, separate authorization, and material-change evidence on every sequence after the first.
+- For completion-result v2 retry ledgers, store completed earlier sequences under `priorUnresolvedSequences` only when their final attempt is failed or indeterminate with `reported-unresolved`, and store the latest sequence under `currentSequence`. Require reset evidence on that current sequence when any prior sequence exists, require `retry-authorized` only with the corresponding next retry, reject execution after `reported-unresolved`, reject another sequence after objective completion, and require at least one objective ledger when failed or indeterminate outcomes are reported.
 
 ## Local consumer validation
 

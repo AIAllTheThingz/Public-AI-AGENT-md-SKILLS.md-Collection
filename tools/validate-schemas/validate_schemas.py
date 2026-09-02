@@ -146,24 +146,6 @@ def discover(path: Path) -> str | None:
     return None
 
 
-def result_with_repository_instances(
-    findings: list[Finding],
-    repository_instances: list[tuple[Path, Path]],
-    root: Path,
-    summary: dict[str, int],
-) -> ToolResult:
-    for path, schema_path in repository_instances:
-        if schema_path.is_file():
-            findings.extend(instance_findings(path, schema_path, root, True))
-    summary["findings"] = len(findings)
-    return ToolResult.from_findings(
-        tool=TOOL,
-        version=VERSION,
-        findings=findings,
-        summary=summary,
-    )
-
-
 def run(args: argparse.Namespace) -> ToolResult:
     root = args.root.resolve()
     schema_root = root / "schemas"
@@ -176,7 +158,7 @@ def run(args: argparse.Namespace) -> ToolResult:
 
     versioned_schema_count = sum(len(majors) for majors in VERSIONED_SCHEMA_MAJORS.values())
 
-    repository_instances: list[tuple[Path, Path]] = []
+    repository_instances: list[tuple[Path, Path]] = list()
     if not args.skip_repository_instances:
         for path in sorted(root.rglob("*.json")):
             if schema_root in path.parents or (root / "tools" / "contracts") in path.parents:
@@ -191,9 +173,6 @@ def run(args: argparse.Namespace) -> ToolResult:
 
     historical_valid = schema_root / "examples" / "completion-result" / "valid-v1.example.json"
     v1_completion_schema = versioned_schema_path(schema_root, "completion-result", 1)
-    if historical_valid.is_file() and v1_completion_schema.is_file():
-        positive_count += 1
-        findings.extend(instance_findings(historical_valid, v1_completion_schema, root, True))
 
     for name in SCHEMA_NAMES:
         rolling = schema_root / f"{name}.schema.json"
@@ -261,11 +240,23 @@ def run(args: argparse.Namespace) -> ToolResult:
         else:
             findings.append(Finding("SCHEMA_NEGATIVE_EXAMPLE_MISSING", "Missing negative example.", path=invalid_example.relative_to(root).as_posix()))
 
-    return result_with_repository_instances(
-        findings,
-        repository_instances,
-        root,
-        {
+    if (
+        historical_valid.is_file()
+        and v1_completion_schema.is_file()
+        and "completion-result" not in unsafe_names
+    ):
+        positive_count += 1
+        findings.extend(instance_findings(historical_valid, v1_completion_schema, root, True))
+
+    for path, schema_path in repository_instances:
+        if schema_path.is_file():
+            findings.extend(instance_findings(path, schema_path, root, True))
+
+    return ToolResult.from_findings(
+        tool=TOOL,
+        version=VERSION,
+        findings=findings,
+        summary={
             "rollingSchemas": len(SCHEMA_NAMES),
             "versionedSchemas": versioned_schema_count,
             "positiveExamples": positive_count,

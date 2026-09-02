@@ -58,7 +58,14 @@ def retry_sequence(
 
 
 def retry_ledger(*sequences: dict) -> dict:
-    return {"fictitious objective": {"sequences": list(sequences)}}
+    if not sequences:
+        return {}
+    return {
+        "fictitious objective": {
+            "priorUnresolvedSequences": list(sequences[:-1]),
+            "currentSequence": sequences[-1],
+        }
+    }
 
 
 class ValidateSchemasTests(unittest.TestCase):
@@ -130,6 +137,53 @@ class ValidateSchemasTests(unittest.TestCase):
                     [],
                 )
 
+    def test_multiple_authorized_retry_resets_are_valid(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = [
+            "Two prior fictitious sequences reported the objective unresolved."
+        ]
+        reset = {
+            "priorSequenceStopReport": "The prior sequence reported unresolved.",
+            "authorizedBy": "fictitious-owner",
+            "authorizationEvidence": "Fictitious authorization record.",
+            "materialChange": "Fictitious material state change.",
+        }
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Failed", "initial-attempt", "reported-unresolved"
+                    )
+                }
+            ),
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Indeterminate", "initial-attempt", "reported-unresolved"
+                    )
+                },
+                sequence_id="sequence-2",
+                reset_authorization=reset,
+            ),
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Successful", "initial-attempt", "objective-completed"
+                    )
+                },
+                sequence_id="sequence-3",
+                reset_authorization=reset,
+            ),
+        )
+        self.assertEqual(
+            list(
+                Draft202012Validator(
+                    schema, format_checker=FormatChecker()
+                ).iter_errors(instance)
+            ),
+            [],
+        )
+
     def test_completion_result_v2_requires_execution_discipline(self):
         schema = json.loads(
             (REPO_ROOT / "schemas/v2/completion-result.schema.json").read_text(
@@ -175,6 +229,40 @@ class ValidateSchemasTests(unittest.TestCase):
             list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(instance)),
             [],
         )
+
+    def test_retry_authorized_requires_the_corresponding_retry(self):
+        cases = (
+            {
+                "initialAttempt": ledger_action(
+                    "Failed", "initial-attempt", "retry-authorized"
+                )
+            },
+            {
+                "initialAttempt": ledger_action(
+                    "Failed", "initial-attempt", "retry-authorized"
+                ),
+                "retry1": ledger_action(
+                    "Indeterminate", "retry-1", "retry-authorized"
+                ),
+            },
+        )
+        for attempts in cases:
+            with self.subTest(attempts=tuple(attempts)):
+                schema, instance = completion_v2()
+                instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+                    retry_sequence(attempts)
+                )
+                self.assertTrue(
+                    list(Draft202012Validator(schema).iter_errors(instance))
+                )
+
+    def test_failed_outcomes_require_a_nonempty_retry_ledger(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = [
+            "Fictitious validation failed."
+        ]
+        instance["executionDiscipline"]["retryLedger"] = {}
+        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_failed_budgeted_attempt_cannot_claim_completion(self):
         schema, instance = completion_v2()
@@ -272,6 +360,33 @@ class ValidateSchemasTests(unittest.TestCase):
         )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
+    def test_retry_sequence_cannot_follow_a_successful_sequence(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Successful", "initial-attempt", "objective-completed"
+                    )
+                }
+            ),
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Successful", "initial-attempt", "objective-completed"
+                    )
+                },
+                sequence_id="sequence-2",
+                reset_authorization={
+                    "priorSequenceStopReport": "Fictitious prior stop report.",
+                    "authorizedBy": "fictitious-owner",
+                    "authorizationEvidence": "Fictitious authorization record.",
+                    "materialChange": "Fictitious material state change.",
+                },
+            ),
+        )
+        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
     def test_unknown_attempt_position_is_invalid(self):
         schema, instance = completion_v2()
         instance["executionDiscipline"]["retryLedger"] = retry_ledger(
@@ -362,6 +477,39 @@ class ValidateSchemasTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 1)
             codes = {item["code"] for item in json_result(completed)["findings"]}
             self.assertIn("SCHEMA_REMOTE_REF", codes)
+
+    def test_remote_ref_in_v1_completion_is_rejected_before_fixture_validation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+            path = root / "schemas" / "v1" / "completion-result.schema.json"
+            text = path.read_text(encoding="utf-8").replace(
+                '"type": "object"',
+                '"$ref": "https://example.invalid/remote.json",\n  "type": "object"',
+                1,
+            )
+            path.write_text(text, encoding="utf-8")
+
+            completed = run_tool(
+                "tools/validate-schemas/validate_schemas.py",
+                "--format",
+                "json",
+                "--skip-repository-instances",
+                root=root,
+            )
+            self.assertEqual(completed.returncode, 1)
+            result = json_result(completed)
+            self.assertEqual(result["status"], "failed")
+            self.assertNotIn(
+                "INTERNAL_ERROR", {item["code"] for item in result["findings"]}
+            )
+            matching = [
+                item
+                for item in result["findings"]
+                if item["code"] == "SCHEMA_REMOTE_REF"
+                and item["path"] == "schemas/v1/completion-result.schema.json"
+            ]
+            self.assertEqual(len(matching), 1)
 
 
 if __name__ == "__main__":

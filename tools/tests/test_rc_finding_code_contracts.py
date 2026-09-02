@@ -53,7 +53,8 @@ _BEHAVIOR_BOUND_FINDING_CONTEXTS = {
             "reason": (
                 "Completion-result current-major routing intentionally expands versioned-schema "
                 "validation. Direct positive and negative validator tests preserve each public "
-                "code while allowing repository-instance finalization to prevent post-emission loss."
+                "code while schema and reference checks remain ordered before fixture and "
+                "repository-instance validation."
             ),
         }
         for code in (

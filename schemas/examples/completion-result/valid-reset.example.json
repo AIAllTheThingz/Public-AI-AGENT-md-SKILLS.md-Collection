@@ -24,7 +24,7 @@
     "authorizationRecoveryContinuity": "No consequential mutation occurred; authorization remained scoped to the fictitious validation objective.",
     "retryLedger": {
       "validate the fictitious completion record": {
-        "sequences": [
+        "priorUnresolvedSequences": [
           {
             "sequenceId": "sequence-1",
             "attempts": {
@@ -44,34 +44,34 @@
               }
             },
             "nonConsumingActions": []
-          },
-          {
-            "sequenceId": "sequence-2",
-            "resetAuthorization": {
-              "priorSequenceStopReport": "Sequence 1 stopped and reported the validation objective unresolved.",
-              "authorizedBy": "fictitious-owner",
-              "authorizationEvidence": "Fictitious decision record RESET-001.",
-              "materialChange": "The missing source fixture became available."
-            },
-            "attempts": {
-              "initialAttempt": {
-                "action": "Validate the available fictitious fixture",
-                "actor": "fictitious-agent",
-                "executionContext": {
-                  "tool": "fictitious-validator"
-                },
-                "startedAt": "2026-01-01T01:00:00Z",
-                "endedAt": "2026-01-01T01:01:00Z",
-                "effectsReconciliation": "No state changed; successful output was reconciled.",
-                "result": "Successful",
-                "budgetPosition": "initial-attempt",
-                "justification": "A separately authorized sequence began after the material blocker changed.",
-                "terminalDisposition": "objective-completed"
-              }
-            },
-            "nonConsumingActions": []
           }
-        ]
+        ],
+        "currentSequence": {
+          "sequenceId": "sequence-2",
+          "resetAuthorization": {
+            "priorSequenceStopReport": "Sequence 1 stopped and reported the validation objective unresolved.",
+            "authorizedBy": "fictitious-owner",
+            "authorizationEvidence": "Fictitious decision record RESET-001.",
+            "materialChange": "The missing source fixture became available."
+          },
+          "attempts": {
+            "initialAttempt": {
+              "action": "Validate the available fictitious fixture",
+              "actor": "fictitious-agent",
+              "executionContext": {
+                "tool": "fictitious-validator"
+              },
+              "startedAt": "2026-01-01T01:00:00Z",
+              "endedAt": "2026-01-01T01:01:00Z",
+              "effectsReconciliation": "No state changed; successful output was reconciled.",
+              "result": "Successful",
+              "budgetPosition": "initial-attempt",
+              "justification": "A separately authorized sequence began after the material blocker changed.",
+              "terminalDisposition": "objective-completed"
+            }
+          },
+          "nonConsumingActions": []
+        }
       }
     },
     "resetBasis": "Sequence 2 was separately authorized after sequence 1 stopped and reported unresolved and the missing source fixture became available.",

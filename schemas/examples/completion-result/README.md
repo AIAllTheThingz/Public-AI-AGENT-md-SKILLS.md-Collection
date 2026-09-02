@@ -18,7 +18,7 @@ It demonstrates `schemaVersion: "2.0.0"` and required `executionDiscipline` evid
 
 ## Authorized reset positive example
 
-[`valid-reset.example.json`](valid-reset.example.json) must validate against the rolling and v2 schemas. It preserves the stopped and reported first sequence, then records separate authorization and material-change evidence on the second sequence before completing the objective.
+[`valid-reset.example.json`](valid-reset.example.json) must validate against the rolling and v2 schemas. It preserves the stopped and reported first sequence under `priorUnresolvedSequences`, then records separate authorization and material-change evidence on `currentSequence` before completing the objective.
 
 ## Preserved v1 compatibility example
 
