@@ -174,6 +174,11 @@ def run(args: argparse.Namespace) -> ToolResult:
     historical_valid = schema_root / "examples" / "completion-result" / "valid-v1.example.json"
     v1_completion_schema = versioned_schema_path(schema_root, "completion-result", 1)
 
+    # Complete the offline-reference preflight before validating any instances.
+    # The main pass below still emits the public findings with their full context.
+    schema_groups: list[
+        tuple[str, Path, Path, list[tuple[Path, str]], bool]
+    ] = list()
     for name in SCHEMA_NAMES:
         rolling = schema_root / f"{name}.schema.json"
         current_versioned = versioned_schema_path(
@@ -183,7 +188,54 @@ def run(args: argparse.Namespace) -> ToolResult:
             (versioned_schema_path(schema_root, name, major), f"versioned-v{major}")
             for major in VERSIONED_SCHEMA_MAJORS[name]
         ]
-        for path, kind in [(rolling, "rolling"), *versioned_paths]:
+        schema_paths = [(rolling, "rolling"), *versioned_paths]
+        version_mismatch = False
+        if rolling.is_file() and current_versioned.is_file():
+            try:
+                version_mismatch = normalized(load_json(rolling)) != normalized(
+                    load_json(current_versioned)
+                )
+            except json.JSONDecodeError:
+                pass
+        schema_groups.append(
+            (name, rolling, current_versioned, schema_paths, version_mismatch)
+        )
+        for path, _kind in schema_paths:
+            if not path.is_file():
+                continue
+            try:
+                schema = load_json(path)
+                Draft202012Validator.check_schema(schema)
+            except (json.JSONDecodeError, jsonschema.SchemaError):
+                continue
+            if remote_refs(schema):
+                unsafe_names.add(name)
+
+    if (
+        historical_valid.is_file()
+        and v1_completion_schema.is_file()
+        and "completion-result" not in unsafe_names
+    ):
+        try:
+            historical_schema = load_json(v1_completion_schema)
+            Draft202012Validator.check_schema(historical_schema)
+        except (json.JSONDecodeError, jsonschema.SchemaError):
+            pass
+        else:
+            positive_count += 1
+            findings.extend(
+                instance_findings(
+                    historical_valid, v1_completion_schema, root, True
+                )
+            )
+
+    for path, schema_path in repository_instances:
+        schema_name = schema_path.name.removesuffix(".schema.json")
+        if schema_path.is_file() and schema_name not in unsafe_names:
+            findings.extend(instance_findings(path, schema_path, root, True))
+
+    for name, rolling, current_versioned, schema_paths, version_mismatch in schema_groups:
+        for path, kind in schema_paths:
             if not path.is_file():
                 findings.append(Finding("SCHEMA_MISSING", f"Missing {kind} schema.", path=path.relative_to(root).as_posix()))
                 continue
@@ -215,13 +267,12 @@ def run(args: argparse.Namespace) -> ToolResult:
                     details={"pointer": location},
                 ))
 
-        if rolling.is_file() and current_versioned.is_file():
-            if normalized(load_json(rolling)) != normalized(load_json(current_versioned)):
-                findings.append(Finding(
-                    "SCHEMA_VERSION_MISMATCH",
-                    "Rolling and versioned schemas differ beyond identifier metadata.",
-                    path=rolling.relative_to(root).as_posix(),
-                ))
+        if version_mismatch:
+            findings.append(Finding(
+                "SCHEMA_VERSION_MISMATCH",
+                "Rolling and versioned schemas differ beyond identifier metadata.",
+                path=rolling.relative_to(root).as_posix(),
+            ))
 
         if name in unsafe_names:
             continue
@@ -239,18 +290,6 @@ def run(args: argparse.Namespace) -> ToolResult:
             findings.extend(instance_findings(invalid_example, current_versioned, root, False))
         else:
             findings.append(Finding("SCHEMA_NEGATIVE_EXAMPLE_MISSING", "Missing negative example.", path=invalid_example.relative_to(root).as_posix()))
-
-    if (
-        historical_valid.is_file()
-        and v1_completion_schema.is_file()
-        and "completion-result" not in unsafe_names
-    ):
-        positive_count += 1
-        findings.extend(instance_findings(historical_valid, v1_completion_schema, root, True))
-
-    for path, schema_path in repository_instances:
-        if schema_path.is_file():
-            findings.extend(instance_findings(path, schema_path, root, True))
 
     return ToolResult.from_findings(
         tool=TOOL,
