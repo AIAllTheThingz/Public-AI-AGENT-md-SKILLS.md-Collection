@@ -52,7 +52,7 @@ template_type: completion-report
 {{FAILED_OR_INDETERMINATE_OUTCOMES}}
 - Authorization/recovery continuity for consequential mutations:
 {{AUTHORIZATION_RECOVERY_CONTINUITY}}
-- Retry ledger, grouped into repeatable sequences for each objective or blocker, with one row per budget-consuming action and each subsequent Successful objective-clearing action recorded at its current retry position (execution context is the command sequence, plan, workflow, tool, agent, strategy, task, or session as applicable):
+- Retry ledger, grouped into repeatable sequences for each objective or blocker, with one row per budget-consuming action and each subsequent Successful objective-clearing action recorded at its current retry position; also record each Successful non-consuming discovery, reconciliation, or validation action (execution context is the command sequence, plan, workflow, tool, agent, strategy, task, or session as applicable):
 
 | Objective/blocker | Sequence | Sequence reset evidence | Action | Actor | Execution context | Start | End | Observable-effects reconciliation | Result | Budget position/count | Justification | Terminal disposition |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -69,7 +69,7 @@ template_type: completion-report
 - Authorized routing of non-blocking out-of-scope findings:
 {{OUT_OF_SCOPE_ROUTING}}
 
-The retry budget allows the initial attempt plus at most two justified retries per sequence. A budget-consuming attempt is any execution action directed at achieving the objective or clearing the blocker whose observable effects are reconciled and whose result is Failed or Indeterminate, whether mutating or read-only; every subsequent execution action after that result for the objective or blocker is a retry even within the same command sequence, plan, workflow, tool, agent, or strategy. Successful read-only discovery, reconciliation, or validation that only gathers evidence is non-consuming, a Failed or Indeterminate read-only execution directed at the objective or blocker consumes budget, and a subsequent Successful objective-clearing action is recorded at its current retry position and ends the objective or blocker. Preserve every stopped sequence; each sequence after the first requires the prior sequence stop/report, separate accountable authorization, and material-change evidence.
+The retry budget allows the initial attempt plus at most two justified retries per sequence. A budget-consuming attempt is any execution action directed at achieving the objective or clearing the blocker whose observable effects are reconciled and whose result is Failed or Indeterminate, whether mutating or read-only; every subsequent execution action after that result for the objective or blocker is a retry even within the same command sequence, plan, workflow, tool, agent, or strategy. Successful read-only discovery, reconciliation, or validation that only gathers evidence is non-consuming and is recorded as a non-consuming ledger row; a Failed or Indeterminate read-only execution directed at the objective or blocker consumes budget, and a subsequent Successful objective-clearing action is recorded at its current retry position and ends the objective or blocker. Preserve every stopped sequence; each sequence after the first requires the prior sequence stop/report, separate accountable authorization, and material-change evidence.
 
 ## Deployment and operational impact
 

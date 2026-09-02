@@ -213,6 +213,9 @@ class ValidateSchemasTests(unittest.TestCase):
 
     def test_failed_initial_then_successful_retry_is_valid(self):
         schema, instance = completion_v2()
+        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = [
+            "Fictitious initial validation failed before the retry succeeded."
+        ]
         instance["executionDiscipline"]["retryLedger"] = retry_ledger(
             retry_sequence(
                 {
@@ -227,6 +230,26 @@ class ValidateSchemasTests(unittest.TestCase):
         )
         self.assertEqual(
             list(Draft202012Validator(schema, format_checker=FormatChecker()).iter_errors(instance)),
+            [],
+        )
+
+    def test_success_only_ledger_allows_an_empty_outcome_summary(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Successful", "initial-attempt", "objective-completed"
+                    )
+                }
+            )
+        )
+        self.assertEqual(
+            list(
+                Draft202012Validator(
+                    schema, format_checker=FormatChecker()
+                ).iter_errors(instance)
+            ),
             [],
         )
 
@@ -262,6 +285,19 @@ class ValidateSchemasTests(unittest.TestCase):
             "Fictitious validation failed."
         ]
         instance["executionDiscipline"]["retryLedger"] = {}
+        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
+    def test_failed_attempt_requires_a_reported_outcome(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Failed", "initial-attempt", "reported-unresolved"
+                    )
+                }
+            )
+        )
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_reported_failures_require_a_failed_or_indeterminate_attempt(self):

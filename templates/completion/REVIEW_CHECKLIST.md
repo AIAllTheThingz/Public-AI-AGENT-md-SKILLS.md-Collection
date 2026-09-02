@@ -35,7 +35,7 @@ status: baseline
 - [ ] Artifact identifiers are immutable where possible.
 - [ ] Limitations and residual risk are honest.
 - [ ] Execution discipline records failed or indeterminate outcomes, authorization/recovery continuity, and any out-of-scope routing.
-- [ ] Retry ledger has one row per budget-consuming action and each subsequent successful objective-clearing action at its current retry position, with objective/blocker, sequence, sequence-specific reset evidence, action, actor, execution context, start/end, reconciliation, result, budget position/count, justification, and terminal disposition.
+- [ ] Retry ledger has one row per budget-consuming action, each successful non-consuming discovery, reconciliation, or validation action, and each subsequent successful objective-clearing action at its current retry position, with objective/blocker, sequence, sequence-specific reset evidence, action, actor, execution context, start/end, reconciliation, result, budget position/count, justification, and terminal disposition.
 - [ ] Every prior retry sequence remains present, and each sequence after the first records the prior stop/report, separate accountable authorization, and material-change evidence.
 - [ ] Retry counting distinguishes failed or indeterminate read-only execution from successful evidence-only discovery, reconciliation, or validation; exhaustion and any reset basis are explicit.
 - [ ] Delegation handoff records value and state, and confirms retry/no-progress boundaries remain enforced and were not reset or bypassed.
