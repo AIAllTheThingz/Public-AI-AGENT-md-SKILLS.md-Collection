@@ -143,7 +143,7 @@
         },
         "retryLedger": {
           "type": "object",
-          "description": "Per-objective retry evidence. A non-empty failedOrIndeterminateOutcomes array requires at least one objective ledger, and every supplied objective ledger must contain a Failed or Indeterminate attempt. When that outcomes array is empty, no supplied objective ledger may contain a Failed or Indeterminate attempt.",
+          "description": "Per-objective retry evidence. A non-empty failedOrIndeterminateOutcomes array requires at least one objective ledger containing a Failed or Indeterminate attempt. When that outcomes array is empty, no supplied objective ledger may contain a Failed or Indeterminate attempt.",
           "propertyNames": {
             "type": "string",
             "minLength": 1
@@ -203,9 +203,13 @@
             "properties": {
               "retryLedger": {
                 "minProperties": 1,
-                "patternProperties": {
-                  "^.+$": {
-                    "$ref": "#/$defs/objectiveRetryLedgerWithFailure"
+                "not": {
+                  "patternProperties": {
+                    "^.+$": {
+                      "not": {
+                        "$ref": "#/$defs/objectiveRetryLedgerWithFailure"
+                      }
+                    }
                   }
                 }
               }
@@ -267,6 +271,41 @@
             },
             "required": [
               "retryLedger"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "validation": {
+            "contains": {
+              "properties": {
+                "result": {
+                  "const": "failed"
+                }
+              },
+              "required": [
+                "result"
+              ]
+            }
+          }
+        },
+        "required": [
+          "validation"
+        ]
+      },
+      "then": {
+        "properties": {
+          "executionDiscipline": {
+            "properties": {
+              "failedOrIndeterminateOutcomes": {
+                "minItems": 1
+              }
+            },
+            "required": [
+              "failedOrIndeterminateOutcomes"
             ]
           }
         }

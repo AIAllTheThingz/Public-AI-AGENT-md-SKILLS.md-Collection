@@ -277,6 +277,49 @@ class ValidateSchemasTests(unittest.TestCase):
         instance["executionDiscipline"]["retryLedger"] = {}
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
+    def test_failed_validation_requires_a_reported_failure(self):
+        schema, instance = completion_v2()
+        instance["validation"][0]["result"] = "failed"
+        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
+    def test_failure_and_success_only_objective_ledgers_can_coexist(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["failedOrIndeterminateOutcomes"] = [
+            "Fictitious validation failed."
+        ]
+        evidence_sequence = retry_sequence(
+            {},
+            sequence_id="evidence-sequence-1",
+            non_consuming_actions=[
+                ledger_action("Successful", "non-consuming", "not-terminal")
+            ],
+        )
+        del evidence_sequence["attempts"]
+        instance["executionDiscipline"]["retryLedger"] = {
+            "failing objective": {
+                "priorUnresolvedSequences": [],
+                "currentSequence": retry_sequence(
+                    {
+                        "initialAttempt": ledger_action(
+                            "Failed", "initial-attempt", "reported-unresolved"
+                        )
+                    }
+                ),
+            },
+            "evidence-only objective": {
+                "priorUnresolvedSequences": [],
+                "currentSequence": evidence_sequence,
+            },
+        }
+        self.assertEqual(
+            list(
+                Draft202012Validator(
+                    schema, format_checker=FormatChecker()
+                ).iter_errors(instance)
+            ),
+            [],
+        )
+
     def test_sequence_without_any_execution_action_is_invalid(self):
         schema, instance = completion_v2()
         sequence = retry_sequence({})
