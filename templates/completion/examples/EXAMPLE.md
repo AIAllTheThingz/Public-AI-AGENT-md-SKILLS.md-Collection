@@ -62,7 +62,7 @@ Reset basis: None; no new execution sequence was authorized.
 
 Progress or blocker narrowing: The failed validation identified the v1 fixture as the blocker; the corrected fixture validated the current contract.
 
-Delegation handoff: `delegated: false`; no delegation occurred and the example maintainer retained the work; retry and no-progress boundaries remained preserved.
+Per-objective delegation handoff for `Completion record migration`: `delegated: false`; no delegation occurred and the example maintainer retained the work; retry and no-progress boundaries remained preserved.
 
 Delegation boundary continuity before handoff completion: Confirmed; retry and no-progress boundaries remained enforced and were not reset or bypassed.
 

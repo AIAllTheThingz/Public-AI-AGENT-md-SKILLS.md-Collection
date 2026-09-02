@@ -19,6 +19,11 @@
         "failedOrIndeterminateOutcomes": [
           "The initial fictitious validation failed."
         ],
+        "delegationHandoff": {
+          "delegated": false,
+          "summary": "Not applicable; no delegation occurred.",
+          "boundariesPreserved": true
+        },
         "priorUnresolvedSequences": [],
         "currentSequence": {
           "sequenceId": "sequence-1",
@@ -58,11 +63,6 @@
     },
     "resetBasis": "Not applicable; no reset occurred.",
     "progressOrBlockerNarrowing": "The retry supplies no causal reason that the repeated action could succeed.",
-    "delegationHandoff": {
-      "delegated": false,
-      "summary": "Not applicable; no delegation occurred.",
-      "boundariesPreserved": true
-    },
     "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
   }
 }

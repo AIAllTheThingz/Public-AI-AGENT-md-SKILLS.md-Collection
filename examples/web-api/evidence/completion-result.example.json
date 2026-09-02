@@ -46,6 +46,11 @@
     "retryLedger": {
       "validate the documentation-only standards example": {
         "failedOrIndeterminateOutcomes": [],
+        "delegationHandoff": {
+          "delegated": false,
+          "summary": "Not applicable; no delegation occurred.",
+          "boundariesPreserved": true
+        },
         "priorUnresolvedSequences": [],
         "currentSequence": {
           "sequenceId": "sequence-1",
@@ -84,11 +89,6 @@
     },
     "resetBasis": "Not applicable; no retry budget reset occurred.",
     "progressOrBlockerNarrowing": "Evidence-only validation completed without a blocker.",
-    "delegationHandoff": {
-      "delegated": false,
-      "summary": "Not applicable; no delegation occurred.",
-      "boundariesPreserved": true
-    },
     "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
   }
 }

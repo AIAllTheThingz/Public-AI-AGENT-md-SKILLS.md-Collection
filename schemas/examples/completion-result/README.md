@@ -32,7 +32,9 @@ The [`invalid-v1.example.json`](invalid-v1.example.json) compatibility fixture m
 
 [`invalid-retry.example.json`](invalid-retry.example.json) is intentionally invalid because `retry1` repeats an action without the retry-specific `materialChange` and `causalRationale` evidence required to show why it may now succeed.
 
-[`invalid-delegation.example.json`](invalid-delegation.example.json) is intentionally invalid because it marks the handoff as delegated but omits `meaningfulValue`, `failureEvidence`, `blocker`, `retryCount`, and `unresolvedState`.
+[`invalid-delegation.example.json`](invalid-delegation.example.json) is intentionally invalid because it marks the per-objective handoff as delegated but omits `meaningfulValue`, `blocker`, `retryCount`, and `unresolvedState`; the containing objective's non-empty `failedOrIndeterminateOutcomes` array supplies the handoff's authoritative failure evidence.
+
+[`invalid-delegation-count.example.json`](invalid-delegation-count.example.json) is intentionally invalid because the handoff is embedded in an objective whose current sequence contains `retry2`, but it understates that evidence with `retryCount: 0` instead of the required value `2`.
 
 ## Boundary
 

@@ -125,7 +125,6 @@
         "retryLedger",
         "resetBasis",
         "progressOrBlockerNarrowing",
-        "delegationHandoff",
         "outOfScopeRouting"
       ],
       "properties": {
@@ -155,104 +154,6 @@
         "progressOrBlockerNarrowing": {
           "type": "string",
           "minLength": 1
-        },
-        "delegationHandoff": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "delegated",
-            "summary",
-            "boundariesPreserved"
-          ],
-          "properties": {
-            "delegated": {
-              "type": "boolean",
-              "description": "Whether work is being handed to another actor. A true value requires the complete unresolved-state handoff."
-            },
-            "summary": {
-              "type": "string",
-              "minLength": 1
-            },
-            "meaningfulValue": {
-              "type": "string",
-              "minLength": 1
-            },
-            "failureEvidence": {
-              "type": "array",
-              "minItems": 1,
-              "uniqueItems": true,
-              "items": {
-                "type": "string",
-                "minLength": 1
-              }
-            },
-            "blocker": {
-              "type": "string",
-              "minLength": 1
-            },
-            "retryCount": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 2
-            },
-            "unresolvedState": {
-              "const": "unresolved"
-            },
-            "boundariesPreserved": {
-              "const": true,
-              "description": "Delegation must preserve retry-budget, no-progress, scope, authorization, and evidence boundaries."
-            }
-          },
-          "if": {
-            "properties": {
-              "delegated": {
-                "const": true
-              }
-            },
-            "required": [
-              "delegated"
-            ]
-          },
-          "then": {
-            "required": [
-              "meaningfulValue",
-              "failureEvidence",
-              "blocker",
-              "retryCount",
-              "unresolvedState"
-            ]
-          },
-          "else": {
-            "not": {
-              "anyOf": [
-                {
-                  "required": [
-                    "meaningfulValue"
-                  ]
-                },
-                {
-                  "required": [
-                    "failureEvidence"
-                  ]
-                },
-                {
-                  "required": [
-                    "blocker"
-                  ]
-                },
-                {
-                  "required": [
-                    "retryCount"
-                  ]
-                },
-                {
-                  "required": [
-                    "unresolvedState"
-                  ]
-                }
-              ]
-            }
-          }
         },
         "outOfScopeRouting": {
           "type": "string",
@@ -583,6 +484,89 @@
         "causalRationale": {
           "type": "string",
           "minLength": 1
+        }
+      }
+    },
+    "delegationHandoff": {
+      "type": "object",
+      "description": "Per-objective delegation state. Failure evidence is the containing objective ledger's failedOrIndeterminateOutcomes array, and retryCount must equal its current sequence's recorded retry depth.",
+      "additionalProperties": false,
+      "required": [
+        "delegated",
+        "summary",
+        "boundariesPreserved"
+      ],
+      "properties": {
+        "delegated": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "meaningfulValue": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocker": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retryCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "unresolvedState": {
+          "const": "unresolved"
+        },
+        "boundariesPreserved": {
+          "const": true,
+          "description": "Delegation must preserve retry-budget, no-progress, scope, authorization, and evidence boundaries."
+        }
+      },
+      "if": {
+        "properties": {
+          "delegated": {
+            "const": true
+          }
+        },
+        "required": [
+          "delegated"
+        ]
+      },
+      "then": {
+        "required": [
+          "meaningfulValue",
+          "blocker",
+          "retryCount",
+          "unresolvedState"
+        ]
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "meaningfulValue"
+              ]
+            },
+            {
+              "required": [
+                "blocker"
+              ]
+            },
+            {
+              "required": [
+                "retryCount"
+              ]
+            },
+            {
+              "required": [
+                "unresolvedState"
+              ]
+            }
+          ]
         }
       }
     },
@@ -1151,6 +1135,7 @@
       "additionalProperties": false,
       "required": [
         "failedOrIndeterminateOutcomes",
+        "delegationHandoff",
         "priorUnresolvedSequences",
         "currentSequence"
       ],
@@ -1163,6 +1148,9 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "delegationHandoff": {
+          "$ref": "#/$defs/delegationHandoff"
         },
         "priorUnresolvedSequences": {
           "type": "array",
@@ -1204,6 +1192,81 @@
             "properties": {
               "currentSequence": {
                 "$ref": "#/$defs/resetRetrySequence"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "currentSequence": {
+                "properties": {
+                  "attempts": {
+                    "required": [
+                      "retry2"
+                    ]
+                  }
+                },
+                "required": [
+                  "attempts"
+                ]
+              }
+            },
+            "required": [
+              "currentSequence"
+            ]
+          },
+          "then": {
+            "properties": {
+              "delegationHandoff": {
+                "properties": {
+                  "retryCount": {
+                    "const": 2
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "if": {
+              "properties": {
+                "currentSequence": {
+                  "properties": {
+                    "attempts": {
+                      "required": [
+                        "retry1"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "attempts"
+                  ]
+                }
+              },
+              "required": [
+                "currentSequence"
+              ]
+            },
+            "then": {
+              "properties": {
+                "delegationHandoff": {
+                  "properties": {
+                    "retryCount": {
+                      "const": 1
+                    }
+                  }
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "delegationHandoff": {
+                  "properties": {
+                    "retryCount": {
+                      "const": 0
+                    }
+                  }
+                }
               }
             }
           }
@@ -1263,6 +1326,35 @@
           "else": {
             "not": {
               "$ref": "#/$defs/objectiveRetryLedgerCoreWithFailure"
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "delegationHandoff": {
+                "properties": {
+                  "delegated": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "delegated"
+                ]
+              }
+            },
+            "required": [
+              "delegationHandoff"
+            ]
+          },
+          "then": {
+            "properties": {
+              "failedOrIndeterminateOutcomes": {
+                "minItems": 1
+              },
+              "currentSequence": {
+                "$ref": "#/$defs/unresolvedRetrySequence"
+              }
             }
           }
         }

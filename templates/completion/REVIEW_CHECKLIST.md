@@ -39,7 +39,7 @@ status: baseline
 - [ ] Retry ledger has one row per budget-consuming action, each successful non-consuming discovery, reconciliation, or validation action, and each subsequent successful objective-clearing action at its current retry position, with objective/blocker, sequence, sequence-specific reset evidence, action, actor, execution context, start/end, reconciliation, result, budget position/count, retry-specific material change and causal rationale, justification, and terminal disposition.
 - [ ] Every retry records a causally relevant material change and why it may now succeed; every prior retry sequence remains present, and each sequence after the first records the prior stop/report, separate accountable authorization, material-change evidence, and causal rationale.
 - [ ] Retry counting distinguishes failed or indeterminate read-only execution from successful evidence-only discovery, reconciliation, or validation; exhaustion and any reset basis are explicit.
-- [ ] Delegation handoff explicitly records whether work was delegated; delegated work includes meaningful value, failure evidence, blocker, retry count, unresolved state, and confirmation that retry/no-progress boundaries remain enforced and were not reset or bypassed.
+- [ ] Each objective ledger has an explicit delegation handoff; delegated work includes meaningful value, failure evidence from that same objective's outcomes, blocker, retry count equal to the current sequence's recorded retry depth, unresolved state with the current sequence ending `reported-unresolved`, and confirmation that retry/no-progress boundaries remain enforced and were not reset or bypassed.
 
 ## Validation
 

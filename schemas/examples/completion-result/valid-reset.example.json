@@ -24,6 +24,11 @@
         "failedOrIndeterminateOutcomes": [
           "The first sequence stopped and reported the objective unresolved after the source fixture was unavailable."
         ],
+        "delegationHandoff": {
+          "delegated": false,
+          "summary": "Not applicable; no delegation occurred.",
+          "boundariesPreserved": true
+        },
         "priorUnresolvedSequences": [
           {
             "sequenceId": "sequence-1",
@@ -77,11 +82,6 @@
     },
     "resetBasis": "Sequence 2 was separately authorized after sequence 1 stopped and reported unresolved and the missing source fixture became available.",
     "progressOrBlockerNarrowing": "The source fixture became available and the validation objective completed.",
-    "delegationHandoff": {
-      "delegated": false,
-      "summary": "Not applicable; no delegation occurred.",
-      "boundariesPreserved": true
-    },
     "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
   }
 }

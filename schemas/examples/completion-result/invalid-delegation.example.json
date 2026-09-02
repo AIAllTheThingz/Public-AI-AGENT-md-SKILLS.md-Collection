@@ -6,7 +6,7 @@
   "validation": [
     {
       "name": "Fictitious validation",
-      "result": "not-run"
+      "result": "failed"
     }
   ],
   "limitations": [
@@ -14,14 +14,41 @@
   ],
   "executionDiscipline": {
     "authorizationRecoveryContinuity": "No consequential mutation occurred.",
-    "retryLedger": {},
+    "retryLedger": {
+      "validate the fictitious artifact": {
+        "failedOrIndeterminateOutcomes": [
+          "The fictitious validation failed."
+        ],
+        "delegationHandoff": {
+          "delegated": true,
+          "summary": "Fictitious work was delegated without the required state.",
+          "boundariesPreserved": true
+        },
+        "priorUnresolvedSequences": [],
+        "currentSequence": {
+          "sequenceId": "sequence-1",
+          "attempts": {
+            "initialAttempt": {
+              "action": "Run fictitious validation",
+              "actor": "fictitious-agent",
+              "executionContext": {
+                "tool": "fictitious-validator"
+              },
+              "startedAt": "2026-01-01T00:00:00Z",
+              "endedAt": "2026-01-01T00:01:00Z",
+              "effectsReconciliation": "No state changed.",
+              "result": "Failed",
+              "budgetPosition": "initial-attempt",
+              "justification": "Initial validation attempt.",
+              "terminalDisposition": "reported-unresolved"
+            }
+          },
+          "nonConsumingActions": []
+        }
+      }
+    },
     "resetBasis": "Not applicable; no reset occurred.",
     "progressOrBlockerNarrowing": "The unresolved work is being handed off.",
-    "delegationHandoff": {
-      "delegated": true,
-      "summary": "Fictitious work was delegated without the required state.",
-      "boundariesPreserved": true
-    },
     "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
   }
 }

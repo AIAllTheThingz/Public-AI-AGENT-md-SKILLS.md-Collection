@@ -48,6 +48,7 @@
     "authorizationRecoveryContinuity": "No consequential mutation occurred.",
     "retryLedger": {
       "validate the fictitious completion record": {
+        "failedOrIndeterminateOutcomes": [],
         "priorUnresolvedSequences": [],
         "currentSequence": {
           "sequenceId": "sequence-1",

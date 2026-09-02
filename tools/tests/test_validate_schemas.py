@@ -69,6 +69,11 @@ def retry_ledger(*sequences: dict, outcomes: tuple[str, ...] = ()) -> dict:
     return {
         "fictitious objective": {
             "failedOrIndeterminateOutcomes": list(outcomes),
+            "delegationHandoff": {
+                "delegated": False,
+                "summary": "Not applicable; no delegation occurred.",
+                "boundariesPreserved": True,
+            },
             "priorUnresolvedSequences": list(sequences[:-1]),
             "currentSequence": sequences[-1],
         }
@@ -401,6 +406,11 @@ class ValidateSchemasTests(unittest.TestCase):
         instance["executionDiscipline"]["retryLedger"] = {
             "failing objective": {
                 "failedOrIndeterminateOutcomes": ["Fictitious validation failed."],
+                "delegationHandoff": {
+                    "delegated": False,
+                    "summary": "Not applicable; no delegation occurred.",
+                    "boundariesPreserved": True,
+                },
                 "priorUnresolvedSequences": [],
                 "currentSequence": retry_sequence(
                     {
@@ -412,6 +422,11 @@ class ValidateSchemasTests(unittest.TestCase):
             },
             "evidence-only objective": {
                 "failedOrIndeterminateOutcomes": [],
+                "delegationHandoff": {
+                    "delegated": False,
+                    "summary": "Not applicable; no delegation occurred.",
+                    "boundariesPreserved": True,
+                },
                 "priorUnresolvedSequences": [],
                 "currentSequence": evidence_sequence,
             },
@@ -500,6 +515,11 @@ class ValidateSchemasTests(unittest.TestCase):
                 "failedOrIndeterminateOutcomes": [
                     "Fictitious first validation failed."
                 ],
+                "delegationHandoff": {
+                    "delegated": False,
+                    "summary": "Not applicable; no delegation occurred.",
+                    "boundariesPreserved": True,
+                },
                 "priorUnresolvedSequences": [],
                 "currentSequence": retry_sequence(
                     {
@@ -510,6 +530,11 @@ class ValidateSchemasTests(unittest.TestCase):
                 ),
             },
             "second objective": {
+                "delegationHandoff": {
+                    "delegated": False,
+                    "summary": "Not applicable; no delegation occurred.",
+                    "boundariesPreserved": True,
+                },
                 "priorUnresolvedSequences": [],
                 "currentSequence": retry_sequence(
                     {
@@ -581,9 +606,8 @@ class ValidateSchemasTests(unittest.TestCase):
 
     def test_delegation_boundaries_must_be_preserved(self):
         schema, instance = completion_v2()
-        instance["executionDiscipline"]["delegationHandoff"][
-            "boundariesPreserved"
-        ] = False
+        objective = next(iter(instance["executionDiscipline"]["retryLedger"].values()))
+        objective["delegationHandoff"]["boundariesPreserved"] = False
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_incomplete_delegated_handoff_is_invalid(self):
@@ -610,11 +634,13 @@ class ValidateSchemasTests(unittest.TestCase):
             ),
             outcomes=("Fictitious validation failed.",),
         )
-        instance["executionDiscipline"]["delegationHandoff"] = {
+        objective = next(
+            iter(instance["executionDiscipline"]["retryLedger"].values())
+        )
+        objective["delegationHandoff"] = {
             "delegated": True,
             "summary": "Fictitious unresolved work was delegated.",
             "meaningfulValue": "Independent validation specialization.",
-            "failureEvidence": ["Fictitious validation failed."],
             "blocker": "Fictitious validation blocker.",
             "retryCount": 0,
             "unresolvedState": "unresolved",
@@ -627,6 +653,112 @@ class ValidateSchemasTests(unittest.TestCase):
                 ).iter_errors(instance)
             ),
             [],
+        )
+
+    def test_delegated_retry_count_matches_current_sequence_depth(self):
+        cases = (
+            (
+                {
+                    "initialAttempt": ledger_action(
+                        "Failed", "initial-attempt", "retry-authorized"
+                    ),
+                    "retry1": ledger_action(
+                        "Failed", "retry-1", "reported-unresolved"
+                    ),
+                },
+                1,
+            ),
+            (
+                {
+                    "initialAttempt": ledger_action(
+                        "Failed", "initial-attempt", "retry-authorized"
+                    ),
+                    "retry1": ledger_action(
+                        "Failed", "retry-1", "retry-authorized"
+                    ),
+                    "retry2": ledger_action(
+                        "Failed", "retry-2", "reported-unresolved"
+                    ),
+                },
+                2,
+            ),
+        )
+        for attempts, retry_count in cases:
+            with self.subTest(retry_count=retry_count):
+                schema, instance = completion_v2()
+                instance["validation"][0]["result"] = "failed"
+                instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+                    retry_sequence(attempts),
+                    outcomes=("Fictitious validation remained unresolved.",),
+                )
+                objective = next(
+                    iter(instance["executionDiscipline"]["retryLedger"].values())
+                )
+                objective["delegationHandoff"] = {
+                    "delegated": True,
+                    "summary": "Fictitious unresolved work was delegated.",
+                    "meaningfulValue": "Independent validation specialization.",
+                    "blocker": "Fictitious validation blocker.",
+                    "retryCount": retry_count,
+                    "unresolvedState": "unresolved",
+                    "boundariesPreserved": True,
+                }
+                self.assertEqual(
+                    list(
+                        Draft202012Validator(
+                            schema, format_checker=FormatChecker()
+                        ).iter_errors(instance)
+                    ),
+                    [],
+                )
+
+    def test_completed_objective_cannot_be_delegated_as_unresolved(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Failed", "initial-attempt", "retry-authorized"
+                    ),
+                    "retry1": ledger_action(
+                        "Successful", "retry-1", "objective-completed"
+                    ),
+                }
+            ),
+            outcomes=("Fictitious initial validation failed.",),
+        )
+        objective = next(
+            iter(instance["executionDiscipline"]["retryLedger"].values())
+        )
+        objective["delegationHandoff"] = {
+            "delegated": True,
+            "summary": "Fictitious completed work was incorrectly delegated.",
+            "meaningfulValue": "Independent validation specialization.",
+            "blocker": "No blocker remains.",
+            "retryCount": 1,
+            "unresolvedState": "unresolved",
+            "boundariesPreserved": True,
+        }
+        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
+    def test_delegated_retry_count_mismatch_fixture_is_invalid(self):
+        schema, _ = completion_v2()
+        instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/invalid-delegation-count.example.json"
+            ).read_text(encoding="utf-8")
+        )
+        errors = list(Draft202012Validator(schema).iter_errors(instance))
+        self.assertTrue(
+            any(
+                error.validator == "const"
+                and list(error.absolute_path)[-2:] == [
+                    "delegationHandoff",
+                    "retryCount",
+                ]
+                for error in errors
+            )
         )
 
     def test_failed_budgeted_attempt_cannot_claim_completion(self):

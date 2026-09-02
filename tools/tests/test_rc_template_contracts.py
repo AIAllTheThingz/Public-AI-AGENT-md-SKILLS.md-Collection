@@ -534,6 +534,16 @@ Approval must come from an accountable human with delegated authority.
                 self.assertIn("retry count", normalized)
                 self.assertIn("unresolved state", normalized)
 
+    def test_completion_reset_requirement_includes_causal_rationale(self):
+        template = (
+            REPO_ROOT / "templates/completion/COMPLETION_REPORT_TEMPLATE.md"
+        ).read_text(encoding="utf-8")
+        retry_requirement = template.split("The retry budget allows", 1)[1].split(
+            "## Deployment and operational impact", 1
+        )[0]
+        self.assertIn("each sequence after the first", retry_requirement)
+        self.assertIn("causal rationale", retry_requirement)
+
 
 if __name__ == "__main__":
     unittest.main()

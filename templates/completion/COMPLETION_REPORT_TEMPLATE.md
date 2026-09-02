@@ -58,20 +58,20 @@ template_type: completion-report
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 {{RETRY_LEDGER_ROWS}}
 
-For schema-backed JSON, use one `retryLedger` map keyed by objective. Each objective ledger contains its own `failedOrIndeterminateOutcomes` array: it is non-empty exactly when that same ledger contains a Failed or Indeterminate attempt. No second objective map exists, so an objective cannot be split across ledgers. The rendered summary and table above describe the same per-objective records.
+For schema-backed JSON, use one `retryLedger` map keyed by objective. Each objective ledger contains its own `failedOrIndeterminateOutcomes` array and `delegationHandoff`. The outcome array is non-empty exactly when that same ledger contains a Failed or Indeterminate attempt and supplies authoritative failure evidence for a delegated handoff. A delegated handoff requires the current sequence to end `reported-unresolved`, and its `retryCount` must equal that sequence's recorded retry depth. No second objective map exists, so an objective, its failure evidence, and its handoff cannot be split across ledgers. The rendered summaries and table above describe the same per-objective records.
 
 - Reset basis, if any:
 {{RESET_BASIS}}
 - Progress or blocker narrowing:
 {{PROGRESS_OR_BLOCKER_NARROWING}}
-- Delegation handoff (`delegated`; summary; meaningful value; failure evidence; blocker; retry count; unresolved state; boundaries preserved):
+- Per-objective delegation handoff (`delegated`; summary; meaningful value; failure evidence from that objective's outcome array; blocker; retry count equal to the current sequence's recorded retries; unresolved state; boundaries preserved):
 {{DELEGATION_HANDOFF}}
 - Delegation boundary continuity before handoff completion:
 {{DELEGATION_BOUNDARY_CONTINUITY}}
 - Authorized routing of non-blocking out-of-scope findings:
 {{OUT_OF_SCOPE_ROUTING}}
 
-The retry budget allows the initial attempt plus at most two justified retries per sequence. A budget-consuming attempt is any execution action directed at achieving the objective or clearing the blocker whose observable effects are reconciled and whose result is Failed or Indeterminate, whether mutating or read-only; every subsequent execution action after that result for the objective or blocker is a retry even within the same command sequence, plan, workflow, tool, agent, or strategy. Successful read-only discovery, reconciliation, or validation that only gathers evidence is non-consuming and is recorded as a non-consuming ledger row; a Failed or Indeterminate read-only execution directed at the objective or blocker consumes budget, and a subsequent Successful objective-clearing action is recorded at its current retry position and ends the objective or blocker. Preserve every stopped sequence; each sequence after the first requires the prior sequence stop/report, separate accountable authorization, and material-change evidence.
+The retry budget allows the initial attempt plus at most two justified retries per sequence. A budget-consuming attempt is any execution action directed at achieving the objective or clearing the blocker whose observable effects are reconciled and whose result is Failed or Indeterminate, whether mutating or read-only; every subsequent execution action after that result for the objective or blocker is a retry even within the same command sequence, plan, workflow, tool, agent, or strategy. Successful read-only discovery, reconciliation, or validation that only gathers evidence is non-consuming and is recorded as a non-consuming ledger row; a Failed or Indeterminate read-only execution directed at the objective or blocker consumes budget, and a subsequent Successful objective-clearing action is recorded at its current retry position and ends the objective or blocker. Preserve every stopped sequence; each sequence after the first requires the prior sequence stop/report, separate accountable authorization, material-change evidence, and causal rationale explaining why that change creates a concrete reason the new sequence may succeed.
 
 ## Deployment and operational impact
 
