@@ -533,6 +533,7 @@ Approval must come from an accountable human with delegated authority.
                 self.assertIn("failure evidence", normalized)
                 self.assertIn("retry count", normalized)
                 self.assertIn("unresolved state", normalized)
+                self.assertIn("per sequence", normalized)
 
     def test_completion_reset_requirement_includes_causal_rationale(self):
         template = (
@@ -543,6 +544,23 @@ Approval must come from an accountable human with delegated authority.
         )[0]
         self.assertIn("each sequence after the first", retry_requirement)
         self.assertIn("causal rationale", retry_requirement)
+
+    def test_completion_preserves_sequence_handoffs_and_terminal_stop(self):
+        template = (
+            REPO_ROOT / "templates/completion/COMPLETION_REPORT_TEMPLATE.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "every prior or current sequence contains its own `delegationHandoff`",
+            template,
+        )
+        self.assertIn(
+            "Preserve the handoff on a prior sequence when an authorized reset creates a new current sequence",
+            template,
+        )
+        self.assertIn(
+            "A sequence ending `reported-unresolved` cannot contain a successful non-consuming action",
+            template,
+        )
 
 
 if __name__ == "__main__":

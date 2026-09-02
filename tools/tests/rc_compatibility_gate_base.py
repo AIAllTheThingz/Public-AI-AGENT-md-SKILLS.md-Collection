@@ -585,7 +585,11 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         )
         self.assertIn("use one retryLedger map keyed by objective", required_actions)
         self.assertIn(
-            "store each objective's failedOrIndeterminateOutcomes array and delegationHandoff inside that objective's ledger",
+            "store each objective's failedOrIndeterminateOutcomes array inside that objective's ledger",
+            required_actions,
+        )
+        self.assertIn(
+            "store delegationHandoff inside every prior and current sequence",
             required_actions,
         )
         self.assertIn("same objective cannot be split across maps", required_actions)
@@ -593,13 +597,21 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
             "require each retry action to record materialChange and causalRationale",
             required_actions,
         )
-        self.assertIn("explicit per-objective delegationHandoff.delegated", required_actions)
+        self.assertIn("explicit per-sequence delegationHandoff.delegated", required_actions)
         self.assertIn(
-            "same ledger's outcomes as authoritative failure evidence",
+            "containing objective ledger's outcomes as authoritative failure evidence",
             required_actions,
         )
         self.assertIn(
-            "retryCount to equal the current sequence's actual retry depth",
+            "retryCount to equal that same sequence's actual retry depth",
+            required_actions,
+        )
+        self.assertIn(
+            "prohibit nonConsumingActions in a sequence ending reported-unresolved",
+            required_actions,
+        )
+        self.assertIn(
+            "preserve a prior sequence's handoff after an authorized reset",
             required_actions,
         )
         self.assertIn("per-objective sequences", required_actions)

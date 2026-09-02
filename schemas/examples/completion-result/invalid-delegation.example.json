@@ -19,14 +19,14 @@
         "failedOrIndeterminateOutcomes": [
           "The fictitious validation failed."
         ],
-        "delegationHandoff": {
-          "delegated": true,
-          "summary": "Fictitious work was delegated without the required state.",
-          "boundariesPreserved": true
-        },
         "priorUnresolvedSequences": [],
         "currentSequence": {
           "sequenceId": "sequence-1",
+          "delegationHandoff": {
+            "delegated": true,
+            "summary": "Fictitious work was delegated without the required state.",
+            "boundariesPreserved": true
+          },
           "attempts": {
             "initialAttempt": {
               "action": "Run fictitious validation",

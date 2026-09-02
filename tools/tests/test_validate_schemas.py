@@ -52,10 +52,17 @@ def retry_sequence(
     sequence_id: str = "sequence-1",
     non_consuming_actions: list[dict] | None = None,
     reset_authorization: dict | None = None,
+    delegation_handoff: dict | None = None,
 ) -> dict:
     sequence = {
         "sequenceId": sequence_id,
         "attempts": attempts,
+        "delegationHandoff": delegation_handoff
+        or {
+            "delegated": False,
+            "summary": "Not applicable; no delegation occurred.",
+            "boundariesPreserved": True,
+        },
         "nonConsumingActions": non_consuming_actions or [],
     }
     if reset_authorization is not None:
@@ -69,11 +76,6 @@ def retry_ledger(*sequences: dict, outcomes: tuple[str, ...] = ()) -> dict:
     return {
         "fictitious objective": {
             "failedOrIndeterminateOutcomes": list(outcomes),
-            "delegationHandoff": {
-                "delegated": False,
-                "summary": "Not applicable; no delegation occurred.",
-                "boundariesPreserved": True,
-            },
             "priorUnresolvedSequences": list(sequences[:-1]),
             "currentSequence": sequences[-1],
         }
@@ -406,11 +408,6 @@ class ValidateSchemasTests(unittest.TestCase):
         instance["executionDiscipline"]["retryLedger"] = {
             "failing objective": {
                 "failedOrIndeterminateOutcomes": ["Fictitious validation failed."],
-                "delegationHandoff": {
-                    "delegated": False,
-                    "summary": "Not applicable; no delegation occurred.",
-                    "boundariesPreserved": True,
-                },
                 "priorUnresolvedSequences": [],
                 "currentSequence": retry_sequence(
                     {
@@ -422,11 +419,6 @@ class ValidateSchemasTests(unittest.TestCase):
             },
             "evidence-only objective": {
                 "failedOrIndeterminateOutcomes": [],
-                "delegationHandoff": {
-                    "delegated": False,
-                    "summary": "Not applicable; no delegation occurred.",
-                    "boundariesPreserved": True,
-                },
                 "priorUnresolvedSequences": [],
                 "currentSequence": evidence_sequence,
             },
@@ -515,11 +507,6 @@ class ValidateSchemasTests(unittest.TestCase):
                 "failedOrIndeterminateOutcomes": [
                     "Fictitious first validation failed."
                 ],
-                "delegationHandoff": {
-                    "delegated": False,
-                    "summary": "Not applicable; no delegation occurred.",
-                    "boundariesPreserved": True,
-                },
                 "priorUnresolvedSequences": [],
                 "currentSequence": retry_sequence(
                     {
@@ -530,11 +517,6 @@ class ValidateSchemasTests(unittest.TestCase):
                 ),
             },
             "second objective": {
-                "delegationHandoff": {
-                    "delegated": False,
-                    "summary": "Not applicable; no delegation occurred.",
-                    "boundariesPreserved": True,
-                },
                 "priorUnresolvedSequences": [],
                 "currentSequence": retry_sequence(
                     {
@@ -607,7 +589,7 @@ class ValidateSchemasTests(unittest.TestCase):
     def test_delegation_boundaries_must_be_preserved(self):
         schema, instance = completion_v2()
         objective = next(iter(instance["executionDiscipline"]["retryLedger"].values()))
-        objective["delegationHandoff"]["boundariesPreserved"] = False
+        objective["currentSequence"]["delegationHandoff"]["boundariesPreserved"] = False
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
 
     def test_incomplete_delegated_handoff_is_invalid(self):
@@ -637,7 +619,7 @@ class ValidateSchemasTests(unittest.TestCase):
         objective = next(
             iter(instance["executionDiscipline"]["retryLedger"].values())
         )
-        objective["delegationHandoff"] = {
+        objective["currentSequence"]["delegationHandoff"] = {
             "delegated": True,
             "summary": "Fictitious unresolved work was delegated.",
             "meaningfulValue": "Independent validation specialization.",
@@ -694,7 +676,7 @@ class ValidateSchemasTests(unittest.TestCase):
                 objective = next(
                     iter(instance["executionDiscipline"]["retryLedger"].values())
                 )
-                objective["delegationHandoff"] = {
+                objective["currentSequence"]["delegationHandoff"] = {
                     "delegated": True,
                     "summary": "Fictitious unresolved work was delegated.",
                     "meaningfulValue": "Independent validation specialization.",
@@ -730,7 +712,7 @@ class ValidateSchemasTests(unittest.TestCase):
         objective = next(
             iter(instance["executionDiscipline"]["retryLedger"].values())
         )
-        objective["delegationHandoff"] = {
+        objective["currentSequence"]["delegationHandoff"] = {
             "delegated": True,
             "summary": "Fictitious completed work was incorrectly delegated.",
             "meaningfulValue": "Independent validation specialization.",
@@ -757,6 +739,53 @@ class ValidateSchemasTests(unittest.TestCase):
                     "delegationHandoff",
                     "retryCount",
                 ]
+                for error in errors
+            )
+        )
+
+    def test_prior_delegated_sequence_can_be_followed_by_completed_reset(self):
+        schema, _ = completion_v2()
+        instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/valid-reset.example.json"
+            ).read_text(encoding="utf-8")
+        )
+        objective = next(
+            iter(instance["executionDiscipline"]["retryLedger"].values())
+        )
+        self.assertTrue(
+            objective["priorUnresolvedSequences"][0]["delegationHandoff"]["delegated"]
+        )
+        self.assertFalse(
+            objective["currentSequence"]["delegationHandoff"]["delegated"]
+        )
+        self.assertEqual(
+            list(
+                Draft202012Validator(
+                    schema, format_checker=FormatChecker()
+                ).iter_errors(instance)
+            ),
+            [],
+        )
+
+    def test_post_terminal_non_consuming_action_fixture_is_invalid(self):
+        schema, _ = completion_v2()
+        instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/invalid-post-terminal-action.example.json"
+            ).read_text(encoding="utf-8")
+        )
+        errors = list(
+            Draft202012Validator(
+                schema, format_checker=FormatChecker()
+            ).iter_errors(instance)
+        )
+        self.assertTrue(
+            any(
+                error.validator == "maxItems"
+                and list(error.absolute_path)[-1:] == ["nonConsumingActions"]
                 for error in errors
             )
         )

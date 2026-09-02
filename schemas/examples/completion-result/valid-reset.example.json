@@ -24,14 +24,18 @@
         "failedOrIndeterminateOutcomes": [
           "The first sequence stopped and reported the objective unresolved after the source fixture was unavailable."
         ],
-        "delegationHandoff": {
-          "delegated": false,
-          "summary": "Not applicable; no delegation occurred.",
-          "boundariesPreserved": true
-        },
         "priorUnresolvedSequences": [
           {
             "sequenceId": "sequence-1",
+            "delegationHandoff": {
+              "delegated": true,
+              "summary": "The unresolved first sequence was delegated before reset authorization.",
+              "meaningfulValue": "A second specialist preserved the failed validation evidence.",
+              "blocker": "The required source fixture was unavailable.",
+              "retryCount": 0,
+              "unresolvedState": "unresolved",
+              "boundariesPreserved": true
+            },
             "attempts": {
               "initialAttempt": {
                 "action": "Run fictitious schema validation",
@@ -53,6 +57,11 @@
         ],
         "currentSequence": {
           "sequenceId": "sequence-2",
+          "delegationHandoff": {
+            "delegated": false,
+            "summary": "The separately authorized reset sequence was completed without delegation.",
+            "boundariesPreserved": true
+          },
           "resetAuthorization": {
             "priorSequenceStopReport": "Sequence 1 stopped and reported the validation objective unresolved.",
             "authorizedBy": "fictitious-owner",

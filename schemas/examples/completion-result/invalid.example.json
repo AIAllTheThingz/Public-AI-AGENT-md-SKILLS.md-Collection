@@ -24,6 +24,11 @@
           "priorUnresolvedSequences": [],
           "currentSequence": {
             "sequenceId": "sequence-1",
+            "delegationHandoff": {
+              "delegated": false,
+              "summary": "Not applicable; no delegation occurred.",
+              "boundariesPreserved": true
+            },
             "attempts": {
               "initialAttempt": {
                 "action": "Run fictitious schema validation",
@@ -52,6 +57,11 @@
         "priorUnresolvedSequences": [],
         "currentSequence": {
           "sequenceId": "sequence-1",
+          "delegationHandoff": {
+            "delegated": false,
+            "summary": "Not applicable; no delegation occurred.",
+            "boundariesPreserved": true
+          },
           "attempts": {
             "initialAttempt": {
               "action": "Claim a successful validation in a separate ledger",
@@ -74,11 +84,6 @@
     },
     "resetBasis": "Not applicable; no reset occurred.",
     "progressOrBlockerNarrowing": "The record attempts to bypass reset authorization by duplicating one objective across two maps.",
-    "delegationHandoff": {
-      "delegated": false,
-      "summary": "Not applicable; no delegation occurred.",
-      "boundariesPreserved": true
-    },
     "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
   }
 }

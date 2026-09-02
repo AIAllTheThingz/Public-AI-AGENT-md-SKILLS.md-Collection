@@ -19,18 +19,18 @@
         "failedOrIndeterminateOutcomes": [
           "The fictitious validation remained unresolved after two retries."
         ],
-        "delegationHandoff": {
-          "delegated": true,
-          "summary": "The exhausted validation objective was delegated.",
-          "meaningfulValue": "Independent validation specialization.",
-          "blocker": "The fictitious validation still fails.",
-          "retryCount": 0,
-          "unresolvedState": "unresolved",
-          "boundariesPreserved": true
-        },
         "priorUnresolvedSequences": [],
         "currentSequence": {
           "sequenceId": "sequence-1",
+          "delegationHandoff": {
+            "delegated": true,
+            "summary": "The exhausted validation objective was delegated.",
+            "meaningfulValue": "Independent validation specialization.",
+            "blocker": "The fictitious validation still fails.",
+            "retryCount": 0,
+            "unresolvedState": "unresolved",
+            "boundariesPreserved": true
+          },
           "attempts": {
             "initialAttempt": {
               "action": "Run fictitious validation",

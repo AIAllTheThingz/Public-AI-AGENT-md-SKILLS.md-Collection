@@ -32,14 +32,14 @@
     "retryLedger": {
       "validate the fictitious governance change": {
         "failedOrIndeterminateOutcomes": [],
-        "delegationHandoff": {
-          "delegated": false,
-          "summary": "Not applicable; no delegation occurred.",
-          "boundariesPreserved": true
-        },
         "priorUnresolvedSequences": [],
         "currentSequence": {
           "sequenceId": "sequence-1",
+          "delegationHandoff": {
+            "delegated": false,
+            "summary": "Not applicable; no delegation occurred.",
+            "boundariesPreserved": true
+          },
           "nonConsumingActions": [
             {
               "action": "Run evidence-only repository validation",

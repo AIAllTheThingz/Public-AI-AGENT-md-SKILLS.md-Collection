@@ -489,7 +489,7 @@
     },
     "delegationHandoff": {
       "type": "object",
-      "description": "Per-objective delegation state. Failure evidence is the containing objective ledger's failedOrIndeterminateOutcomes array, and retryCount must equal its current sequence's recorded retry depth.",
+      "description": "Per-sequence delegation state. Failure evidence is the containing objective ledger's failedOrIndeterminateOutcomes array, and retryCount must equal this sequence's recorded retry depth.",
       "additionalProperties": false,
       "required": [
         "delegated",
@@ -576,6 +576,7 @@
       "additionalProperties": false,
       "required": [
         "sequenceId",
+        "delegationHandoff",
         "nonConsumingActions"
       ],
       "properties": {
@@ -585,6 +586,9 @@
         },
         "resetAuthorization": {
           "$ref": "#/$defs/resetAuthorization"
+        },
+        "delegationHandoff": {
+          "$ref": "#/$defs/delegationHandoff"
         },
         "attempts": {
           "type": "object",
@@ -794,6 +798,103 @@
           }
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "attempts": {
+                "required": [
+                  "retry2"
+                ]
+              }
+            },
+            "required": [
+              "attempts"
+            ]
+          },
+          "then": {
+            "properties": {
+              "delegationHandoff": {
+                "properties": {
+                  "retryCount": {
+                    "const": 2
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "if": {
+              "properties": {
+                "attempts": {
+                  "required": [
+                    "retry1"
+                  ]
+                }
+              },
+              "required": [
+                "attempts"
+              ]
+            },
+            "then": {
+              "properties": {
+                "delegationHandoff": {
+                  "properties": {
+                    "retryCount": {
+                      "const": 1
+                    }
+                  }
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "delegationHandoff": {
+                  "properties": {
+                    "retryCount": {
+                      "const": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "delegationHandoff": {
+                "properties": {
+                  "delegated": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "delegated"
+                ]
+              }
+            },
+            "required": [
+              "delegationHandoff"
+            ]
+          },
+          "then": {
+            "$ref": "#/$defs/reportedUnresolvedAttempts"
+          }
+        },
+        {
+          "if": {
+            "$ref": "#/$defs/reportedUnresolvedAttempts"
+          },
+          "then": {
+            "properties": {
+              "nonConsumingActions": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ],
       "anyOf": [
         {
           "required": [
@@ -1009,103 +1110,106 @@
         }
       ]
     },
+    "reportedUnresolvedAttempts": {
+      "required": [
+        "attempts"
+      ],
+      "properties": {
+        "attempts": {
+          "anyOf": [
+            {
+              "required": [
+                "retry2"
+              ],
+              "properties": {
+                "retry2": {
+                  "properties": {
+                    "result": {
+                      "enum": [
+                        "Failed",
+                        "Indeterminate"
+                      ]
+                    },
+                    "terminalDisposition": {
+                      "const": "reported-unresolved"
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "terminalDisposition"
+                  ]
+                }
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "retry2"
+                ]
+              },
+              "required": [
+                "retry1"
+              ],
+              "properties": {
+                "retry1": {
+                  "properties": {
+                    "result": {
+                      "enum": [
+                        "Failed",
+                        "Indeterminate"
+                      ]
+                    },
+                    "terminalDisposition": {
+                      "const": "reported-unresolved"
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "terminalDisposition"
+                  ]
+                }
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "retry1"
+                ]
+              },
+              "properties": {
+                "initialAttempt": {
+                  "properties": {
+                    "result": {
+                      "enum": [
+                        "Failed",
+                        "Indeterminate"
+                      ]
+                    },
+                    "terminalDisposition": {
+                      "const": "reported-unresolved"
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "terminalDisposition"
+                  ]
+                }
+              },
+              "required": [
+                "initialAttempt"
+              ]
+            }
+          ]
+        }
+      }
+    },
     "unresolvedRetrySequence": {
       "allOf": [
         {
           "$ref": "#/$defs/retrySequence"
         },
         {
-          "required": [
-            "attempts"
-          ],
-          "properties": {
-            "attempts": {
-              "anyOf": [
-                {
-                  "required": [
-                    "retry2"
-                  ],
-                  "properties": {
-                    "retry2": {
-                      "properties": {
-                        "result": {
-                          "enum": [
-                            "Failed",
-                            "Indeterminate"
-                          ]
-                        },
-                        "terminalDisposition": {
-                          "const": "reported-unresolved"
-                        }
-                      },
-                      "required": [
-                        "result",
-                        "terminalDisposition"
-                      ]
-                    }
-                  }
-                },
-                {
-                  "not": {
-                    "required": [
-                      "retry2"
-                    ]
-                  },
-                  "required": [
-                    "retry1"
-                  ],
-                  "properties": {
-                    "retry1": {
-                      "properties": {
-                        "result": {
-                          "enum": [
-                            "Failed",
-                            "Indeterminate"
-                          ]
-                        },
-                        "terminalDisposition": {
-                          "const": "reported-unresolved"
-                        }
-                      },
-                      "required": [
-                        "result",
-                        "terminalDisposition"
-                      ]
-                    }
-                  }
-                },
-                {
-                  "not": {
-                    "required": [
-                      "retry1"
-                    ]
-                  },
-                  "properties": {
-                    "initialAttempt": {
-                      "properties": {
-                        "result": {
-                          "enum": [
-                            "Failed",
-                            "Indeterminate"
-                          ]
-                        },
-                        "terminalDisposition": {
-                          "const": "reported-unresolved"
-                        }
-                      },
-                      "required": [
-                        "result",
-                        "terminalDisposition"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "initialAttempt"
-                  ]
-                }
-              ]
-            }
-          }
+          "$ref": "#/$defs/reportedUnresolvedAttempts"
         }
       ]
     },
@@ -1135,7 +1239,6 @@
       "additionalProperties": false,
       "required": [
         "failedOrIndeterminateOutcomes",
-        "delegationHandoff",
         "priorUnresolvedSequences",
         "currentSequence"
       ],
@@ -1148,9 +1251,6 @@
             "type": "string",
             "minLength": 1
           }
-        },
-        "delegationHandoff": {
-          "$ref": "#/$defs/delegationHandoff"
         },
         "priorUnresolvedSequences": {
           "type": "array",
@@ -1192,81 +1292,6 @@
             "properties": {
               "currentSequence": {
                 "$ref": "#/$defs/resetRetrySequence"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "currentSequence": {
-                "properties": {
-                  "attempts": {
-                    "required": [
-                      "retry2"
-                    ]
-                  }
-                },
-                "required": [
-                  "attempts"
-                ]
-              }
-            },
-            "required": [
-              "currentSequence"
-            ]
-          },
-          "then": {
-            "properties": {
-              "delegationHandoff": {
-                "properties": {
-                  "retryCount": {
-                    "const": 2
-                  }
-                }
-              }
-            }
-          },
-          "else": {
-            "if": {
-              "properties": {
-                "currentSequence": {
-                  "properties": {
-                    "attempts": {
-                      "required": [
-                        "retry1"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "attempts"
-                  ]
-                }
-              },
-              "required": [
-                "currentSequence"
-              ]
-            },
-            "then": {
-              "properties": {
-                "delegationHandoff": {
-                  "properties": {
-                    "retryCount": {
-                      "const": 1
-                    }
-                  }
-                }
-              }
-            },
-            "else": {
-              "properties": {
-                "delegationHandoff": {
-                  "properties": {
-                    "retryCount": {
-                      "const": 0
-                    }
-                  }
-                }
               }
             }
           }
@@ -1326,35 +1351,6 @@
           "else": {
             "not": {
               "$ref": "#/$defs/objectiveRetryLedgerCoreWithFailure"
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "delegationHandoff": {
-                "properties": {
-                  "delegated": {
-                    "const": true
-                  }
-                },
-                "required": [
-                  "delegated"
-                ]
-              }
-            },
-            "required": [
-              "delegationHandoff"
-            ]
-          },
-          "then": {
-            "properties": {
-              "failedOrIndeterminateOutcomes": {
-                "minItems": 1
-              },
-              "currentSequence": {
-                "$ref": "#/$defs/unresolvedRetrySequence"
-              }
             }
           }
         }

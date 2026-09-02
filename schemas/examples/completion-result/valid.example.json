@@ -22,14 +22,14 @@
     "retryLedger": {
       "validate the illustrative completion record": {
         "failedOrIndeterminateOutcomes": [],
-        "delegationHandoff": {
-          "delegated": false,
-          "summary": "Not applicable; no delegation occurred.",
-          "boundariesPreserved": true
-        },
         "priorUnresolvedSequences": [],
         "currentSequence": {
           "sequenceId": "sequence-1",
+          "delegationHandoff": {
+            "delegated": false,
+            "summary": "Not applicable; no delegation occurred.",
+            "boundariesPreserved": true
+          },
           "nonConsumingActions": [
             {
               "action": "Run evidence-only schema validation",

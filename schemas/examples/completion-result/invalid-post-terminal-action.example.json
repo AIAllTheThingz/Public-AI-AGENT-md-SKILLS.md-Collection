@@ -1,23 +1,23 @@
 {
   "schemaVersion": "2.0.0",
-  "status": "partially-validated",
-  "summary": "Invalid v2 record whose retry repeats an unchanged action without causal evidence.",
+  "status": "not-completed",
+  "summary": "Invalid v2 record that continues acting after a sequence reports unresolved.",
   "filesChanged": [],
   "validation": [
     {
       "name": "Fictitious validation",
-      "result": "passed"
+      "result": "failed"
     }
   ],
   "limitations": [
-    "The retry intentionally omits materialChange and causalRationale."
+    "The successful evidence action intentionally occurs after the terminal unresolved report."
   ],
   "executionDiscipline": {
     "authorizationRecoveryContinuity": "No consequential mutation occurred.",
     "retryLedger": {
       "validate the fictitious artifact": {
         "failedOrIndeterminateOutcomes": [
-          "The initial fictitious validation failed."
+          "The exhausted fictitious validation sequence reported unresolved."
         ],
         "priorUnresolvedSequences": [],
         "currentSequence": {
@@ -40,29 +40,30 @@
               "result": "Failed",
               "budgetPosition": "initial-attempt",
               "justification": "Initial validation attempt.",
-              "terminalDisposition": "retry-authorized"
-            },
-            "retry1": {
-              "action": "Run the identical fictitious validation again",
+              "terminalDisposition": "reported-unresolved"
+            }
+          },
+          "nonConsumingActions": [
+            {
+              "action": "Inspect another source after the terminal stop",
               "actor": "fictitious-agent",
               "executionContext": {
-                "tool": "fictitious-validator"
+                "tool": "fictitious-inspector"
               },
               "startedAt": "2026-01-01T00:02:00Z",
               "endedAt": "2026-01-01T00:03:00Z",
               "effectsReconciliation": "No state changed.",
               "result": "Successful",
-              "budgetPosition": "retry-1",
-              "justification": "Generic retry justification without a material change.",
-              "terminalDisposition": "objective-completed"
+              "budgetPosition": "non-consuming",
+              "justification": "This action is intentionally recorded after the terminal stop.",
+              "terminalDisposition": "not-terminal"
             }
-          },
-          "nonConsumingActions": []
+          ]
         }
       }
     },
     "resetBasis": "Not applicable; no reset occurred.",
-    "progressOrBlockerNarrowing": "The retry supplies no causal reason that the repeated action could succeed.",
+    "progressOrBlockerNarrowing": "No action is permitted in this stopped sequence.",
     "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
   }
 }
