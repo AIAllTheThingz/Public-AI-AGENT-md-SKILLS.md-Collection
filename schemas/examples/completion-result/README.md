@@ -20,9 +20,11 @@ It demonstrates `schemaVersion: "2.0.0"` and required `executionDiscipline` evid
 
 [`valid-reset.example.json`](valid-reset.example.json) must validate against the rolling and v2 schemas. It preserves the stopped and reported first sequence under `priorUnresolvedSequences`, then records separate authorization and material-change evidence on `currentSequence` before completing the objective.
 
-## Preserved v1 compatibility example
+## Preserved v1 compatibility examples
 
 The [`valid-v1.example.json`](valid-v1.example.json) compatibility fixture must validate against the unchanged [`../../v1/completion-result.schema.json`](../../v1/completion-result.schema.json). It remains available for historical records and pinned v1 consumers and is not expected to satisfy v2.
+
+The [`invalid-v1.example.json`](invalid-v1.example.json) compatibility fixture must fail that same v1 schema because its `status` is outside the preserved enum. Together, the fixtures detect both accidental narrowing and accidental broadening of the historical contract.
 
 ## Negative example
 

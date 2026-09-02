@@ -53,6 +53,7 @@ Each contract must have:
 - Other schemas remain current major version 1.
 - All positive examples validate.
 - All negative examples fail.
+- Preserved completion-result v1 positive and negative compatibility fixtures validate and fail, respectively.
 - All discovered repository instances validate.
 - Format checking is enabled.
 - Every JSON document parses.

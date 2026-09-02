@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "completed",
+  "summary": "Intentionally invalid historical v1 completion record.",
+  "filesChanged": [
+    "README.md"
+  ],
+  "risk": "low",
+  "validation": [
+    {
+      "name": "Schema validation",
+      "result": "passed",
+      "evidence": "example only"
+    }
+  ],
+  "limitations": [
+    "The status intentionally falls outside the v1 enum."
+  ],
+  "reviewer": "fictitious-reviewer"
+}

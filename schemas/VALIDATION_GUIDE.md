@@ -28,7 +28,7 @@ python tools/validate-schemas/validate_schemas.py
 5. negative example rejection
 6. repository instance discovery and validation
 7. date and date-time format checking
-8. current-major schema selection (completion-result v2; other contracts v1) with preserved v1 completion compatibility
+8. current-major schema selection (completion-result v2; other contracts v1) with preserved positive and negative v1 completion compatibility fixtures
 
 ## Error interpretation
 

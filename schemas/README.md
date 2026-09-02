@@ -113,7 +113,7 @@ Each schema has:
 
 Examples are under [`examples/`](examples/).
 
-The completion-result examples include a current v2 positive/negative pair and a preserved v1 compatibility fixture.
+The completion-result examples include a current v2 positive/negative pair and preserved v1 positive/negative compatibility fixtures.
 
 Negative examples are intentionally invalid. Do not copy them into production unless the production goal is to test whether anyone is awake.
 

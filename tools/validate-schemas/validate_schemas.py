@@ -172,6 +172,7 @@ def run(args: argparse.Namespace) -> ToolResult:
     instance_count = len(repository_instances)
 
     historical_valid = schema_root / "examples" / "completion-result" / "valid-v1.example.json"
+    historical_invalid = schema_root / "examples" / "completion-result" / "invalid-v1.example.json"
     v1_completion_schema = versioned_schema_path(schema_root, "completion-result", 1)
 
     # Complete the offline-reference preflight before validating any instances.
@@ -231,6 +232,13 @@ def run(args: argparse.Namespace) -> ToolResult:
                     historical_valid, v1_completion_schema, root, True
                 )
             )
+            if historical_invalid.is_file():
+                negative_count += 1
+                findings.extend(
+                    instance_findings(
+                        historical_invalid, v1_completion_schema, root, False
+                    )
+                )
 
     for path, schema_path in repository_instances:
         schema_name = schema_path.name.removesuffix(".schema.json")

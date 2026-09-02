@@ -59,7 +59,7 @@ python tools/validate-schemas/validate_schemas.py --help
 - positive examples
 - negative examples
 - repository instance discovery
-- current-major selection for unversioned records; retained completion-result v1 records must explicitly declare `schemaVersion: "1.0.0"`
+- current-major selection for unversioned records; retained completion-result v1 records must explicitly declare `schemaVersion: "1.0.0"`, and preserved positive and negative v1 fixtures exercise that contract
 
 ## Examples
 

@@ -90,6 +90,26 @@ class ValidateSchemasTests(unittest.TestCase):
             [],
         )
 
+    def test_completion_result_v1_negative_fixture_remains_invalid(self):
+        schema = json.loads(
+            (REPO_ROOT / "schemas/v1/completion-result.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/invalid-v1.example.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertTrue(
+            list(
+                Draft202012Validator(
+                    schema, format_checker=FormatChecker()
+                ).iter_errors(instance)
+            )
+        )
+
     def test_completion_result_v2_fixture_is_valid_and_matches_rolling_schema(self):
         schema = json.loads(
             (REPO_ROOT / "schemas/v2/completion-result.schema.json").read_text(

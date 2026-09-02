@@ -37,7 +37,7 @@ The repository validator maps files by naming convention:
 
 The rolling and current versioned completion-result contracts are major version 2 and require `executionDiscipline` with `schemaVersion: "2.0.0"`. `v1/completion-result.schema.json` remains unchanged for historical records and pinned v1 consumers. The other catalogued contracts remain major version 1.
 
-Files under `schemas/examples/` are handled as explicit positive or negative test cases.
+Files under `schemas/examples/` are handled as explicit positive or negative test cases, including the preserved completion-result v1 compatibility pair.
 
 ## Ownership
 
