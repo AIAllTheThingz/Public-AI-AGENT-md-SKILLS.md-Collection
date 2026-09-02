@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "partially-validated",
+  "summary": "Illustrative historical v1 validation record.",
+  "filesChanged": [
+    "README.md"
+  ],
+  "risk": "low",
+  "validation": [
+    {
+      "name": "Schema validation",
+      "result": "passed",
+      "evidence": "example only"
+    }
+  ],
+  "limitations": [
+    "No runtime behavior was tested."
+  ],
+  "reviewer": "fictitious-reviewer"
+}

@@ -237,6 +237,28 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
             completion["obligations"]["human review"],
         )
 
+        candidate_completion = template_contract(
+            (REPO_ROOT / completion_path).read_text(encoding="utf-8")
+        )
+        self.assertIn("execution discipline", candidate_completion["sections"])
+        for placeholder in (
+            "FAILED_OR_INDETERMINATE_OUTCOMES",
+            "AUTHORIZATION_RECOVERY_CONTINUITY",
+            "RETRY_LEDGER_ROWS",
+            "RESET_BASIS",
+            "PROGRESS_OR_BLOCKER_NARROWING",
+            "DELEGATION_HANDOFF",
+            "DELEGATION_BOUNDARY_CONTINUITY",
+            "OUT_OF_SCOPE_ROUTING",
+        ):
+            self.assertIn(placeholder, candidate_completion["placeholders"])
+            self.assertTrue(
+                any(
+                    name == placeholder and section == "execution discipline"
+                    for name, section, _label in candidate_completion["placeholderBindings"]
+                )
+            )
+
         exception_path = "templates/exception/EXCEPTION_RECORD_TEMPLATE.md"
         exception = template_contract(git_source_at(self.source_commit, exception_path))
         self.assertIn(

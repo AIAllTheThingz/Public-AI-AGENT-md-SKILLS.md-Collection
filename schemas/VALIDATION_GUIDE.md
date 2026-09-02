@@ -1,7 +1,7 @@
 ---
 id: SCHEMA-VALIDATE-001
 title: Schema Validation Guide
-version: 0.2.0
+version: 0.3.0
 status: baseline
 ---
 
@@ -28,6 +28,7 @@ python tools/validate-schemas/validate_schemas.py
 5. negative example rejection
 6. repository instance discovery and validation
 7. date and date-time format checking
+8. current-major schema selection (completion-result v2; other contracts v1) with preserved v1 completion compatibility
 
 ## Error interpretation
 
@@ -47,6 +48,13 @@ A validation error should be resolved by one of:
 - documenting an explicit migration
 
 Disabling validation is not remediation.
+
+## Schema selection
+
+- Validate new or current completion-result records against the rolling or `schemas/v2/completion-result.schema.json` contract, including required `executionDiscipline` and `schemaVersion: "2.0.0"`.
+- Validate retained historical or pinned v1 completion-result records against the unchanged `schemas/v1/completion-result.schema.json` contract.
+- Validate the other contracts against their current `schemas/v1/` major paths.
+- Do not silently send a v1 historical record to the v2 validator; select by the record's declared version or the consumer's pinned contract.
 
 ## Local consumer validation
 

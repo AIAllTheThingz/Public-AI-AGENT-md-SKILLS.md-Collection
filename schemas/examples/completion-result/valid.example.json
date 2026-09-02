@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
   "status": "partially-validated",
   "summary": "Illustrative standards-only validation record.",
   "filesChanged": [
@@ -16,5 +16,17 @@
   "limitations": [
     "No runtime behavior was tested."
   ],
-  "reviewer": "fictitious-reviewer"
+  "reviewer": "fictitious-reviewer",
+  "executionDiscipline": {
+    "failedOrIndeterminateOutcomes": [],
+    "authorizationRecoveryContinuity": "Not applicable; no consequential execution action occurred.",
+    "retryLedger": {},
+    "resetBasis": "Not applicable; no retry budget reset occurred.",
+    "progressOrBlockerNarrowing": "Evidence-only schema validation completed without a blocker.",
+    "delegationHandoff": {
+      "summary": "Not applicable; no delegation occurred.",
+      "boundariesPreserved": true
+    },
+    "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
+  }
 }

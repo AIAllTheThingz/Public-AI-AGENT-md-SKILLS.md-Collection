@@ -1,7 +1,7 @@
 ---
 id: SCHEMA-AGENT-001
 title: Schema Agent Instructions
-version: 0.2.0
+version: 0.3.0
 status: baseline
 ---
 
@@ -18,7 +18,7 @@ Schema changes can alter public machine-readable contracts. Treat them as API ch
 These instructions apply to:
 
 - `schemas/*.schema.json`
-- `schemas/v1/*.schema.json`
+- `schemas/v*/*.schema.json`
 - schema examples
 - schema versioning and compatibility documents
 - schema validation tooling
@@ -40,7 +40,7 @@ Local instructions may strengthen controls. They may not silently weaken compati
 
 - Preserve the six existing rolling filenames.
 - Do not remove or rename a required field without a versioned breaking change.
-- Keep rolling and versioned schema copies synchronized.
+- Keep each rolling schema synchronized with its current-major versioned copy; preserve prior-major contracts unchanged except for separately approved backward-compatible maintenance. For completion-result, rolling aligns with v2 and v1 completion is excluded from current-major synchronization.
 - Keep schemas closed by default.
 - Put custom data under the `extensions` object.
 - Do not reuse a standard property name for a different meaning.

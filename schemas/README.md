@@ -1,7 +1,7 @@
 ---
 id: SCHEMA-INDEX-001
 title: Schema Contracts
-version: 0.3.0
+version: 0.4.0
 status: baseline
 ---
 
@@ -30,7 +30,7 @@ Official references:
 | Schema | Purpose | Common repository instances |
 |---|---|---|
 | [`artifact-record.schema.json`](artifact-record.schema.json) | Identify an artifact, source revision, digest, provenance, and signing state. | `artifact-record*.json` |
-| [`completion-result.schema.json`](completion-result.schema.json) | Record completion state, validation, limitations, risk, and review. | `completion-result*.json` |
+| [`completion-result.schema.json`](completion-result.schema.json) | Record completion state, validation, execution discipline, limitations, risk, and review under current major v2. | `completion-result*.json` |
 | [`exception-record.schema.json`](exception-record.schema.json) | Record time-bounded standards exceptions and compensating controls. | `exception-record*.json` |
 | [`project-manifest.schema.json`](project-manifest.schema.json) | Declare profile and package composition for a project. | `project-manifest.json` |
 | [`risk-classification.schema.json`](risk-classification.schema.json) | Record risk level, rationale, factors, reviewers, and rollback need. | `risk-classification*.json` |
@@ -40,20 +40,22 @@ See [`SCHEMA_CATALOG.md`](SCHEMA_CATALOG.md) for field-level ownership and insta
 
 ## Stable paths and versioned paths
 
-Two paths are provided for each contract:
+Rolling and versioned paths are provided for each contract:
 
 - `schemas/<name>.schema.json` is the rolling convenience entry point.
-- `schemas/v1/<name>.schema.json` is the backward-compatible major-version 1 contract.
+- `schemas/v2/completion-result.schema.json` is the current major-version 2 completion-result contract.
+- `schemas/v1/completion-result.schema.json` is the unchanged historical major-version 1 completion-result contract.
+- `schemas/v1/<name>.schema.json` remains the current major-version 1 contract for the other five schemas.
 
-Long-lived automation should use the major-version path. Consumers requiring an exact immutable contract must also pin a repository tag or commit. The rolling path may advance according to the compatibility policy.
+Long-lived automation should use the applicable major-version path. Consumers requiring an exact immutable contract must also pin a repository tag or commit. The rolling path may advance according to the compatibility policy; the completion-result rolling path follows v2.
 
 The six original filenames remain intact.
 
 ## Compatibility objective
 
-Version 1 keeps all fields that were previously required and preserves the current repository examples.
+The current completion-result rolling and v2 contracts require `executionDiscipline` and use `schemaVersion: "2.0.0"`. The v1 completion-result contract remains supported and unchanged for historical or pinned consumers. The other five contracts remain version 1.
 
-The upgrade adds descriptions, optional metadata, normalized extension points, stronger non-empty constraints, and versioned copies. Existing valid repository instances remain valid.
+The completion-result v1-to-v2 upgrade is breaking because it adds required execution-discipline evidence. Existing v1 completion records remain valid when evaluated against the preserved v1 contract; they are not silently reinterpreted as v2.
 
 See:
 
@@ -67,7 +69,7 @@ All six schemas remain closed by default with `additionalProperties: false`.
 
 Projects may add organization-specific data only inside the optional `extensions` object. Extension keys must be namespaced and must not redefine standard fields.
 
-The optional `schemaVersion` property may be set to `1.0.0` or `1.1.0` for project manifests and to `1.0.0` for the other version 1 contracts. Project-manifest version `1.1.0` adds optional `virtualization`, `operatingSystems`, and `networking` arrays; using any of those arrays requires the instance to declare `1.1.0`. Legacy instances without `schemaVersion` are interpreted as version `1.0.0`.
+Completion-result v2 instances use `schemaVersion: "2.0.0"`; preserved v1 completion records use `1.0.0` or omit the property as permitted by the v1 contract. The other version 1 contracts use `1.0.0`, except project manifests using infrastructure package arrays, which use `1.1.0`. Legacy instances without `schemaVersion` are interpreted according to their selected major contract.
 
 See [`EXTENSION_POLICY.md`](EXTENSION_POLICY.md).
 
@@ -88,12 +90,14 @@ python tools/validate-schemas/validate_schemas.py
 The validator:
 
 - validates every schema against Draft 2020-12
-- verifies rolling and versioned schemas remain equivalent except for identifier metadata
+- verifies each rolling schema matches its current versioned major except for identifier metadata (completion-result v2; other schemas v1)
 - validates positive examples
 - confirms negative examples fail
 - discovers and validates repository instances by filename
 - enables format checking for dates and date-times
 - reports the instance path and failing JSON pointer
+
+Use the rolling or v2 completion-result schema for new/current records and the v1 completion-result schema for retained historical or pinned v1 records. The current validator must select the schema that matches the record's declared or pinned major; it must not silently validate a historical v1 record against v2.
 
 See [`VALIDATION_GUIDE.md`](VALIDATION_GUIDE.md).
 
@@ -106,6 +110,8 @@ Each schema has:
 - a README explaining what the example proves and does not prove
 
 Examples are under [`examples/`](examples/).
+
+The completion-result examples include a current v2 positive/negative pair and a preserved v1 compatibility fixture.
 
 Negative examples are intentionally invalid. Do not copy them into production unless the production goal is to test whether anyone is awake.
 

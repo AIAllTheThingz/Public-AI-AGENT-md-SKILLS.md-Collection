@@ -1,7 +1,7 @@
 ---
 id: SCHEMA-MIGRATE-001
 title: Schema Migration Guide
-version: 0.3.0
+version: 0.4.0
 status: baseline
 ---
 
@@ -21,16 +21,16 @@ Version 1 adds:
 - executable positive and negative validation
 - format checking for dates and date-times
 
-Current valid repository instances remain valid.
+Existing records remain valid against their selected preserved major; completion records selected against the new v2 rolling/current contract require the migration below.
 
 ## Recommended consumer migration
 
 1. Inventory every producer and consumer.
-2. Use the appropriate `schemas/v1/` major-version path and pin a repository tag or commit when exact immutability is required.
+2. Use the current major-version path (`schemas/v2/` for completion-result and `schemas/v1/` for other contracts), and pin a repository tag or commit when exact immutability is required. Use `schemas/v1/completion-result.schema.json` for retained v1 records or pinned v1 consumers.
 3. Install or configure a Draft 2020-12 validator.
 4. Enable format checking.
 5. Validate stored representative records.
-6. Add the current supported `schemaVersion` to newly produced records (`1.1.0` for project manifests using infrastructure package arrays; otherwise `1.0.0`).
+6. Add the current supported `schemaVersion` to newly produced records (`2.0.0` for completion-result v2, `1.1.0` for project manifests using infrastructure package arrays, otherwise `1.0.0`).
 7. Move non-standard fields under `extensions`.
 8. Record failures and correct producers rather than weakening the contract.
 9. Add contract tests to CI.
@@ -38,7 +38,15 @@ Current valid repository instances remain valid.
 
 ## Rolling-path consumers
 
-Consumers using `schemas/<name>.schema.json` should migrate to `schemas/v1/<name>.schema.json` for major-version compatibility. Consumers requiring an exact immutable artifact should resolve that path from a pinned repository tag or commit.
+Consumers using `schemas/<name>.schema.json` should follow the current major for that contract: completion-result rolling is v2, while the other rolling contracts remain v1. Consumers requiring an exact immutable artifact should resolve the applicable major path from a pinned repository tag or commit. Retained v1 completion records must use `schemas/v1/completion-result.schema.json`.
+
+## Completion-result v2 migration
+
+Moving the rolling/current completion-result contract from v1 to v2 is a breaking change because v2 requires `executionDiscipline` and `schemaVersion: "2.0.0"`.
+
+Producers of new or current records must emit v2 records and populate failed or indeterminate outcomes, authorization and recovery continuity, the per-action retry ledger and terminal/reset evidence, progress or blocker narrowing, delegation handoff and boundary continuity, and authorized out-of-scope routing. Consumers must update schema selection and bindings to read `executionDiscipline` and validate current records against the rolling or v2 schema.
+
+Retain existing v1 records unchanged and validate them against `schemas/v1/completion-result.schema.json`; pinned v1 consumers may remain on that major path. Do not rewrite historical v1 records in place or silently validate them as v2. The current validator selects v2 for current/new completion records and v1 for records explicitly retained or pinned at v1. The compatibility class is breaking for completion-result consumers; all other schemas remain v1.
 
 ## Project manifest 1.1
 

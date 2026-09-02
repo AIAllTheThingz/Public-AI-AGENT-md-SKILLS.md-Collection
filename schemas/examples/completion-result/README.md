@@ -1,22 +1,28 @@
 ---
 id: SCHEMA-EX-COMPLETION-RESULT-001
 title: Completion Result Examples
-version: 0.2.0
+version: 0.3.0
 status: baseline
 ---
 
 # Completion Result Examples
 
-## Positive example
+## Current v2 positive example
 
 [`valid.example.json`](valid.example.json) must validate against:
 
 - [`../../completion-result.schema.json`](../../completion-result.schema.json)
-- [`../../v1/completion-result.schema.json`](../../v1/completion-result.schema.json)
+- [`../../v2/completion-result.schema.json`](../../v2/completion-result.schema.json)
+
+It demonstrates `schemaVersion: "2.0.0"` and required `executionDiscipline` evidence for a current completion record.
+
+## Preserved v1 compatibility example
+
+The [`valid-v1.example.json`](valid-v1.example.json) compatibility fixture must validate against the unchanged [`../../v1/completion-result.schema.json`](../../v1/completion-result.schema.json). It remains available for historical records and pinned v1 consumers and is not expected to satisfy v2.
 
 ## Negative example
 
-[`invalid.example.json`](invalid.example.json) is intentionally invalid and must be rejected.
+[`invalid.example.json`](invalid.example.json) is intentionally invalid under the current v2 contract and must be rejected, including when required execution-discipline evidence is missing.
 
 ## Boundary
 

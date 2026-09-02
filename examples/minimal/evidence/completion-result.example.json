@@ -1,4 +1,5 @@
 {
+  "schemaVersion": "2.0.0",
   "status": "validated",
   "summary": "Validated documentation-only standards composition for example-minimal.",
   "filesChanged": [
@@ -39,5 +40,17 @@
     "Runtime, operating-system, packaging, and signing choices remain project decisions.",
     "Low risk does not exempt the project from input validation, tests, or truthful evidence."
   ],
-  "reviewer": "not-assigned"
+  "reviewer": "not-assigned",
+  "executionDiscipline": {
+    "failedOrIndeterminateOutcomes": [],
+    "authorizationRecoveryContinuity": "Not applicable; no consequential execution action occurred.",
+    "retryLedger": {},
+    "resetBasis": "Not applicable; no retry budget reset occurred.",
+    "progressOrBlockerNarrowing": "Evidence-only validation completed without a blocker.",
+    "delegationHandoff": {
+      "summary": "Not applicable; no delegation occurred.",
+      "boundariesPreserved": true
+    },
+    "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
+  }
 }

@@ -24,7 +24,7 @@ except ImportError as exc:
     ) from exc
 
 TOOL = "validate-schemas"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_NAMES = [
     "artifact-record",
@@ -34,6 +34,22 @@ SCHEMA_NAMES = [
     "risk-classification",
     "test-evidence",
 ]
+CURRENT_SCHEMA_MAJORS = {
+    "artifact-record": 1,
+    "completion-result": 2,
+    "exception-record": 1,
+    "project-manifest": 1,
+    "risk-classification": 1,
+    "test-evidence": 1,
+}
+VERSIONED_SCHEMA_MAJORS = {
+    "artifact-record": (1,),
+    "completion-result": (1, 2),
+    "exception-record": (1,),
+    "project-manifest": (1,),
+    "risk-classification": (1,),
+    "test-evidence": (1,),
+}
 INSTANCE_RULES = [
     ("project-manifest.json", "project-manifest"),
     ("completion-result", "completion-result"),
@@ -59,6 +75,21 @@ def normalized(schema: dict[str, Any]) -> dict[str, Any]:
     value.pop("$id", None)
     value.pop("x-versionedSchema", None)
     return value
+
+
+def versioned_schema_path(schema_root: Path, name: str, major: int) -> Path:
+    return schema_root / f"v{major}" / f"{name}.schema.json"
+
+
+def instance_schema_path(instance: Any, schema_root: Path, name: str) -> Path:
+    major = 1
+    if isinstance(instance, dict) and "schemaVersion" in instance:
+        value = instance["schemaVersion"]
+        prefix = value.split(".", 1)[0] if isinstance(value, str) else ""
+        major = int(prefix) if prefix.isdigit() else -1
+    if major not in VERSIONED_SCHEMA_MAJORS[name]:
+        major = CURRENT_SCHEMA_MAJORS[name]
+    return versioned_schema_path(schema_root, name, major)
 
 
 def remote_refs(value: Any, location: str="/") -> list[tuple[str, str]]:
@@ -125,10 +156,18 @@ def run(args: argparse.Namespace) -> ToolResult:
     instance_count = 0
     unsafe_names: set[str] = set()
 
+    versioned_schema_count = sum(len(majors) for majors in VERSIONED_SCHEMA_MAJORS.values())
+
     for name in SCHEMA_NAMES:
         rolling = schema_root / f"{name}.schema.json"
-        versioned = schema_root / "v1" / f"{name}.schema.json"
-        for path, kind in ((rolling, "rolling"), (versioned, "versioned")):
+        current_versioned = versioned_schema_path(
+            schema_root, name, CURRENT_SCHEMA_MAJORS[name]
+        )
+        versioned_paths = [
+            (versioned_schema_path(schema_root, name, major), f"versioned-v{major}")
+            for major in VERSIONED_SCHEMA_MAJORS[name]
+        ]
+        for path, kind in [(rolling, "rolling"), *versioned_paths]:
             if not path.is_file():
                 findings.append(Finding("SCHEMA_MISSING", f"Missing {kind} schema.", path=path.relative_to(root).as_posix()))
                 continue
@@ -160,8 +199,8 @@ def run(args: argparse.Namespace) -> ToolResult:
                     details={"pointer": location},
                 ))
 
-        if rolling.is_file() and versioned.is_file():
-            if normalized(load_json(rolling)) != normalized(load_json(versioned)):
+        if rolling.is_file() and current_versioned.is_file():
+            if normalized(load_json(rolling)) != normalized(load_json(current_versioned)):
                 findings.append(Finding(
                     "SCHEMA_VERSION_MISMATCH",
                     "Rolling and versioned schemas differ beyond identifier metadata.",
@@ -174,16 +213,22 @@ def run(args: argparse.Namespace) -> ToolResult:
         example_root = schema_root / "examples" / name
         valid_example = example_root / "valid.example.json"
         invalid_example = example_root / "invalid.example.json"
-        if valid_example.is_file() and versioned.is_file():
+        if valid_example.is_file() and current_versioned.is_file():
             positive_count += 1
-            findings.extend(instance_findings(valid_example, versioned, root, True))
+            findings.extend(instance_findings(valid_example, current_versioned, root, True))
         else:
             findings.append(Finding("SCHEMA_POSITIVE_EXAMPLE_MISSING", "Missing positive example.", path=valid_example.relative_to(root).as_posix()))
-        if invalid_example.is_file() and versioned.is_file():
+        if invalid_example.is_file() and current_versioned.is_file():
             negative_count += 1
-            findings.extend(instance_findings(invalid_example, versioned, root, False))
+            findings.extend(instance_findings(invalid_example, current_versioned, root, False))
         else:
             findings.append(Finding("SCHEMA_NEGATIVE_EXAMPLE_MISSING", "Missing negative example.", path=invalid_example.relative_to(root).as_posix()))
+
+        historical_valid = example_root / "valid-v1.example.json"
+        v1_schema = versioned_schema_path(schema_root, name, 1)
+        if historical_valid.is_file() and v1_schema.is_file():
+            positive_count += 1
+            findings.extend(instance_findings(historical_valid, v1_schema, root, True))
 
     if not args.skip_repository_instances:
         for path in sorted(root.rglob("*.json")):
@@ -193,7 +238,7 @@ def run(args: argparse.Namespace) -> ToolResult:
             if schema_name is None:
                 continue
             instance_count += 1
-            schema_path = schema_root / "v1" / f"{schema_name}.schema.json"
+            schema_path = instance_schema_path(load_json(path), schema_root, schema_name)
             if schema_path.is_file():
                 findings.extend(instance_findings(path, schema_path, root, True))
 
@@ -203,7 +248,7 @@ def run(args: argparse.Namespace) -> ToolResult:
         findings=findings,
         summary={
             "rollingSchemas": len(SCHEMA_NAMES),
-            "versionedSchemas": len(SCHEMA_NAMES),
+            "versionedSchemas": versioned_schema_count,
             "positiveExamples": positive_count,
             "negativeExamples": negative_count,
             "repositoryInstances": instance_count,

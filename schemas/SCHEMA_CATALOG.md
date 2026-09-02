@@ -1,7 +1,7 @@
 ---
 id: SCHEMA-CATALOG-001
 title: Schema Catalog
-version: 0.3.0
+version: 0.4.0
 status: baseline
 ---
 
@@ -14,7 +14,7 @@ This catalog maps each machine-readable contract to stable paths, versioned path
 | Contract | Rolling path | Versioned path | Purpose |
 |---|---|---|---|
 | `artifact-record` | `artifact-record.schema.json` | `v1/artifact-record.schema.json` | Identifies a produced artifact, its source revision, digest, build context, provenance, and signing state. |
-| `completion-result` | `completion-result.schema.json` | `v1/completion-result.schema.json` | Records implementation state, validation outcomes, limitations, risk, compatibility impact, and review without treating a single successful command as proof of full completion. |
+| `completion-result` | `completion-result.schema.json` | `v2/completion-result.schema.json` | Records implementation state, validation outcomes, execution-discipline evidence, limitations, risk, compatibility impact, and review without treating a single successful command as proof of full completion. |
 | `exception-record` | `exception-record.schema.json` | `v1/exception-record.schema.json` | Records a time-bounded deviation from a specific rule, including ownership, rationale, risk, compensating controls, approval, status, and closure. |
 | `project-manifest` | `project-manifest.schema.json` | `v1/project-manifest.schema.json` | Declares the selected project profile; language, discipline, framework, platform, virtualization, operating-system, and networking packages; risk; exceptions; and project-specific composition metadata. |
 | `risk-classification` | `risk-classification.schema.json` | `v1/risk-classification.schema.json` | Records a change risk level, rationale, evaluated factors, required reviewers, rollback requirement, ownership, and reassessment triggers. |
@@ -32,6 +32,10 @@ The repository validator maps files by naming convention:
 | `artifact-record*.json` | artifact record |
 | `exception-record*.json` | exception record |
 | `risk-classification*.json` | risk classification |
+
+## Completion-result compatibility
+
+The rolling and current versioned completion-result contracts are major version 2 and require `executionDiscipline` with `schemaVersion: "2.0.0"`. `v1/completion-result.schema.json` remains unchanged for historical records and pinned v1 consumers. The other catalogued contracts remain major version 1.
 
 Files under `schemas/examples/` are handled as explicit positive or negative test cases.
 

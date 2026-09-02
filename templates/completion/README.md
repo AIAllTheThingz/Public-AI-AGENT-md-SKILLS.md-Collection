@@ -1,7 +1,7 @@
 ---
 id: TEMPLATE-PKG-COMPLETION-001
 title: Completion Report Template Package
-version: 0.2.0
+version: 0.3.0
 status: baseline
 ---
 
@@ -9,7 +9,7 @@ status: baseline
 
 ## Purpose
 
-Report implemented scope, changed files, risk, validation, evidence, limitations, operational impact, recovery, and accountable review.
+Report implemented scope, changed files, risk, validation, execution-discipline evidence, limitations, operational impact, recovery, and accountable review.
 
 Status: **baseline**
 
@@ -76,6 +76,14 @@ Only the following placeholders are valid in this template:
 | `{{COMPATIBILITY_IMPACT}}` | Compatibility and migration impact. |
 | `{{VALIDATION_ROWS}}` | Command, result, environment, and evidence rows. |
 | `{{VALIDATION_NOT_PERFORMED}}` | Checks not run with reasons. |
+| `{{FAILED_OR_INDETERMINATE_OUTCOMES}}` | Failed or indeterminate execution outcomes for the objective or blocker, including actual-state reconciliation. |
+| `{{AUTHORIZATION_RECOVERY_CONTINUITY}}` | Confirmation that authorization and recovery controls remain valid for consequential mutations. |
+| `{{RETRY_LEDGER_ROWS}}` | One row per budget-consuming action with the retry ledger fields and terminal disposition. |
+| `{{RESET_BASIS}}` | Prior stop/report, separate accountable authorization, and material blocker or relevant scope or system-state change supporting any new budget. |
+| `{{PROGRESS_OR_BLOCKER_NARROWING}}` | Evidence of relevant progress toward acceptance criteria or narrowing the blocker. |
+| `{{DELEGATION_HANDOFF}}` | Delegation value, failure evidence, blocker, retry count, and unresolved state. |
+| `{{DELEGATION_BOUNDARY_CONTINUITY}}` | Confirmation before handoff completion that retry and no-progress boundaries remain enforced and were not reset or bypassed. |
+| `{{OUT_OF_SCOPE_ROUTING}}` | Authorized routing of non-blocking out-of-scope findings. |
 | `{{OPERATIONAL_IMPACT}}` | Deployment, operations, monitoring, and support impact. |
 | `{{ROLLBACK_RECOVERY}}` | Rollback, restore, or recovery plan and evidence. |
 | `{{LIMITATIONS}}` | Known limitations and remaining risks. |
@@ -83,6 +91,10 @@ Only the following placeholders are valid in this template:
 | `{{HUMAN_REVIEW}}` | Reviewers, decisions, and dates. |
 
 Placeholders use the exact `{{UPPER_SNAKE_CASE}}` form. Replace every token before adoption.
+
+## Execution discipline
+
+When an objective or blocker has execution activity, complete the Execution discipline section. Count any objective-directed execution action with a reconciled `Failed` or `Indeterminate` result as a budget-consuming attempt, whether mutating or read-only; count every later execution action for that objective or blocker as a retry even inside the same sequence, plan, workflow, tool, agent, or strategy. Evidence-only successful discovery, reconciliation, or validation is non-consuming, while failed or indeterminate read-only execution directed at the objective or blocker consumes budget. A subsequent successful objective-clearing action is recorded at its current retry position and ends the objective or blocker. Preserve the initial-attempt-plus-two-retries terminal boundary and record any reset basis before a new execution sequence.
 
 For optional JSON fields, remove the property or array item when it is genuinely inapplicable. Do not replace typed JSON fields with quoted prose and then declare the schema unreasonable for noticing.
 
@@ -108,6 +120,7 @@ The adopted record is complete only when:
 - scope and ownership are explicit
 - required facts are traceable
 - applicable evidence is linked
+- execution-discipline evidence is complete for any objective-directed execution
 - decisions use defined vocabulary
 - optional omissions are justified
 - review and approval roles are not conflated
@@ -122,6 +135,7 @@ The adopted record is complete only when:
 - not-run checks are explicit
 - artifact identifiers are immutable where possible
 - limitations and residual risk are honest
+- retry counts, reset basis, progress, and delegation boundaries are explicit
 
 ## Common failure modes
 
@@ -160,6 +174,7 @@ Changes to this package must:
 - preserve the stable template path unless migration is approved
 - update the README, checklist, example, and template together
 - preserve placeholder names unless a migration is documented
+- preserve the Execution discipline section and its documented placeholders
 - classify compatibility for downstream users
 - run template and link validation
 - state checks not run

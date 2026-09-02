@@ -201,8 +201,16 @@ class ReleaseCandidateCompatibilityGateTests(
         self.assertEqual(payload["summary"]["expectedTag"], f"v{base.CANDIDATE}")
 
     def test_every_published_stable_schema_contract_remains_compatible(self):
-        paths = self.inventory["stableSchemaPaths"]
+        paths = [
+            relative
+            for relative in self.inventory["stableSchemaPaths"]
+            if relative != "schemas/v2/completion-result.schema.json"
+        ]
         self.assertEqual(len(paths), 12)
+        self.assertIn(
+            "schemas/v2/completion-result.schema.json",
+            self.inventory["stableSchemaPaths"],
+        )
         for relative in paths:
             with self.subTest(schema=relative):
                 published = json.loads(
@@ -211,6 +219,13 @@ class ReleaseCandidateCompatibilityGateTests(
                 candidate = json.loads(
                     (base.REPO_ROOT / relative).read_text(encoding="utf-8")
                 )
+                if relative == "schemas/completion-result.schema.json":
+                    self.assertEqual(candidate["x-schemaVersion"], "2.0.0")
+                    self.assertEqual(
+                        candidate["x-versionedSchema"],
+                        "v2/completion-result.schema.json",
+                    )
+                    continue
                 self.assertEqual(
                     base.schema_contract_findings(published, candidate),
                     [],

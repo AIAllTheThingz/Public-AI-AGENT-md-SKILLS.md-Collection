@@ -40,7 +40,7 @@ A template is a starting structure, not a completed control. Copying a file does
 | [Change Risk Assessment](risk/) | [`RISK_ASSESSMENT_TEMPLATE.md`](risk/RISK_ASSESSMENT_TEMPLATE.md) | `risk-assessment` | Classify change risk using explicit factors, required controls, residual risk, ownership, and reassessment triggers. |
 | [Threat Model](threat-model/) | [`THREAT_MODEL_TEMPLATE.md`](threat-model/THREAT_MODEL_TEMPLATE.md) | `threat-model` | Document assets, actors, entry points, trust boundaries, abuse cases, mitigations, evidence, and residual risk for a defined system or change. |
 | [Standards Exception Record](exception/) | [`EXCEPTION_RECORD_TEMPLATE.md`](exception/EXCEPTION_RECORD_TEMPLATE.md) | `exception-record` | Request, review, approve, monitor, expire, and close a time-bounded deviation from a specific standards rule. |
-| [Completion Report](completion/) | [`COMPLETION_REPORT_TEMPLATE.md`](completion/COMPLETION_REPORT_TEMPLATE.md) | `completion-report` | Report implemented scope, changed files, risk, validation, evidence, limitations, operational impact, recovery, and accountable review. |
+| [Completion Report](completion/) | [`COMPLETION_REPORT_TEMPLATE.md`](completion/COMPLETION_REPORT_TEMPLATE.md) | `completion-report` | Report implemented scope, changed files, risk, validation, execution-discipline evidence, limitations, operational impact, recovery, and accountable review. |
 | [Project Standards Manifest](project-manifest/) | [`PROJECT_MANIFEST_TEMPLATE.json`](project-manifest/PROJECT_MANIFEST_TEMPLATE.json) | `project-manifest` | Declare the project's selected profile, languages, disciplines, frameworks, platforms, virtualization systems, operating systems, networking systems, risk, exceptions, ownership, and evidence location in machine-readable form. |
 | [Test Evidence Record](test-evidence/) | [`TEST_EVIDENCE_TEMPLATE.json`](test-evidence/TEST_EVIDENCE_TEMPLATE.json) | `test-evidence` | Record an exact validation command, outcome, environment, timing, artifact, evidence, exit code, and limitations in schema-compatible JSON. |
 | [Artifact Record](artifact-record/) | [`ARTIFACT_RECORD_TEMPLATE.json`](artifact-record/ARTIFACT_RECORD_TEMPLATE.json) | `artifact-record` | Identify an artifact, immutable digest, source revision, build run, provenance, signing state, creation time, and limitations in schema-compatible JSON. |
@@ -105,7 +105,7 @@ These capture decisions and accountability. They must distinguish requester, imp
 - Test evidence
 - Artifact record
 
-Machine-readable evidence templates align with the version 1 schemas where applicable.
+Machine-readable evidence templates align with their current-major schemas where applicable; historical major paths remain available for retained records.
 
 ### Delivery and operations templates
 

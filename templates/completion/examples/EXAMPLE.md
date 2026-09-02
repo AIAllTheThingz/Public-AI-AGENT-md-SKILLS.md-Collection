@@ -1,7 +1,7 @@
 ---
 id: TEMPLATE-EX-COMPLETION-001
 title: Completion Report Example
-version: 0.2.0
+version: 0.3.0
 status: baseline
 ---
 
@@ -45,6 +45,27 @@ Stable template paths remain present.
 ## Validation not performed
 
 No copied-template adoption test was run in a real project.
+
+## Execution discipline
+
+Failed or indeterminate outcomes: One objective-directed read-only validation returned `Failed` because the fixture still used the v1 completion contract; observable output was reconciled and the producer fixture was corrected.
+
+Authorization/recovery continuity for consequential mutations: Confirmed authorization and recovery controls remained valid; the correction was limited to the fictitious fixture.
+
+| Objective/blocker | Action | Actor | Execution context | Start | End | Observable-effects reconciliation | Result | Budget position/count | Justification | Terminal disposition |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Completion record migration | Validate completion fixture | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `template-validator`; task `PR-EXAMPLE-0042` | 2026-08-16T10:00:00Z | 2026-08-16T10:00:01Z | No target-state mutation; failed output reconciled | Failed | Initial attempt (1 budget-consuming action) | Detected v1 fixture against the current v2 contract | Retry justified after correcting the fixture |
+| Completion record migration | Validate corrected completion fixture | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `template-validator`; task `PR-EXAMPLE-0042` | 2026-08-16T10:02:00Z | 2026-08-16T10:02:01Z | Corrected fixture output reconciled; no target-state mutation | Successful | Retry 1 (second execution action) | Corrected producer fixture using reviewed facts | Objective complete |
+
+Reset basis: None; no new execution sequence was authorized.
+
+Progress or blocker narrowing: The failed validation identified the v1 fixture as the blocker; the corrected fixture validated the current contract.
+
+Delegation handoff: No delegation; the example maintainer retained the work.
+
+Delegation boundary continuity before handoff completion: Confirmed; retry and no-progress boundaries remained enforced and were not reset or bypassed.
+
+Authorized routing of non-blocking out-of-scope findings: None; no non-blocking out-of-scope finding was identified.
 
 ## Deployment and operational impact
 

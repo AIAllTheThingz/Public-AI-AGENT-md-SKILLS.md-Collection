@@ -337,7 +337,7 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         }
         expected_schemas = {f"schemas/{name}" for name in schema_names} | {
             f"schemas/v1/{name}" for name in schema_names
-        }
+        } | {"schemas/v2/completion-result.schema.json"}
         self.assertEqual(set(self.inventory["stableSchemaPaths"]), expected_schemas)
 
         templates_manifest = (REPO_ROOT / "templates" / "MANIFEST.md").read_text(encoding="utf-8")
@@ -553,6 +553,8 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertIn("User Experience", breaking)
         self.assertIn("GOV-WORK-011", breaking)
         self.assertIn("GOV-WORK-014", breaking)
+        self.assertIn("completion-result", breaking)
+        self.assertIn("schemaVersion 2.0.0", breaking)
         self.assertGreaterEqual(len(migration["requiredActions"]), 5)
         required_actions = "\n".join(migration["requiredActions"])
         self.assertIn("stop all further execution attempts", required_actions)
@@ -564,6 +566,18 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertIn(
             "material blocker or relevant scope or system-state change",
             required_actions,
+        )
+        self.assertIn(
+            "Failed or Indeterminate read-only execution",
+            required_actions,
+        )
+        self.assertIn("successful evidence-only", required_actions)
+        self.assertIn("executionDiscipline", required_actions)
+        review_actions = "\n".join(migration["reviewActions"])
+        self.assertIn("completion-result v2", review_actions)
+        preserved_contracts = "\n".join(migration["preservedContracts"])
+        self.assertIn(
+            "schemas/v1/completion-result.schema.json", preserved_contracts
         )
         self.assertGreaterEqual(len(migration["preservedContracts"]), 6)
         notes = (REPO_ROOT / "releases" / "migrations" / f"{CANDIDATE}.md").read_text(encoding="utf-8")

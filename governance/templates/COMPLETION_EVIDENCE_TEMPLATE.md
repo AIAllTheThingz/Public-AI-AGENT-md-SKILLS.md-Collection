@@ -35,7 +35,7 @@ status: baseline
 |---|---|---|---|---|---|---|---|---|---|---|
 | | | | | | | | | | | |
 
-Each budget-consuming action is one consequential execution action directed at achieving the objective or clearing the blocker; each consequential action after Failed or Indeterminate counts as a retry even within the same command sequence, plan, workflow, tool, agent, or strategy; read-only discovery, actual-state reconciliation, and validation that do not themselves try to change target state are non-consuming; Successful ends the objective or blocker rather than consuming a retry.
+The budget allows the initial attempt plus at most two justified retries. A budget-consuming attempt is any execution action directed at achieving the objective or clearing the blocker whose observable effects are reconciled and whose result is Failed or Indeterminate, whether mutating or read-only; every subsequent execution action after that result for the objective or blocker is a retry even within the same command sequence, plan, workflow, tool, agent, or strategy; successful read-only discovery, reconciliation, or validation that only gathers evidence is non-consuming, a Failed or Indeterminate read-only execution directed at the objective or blocker consumes budget, and a subsequent Successful objective-clearing action is recorded at its current retry position and ends the objective or blocker.
 - Reset basis, if any (prior sequence stopped and reported, accountable requester or owner authorization, material blocker or relevant scope or system-state change):
 - Progress or blocker narrowing:
 - Delegation handoff (value, failure evidence, blocker, retry count, unresolved state):
