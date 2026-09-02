@@ -1,7 +1,7 @@
 ---
 id: TOOL-PKG-VALIDATE-SCHEMAS-001
 title: Validate Schemas Tool
-version: 1.1.0
+version: 1.2.0
 status: baseline
 ---
 
@@ -59,6 +59,7 @@ python tools/validate-schemas/validate_schemas.py --help
 - positive examples
 - negative examples
 - repository instance discovery
+- current-major selection for unversioned records; retained completion-result v1 records must explicitly declare `schemaVersion: "1.0.0"`
 
 ## Examples
 

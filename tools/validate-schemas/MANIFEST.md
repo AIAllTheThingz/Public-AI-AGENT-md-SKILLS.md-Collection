@@ -1,7 +1,7 @@
 ---
 id: TOOL-PKG-VALIDATE-SCHEMAS-001-MANIFEST
 title: Validate Schemas Tool Manifest
-version: 1.1.0
+version: 1.2.0
 status: baseline
 ---
 

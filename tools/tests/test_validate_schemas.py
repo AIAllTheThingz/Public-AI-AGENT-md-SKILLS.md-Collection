@@ -135,6 +135,20 @@ class ValidateSchemasTests(unittest.TestCase):
             [],
         )
 
+    def test_failed_budgeted_attempt_cannot_claim_completion(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["retryLedger"] = {
+            "fictitious objective": {
+                "attempts": {
+                    "initialAttempt": ledger_action(
+                        "Failed", "initial-attempt", "objective-completed"
+                    )
+                },
+                "nonConsumingActions": [],
+            }
+        }
+        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
     def test_retry2_without_retry1_is_invalid(self):
         schema, instance = completion_v2()
         instance["executionDiscipline"]["retryLedger"] = {
@@ -214,6 +228,39 @@ class ValidateSchemasTests(unittest.TestCase):
             self.assertEqual(
                 matching[0]["details"]["schema"],
                 "schemas/v2/completion-result.schema.json",
+            )
+
+    def test_unversioned_completion_uses_current_schema(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+            instance = json.loads(
+                (root / "schemas/examples/completion-result/valid.example.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            del instance["schemaVersion"]
+            del instance["executionDiscipline"]
+            evidence = root / "evidence" / "completion-result.example.json"
+            evidence.parent.mkdir()
+            evidence.write_text(json.dumps(instance), encoding="utf-8")
+
+            completed = run_tool(
+                "tools/validate-schemas/validate_schemas.py", "--format", "json", root=root
+            )
+            self.assertEqual(completed.returncode, 1)
+            matching = [
+                item
+                for item in json_result(completed)["findings"]
+                if item["path"] == "evidence/completion-result.example.json"
+            ]
+            self.assertTrue(matching)
+            self.assertTrue(
+                all(
+                    item["details"]["schema"]
+                    == "schemas/v2/completion-result.schema.json"
+                    for item in matching
+                )
             )
 
     def test_remote_ref_is_rejected(self):

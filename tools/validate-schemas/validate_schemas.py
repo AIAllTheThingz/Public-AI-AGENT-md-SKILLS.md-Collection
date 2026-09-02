@@ -82,7 +82,7 @@ def versioned_schema_path(schema_root: Path, name: str, major: int) -> Path:
 
 
 def instance_schema_path(instance: Any, schema_root: Path, name: str) -> Path:
-    major = 1
+    major = CURRENT_SCHEMA_MAJORS[name]
     if isinstance(instance, dict) and "schemaVersion" in instance:
         value = instance["schemaVersion"]
         prefix = value.split(".", 1)[0] if isinstance(value, str) else ""
@@ -158,6 +158,12 @@ def run(args: argparse.Namespace) -> ToolResult:
 
     versioned_schema_count = sum(len(majors) for majors in VERSIONED_SCHEMA_MAJORS.values())
 
+    historical_valid = schema_root / "examples" / "completion-result" / "valid-v1.example.json"
+    v1_completion_schema = versioned_schema_path(schema_root, "completion-result", 1)
+    if historical_valid.is_file() and v1_completion_schema.is_file():
+        positive_count += 1
+        findings.extend(instance_findings(historical_valid, v1_completion_schema, root, True))
+
     for name in SCHEMA_NAMES:
         rolling = schema_root / f"{name}.schema.json"
         current_versioned = versioned_schema_path(
@@ -223,12 +229,6 @@ def run(args: argparse.Namespace) -> ToolResult:
             findings.extend(instance_findings(invalid_example, current_versioned, root, False))
         else:
             findings.append(Finding("SCHEMA_NEGATIVE_EXAMPLE_MISSING", "Missing negative example.", path=invalid_example.relative_to(root).as_posix()))
-
-        historical_valid = example_root / "valid-v1.example.json"
-        v1_schema = versioned_schema_path(schema_root, name, 1)
-        if historical_valid.is_file() and v1_schema.is_file():
-            positive_count += 1
-            findings.extend(instance_findings(historical_valid, v1_schema, root, True))
 
     if not args.skip_repository_instances:
         for path in sorted(root.rglob("*.json")):

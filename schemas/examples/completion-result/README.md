@@ -22,7 +22,7 @@ The [`valid-v1.example.json`](valid-v1.example.json) compatibility fixture must 
 
 ## Negative example
 
-[`invalid.example.json`](invalid.example.json) is intentionally invalid under the current v2 contract and must be rejected, including when required execution-discipline evidence is missing.
+[`invalid.example.json`](invalid.example.json) is intentionally invalid under the current v2 contract because a failed budgeted attempt claims `objective-completed`; failed or indeterminate attempts may only authorize a retry or report the objective unresolved.
 
 ## Boundary
 

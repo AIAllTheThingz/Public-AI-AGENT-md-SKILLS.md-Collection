@@ -323,6 +323,16 @@
                 "const": "objective-completed"
               }
             }
+          },
+          "else": {
+            "properties": {
+              "terminalDisposition": {
+                "enum": [
+                  "retry-authorized",
+                  "reported-unresolved"
+                ]
+              }
+            }
           }
         }
       ]

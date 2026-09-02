@@ -59,7 +59,7 @@ For each change, identify:
 
 The version 1 contracts preserve the repository's existing required fields and current valid instances. Completion-result v1 remains available and unchanged for historical records and pinned v1 consumers, while the rolling/current completion-result contract is v2 and requires `executionDiscipline`. The other contracts remain v1. Compatible optional properties may be added within a major path; consumers requiring an immutable artifact must also pin a repository tag or commit.
 
-Optionality for `schemaVersion` and `extensions` applies only where the selected major permits omission. Completion-result v2 requires `schemaVersion: "2.0.0"` and `executionDiscipline`; completion-result v1 remains unchanged for historical records and pinned v1 consumers. Project-manifest version `1.1.0` adds optional `virtualization`, `operatingSystems`, and `networking` arrays without invalidating version `1.0.0` instances. Any instance containing one of those arrays must declare version `1.1.0`.
+Optionality for `schemaVersion` and `extensions` applies only where the selected major permits omission. Repository instance discovery selects the current major when `schemaVersion` is omitted, so retained completion-result v1 records discovered there must explicitly declare `1.0.0`; direct consumers pinned to the unchanged v1 contract may continue accepting omission. Completion-result v2 requires `schemaVersion: "2.0.0"` and `executionDiscipline`. Project-manifest version `1.1.0` adds optional `virtualization`, `operatingSystems`, and `networking` arrays without invalidating version `1.0.0` instances. Any instance containing one of those arrays must declare version `1.1.0`.
 
 ## Validation versus compatibility
 

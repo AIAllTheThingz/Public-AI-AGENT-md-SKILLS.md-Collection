@@ -52,9 +52,9 @@ Disabling validation is not remediation.
 ## Schema selection
 
 - Validate new or current completion-result records against the rolling or `schemas/v2/completion-result.schema.json` contract, including required `executionDiscipline` and `schemaVersion: "2.0.0"`.
-- Validate retained historical or pinned v1 completion-result records against the unchanged `schemas/v1/completion-result.schema.json` contract.
+- Validate retained historical or pinned v1 completion-result records against the unchanged `schemas/v1/completion-result.schema.json` contract and explicitly declare `schemaVersion: "1.0.0"` when repository instance discovery is used.
 - Validate the other contracts against their current `schemas/v1/` major paths.
-- Do not silently send a v1 historical record to the v2 validator; select by the record's declared version or the consumer's pinned contract.
+- Repository instance discovery selects the current major when `schemaVersion` is omitted; do not rely on omission to identify a v1 historical record.
 
 ## Local consumer validation
 

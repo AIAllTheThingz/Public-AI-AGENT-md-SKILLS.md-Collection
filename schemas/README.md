@@ -69,7 +69,7 @@ All six schemas remain closed by default with `additionalProperties: false`.
 
 Projects may add organization-specific data only inside the optional `extensions` object. Extension keys must be namespaced and must not redefine standard fields.
 
-Completion-result v2 instances use `schemaVersion: "2.0.0"`; preserved v1 completion records use `1.0.0` or omit the property as permitted by the v1 contract. The other version 1 contracts use `1.0.0`, except project manifests using infrastructure package arrays, which use `1.1.0`. Legacy instances without `schemaVersion` are interpreted according to their selected major contract.
+Completion-result v2 instances use `schemaVersion: "2.0.0"`; preserved v1 completion records use `1.0.0` or omit the property only when directly validated against the pinned v1 contract. Repository instance discovery routes an omitted `schemaVersion` to the current major, so retained v1 completion records discovered by the repository validator must explicitly declare `1.0.0`. The other version 1 contracts use `1.0.0`, except project manifests using infrastructure package arrays, which use `1.1.0`.
 
 See [`EXTENSION_POLICY.md`](EXTENSION_POLICY.md).
 

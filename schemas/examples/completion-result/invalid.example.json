@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0.0",
   "status": "partially-validated",
-  "summary": "Plausible v2 record missing execution discipline.",
+  "summary": "Plausible v2 record with an invalid failed-attempt disposition.",
   "filesChanged": [
     "README.md"
   ],
@@ -12,6 +12,40 @@
     }
   ],
   "limitations": [
-    "This intentionally invalid example omits execution discipline."
-  ]
+    "This intentionally invalid example claims completion after a failed attempt."
+  ],
+  "executionDiscipline": {
+    "failedOrIndeterminateOutcomes": [
+      "The fictitious validation attempt failed."
+    ],
+    "authorizationRecoveryContinuity": "No consequential mutation occurred.",
+    "retryLedger": {
+      "validate the fictitious completion record": {
+        "attempts": {
+          "initialAttempt": {
+            "action": "Run fictitious schema validation",
+            "actor": "fictitious-agent",
+            "executionContext": {
+              "tool": "fictitious-validator"
+            },
+            "startedAt": "2026-01-01T00:00:00Z",
+            "endedAt": "2026-01-01T00:01:00Z",
+            "effectsReconciliation": "No state changed.",
+            "result": "Failed",
+            "budgetPosition": "initial-attempt",
+            "justification": "Initial validation attempt.",
+            "terminalDisposition": "objective-completed"
+          }
+        },
+        "nonConsumingActions": []
+      }
+    },
+    "resetBasis": "Not applicable; no reset occurred.",
+    "progressOrBlockerNarrowing": "The validation blocker remains unresolved.",
+    "delegationHandoff": {
+      "summary": "Not applicable; no delegation occurred.",
+      "boundariesPreserved": true
+    },
+    "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
+  }
 }

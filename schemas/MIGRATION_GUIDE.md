@@ -30,7 +30,7 @@ Existing records remain valid against their selected preserved major; completion
 3. Install or configure a Draft 2020-12 validator.
 4. Enable format checking.
 5. Validate stored representative records.
-6. Add the current supported `schemaVersion` to newly produced records (`2.0.0` for completion-result v2, `1.1.0` for project manifests using infrastructure package arrays, otherwise `1.0.0`).
+6. Add the current supported `schemaVersion` to newly produced records (`2.0.0` for completion-result v2, `1.1.0` for project manifests using infrastructure package arrays, otherwise `1.0.0`); explicitly mark repository-discovered retained completion-result v1 records as `1.0.0` because omission selects the current major.
 7. Move non-standard fields under `extensions`.
 8. Record failures and correct producers rather than weakening the contract.
 9. Add contract tests to CI.
@@ -46,7 +46,7 @@ Moving the rolling/current completion-result contract from v1 to v2 is a breakin
 
 Producers of new or current records must emit v2 records and populate failed or indeterminate outcomes, authorization and recovery continuity, the per-action retry ledger and terminal/reset evidence, progress or blocker narrowing, delegation handoff and boundary continuity, and authorized out-of-scope routing. Consumers must update schema selection and bindings to read `executionDiscipline` and validate current records against the rolling or v2 schema.
 
-Retain existing v1 records unchanged and validate them against `schemas/v1/completion-result.schema.json`; pinned v1 consumers may remain on that major path. Do not rewrite historical v1 records in place or silently validate them as v2. The current validator selects v2 for current/new completion records and v1 for records explicitly retained or pinned at v1. The compatibility class is breaking for completion-result consumers; all other schemas remain v1.
+Retain existing v1 records and validate them against `schemas/v1/completion-result.schema.json`; pinned v1 consumers may remain on that major path. Repository-discovered retained v1 records must explicitly declare `schemaVersion: "1.0.0"`, while direct consumers pinned to v1 may continue accepting omission as the unchanged v1 contract permits. The current validator selects v2 for omitted, current, or new completion records and v1 only for records explicitly marked or pinned at v1. The compatibility class is breaking for completion-result consumers; all other schemas remain v1.
 
 ## Project manifest 1.1
 
