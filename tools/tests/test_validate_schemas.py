@@ -110,6 +110,36 @@ class ValidateSchemasTests(unittest.TestCase):
             )
         )
 
+    def test_missing_completion_result_v1_compatibility_fixture_is_reported(self):
+        cases = (
+            ("valid-v1.example.json", "SCHEMA_POSITIVE_EXAMPLE_MISSING"),
+            ("invalid-v1.example.json", "SCHEMA_NEGATIVE_EXAMPLE_MISSING"),
+        )
+        for filename, code in cases:
+            with self.subTest(filename=filename), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+                missing = root / "schemas/examples/completion-result" / filename
+                missing.unlink()
+
+                completed = run_tool(
+                    "tools/validate-schemas/validate_schemas.py",
+                    "--format",
+                    "json",
+                    "--skip-repository-instances",
+                    root=root,
+                )
+                self.assertEqual(completed.returncode, 1)
+                result = json_result(completed)
+                matching = [
+                    item
+                    for item in result["findings"]
+                    if item["code"] == code
+                    and item["path"]
+                    == f"schemas/examples/completion-result/{filename}"
+                ]
+                self.assertEqual(len(matching), 1)
+
     def test_completion_result_v2_fixture_is_valid_and_matches_rolling_schema(self):
         schema = json.loads(
             (REPO_ROOT / "schemas/v2/completion-result.schema.json").read_text(
@@ -218,6 +248,22 @@ class ValidateSchemasTests(unittest.TestCase):
         del instance["executionDiscipline"]
         errors = list(Draft202012Validator(schema).iter_errors(instance))
         self.assertTrue(any(error.validator == "required" for error in errors))
+
+    def test_validated_status_requires_a_passing_validation(self):
+        schema, instance = completion_v2()
+        instance["status"] = "validated"
+        cases = (
+            [],
+            [{"name": "Fictitious check", "result": "not-run"}],
+            [{"name": "Fictitious check", "result": "failed"}],
+        )
+        for validation in cases:
+            with self.subTest(validation=validation):
+                candidate = json.loads(json.dumps(instance))
+                candidate["validation"] = validation
+                self.assertTrue(
+                    list(Draft202012Validator(schema).iter_errors(candidate))
+                )
 
     def test_failed_retry_cannot_be_non_consuming(self):
         schema, instance = completion_v2()
@@ -731,6 +777,38 @@ class ValidateSchemasTests(unittest.TestCase):
             codes = {item["code"] for item in result["findings"]}
             self.assertIn("SCHEMA_INVALID", codes)
             self.assertIn("SCHEMA_REMOTE_REF", codes)
+            self.assertNotIn("INTERNAL_ERROR", codes)
+            self.assertEqual(result["summary"]["repositoryInstances"], 1)
+
+    def test_meta_invalid_schema_is_skipped_for_repository_instances(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+            path = root / "schemas" / "v2" / "completion-result.schema.json"
+            schema = json.loads(path.read_text(encoding="utf-8"))
+            schema["properties"]["summary"]["type"] = 123
+            path.write_text(json.dumps(schema), encoding="utf-8")
+
+            instance = json.loads(
+                (
+                    root
+                    / "schemas/examples/completion-result/valid.example.json"
+                ).read_text(encoding="utf-8")
+            )
+            evidence = root / "evidence" / "completion-result.example.json"
+            evidence.parent.mkdir()
+            evidence.write_text(json.dumps(instance), encoding="utf-8")
+
+            completed = run_tool(
+                "tools/validate-schemas/validate_schemas.py",
+                "--format",
+                "json",
+                root=root,
+            )
+            self.assertEqual(completed.returncode, 1)
+            result = json_result(completed)
+            codes = {item["code"] for item in result["findings"]}
+            self.assertIn("SCHEMA_INVALID", codes)
             self.assertNotIn("INTERNAL_ERROR", codes)
             self.assertEqual(result["summary"]["repositoryInstances"], 1)
 

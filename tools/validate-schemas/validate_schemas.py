@@ -207,17 +207,31 @@ def run(args: argparse.Namespace) -> ToolResult:
             try:
                 schema = load_json(path)
             except json.JSONDecodeError:
+                unsafe_names.add(name)
                 continue
             if remote_refs(schema):
                 unsafe_names.add(name)
             try:
                 Draft202012Validator.check_schema(schema)
             except jsonschema.SchemaError:
+                unsafe_names.add(name)
                 continue
 
+    if not historical_valid.is_file():
+        findings.append(Finding(
+            "SCHEMA_POSITIVE_EXAMPLE_MISSING",
+            "Missing preserved v1 positive example.",
+            path=historical_valid.relative_to(root).as_posix(),
+        ))
+    if not historical_invalid.is_file():
+        findings.append(Finding(
+            "SCHEMA_NEGATIVE_EXAMPLE_MISSING",
+            "Missing preserved v1 negative example.",
+            path=historical_invalid.relative_to(root).as_posix(),
+        ))
+
     if (
-        historical_valid.is_file()
-        and v1_completion_schema.is_file()
+        v1_completion_schema.is_file()
         and "completion-result" not in unsafe_names
     ):
         try:
@@ -226,12 +240,13 @@ def run(args: argparse.Namespace) -> ToolResult:
         except (json.JSONDecodeError, jsonschema.SchemaError):
             pass
         else:
-            positive_count += 1
-            findings.extend(
-                instance_findings(
-                    historical_valid, v1_completion_schema, root, True
+            if historical_valid.is_file():
+                positive_count += 1
+                findings.extend(
+                    instance_findings(
+                        historical_valid, v1_completion_schema, root, True
+                    )
                 )
-            )
             if historical_invalid.is_file():
                 negative_count += 1
                 findings.extend(

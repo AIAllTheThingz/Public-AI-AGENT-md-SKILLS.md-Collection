@@ -244,6 +244,35 @@
     {
       "if": {
         "properties": {
+          "status": {
+            "const": "validated"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "validation": {
+            "contains": {
+              "properties": {
+                "result": {
+                  "const": "passed"
+                }
+              },
+              "required": [
+                "result"
+              ]
+            },
+            "minContains": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
           "validation": {
             "contains": {
               "properties": {
