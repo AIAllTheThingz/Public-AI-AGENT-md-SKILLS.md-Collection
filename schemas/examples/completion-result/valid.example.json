@@ -19,8 +19,31 @@
   "reviewer": "fictitious-reviewer",
   "executionDiscipline": {
     "failedOrIndeterminateOutcomes": [],
-    "authorizationRecoveryContinuity": "Not applicable; no consequential execution action occurred.",
-    "retryLedger": {},
+    "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
+    "retryLedger": {
+      "validate the illustrative completion record": {
+        "priorUnresolvedSequences": [],
+        "currentSequence": {
+          "sequenceId": "sequence-1",
+          "nonConsumingActions": [
+            {
+              "action": "Run evidence-only schema validation",
+              "actor": "fictitious-reviewer",
+              "executionContext": {
+                "tool": "fictitious-schema-validator"
+              },
+              "startedAt": "2026-01-01T00:00:00Z",
+              "endedAt": "2026-01-01T00:01:00Z",
+              "effectsReconciliation": "No target-state mutation; successful output was reconciled.",
+              "result": "Successful",
+              "budgetPosition": "non-consuming",
+              "justification": "Gathered structural validation evidence without changing target state.",
+              "terminalDisposition": "not-terminal"
+            }
+          ]
+        }
+      }
+    },
     "resetBasis": "Not applicable; no retry budget reset occurred.",
     "progressOrBlockerNarrowing": "Evidence-only schema validation completed without a blocker.",
     "delegationHandoff": {

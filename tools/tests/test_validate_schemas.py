@@ -253,6 +253,37 @@ class ValidateSchemasTests(unittest.TestCase):
             [],
         )
 
+    def test_non_consuming_only_sequence_is_valid(self):
+        schema, instance = completion_v2()
+        sequence = retry_sequence(
+            {},
+            non_consuming_actions=[
+                ledger_action("Successful", "non-consuming", "not-terminal")
+            ],
+        )
+        del sequence["attempts"]
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(sequence)
+        self.assertEqual(
+            list(
+                Draft202012Validator(
+                    schema, format_checker=FormatChecker()
+                ).iter_errors(instance)
+            ),
+            [],
+        )
+
+    def test_passed_validation_requires_a_nonempty_execution_ledger(self):
+        schema, instance = completion_v2()
+        instance["executionDiscipline"]["retryLedger"] = {}
+        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
+    def test_sequence_without_any_execution_action_is_invalid(self):
+        schema, instance = completion_v2()
+        sequence = retry_sequence({})
+        del sequence["attempts"]
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(sequence)
+        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
     def test_retry_authorized_requires_the_corresponding_retry(self):
         cases = (
             {

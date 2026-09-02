@@ -43,8 +43,45 @@
   "reviewer": "not-assigned",
   "executionDiscipline": {
     "failedOrIndeterminateOutcomes": [],
-    "authorizationRecoveryContinuity": "Not applicable; no consequential execution action occurred.",
-    "retryLedger": {},
+    "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
+    "retryLedger": {
+      "validate the documentation-only standards example": {
+        "priorUnresolvedSequences": [],
+        "currentSequence": {
+          "sequenceId": "sequence-1",
+          "nonConsumingActions": [
+            {
+              "action": "Run repository structure and identifier validation",
+              "actor": "example-maintainer",
+              "executionContext": {
+                "tool": "validate-standards"
+              },
+              "startedAt": "2026-01-01T00:00:00Z",
+              "endedAt": "2026-01-01T00:01:00Z",
+              "effectsReconciliation": "No target-state mutation; successful output was reconciled.",
+              "result": "Successful",
+              "budgetPosition": "non-consuming",
+              "justification": "Gathered repository-structure evidence.",
+              "terminalDisposition": "not-terminal"
+            },
+            {
+              "action": "Run relative Markdown link validation",
+              "actor": "example-maintainer",
+              "executionContext": {
+                "tool": "check-links"
+              },
+              "startedAt": "2026-01-01T00:01:00Z",
+              "endedAt": "2026-01-01T00:02:00Z",
+              "effectsReconciliation": "No target-state mutation; successful output was reconciled.",
+              "result": "Successful",
+              "budgetPosition": "non-consuming",
+              "justification": "Gathered relative-link evidence.",
+              "terminalDisposition": "not-terminal"
+            }
+          ]
+        }
+      }
+    },
     "resetBasis": "Not applicable; no retry budget reset occurred.",
     "progressOrBlockerNarrowing": "Evidence-only validation completed without a blocker.",
     "delegationHandoff": {

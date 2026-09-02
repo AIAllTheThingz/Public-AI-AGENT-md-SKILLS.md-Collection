@@ -236,6 +236,43 @@
       "additionalProperties": true
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "validation": {
+            "contains": {
+              "properties": {
+                "result": {
+                  "const": "passed"
+                }
+              },
+              "required": [
+                "result"
+              ]
+            }
+          }
+        },
+        "required": [
+          "validation"
+        ]
+      },
+      "then": {
+        "properties": {
+          "executionDiscipline": {
+            "properties": {
+              "retryLedger": {
+                "minProperties": 1
+              }
+            },
+            "required": [
+              "retryLedger"
+            ]
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "ledgerAction": {
       "type": "object",
@@ -408,10 +445,10 @@
     },
     "retrySequence": {
       "type": "object",
+      "description": "One execution sequence. It contains a budgeted initial attempt (and any retries), one or more successful non-consuming evidence actions, or both; an evidence-only sequence does not fabricate a budgeted attempt.",
       "additionalProperties": false,
       "required": [
         "sequenceId",
-        "attempts",
         "nonConsumingActions"
       ],
       "properties": {
@@ -629,7 +666,24 @@
             ]
           }
         }
-      }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "attempts"
+          ]
+        },
+        {
+          "properties": {
+            "nonConsumingActions": {
+              "minItems": 1
+            }
+          },
+          "required": [
+            "nonConsumingActions"
+          ]
+        }
+      ]
     },
     "retrySequenceWithFailure": {
       "allOf": [
@@ -741,6 +795,9 @@
           "$ref": "#/$defs/retrySequence"
         },
         {
+          "required": [
+            "attempts"
+          ],
           "properties": {
             "attempts": {
               "anyOf": [

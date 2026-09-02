@@ -30,7 +30,30 @@
   "executionDiscipline": {
     "failedOrIndeterminateOutcomes": [],
     "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
-    "retryLedger": {},
+    "retryLedger": {
+      "validate the fictitious governance change": {
+        "priorUnresolvedSequences": [],
+        "currentSequence": {
+          "sequenceId": "sequence-1",
+          "nonConsumingActions": [
+            {
+              "action": "Run evidence-only repository validation",
+              "actor": "fictitious-governance-reviewer",
+              "executionContext": {
+                "tool": "validate-standards"
+              },
+              "startedAt": "2026-01-01T00:00:00Z",
+              "endedAt": "2026-01-01T00:01:00Z",
+              "effectsReconciliation": "No target-state mutation; successful output was reconciled.",
+              "result": "Successful",
+              "budgetPosition": "non-consuming",
+              "justification": "Gathered illustrative repository-validation evidence.",
+              "terminalDisposition": "not-terminal"
+            }
+          ]
+        }
+      }
+    },
     "resetBasis": "Not applicable; no retry budget reset occurred.",
     "progressOrBlockerNarrowing": "Repository validation completed without a blocker.",
     "delegationHandoff": {
