@@ -52,10 +52,10 @@ template_type: completion-report
 {{FAILED_OR_INDETERMINATE_OUTCOMES}}
 - Authorization/recovery continuity for consequential mutations:
 {{AUTHORIZATION_RECOVERY_CONTINUITY}}
-- Retry ledger, grouped into repeatable sequences for each objective or blocker, with one row per budget-consuming action and each subsequent Successful objective-clearing action recorded at its current retry position; also record each Successful non-consuming discovery, reconciliation, or validation action (execution context is the command sequence, plan, workflow, tool, agent, strategy, task, or session as applicable):
+- Retry ledger, grouped into repeatable sequences for each objective or blocker, with one row per budget-consuming action and each subsequent Successful objective-clearing action recorded at its current retry position; every retry records its causally relevant material change and why that change creates a concrete reason to succeed; also record each Successful non-consuming discovery, reconciliation, or validation action (execution context is the command sequence, plan, workflow, tool, agent, strategy, task, or session as applicable):
 
-| Objective/blocker | Sequence | Sequence reset evidence | Action | Actor | Execution context | Start | End | Observable-effects reconciliation | Result | Budget position/count | Justification | Terminal disposition |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Objective/blocker | Sequence | Sequence reset evidence | Action | Actor | Execution context | Start | End | Observable-effects reconciliation | Result | Budget position/count | Retry material change | Retry causal rationale | Justification | Terminal disposition |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 {{RETRY_LEDGER_ROWS}}
 
 For schema-backed JSON, use one `retryLedger` map keyed by objective. Each objective ledger contains its own `failedOrIndeterminateOutcomes` array: it is non-empty exactly when that same ledger contains a Failed or Indeterminate attempt. No second objective map exists, so an objective cannot be split across ledgers. The rendered summary and table above describe the same per-objective records.
@@ -64,7 +64,7 @@ For schema-backed JSON, use one `retryLedger` map keyed by objective. Each objec
 {{RESET_BASIS}}
 - Progress or blocker narrowing:
 {{PROGRESS_OR_BLOCKER_NARROWING}}
-- Delegation handoff:
+- Delegation handoff (`delegated`; summary; meaningful value; failure evidence; blocker; retry count; unresolved state; boundaries preserved):
 {{DELEGATION_HANDOFF}}
 - Delegation boundary continuity before handoff completion:
 {{DELEGATION_BOUNDARY_CONTINUITY}}

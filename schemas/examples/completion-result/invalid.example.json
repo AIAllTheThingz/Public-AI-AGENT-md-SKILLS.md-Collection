@@ -74,6 +74,7 @@
     "resetBasis": "Not applicable; no reset occurred.",
     "progressOrBlockerNarrowing": "The record attempts to bypass reset authorization by duplicating one objective across two maps.",
     "delegationHandoff": {
+      "delegated": false,
       "summary": "Not applicable; no delegation occurred.",
       "boundariesPreserved": true
     },

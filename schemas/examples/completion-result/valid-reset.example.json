@@ -52,7 +52,8 @@
             "priorSequenceStopReport": "Sequence 1 stopped and reported the validation objective unresolved.",
             "authorizedBy": "fictitious-owner",
             "authorizationEvidence": "Fictitious decision record RESET-001.",
-            "materialChange": "The missing source fixture became available."
+            "materialChange": "The missing source fixture became available.",
+            "causalRationale": "Availability of the required source removed the blocker that caused the prior failure."
           },
           "attempts": {
             "initialAttempt": {
@@ -77,6 +78,7 @@
     "resetBasis": "Sequence 2 was separately authorized after sequence 1 stopped and reported unresolved and the missing source fixture became available.",
     "progressOrBlockerNarrowing": "The source fixture became available and the validation objective completed.",
     "delegationHandoff": {
+      "delegated": false,
       "summary": "Not applicable; no delegation occurred.",
       "boundariesPreserved": true
     },

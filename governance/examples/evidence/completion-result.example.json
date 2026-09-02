@@ -57,6 +57,7 @@
     "resetBasis": "Not applicable; no retry budget reset occurred.",
     "progressOrBlockerNarrowing": "Repository validation completed without a blocker.",
     "delegationHandoff": {
+      "delegated": false,
       "summary": "Not applicable; no delegation occurred.",
       "boundariesPreserved": true
     },

@@ -26,7 +26,7 @@ def completion_v2() -> tuple[dict, dict]:
 
 
 def ledger_action(result: str, budget_position: str, terminal_disposition: str) -> dict:
-    return {
+    action = {
         "action": "fictitious action",
         "actor": "fictitious-agent",
         "executionContext": {"tool": "fictitious-tool"},
@@ -38,6 +38,12 @@ def ledger_action(result: str, budget_position: str, terminal_disposition: str) 
         "justification": "Fictitious test action.",
         "terminalDisposition": terminal_disposition,
     }
+    if budget_position in {"retry-1", "retry-2"}:
+        action["materialChange"] = "Fictitious causally relevant material change."
+        action["causalRationale"] = (
+            "The recorded change creates a concrete reason this retry may succeed."
+        )
+    return action
 
 
 def retry_sequence(
@@ -211,6 +217,7 @@ class ValidateSchemasTests(unittest.TestCase):
             "authorizedBy": "fictitious-owner",
             "authorizationEvidence": "Fictitious authorization record.",
             "materialChange": "Fictitious material state change.",
+            "causalRationale": "The state change removes the prior blocker.",
         }
         instance["executionDiscipline"]["retryLedger"] = retry_ledger(
             retry_sequence(
@@ -452,6 +459,40 @@ class ValidateSchemasTests(unittest.TestCase):
                     list(Draft202012Validator(schema).iter_errors(instance))
                 )
 
+    def test_retry_requires_material_change_and_causal_rationale(self):
+        for missing in ("materialChange", "causalRationale"):
+            with self.subTest(missing=missing):
+                schema, instance = completion_v2()
+                instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+                    retry_sequence(
+                        {
+                            "initialAttempt": ledger_action(
+                                "Failed", "initial-attempt", "retry-authorized"
+                            ),
+                            "retry1": ledger_action(
+                                "Successful", "retry-1", "objective-completed"
+                            ),
+                        }
+                    ),
+                    outcomes=("Fictitious initial attempt failed.",),
+                )
+                del instance["executionDiscipline"]["retryLedger"][
+                    "fictitious objective"
+                ]["currentSequence"]["attempts"]["retry1"][missing]
+                errors = list(Draft202012Validator(schema).iter_errors(instance))
+                self.assertTrue(any(error.validator == "required" for error in errors))
+
+    def test_unchanged_retry_negative_fixture_is_rejected(self):
+        schema, _ = completion_v2()
+        instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/invalid-retry.example.json"
+            ).read_text(encoding="utf-8")
+        )
+        errors = list(Draft202012Validator(schema).iter_errors(instance))
+        self.assertTrue(any(error.validator == "required" for error in errors))
+
     def test_each_objective_ledger_requires_its_outcome_array(self):
         schema, instance = completion_v2()
         instance["executionDiscipline"]["retryLedger"] = {
@@ -544,6 +585,49 @@ class ValidateSchemasTests(unittest.TestCase):
             "boundariesPreserved"
         ] = False
         self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+
+    def test_incomplete_delegated_handoff_is_invalid(self):
+        schema, _ = completion_v2()
+        instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/invalid-delegation.example.json"
+            ).read_text(encoding="utf-8")
+        )
+        errors = list(Draft202012Validator(schema).iter_errors(instance))
+        self.assertTrue(any(error.validator == "required" for error in errors))
+
+    def test_complete_delegated_handoff_is_valid(self):
+        schema, instance = completion_v2()
+        instance["validation"][0]["result"] = "failed"
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Failed", "initial-attempt", "reported-unresolved"
+                    )
+                }
+            ),
+            outcomes=("Fictitious validation failed.",),
+        )
+        instance["executionDiscipline"]["delegationHandoff"] = {
+            "delegated": True,
+            "summary": "Fictitious unresolved work was delegated.",
+            "meaningfulValue": "Independent validation specialization.",
+            "failureEvidence": ["Fictitious validation failed."],
+            "blocker": "Fictitious validation blocker.",
+            "retryCount": 0,
+            "unresolvedState": "unresolved",
+            "boundariesPreserved": True,
+        }
+        self.assertEqual(
+            list(
+                Draft202012Validator(
+                    schema, format_checker=FormatChecker()
+                ).iter_errors(instance)
+            ),
+            [],
+        )
 
     def test_failed_budgeted_attempt_cannot_claim_completion(self):
         schema, instance = completion_v2()
@@ -668,6 +752,7 @@ class ValidateSchemasTests(unittest.TestCase):
                     "authorizedBy": "fictitious-owner",
                     "authorizationEvidence": "Fictitious authorization record.",
                     "materialChange": "Fictitious material state change.",
+                    "causalRationale": "The state change removes the prior blocker.",
                 },
             ),
         )

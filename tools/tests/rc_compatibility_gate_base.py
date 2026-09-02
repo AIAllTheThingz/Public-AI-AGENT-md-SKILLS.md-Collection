@@ -589,6 +589,15 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
             required_actions,
         )
         self.assertIn("same objective cannot be split across maps", required_actions)
+        self.assertIn(
+            "require each retry action to record materialChange and causalRationale",
+            required_actions,
+        )
+        self.assertIn("explicit delegationHandoff.delegated", required_actions)
+        self.assertIn(
+            "meaningfulValue, non-empty failureEvidence, blocker, retryCount, unresolvedState",
+            required_actions,
+        )
         self.assertIn("per-objective sequences", required_actions)
         self.assertIn("prior sequence stop/report", required_actions)
         self.assertIn("separate accountable authorization", required_actions)

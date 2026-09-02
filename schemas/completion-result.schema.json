@@ -150,7 +150,7 @@
         "resetBasis": {
           "type": "string",
           "minLength": 1,
-          "description": "Summary of any retry-budget reset. Each sequence after the first records its own prior stop/report, authorization, and material-change evidence. Not applicable is permitted when no reset occurred."
+          "description": "Summary of any retry-budget reset. Each sequence after the first records its own prior stop/report, authorization, material-change evidence, and causal rationale. Not applicable is permitted when no reset occurred."
         },
         "progressOrBlockerNarrowing": {
           "type": "string",
@@ -160,17 +160,97 @@
           "type": "object",
           "additionalProperties": false,
           "required": [
+            "delegated",
             "summary",
             "boundariesPreserved"
           ],
           "properties": {
+            "delegated": {
+              "type": "boolean",
+              "description": "Whether work is being handed to another actor. A true value requires the complete unresolved-state handoff."
+            },
             "summary": {
               "type": "string",
               "minLength": 1
             },
+            "meaningfulValue": {
+              "type": "string",
+              "minLength": 1
+            },
+            "failureEvidence": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "blocker": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retryCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "unresolvedState": {
+              "const": "unresolved"
+            },
             "boundariesPreserved": {
               "const": true,
               "description": "Delegation must preserve retry-budget, no-progress, scope, authorization, and evidence boundaries."
+            }
+          },
+          "if": {
+            "properties": {
+              "delegated": {
+                "const": true
+              }
+            },
+            "required": [
+              "delegated"
+            ]
+          },
+          "then": {
+            "required": [
+              "meaningfulValue",
+              "failureEvidence",
+              "blocker",
+              "retryCount",
+              "unresolvedState"
+            ]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "meaningfulValue"
+                  ]
+                },
+                {
+                  "required": [
+                    "failureEvidence"
+                  ]
+                },
+                {
+                  "required": [
+                    "blocker"
+                  ]
+                },
+                {
+                  "required": [
+                    "retryCount"
+                  ]
+                },
+                {
+                  "required": [
+                    "unresolvedState"
+                  ]
+                }
+              ]
             }
           }
         },
@@ -404,6 +484,16 @@
           "type": "string",
           "minLength": 1
         },
+        "materialChange": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Causally relevant new evidence, changed input, configuration, state, corrected assumption, or materially different implementation or validation method supporting a retry."
+        },
+        "causalRationale": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the recorded material change creates a concrete reason the retry may succeed."
+        },
         "terminalDisposition": {
           "enum": [
             "objective-completed",
@@ -450,6 +540,19 @@
         }
       ]
     },
+    "retryAttempt": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/budgetedAttempt"
+        },
+        {
+          "required": [
+            "materialChange",
+            "causalRationale"
+          ]
+        }
+      ]
+    },
     "resetAuthorization": {
       "type": "object",
       "additionalProperties": false,
@@ -457,7 +560,8 @@
         "priorSequenceStopReport",
         "authorizedBy",
         "authorizationEvidence",
-        "materialChange"
+        "materialChange",
+        "causalRationale"
       ],
       "properties": {
         "priorSequenceStopReport": {
@@ -473,6 +577,10 @@
           "minLength": 1
         },
         "materialChange": {
+          "type": "string",
+          "minLength": 1
+        },
+        "causalRationale": {
           "type": "string",
           "minLength": 1
         }
@@ -518,7 +626,7 @@
             "retry1": {
               "allOf": [
                 {
-                  "$ref": "#/$defs/budgetedAttempt"
+                  "$ref": "#/$defs/retryAttempt"
                 },
                 {
                   "properties": {
@@ -532,7 +640,7 @@
             "retry2": {
               "allOf": [
                 {
-                  "$ref": "#/$defs/budgetedAttempt"
+                  "$ref": "#/$defs/retryAttempt"
                 },
                 {
                   "properties": {

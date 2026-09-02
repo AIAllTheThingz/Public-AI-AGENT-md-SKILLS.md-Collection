@@ -47,6 +47,7 @@
     "resetBasis": "Not applicable; no retry budget reset occurred.",
     "progressOrBlockerNarrowing": "Evidence-only schema validation completed without a blocker.",
     "delegationHandoff": {
+      "delegated": false,
       "summary": "Not applicable; no delegation occurred.",
       "boundariesPreserved": true
     },

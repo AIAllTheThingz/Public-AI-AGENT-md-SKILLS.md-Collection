@@ -514,6 +514,26 @@ Approval must come from an accountable human with delegated authority.
                 self.assertIn("objective", text)
                 self.assertIn("failedOrIndeterminateOutcomes", text)
 
+    def test_completion_structures_retry_and_delegation_evidence(self):
+        sources = {
+            relative: (REPO_ROOT / relative).read_text(encoding="utf-8")
+            for relative in (
+                "templates/completion/COMPLETION_REPORT_TEMPLATE.md",
+                "templates/completion/README.md",
+                "templates/completion/REVIEW_CHECKLIST.md",
+                "governance/templates/COMPLETION_EVIDENCE_TEMPLATE.md",
+            )
+        }
+        for relative, text in sources.items():
+            normalized = text.lower().replace("-", " ")
+            with self.subTest(relative=relative):
+                self.assertIn("material change", normalized)
+                self.assertIn("causal rationale", normalized)
+                self.assertIn("meaningful value", normalized)
+                self.assertIn("failure evidence", normalized)
+                self.assertIn("retry count", normalized)
+                self.assertIn("unresolved state", normalized)
+
 
 if __name__ == "__main__":
     unittest.main()

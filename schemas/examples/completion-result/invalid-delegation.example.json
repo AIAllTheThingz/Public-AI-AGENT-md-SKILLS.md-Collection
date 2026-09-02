@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "2.0.0",
+  "status": "not-completed",
+  "summary": "Invalid v2 record with an incomplete delegated-work handoff.",
+  "filesChanged": [],
+  "validation": [
+    {
+      "name": "Fictitious validation",
+      "result": "not-run"
+    }
+  ],
+  "limitations": [
+    "The delegated handoff intentionally omits its required unresolved-work state."
+  ],
+  "executionDiscipline": {
+    "authorizationRecoveryContinuity": "No consequential mutation occurred.",
+    "retryLedger": {},
+    "resetBasis": "Not applicable; no reset occurred.",
+    "progressOrBlockerNarrowing": "The unresolved work is being handed off.",
+    "delegationHandoff": {
+      "delegated": true,
+      "summary": "Fictitious work was delegated without the required state.",
+      "boundariesPreserved": true
+    },
+    "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
+  }
+}
