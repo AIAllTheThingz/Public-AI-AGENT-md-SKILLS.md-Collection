@@ -237,6 +237,36 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
             completion["obligations"]["human review"],
         )
 
+        candidate_completion_text = (REPO_ROOT / completion_path).read_text(
+            encoding="utf-8"
+        )
+        candidate_completion = template_contract(candidate_completion_text)
+        self.assertIn("execution discipline", candidate_completion["sections"])
+        self.assertIn(
+            "one row per budget-consuming action and each subsequent Successful objective-clearing action",
+            candidate_completion_text,
+        )
+        self.assertIn("| Objective/blocker | Sequence | Sequence reset evidence |", candidate_completion_text)
+        self.assertIn("each sequence after the first requires", candidate_completion_text)
+        self.assertIn("prior sequence stop/report", candidate_completion_text)
+        for placeholder in (
+            "FAILED_OR_INDETERMINATE_OUTCOMES",
+            "AUTHORIZATION_RECOVERY_CONTINUITY",
+            "RETRY_LEDGER_ROWS",
+            "RESET_BASIS",
+            "PROGRESS_OR_BLOCKER_NARROWING",
+            "DELEGATION_HANDOFF",
+            "DELEGATION_BOUNDARY_CONTINUITY",
+            "OUT_OF_SCOPE_ROUTING",
+        ):
+            self.assertIn(placeholder, candidate_completion["placeholders"])
+            self.assertTrue(
+                any(
+                    name == placeholder and section == "execution discipline"
+                    for name, section, _label in candidate_completion["placeholderBindings"]
+                )
+            )
+
         exception_path = "templates/exception/EXCEPTION_RECORD_TEMPLATE.md"
         exception = template_contract(git_source_at(self.source_commit, exception_path))
         self.assertIn(
@@ -465,6 +495,71 @@ Approval must come from an accountable human with delegated authority.
                 "sample.md", published, template_contract(comment_only)
             ),
             [],
+        )
+
+    def test_completion_uses_one_objective_ledger_map(self):
+        sources = {
+            relative: (REPO_ROOT / relative).read_text(encoding="utf-8")
+            for relative in (
+                "templates/completion/COMPLETION_REPORT_TEMPLATE.md",
+                "templates/completion/README.md",
+                "templates/completion/REVIEW_CHECKLIST.md",
+                "templates/completion/examples/EXAMPLE.md",
+                "governance/templates/COMPLETION_EVIDENCE_TEMPLATE.md",
+            )
+        }
+        for relative, text in sources.items():
+            with self.subTest(relative=relative):
+                self.assertIn("one `retryLedger` map", text)
+                self.assertIn("objective", text)
+                self.assertIn("failedOrIndeterminateOutcomes", text)
+
+    def test_completion_structures_retry_and_delegation_evidence(self):
+        sources = {
+            relative: (REPO_ROOT / relative).read_text(encoding="utf-8")
+            for relative in (
+                "templates/completion/COMPLETION_REPORT_TEMPLATE.md",
+                "templates/completion/README.md",
+                "templates/completion/REVIEW_CHECKLIST.md",
+                "governance/templates/COMPLETION_EVIDENCE_TEMPLATE.md",
+            )
+        }
+        for relative, text in sources.items():
+            normalized = text.lower().replace("-", " ")
+            with self.subTest(relative=relative):
+                self.assertIn("material change", normalized)
+                self.assertIn("causal rationale", normalized)
+                self.assertIn("meaningful value", normalized)
+                self.assertIn("failure evidence", normalized)
+                self.assertIn("retry count", normalized)
+                self.assertIn("unresolved state", normalized)
+                self.assertIn("per sequence", normalized)
+
+    def test_completion_reset_requirement_includes_causal_rationale(self):
+        template = (
+            REPO_ROOT / "templates/completion/COMPLETION_REPORT_TEMPLATE.md"
+        ).read_text(encoding="utf-8")
+        retry_requirement = template.split("The retry budget allows", 1)[1].split(
+            "## Deployment and operational impact", 1
+        )[0]
+        self.assertIn("each sequence after the first", retry_requirement)
+        self.assertIn("causal rationale", retry_requirement)
+
+    def test_completion_preserves_sequence_handoffs_and_terminal_stop(self):
+        template = (
+            REPO_ROOT / "templates/completion/COMPLETION_REPORT_TEMPLATE.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "every prior or current sequence contains its own `delegationHandoff`",
+            template,
+        )
+        self.assertIn(
+            "Preserve the handoff on a prior sequence when an authorized reset creates a new current sequence",
+            template,
+        )
+        self.assertIn(
+            "A sequence ending `reported-unresolved` records successful evidence gathered before the terminal attempt in `preTerminalNonConsumingActions` and leaves `nonConsumingActions` empty",
+            template,
         )
 
 

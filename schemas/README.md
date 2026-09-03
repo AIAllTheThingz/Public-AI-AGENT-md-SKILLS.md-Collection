@@ -1,7 +1,7 @@
 ---
 id: SCHEMA-INDEX-001
 title: Schema Contracts
-version: 0.3.0
+version: 0.4.0
 status: baseline
 ---
 
@@ -11,7 +11,7 @@ status: baseline
 
 This directory defines the repository's machine-readable contracts for standards composition, risk, exceptions, testing, artifacts, and completion evidence.
 
-Schemas make records structurally testable. They do not prove that the record is truthful, complete, authorized, secure, compliant, or tied to the correct artifact. A beautifully valid lie remains a lie, merely one with matching braces.
+Schemas make records structurally testable. The repository validator adds bounded semantic consistency checks for completion-result v2 relationships and chronology that JSON Schema cannot reliably express. Neither layer proves that the record is truthful, complete, authorized, secure, compliant, or tied to the correct artifact. A beautifully valid lie remains a lie, merely one with matching braces.
 
 ## Current dialect and implementation baseline
 
@@ -30,7 +30,7 @@ Official references:
 | Schema | Purpose | Common repository instances |
 |---|---|---|
 | [`artifact-record.schema.json`](artifact-record.schema.json) | Identify an artifact, source revision, digest, provenance, and signing state. | `artifact-record*.json` |
-| [`completion-result.schema.json`](completion-result.schema.json) | Record completion state, validation, limitations, risk, and review. | `completion-result*.json` |
+| [`completion-result.schema.json`](completion-result.schema.json) | Record completion state, validation, execution discipline, limitations, risk, and review under current major v2. | `completion-result*.json` |
 | [`exception-record.schema.json`](exception-record.schema.json) | Record time-bounded standards exceptions and compensating controls. | `exception-record*.json` |
 | [`project-manifest.schema.json`](project-manifest.schema.json) | Declare profile and package composition for a project. | `project-manifest.json` |
 | [`risk-classification.schema.json`](risk-classification.schema.json) | Record risk level, rationale, factors, reviewers, and rollback need. | `risk-classification*.json` |
@@ -40,20 +40,28 @@ See [`SCHEMA_CATALOG.md`](SCHEMA_CATALOG.md) for field-level ownership and insta
 
 ## Stable paths and versioned paths
 
-Two paths are provided for each contract:
+Rolling and versioned paths are provided for each contract:
 
 - `schemas/<name>.schema.json` is the rolling convenience entry point.
-- `schemas/v1/<name>.schema.json` is the backward-compatible major-version 1 contract.
+- `schemas/v2/completion-result.schema.json` is the current major-version 2 completion-result contract.
+- `schemas/v1/completion-result.schema.json` is the unchanged historical major-version 1 completion-result contract.
+- `schemas/v1/<name>.schema.json` remains the current major-version 1 contract for the other five schemas.
 
-Long-lived automation should use the major-version path. Consumers requiring an exact immutable contract must also pin a repository tag or commit. The rolling path may advance according to the compatibility policy.
+Long-lived automation should use the applicable major-version path. Consumers requiring an exact immutable contract must also pin a repository tag or commit. The rolling path may advance according to the compatibility policy; the completion-result rolling path follows v2.
 
 The six original filenames remain intact.
 
 ## Compatibility objective
 
-Version 1 keeps all fields that were previously required and preserves the current repository examples.
+The current completion-result rolling and v2 contracts require `executionDiscipline` and use `schemaVersion: "2.0.0"`. The v1 completion-result contract remains supported and unchanged for historical or pinned consumers. The other five contracts remain version 1.
 
-The upgrade adds descriptions, optional metadata, normalized extension points, stronger non-empty constraints, and versioned copies. Existing valid repository instances remain valid.
+Within v2, use one `retryLedger` map keyed by objective. Each objective ledger stores its own `failedOrIndeterminateOutcomes` array and zero or more `priorUnresolvedSequences` followed by exactly one `currentSequence`; every sequence stores its own `delegationHandoff`. The outcome array is non-empty exactly when the same ledger contains a Failed or Indeterminate attempt, so one objective cannot be split across independent failure and success ledgers. Each `retry1` or `retry2` action requires a causally relevant `materialChange` and a `causalRationale` explaining why that change creates a concrete reason to succeed; generic justification alone cannot authorize a repeated action. Only a sequence whose final attempt is failed or indeterminate with `reported-unresolved` may be preserved as a prior sequence. Such a sequence records successful evidence gathered before its stop in `preTerminalNonConsumingActions` and leaves `nonConsumingActions` empty. A current sequence after any prior sequence requires reset evidence naming the immediately prior `sequenceId`, an `authorizedAt` date-time after that stop and before new execution, separate accountable authorization, the material blocker or relevant scope or system-state change, and its causal rationale. A sequence may omit `attempts` only when it contains at least one successful `nonConsumingActions` entry, so evidence-only activity is recorded without fabricating a budgeted attempt. `status: "validated"` requires at least one reported `passed` validation. Every `passed` or `failed` validation carries an `objectiveId` equal to its exact retry-ledger key and an `actionId` that uniquely identifies the specific ledger action performing that check; the semantic validator requires the referenced action result to be compatible with the reported validation result. It also checks action intervals, retry order, unique sequence IDs, reset linkage and chronology, that `preTerminalNonConsumingActions` actually end before the unresolved terminal attempt starts, and that every other action ends before an objective-completing attempt starts. RFC 3339 values accepted by structural validation retain their full fractional precision for chronological comparison; leap seconds remain structurally invalid under the repository's format checker. `retry-authorized` requires the corresponding next retry to be present. Every sequence records `delegationHandoff.delegated`; when true, the containing objective ledger's non-empty `failedOrIndeterminateOutcomes` array is the authoritative failure evidence and `meaningfulValue`, `blocker`, `retryCount`, `unresolvedState: "unresolved"`, and `boundariesPreserved: true` are required. `retryCount` must equal that same sequence's actual retry depth: 0 without `retry1`, 1 with `retry1` only, or 2 with `retry2`. Successful objective-clearing actions remain recorded at their current retry position and cannot be followed by another action or sequence for that objective.
+
+`status: "implemented"` requires a non-empty retry ledger and a `Successful` action with `terminalDisposition: "objective-completed"`. Semantic timestamp ordering computes UTC offsets without converting through Python's bounded UTC calendar, so structurally accepted year-boundary values remain comparable even when their normalized UTC instant falls outside years 1 through 9999.
+
+A delegated handoff requires its containing sequence to end `reported-unresolved`; completed or retry-authorized work cannot be labeled as an unresolved handoff. Preserving the handoff on each prior sequence allows a separately authorized current reset sequence to complete without erasing the earlier delegation event.
+
+The completion-result v1-to-v2 upgrade is breaking because it adds required execution-discipline evidence. Existing v1 completion records remain valid when evaluated against the preserved v1 contract; they are not silently reinterpreted as v2.
 
 See:
 
@@ -67,7 +75,7 @@ All six schemas remain closed by default with `additionalProperties: false`.
 
 Projects may add organization-specific data only inside the optional `extensions` object. Extension keys must be namespaced and must not redefine standard fields.
 
-The optional `schemaVersion` property may be set to `1.0.0` or `1.1.0` for project manifests and to `1.0.0` for the other version 1 contracts. Project-manifest version `1.1.0` adds optional `virtualization`, `operatingSystems`, and `networking` arrays; using any of those arrays requires the instance to declare `1.1.0`. Legacy instances without `schemaVersion` are interpreted as version `1.0.0`.
+Completion-result v2 instances use `schemaVersion: "2.0.0"`; preserved v1 completion records use `1.0.0` or omit the property only when directly validated against the pinned v1 contract. Repository instance discovery routes an omitted `schemaVersion` to the current major, so retained v1 completion records discovered by the repository validator must explicitly declare `1.0.0`. The other version 1 contracts use `1.0.0`, except project manifests using infrastructure package arrays, which use `1.1.0`.
 
 See [`EXTENSION_POLICY.md`](EXTENSION_POLICY.md).
 
@@ -88,12 +96,15 @@ python tools/validate-schemas/validate_schemas.py
 The validator:
 
 - validates every schema against Draft 2020-12
-- verifies rolling and versioned schemas remain equivalent except for identifier metadata
+- verifies each rolling schema matches its current versioned major except for identifier metadata (completion-result v2; other schemas v1)
 - validates positive examples
 - confirms negative examples fail
 - discovers and validates repository instances by filename
 - enables format checking for dates and date-times
+- applies completion-result v2 semantic validation after structural validation succeeds, including exact validation-action correlation, terminal boundaries, full RFC 3339 timestamp handling, and action/reset chronology
 - reports the instance path and failing JSON pointer
+
+Use the rolling or v2 completion-result schema for new/current records and the v1 completion-result schema for retained historical or pinned v1 records. The current validator must select the schema that matches the record's declared or pinned major; it must not silently validate a historical v1 record against v2.
 
 See [`VALIDATION_GUIDE.md`](VALIDATION_GUIDE.md).
 
@@ -106,6 +117,8 @@ Each schema has:
 - a README explaining what the example proves and does not prove
 
 Examples are under [`examples/`](examples/).
+
+The completion-result examples include a current v2 positive/negative pair and preserved v1 positive/negative compatibility fixtures.
 
 Negative examples are intentionally invalid. Do not copy them into production unless the production goal is to test whether anyone is awake.
 
@@ -125,7 +138,7 @@ Before changing a schema:
 
 ## Completion boundary
 
-Schema validation proves only that an instance conforms to the selected structural contract under the validator used.
+Direct JSON Schema validation proves only that an instance conforms to the selected structural contract. The repository validator additionally proves only that its implemented semantic consistency checks passed.
 
 It does not prove:
 

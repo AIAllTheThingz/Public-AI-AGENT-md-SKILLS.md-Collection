@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "2.0.0",
+  "status": "partially-validated",
+  "summary": "Invalid v2 record whose retry repeats an unchanged action without causal evidence.",
+  "filesChanged": [],
+  "validation": [
+    {
+      "objectiveId": "validate the fictitious artifact",
+      "actionId": "repeated-validation",
+      "name": "Fictitious validation",
+      "result": "passed"
+    }
+  ],
+  "limitations": [
+    "The retry intentionally omits materialChange and causalRationale."
+  ],
+  "executionDiscipline": {
+    "authorizationRecoveryContinuity": "No consequential mutation occurred.",
+    "retryLedger": {
+      "validate the fictitious artifact": {
+        "failedOrIndeterminateOutcomes": [
+          "The initial fictitious validation failed."
+        ],
+        "priorUnresolvedSequences": [],
+        "currentSequence": {
+          "sequenceId": "sequence-1",
+          "delegationHandoff": {
+            "delegated": false,
+            "summary": "Not applicable; no delegation occurred.",
+            "boundariesPreserved": true
+          },
+          "attempts": {
+            "initialAttempt": {
+              "action": "Run fictitious validation",
+              "actor": "fictitious-agent",
+              "executionContext": {
+                "tool": "fictitious-validator"
+              },
+              "startedAt": "2026-01-01T00:00:00Z",
+              "endedAt": "2026-01-01T00:01:00Z",
+              "effectsReconciliation": "No state changed.",
+              "result": "Failed",
+              "budgetPosition": "initial-attempt",
+              "justification": "Initial validation attempt.",
+              "terminalDisposition": "retry-authorized"
+            },
+            "retry1": {
+              "actionId": "repeated-validation",
+              "action": "Run the identical fictitious validation again",
+              "actor": "fictitious-agent",
+              "executionContext": {
+                "tool": "fictitious-validator"
+              },
+              "startedAt": "2026-01-01T00:02:00Z",
+              "endedAt": "2026-01-01T00:03:00Z",
+              "effectsReconciliation": "No state changed.",
+              "result": "Successful",
+              "budgetPosition": "retry-1",
+              "justification": "Generic retry justification without a material change.",
+              "terminalDisposition": "objective-completed"
+            }
+          },
+          "preTerminalNonConsumingActions": [],
+          "nonConsumingActions": []
+        }
+      }
+    },
+    "resetBasis": "Not applicable; no reset occurred.",
+    "progressOrBlockerNarrowing": "The retry supplies no causal reason that the repeated action could succeed.",
+    "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
+  }
+}

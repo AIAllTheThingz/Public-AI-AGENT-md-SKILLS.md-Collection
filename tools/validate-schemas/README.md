@@ -1,7 +1,7 @@
 ---
 id: TOOL-PKG-VALIDATE-SCHEMAS-001
 title: Validate Schemas Tool
-version: 1.1.0
+version: 1.2.0
 status: baseline
 ---
 
@@ -9,7 +9,7 @@ status: baseline
 
 ## Purpose
 
-Validate Draft 2020-12 schemas, versioned equivalence, positive and negative examples, formats, and repository instances.
+Validate Draft 2020-12 schemas, versioned equivalence, positive and negative examples, formats, repository instances, and completion-result v2 semantic consistency.
 
 Status: **baseline**
 
@@ -59,6 +59,10 @@ python tools/validate-schemas/validate_schemas.py --help
 - positive examples
 - negative examples
 - repository instance discovery
+- current-major selection for unversioned records; retained completion-result v1 records must explicitly declare `schemaVersion: "1.0.0"`, and preserved positive and negative v1 fixtures exercise that contract
+- completion-result v2 exact validation-action correlation, action intervals, retry and terminal ordering, unique sequence IDs, reset linkage, reset-authorization chronology, and arbitrary-precision RFC 3339 comparison after structural validation succeeds
+
+[`completion_semantics.py`](completion_semantics.py) contains the semantic layer. JSON Schema remains responsible for record shape and local structural constraints; this module evaluates cross-record and temporal relationships that cannot be expressed reliably in the schema alone.
 
 ## Examples
 
@@ -78,6 +82,19 @@ python tools/validate-schemas/validate_schemas.py --skip-repository-instances
 Text output is for interactive use. JSON output conforms to [`../contracts/tool-result.schema.json`](../contracts/tool-result.schema.json).
 
 Finding codes are intended for automation. Message wording may improve, but a finding code must not silently change meaning.
+
+Completion semantic findings use:
+
+- `COMPLETION_VALIDATION_OBJECTIVE_MISMATCH`
+- `COMPLETION_VALIDATION_ACTION_MISMATCH`
+- `COMPLETION_IMPLEMENTED_WITHOUT_SUCCESS`
+- `COMPLETION_ACTION_TIME_INVALID`
+- `COMPLETION_ACTION_ORDER_INVALID`
+- `COMPLETION_PRE_TERMINAL_ORDER_INVALID`
+- `COMPLETION_POST_TERMINAL_ACTION`
+- `COMPLETION_SEQUENCE_ID_DUPLICATE`
+- `COMPLETION_RESET_SEQUENCE_MISMATCH`
+- `COMPLETION_RESET_ORDER_INVALID`
 
 ## Exit codes
 
@@ -131,7 +148,7 @@ Breaking changes include:
 
 ## Limitations
 
-- structural validity is not semantic truth
+- structural and implemented semantic consistency are not evidence truth
 - instance discovery is filename-based
 - remote schema resolution is intentionally unsupported
 - the checked-in lock represents the hosted Python/runtime boundary and must be regenerated when that boundary changes

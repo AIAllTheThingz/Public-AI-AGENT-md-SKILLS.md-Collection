@@ -1,7 +1,7 @@
 ---
 id: SCHEMA-MANIFEST-001
 title: Schema Package Manifest
-version: 0.3.0
+version: 0.4.0
 status: baseline
 ---
 
@@ -25,7 +25,7 @@ status: baseline
 Rolling and versioned copies are required for:
 
 - artifact record
-- completion result
+- completion result (current v2 and preserved historical v1)
 - exception record
 - project manifest
 - risk classification
@@ -42,17 +42,22 @@ Each contract must have:
 ## Required tooling
 
 - `tools/validate-schemas/validate_schemas.py`
+- `tools/validate-schemas/completion_semantics.py`
 - `tools/validate-schemas/requirements.txt`
 - `tools/validate-schemas/README.md`
 
 ## Acceptance checks
 
 - Draft 2020-12 meta-validation passes.
-- Rolling and versioned schemas are equivalent except for identifier metadata.
+- Each rolling schema matches its current versioned major except for identifier metadata.
+- The rolling completion-result schema matches current v2, while the historical v1 completion schema remains present and unchanged.
+- Other schemas remain current major version 1.
 - All positive examples validate.
 - All negative examples fail.
+- Preserved completion-result v1 positive and negative compatibility fixtures validate and fail, respectively.
 - All discovered repository instances validate.
 - Format checking is enabled.
+- Completion-result v2 structural success is followed by exact validation-action correlation, terminal-boundary, and full RFC 3339 chronology validation.
 - Every JSON document parses.
 - Relative Markdown links pass.
 - No schema or example contains an unresolved placeholder.

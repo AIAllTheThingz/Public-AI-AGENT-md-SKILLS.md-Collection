@@ -1,4 +1,5 @@
 {
+  "schemaVersion": "2.0.0",
   "status": "validated",
   "summary": "Validated documentation-only standards composition for example-worker-service.",
   "filesChanged": [
@@ -19,11 +20,15 @@
   "compatibilityImpact": "Stable example paths and identifiers are introduced or maintained.",
   "validation": [
     {
+      "objectiveId": "validate the documentation-only standards example",
+      "actionId": "repository-structure-validation",
       "name": "Repository structure and identifier validation",
       "result": "passed",
       "evidence": "python tools/validate-standards/validate_repository.py"
     },
     {
+      "objectiveId": "validate the documentation-only standards example",
+      "actionId": "relative-link-validation",
       "name": "Relative Markdown link validation",
       "result": "passed",
       "evidence": "python tools/check-links/check_links.py"
@@ -39,5 +44,58 @@
     "Throughput, backpressure, disaster recovery, and on-call procedures are illustrative.",
     "Exactly-once delivery is not claimed."
   ],
-  "reviewer": "not-assigned"
+  "reviewer": "not-assigned",
+  "executionDiscipline": {
+    "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
+    "retryLedger": {
+      "validate the documentation-only standards example": {
+        "failedOrIndeterminateOutcomes": [],
+        "priorUnresolvedSequences": [],
+        "currentSequence": {
+          "sequenceId": "sequence-1",
+          "delegationHandoff": {
+            "delegated": false,
+            "summary": "Not applicable; no delegation occurred.",
+            "boundariesPreserved": true
+          },
+          "preTerminalNonConsumingActions": [],
+          "nonConsumingActions": [
+            {
+              "actionId": "repository-structure-validation",
+              "action": "Run repository structure and identifier validation",
+              "actor": "example-maintainer",
+              "executionContext": {
+                "tool": "validate-standards"
+              },
+              "startedAt": "2026-01-01T00:00:00Z",
+              "endedAt": "2026-01-01T00:01:00Z",
+              "effectsReconciliation": "No target-state mutation; successful output was reconciled.",
+              "result": "Successful",
+              "budgetPosition": "non-consuming",
+              "justification": "Gathered repository-structure evidence.",
+              "terminalDisposition": "not-terminal"
+            },
+            {
+              "actionId": "relative-link-validation",
+              "action": "Run relative Markdown link validation",
+              "actor": "example-maintainer",
+              "executionContext": {
+                "tool": "check-links"
+              },
+              "startedAt": "2026-01-01T00:01:00Z",
+              "endedAt": "2026-01-01T00:02:00Z",
+              "effectsReconciliation": "No target-state mutation; successful output was reconciled.",
+              "result": "Successful",
+              "budgetPosition": "non-consuming",
+              "justification": "Gathered relative-link evidence.",
+              "terminalDisposition": "not-terminal"
+            }
+          ]
+        }
+      }
+    },
+    "resetBasis": "Not applicable; no retry budget reset occurred.",
+    "progressOrBlockerNarrowing": "Evidence-only validation completed without a blocker.",
+    "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
+  }
 }

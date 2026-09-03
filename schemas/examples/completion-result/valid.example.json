@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
   "status": "partially-validated",
   "summary": "Illustrative standards-only validation record.",
   "filesChanged": [
@@ -8,6 +8,8 @@
   "risk": "low",
   "validation": [
     {
+      "objectiveId": "validate the illustrative completion record",
+      "actionId": "schema-validation",
       "name": "Schema validation",
       "result": "passed",
       "evidence": "example only"
@@ -16,5 +18,43 @@
   "limitations": [
     "No runtime behavior was tested."
   ],
-  "reviewer": "fictitious-reviewer"
+  "reviewer": "fictitious-reviewer",
+  "executionDiscipline": {
+    "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
+    "retryLedger": {
+      "validate the illustrative completion record": {
+        "failedOrIndeterminateOutcomes": [],
+        "priorUnresolvedSequences": [],
+        "currentSequence": {
+          "sequenceId": "sequence-1",
+          "delegationHandoff": {
+            "delegated": false,
+            "summary": "Not applicable; no delegation occurred.",
+            "boundariesPreserved": true
+          },
+          "preTerminalNonConsumingActions": [],
+          "nonConsumingActions": [
+            {
+              "actionId": "schema-validation",
+              "action": "Run evidence-only schema validation",
+              "actor": "fictitious-reviewer",
+              "executionContext": {
+                "tool": "fictitious-schema-validator"
+              },
+              "startedAt": "2026-01-01T00:00:00Z",
+              "endedAt": "2026-01-01T00:01:00Z",
+              "effectsReconciliation": "No target-state mutation; successful output was reconciled.",
+              "result": "Successful",
+              "budgetPosition": "non-consuming",
+              "justification": "Gathered structural validation evidence without changing target state.",
+              "terminalDisposition": "not-terminal"
+            }
+          ]
+        }
+      }
+    },
+    "resetBasis": "Not applicable; no retry budget reset occurred.",
+    "progressOrBlockerNarrowing": "Evidence-only schema validation completed without a blocker.",
+    "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
+  }
 }

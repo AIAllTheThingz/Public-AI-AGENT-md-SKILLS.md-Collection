@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "2.0.0",
+  "status": "not-completed",
+  "summary": "Invalid v2 record whose delegated retry count understates the objective ledger.",
+  "filesChanged": [],
+  "validation": [
+    {
+      "objectiveId": "validate the fictitious artifact",
+      "actionId": "final-validation-attempt",
+      "name": "Fictitious validation",
+      "result": "failed"
+    }
+  ],
+  "limitations": [
+    "The handoff intentionally records retryCount 0 after retry2."
+  ],
+  "executionDiscipline": {
+    "authorizationRecoveryContinuity": "No consequential mutation occurred.",
+    "retryLedger": {
+      "validate the fictitious artifact": {
+        "failedOrIndeterminateOutcomes": [
+          "The fictitious validation remained unresolved after two retries."
+        ],
+        "priorUnresolvedSequences": [],
+        "currentSequence": {
+          "sequenceId": "sequence-1",
+          "delegationHandoff": {
+            "delegated": true,
+            "summary": "The exhausted validation objective was delegated.",
+            "meaningfulValue": "Independent validation specialization.",
+            "blocker": "The fictitious validation still fails.",
+            "retryCount": 0,
+            "unresolvedState": "unresolved",
+            "boundariesPreserved": true
+          },
+          "attempts": {
+            "initialAttempt": {
+              "action": "Run fictitious validation",
+              "actor": "fictitious-agent",
+              "executionContext": {
+                "tool": "fictitious-validator"
+              },
+              "startedAt": "2026-01-01T00:00:00Z",
+              "endedAt": "2026-01-01T00:01:00Z",
+              "effectsReconciliation": "No state changed.",
+              "result": "Failed",
+              "budgetPosition": "initial-attempt",
+              "justification": "Initial validation attempt.",
+              "terminalDisposition": "retry-authorized"
+            },
+            "retry1": {
+              "action": "Run changed fictitious validation",
+              "actor": "fictitious-agent",
+              "executionContext": {
+                "tool": "fictitious-validator"
+              },
+              "startedAt": "2026-01-01T00:02:00Z",
+              "endedAt": "2026-01-01T00:03:00Z",
+              "effectsReconciliation": "No state changed.",
+              "result": "Failed",
+              "budgetPosition": "retry-1",
+              "justification": "First justified retry.",
+              "materialChange": "A corrected input was supplied.",
+              "causalRationale": "The corrected input addressed the first failure.",
+              "terminalDisposition": "retry-authorized"
+            },
+            "retry2": {
+              "actionId": "final-validation-attempt",
+              "action": "Run materially different fictitious validation",
+              "actor": "fictitious-agent",
+              "executionContext": {
+                "tool": "different-fictitious-validator"
+              },
+              "startedAt": "2026-01-01T00:04:00Z",
+              "endedAt": "2026-01-01T00:05:00Z",
+              "effectsReconciliation": "No state changed.",
+              "result": "Failed",
+              "budgetPosition": "retry-2",
+              "justification": "Second justified retry.",
+              "materialChange": "A materially different validation method was selected.",
+              "causalRationale": "The independent method could distinguish a tool-specific failure.",
+              "terminalDisposition": "reported-unresolved"
+            }
+          },
+          "preTerminalNonConsumingActions": [],
+          "nonConsumingActions": []
+        }
+      }
+    },
+    "resetBasis": "Not applicable; no reset occurred.",
+    "progressOrBlockerNarrowing": "The objective exhausted retry2 and remained unresolved.",
+    "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
+  }
+}

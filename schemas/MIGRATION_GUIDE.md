@@ -1,7 +1,7 @@
 ---
 id: SCHEMA-MIGRATE-001
 title: Schema Migration Guide
-version: 0.3.0
+version: 0.4.0
 status: baseline
 ---
 
@@ -21,16 +21,16 @@ Version 1 adds:
 - executable positive and negative validation
 - format checking for dates and date-times
 
-Current valid repository instances remain valid.
+Existing records remain valid against their selected preserved major; completion records selected against the new v2 rolling/current contract require the migration below.
 
 ## Recommended consumer migration
 
 1. Inventory every producer and consumer.
-2. Use the appropriate `schemas/v1/` major-version path and pin a repository tag or commit when exact immutability is required.
+2. Use the current major-version path (`schemas/v2/` for completion-result and `schemas/v1/` for other contracts), and pin a repository tag or commit when exact immutability is required. Use `schemas/v1/completion-result.schema.json` for retained v1 records or pinned v1 consumers.
 3. Install or configure a Draft 2020-12 validator.
 4. Enable format checking.
 5. Validate stored representative records.
-6. Add the current supported `schemaVersion` to newly produced records (`1.1.0` for project manifests using infrastructure package arrays; otherwise `1.0.0`).
+6. Add the current supported `schemaVersion` to newly produced records (`2.0.0` for completion-result v2, `1.1.0` for project manifests using infrastructure package arrays, otherwise `1.0.0`); explicitly mark repository-discovered retained completion-result v1 records as `1.0.0` because omission selects the current major.
 7. Move non-standard fields under `extensions`.
 8. Record failures and correct producers rather than weakening the contract.
 9. Add contract tests to CI.
@@ -38,7 +38,19 @@ Current valid repository instances remain valid.
 
 ## Rolling-path consumers
 
-Consumers using `schemas/<name>.schema.json` should migrate to `schemas/v1/<name>.schema.json` for major-version compatibility. Consumers requiring an exact immutable artifact should resolve that path from a pinned repository tag or commit.
+Consumers using `schemas/<name>.schema.json` should follow the current major for that contract: completion-result rolling is v2, while the other rolling contracts remain v1. Consumers requiring an exact immutable artifact should resolve the applicable major path from a pinned repository tag or commit. Retained v1 completion records must use `schemas/v1/completion-result.schema.json`.
+
+## Completion-result v2 migration
+
+Moving the rolling/current completion-result contract from v1 to v2 is a breaking change because v2 requires `executionDiscipline` and `schemaVersion: "2.0.0"`.
+
+Producers of new or current records must emit v2 records and populate failed or indeterminate outcomes, authorization and recovery continuity, the per-action retry ledger and terminal/reset evidence, progress or blocker narrowing, delegation handoff and boundary continuity, and authorized out-of-scope routing. Use one `retryLedger` map keyed by objective, store each objective's `failedOrIndeterminateOutcomes` array inside that objective's ledger, and store `delegationHandoff` inside every prior and current sequence. Make the outcome array non-empty exactly when the same ledger contains a Failed or Indeterminate attempt; remove the obsolete top-level outcome map so a failure ledger and success-only ledger cannot split one objective. Every `retry1` or `retry2` action records a causally relevant `materialChange` plus `causalRationale`; generic justification alone is insufficient. For each objective, store zero or more completed earlier sequences under `priorUnresolvedSequences` only when their final attempt is failed or indeterminate with `reported-unresolved`, then store exactly one latest sequence under `currentSequence`. A terminal unresolved sequence records successful evidence gathered before its stop in `preTerminalNonConsumingActions` and has an empty `nonConsumingActions` array, which preserves earlier evidence while preventing actions after the stop; other sequences leave the pre-terminal array empty. The current sequence has no reset authorization when no prior sequence exists; otherwise it records the prior stop/report, separate accountable authorization, material blocker or relevant scope or system-state change, and causal rationale. Record other successful evidence-only activity under `nonConsumingActions`; a sequence may omit `attempts` only when that array contains at least one action, preventing both fabricated budgeted attempts and empty sequences. `status: "validated"` requires at least one reported `passed` validation. Every reported `passed` or `failed` validation identifies one unique action with matching `objectiveId` and `actionId`, and the referenced action carries a compatible result. Record each successful objective-clearing action at its current retry position, require every other action to end before that attempt starts, require `retry-authorized` only when the corresponding next retry is present, and do not create another action or sequence after objective completion. Set every sequence's `delegationHandoff.delegated` explicitly; when true, the containing objective ledger's non-empty outcomes supply authoritative failure evidence and the handoff records meaningful value, blocker, `unresolvedState: "unresolved"`, and `boundariesPreserved: true`. Its `retryCount` must equal that same sequence's actual retry depth. Preserve a prior sequence's handoff when a separately authorized reset creates a new current sequence. Consumers must update schema selection and bindings to read `executionDiscipline` and validate current records against the rolling or v2 schema.
+
+A delegated handoff must remain on the sequence it describes within the same objective ledger, and that sequence must end `reported-unresolved`; migrate any completed or retry-authorized handoff record to its actual state instead of labeling it unresolved.
+
+Every `passed` or `failed` validation entry must now include `objectiveId` set to the exact `retryLedger` key it evaluates and `actionId` set to the unique ledger action that performed the check; `not-run` entries require neither link because they report no executed result. Add the corresponding `actionId` to each referenced ledger action. Each reset after the first sequence must include `priorSequenceId` for the immediately preceding unresolved sequence and `authorizedAt` between that terminal attempt's end and the new sequence's first action. Update bindings and producers for those fields. Direct JSON Schema evaluation remains the structural layer; run `tools/validate-schemas/validate_schemas.py` or implement equivalent semantic checks for exact validation-action correlation, action intervals, retry and terminal order, unique sequence IDs, reset linkage, authorization chronology, and all RFC 3339 values accepted by the schema.
+
+Retain existing v1 records and validate them against `schemas/v1/completion-result.schema.json`; pinned v1 consumers may remain on that major path. Repository-discovered retained v1 records must explicitly declare `schemaVersion: "1.0.0"`, while direct consumers pinned to v1 may continue accepting omission as the unchanged v1 contract permits. The current validator selects v2 for omitted, current, or new completion records and v1 only for records explicitly marked or pinned at v1. The compatibility class is breaking for completion-result consumers; all other schemas remain v1.
 
 ## Project manifest 1.1
 

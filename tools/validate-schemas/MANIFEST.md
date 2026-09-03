@@ -1,7 +1,7 @@
 ---
 id: TOOL-PKG-VALIDATE-SCHEMAS-001-MANIFEST
 title: Validate Schemas Tool Manifest
-version: 1.1.0
+version: 1.2.0
 status: baseline
 ---
 
@@ -10,6 +10,7 @@ status: baseline
 ## Required files
 
 - `validate_schemas.py`
+- `completion_semantics.py`
 - `requirements.txt`
 - `requirements.lock`
 - `README.md`
@@ -32,5 +33,6 @@ status: baseline
 - direct dependencies are represented in the SHA-256-hashed lock
 - hosted workflows use the checked-in lock with hash enforcement
 - positive and negative tests pass
+- completion-result exact validation-action correlation, terminal-boundary, and RFC 3339 chronology tests pass
 - stable path remains unchanged
 - documentation and examples match behavior

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/completion-result.schema.json",
+  "$id": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/v2/completion-result.schema.json",
   "title": "Completion Result",
   "description": "Records implementation state, validation outcomes, limitations, risk, compatibility impact, review, and execution discipline without treating a single successful command as proof of full completion. Full v2 conformance also requires the completion semantic checks provided by tools/validate-schemas/validate_schemas.py or an equivalent implementation.",
   "type": "object",
@@ -1264,6 +1264,5 @@
       ]
     }
   },
-  "x-schemaVersion": "2.0.0",
-  "x-versionedSchema": "v2/completion-result.schema.json"
+  "x-schemaVersion": "2.0.0"
 }

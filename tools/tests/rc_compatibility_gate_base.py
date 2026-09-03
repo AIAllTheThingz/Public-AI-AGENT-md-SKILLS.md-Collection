@@ -337,7 +337,7 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         }
         expected_schemas = {f"schemas/{name}" for name in schema_names} | {
             f"schemas/v1/{name}" for name in schema_names
-        }
+        } | {"schemas/v2/completion-result.schema.json"}
         self.assertEqual(set(self.inventory["stableSchemaPaths"]), expected_schemas)
 
         templates_manifest = (REPO_ROOT / "templates" / "MANIFEST.md").read_text(encoding="utf-8")
@@ -551,11 +551,89 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
         self.assertIn("Testing and Quality Engineering", breaking)
         self.assertIn("Product Management", breaking)
         self.assertIn("User Experience", breaking)
+        self.assertIn("GOV-WORK-011", breaking)
+        self.assertIn("GOV-WORK-014", breaking)
+        self.assertIn("completion-result", breaking)
+        self.assertIn("schemaVersion 2.0.0", breaking)
         self.assertGreaterEqual(len(migration["requiredActions"]), 5)
+        required_actions = "\n".join(migration["requiredActions"])
+        self.assertIn("stop all further execution attempts", required_actions)
+        self.assertIn("report unresolved", required_actions)
+        self.assertIn(
+            "separate authorization from an accountable requester or owner",
+            required_actions,
+        )
+        self.assertIn(
+            "material blocker or relevant scope or system-state change",
+            required_actions,
+        )
+        self.assertIn(
+            "Failed or Indeterminate read-only execution",
+            required_actions,
+        )
+        self.assertIn("any execution action", required_actions)
+        self.assertNotIn("consequential execution action", required_actions)
+        self.assertIn("successful evidence-only", required_actions)
+        self.assertIn("executionDiscipline", required_actions)
+        self.assertIn(
+            "at least one passed validation before using validated status",
+            required_actions,
+        )
+        self.assertIn(
+            "require every executed passed or failed validation to use objectiveId and actionId",
+            required_actions,
+        )
+        self.assertIn("use one retryLedger map keyed by objective", required_actions)
+        self.assertIn(
+            "store each objective's failedOrIndeterminateOutcomes array inside that objective's ledger",
+            required_actions,
+        )
+        self.assertIn(
+            "store delegationHandoff inside every prior and current sequence",
+            required_actions,
+        )
+        self.assertIn("same objective cannot be split across maps", required_actions)
+        self.assertIn(
+            "require each retry action to record materialChange and causalRationale",
+            required_actions,
+        )
+        self.assertIn("explicit per-sequence delegationHandoff.delegated", required_actions)
+        self.assertIn(
+            "containing objective ledger's outcomes as authoritative failure evidence",
+            required_actions,
+        )
+        self.assertIn(
+            "retryCount to equal that same sequence's actual retry depth",
+            required_actions,
+        )
+        self.assertIn(
+            "store successful evidence gathered before the stop in preTerminalNonConsumingActions",
+            required_actions,
+        )
+        self.assertIn(
+            "prohibit nonConsumingActions so further action requires a separately authorized reset sequence",
+            required_actions,
+        )
+        self.assertIn(
+            "preserve a prior sequence's handoff after an authorized reset",
+            required_actions,
+        )
+        self.assertIn("per-objective sequences", required_actions)
+        self.assertIn("prior sequence stop/report", required_actions)
+        self.assertIn("separate accountable authorization", required_actions)
+        self.assertIn("material blocker or relevant scope or system-state change", required_actions)
+        review_actions = "\n".join(migration["reviewActions"])
+        self.assertIn("completion-result v2", review_actions)
+        preserved_contracts = "\n".join(migration["preservedContracts"])
+        self.assertIn(
+            "schemas/v1/completion-result.schema.json", preserved_contracts
+        )
         self.assertGreaterEqual(len(migration["preservedContracts"]), 6)
         notes = (REPO_ROOT / "releases" / "migrations" / f"{CANDIDATE}.md").read_text(encoding="utf-8")
         self.assertIn("# Migration to 1.0.0-rc.1 from 0.10.0", notes)
         self.assertIn("## Required actions", notes)
+        self.assertIn("GOV-WORK-011", notes)
+        self.assertIn("GOV-WORK-014", notes)
         self.assertIn("The candidate is breaking", notes)
         self.assertNotIn("declares no breaking change", notes)
         self.assertIn("Final `1.0.0` has not yet been approved or published", notes)

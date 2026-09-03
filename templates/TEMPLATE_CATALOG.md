@@ -38,7 +38,7 @@ This catalog maps template types to stable files, package guidance, consumers, a
 | Test evidence | [`test-evidence`](../schemas/v1/test-evidence.schema.json) |
 | Artifact record | [`artifact-record`](../schemas/v1/artifact-record.schema.json) |
 
-Human-readable risk, exception, and completion templates may be paired with their corresponding schemas where an adopting repository requires machine-readable evidence.
+Human-readable risk, exception, and completion templates may be paired with their corresponding current-major schemas where an adopting repository requires machine-readable evidence. Completion-result consumers use v2 for current records and retain v1 for historical or pinned records.
 
 ## Consumer categories
 

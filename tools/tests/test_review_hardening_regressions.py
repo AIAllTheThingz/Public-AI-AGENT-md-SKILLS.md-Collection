@@ -121,7 +121,7 @@ class ReviewHardeningRegressionTests(unittest.TestCase):
         payload = json_result(completed)
 
         self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
-        self.assertEqual(payload["version"], "1.1.0")
+        self.assertEqual(payload["version"], "1.2.0")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 ---
 id: TEMPLATE-PKG-COMPLETION-001
 title: Completion Report Template Package
-version: 0.2.0
+version: 0.3.0
 status: baseline
 ---
 
@@ -9,7 +9,7 @@ status: baseline
 
 ## Purpose
 
-Report implemented scope, changed files, risk, validation, evidence, limitations, operational impact, recovery, and accountable review.
+Report implemented scope, changed files, risk, validation, execution-discipline evidence, limitations, operational impact, recovery, and accountable review.
 
 Status: **baseline**
 
@@ -74,8 +74,16 @@ Only the following placeholders are valid in this template:
 | `{{RISK_CLASSIFICATION}}` | Risk level and assessment reference. |
 | `{{SECURITY_IMPACT}}` | Security and privacy impact. |
 | `{{COMPATIBILITY_IMPACT}}` | Compatibility and migration impact. |
-| `{{VALIDATION_ROWS}}` | Command, result, environment, and evidence rows. |
+| `{{VALIDATION_ROWS}}` | Objective ID, action ID, command, result, environment, and evidence rows; each executed pass or failure identifies one exact retry-ledger action. |
 | `{{VALIDATION_NOT_PERFORMED}}` | Checks not run with reasons. |
+| `{{FAILED_OR_INDETERMINATE_OUTCOMES}}` | Failed or indeterminate execution outcomes from each objective's `failedOrIndeterminateOutcomes` array in the single retry ledger. |
+| `{{AUTHORIZATION_RECOVERY_CONTINUITY}}` | Confirmation that authorization and recovery controls remain valid for consequential mutations. |
+| `{{RETRY_LEDGER_ROWS}}` | One row per budget-consuming action, each successful non-consuming discovery, reconciliation, or validation action, and each subsequent successful objective-clearing action at its current retry position, grouped by objective and sequence with action ID, retry-specific material change, causal rationale, sequence-specific reset evidence, and terminal disposition. |
+| `{{RESET_BASIS}}` | Immediately prior sequence ID and stop/report, separate accountable authorization and timestamp, material blocker or relevant scope or system-state change, and causal rationale supporting any new budget. |
+| `{{PROGRESS_OR_BLOCKER_NARROWING}}` | Evidence of relevant progress toward acceptance criteria or narrowing the blocker. |
+| `{{DELEGATION_HANDOFF}}` | Per-sequence delegation state: whether work was delegated and, when true, its meaningful value, failure evidence from the containing objective's outcomes, blocker, retry count equal to that sequence's recorded retry depth, and unresolved state with that sequence ending `reported-unresolved`; retain prior-sequence handoffs after reset. |
+| `{{DELEGATION_BOUNDARY_CONTINUITY}}` | Confirmation before handoff completion that retry and no-progress boundaries remain enforced and were not reset or bypassed. |
+| `{{OUT_OF_SCOPE_ROUTING}}` | Authorized routing of non-blocking out-of-scope findings. |
 | `{{OPERATIONAL_IMPACT}}` | Deployment, operations, monitoring, and support impact. |
 | `{{ROLLBACK_RECOVERY}}` | Rollback, restore, or recovery plan and evidence. |
 | `{{LIMITATIONS}}` | Known limitations and remaining risks. |
@@ -83,6 +91,10 @@ Only the following placeholders are valid in this template:
 | `{{HUMAN_REVIEW}}` | Reviewers, decisions, and dates. |
 
 Placeholders use the exact `{{UPPER_SNAKE_CASE}}` form. Replace every token before adoption.
+
+## Execution discipline
+
+When an objective or blocker has execution activity, complete the Execution discipline section. Count any objective-directed execution action with a reconciled `Failed` or `Indeterminate` result as a budget-consuming attempt, whether mutating or read-only; count every later execution action for that objective or blocker as a retry even inside the same sequence, plan, workflow, tool, agent, or strategy. Every retry records a causally relevant `materialChange` and a `causalRationale` explaining why that change creates a concrete reason the retry may succeed; generic justification alone is insufficient. Evidence-only successful discovery, reconciliation, or validation is non-consuming and must appear as a non-consuming row in the same objective and sequence ledger, while failed or indeterminate read-only execution directed at the objective or blocker consumes budget. A subsequent successful objective-clearing action is recorded at its current retry position and ends the objective or blocker; every other action ends no later than that terminal attempt starts. A sequence ending `reported-unresolved` stores successful evidence gathered before its terminal attempt in `preTerminalNonConsumingActions` and leaves `nonConsumingActions` empty; each retained action ends no later than the terminal attempt starts, and further action requires a separately authorized reset sequence, while other sequences leave the pre-terminal array empty. Preserve the initial-attempt-plus-two-retries terminal boundary, every prior sequence, and each sequence's handoff; each sequence after the first records the prior stop/report, separate accountable authorization, material-change evidence, and causal rationale. Its `resetAuthorization.priorSequenceId` names the immediately preceding unresolved sequence, and `authorizedAt` falls after that sequence ends and before the new sequence starts. In schema-backed JSON, use one `retryLedger` map keyed by objective, record the exact ledger key as `objectiveId` and the uniquely referenced ledger action as `actionId` on each executed `passed` or `failed` validation, store each objective's `failedOrIndeterminateOutcomes` array inside that objective's ledger, and store `delegationHandoff` inside every prior and current sequence. The outcome array is non-empty exactly when the same ledger has a Failed or Indeterminate attempt and is a delegated handoff's authoritative failure evidence, so the objective cannot be split across maps. Set each per-sequence `delegationHandoff.delegated` explicitly; when true, also record `meaningfulValue`, `blocker`, `retryCount`, `unresolvedState`, and `boundariesPreserved: true`, and require that sequence to end `reported-unresolved`. The schema requires `retryCount` to equal 0, 1, or 2 according to that same sequence's actual retry depth, preserving an earlier handoff even when an authorized reset sequence later completes. Full v2 conformance requires both JSON Schema validation and the completion semantic validator invoked by `tools/validate-schemas/validate_schemas.py`.
 
 For optional JSON fields, remove the property or array item when it is genuinely inapplicable. Do not replace typed JSON fields with quoted prose and then declare the schema unreasonable for noticing.
 
@@ -108,6 +120,7 @@ The adopted record is complete only when:
 - scope and ownership are explicit
 - required facts are traceable
 - applicable evidence is linked
+- execution-discipline evidence is complete for any objective-directed execution
 - decisions use defined vocabulary
 - optional omissions are justified
 - review and approval roles are not conflated
@@ -122,6 +135,7 @@ The adopted record is complete only when:
 - not-run checks are explicit
 - artifact identifiers are immutable where possible
 - limitations and residual risk are honest
+- retry counts, reset basis, progress, and delegation boundaries are explicit
 
 ## Common failure modes
 
@@ -160,6 +174,7 @@ Changes to this package must:
 - preserve the stable template path unless migration is approved
 - update the README, checklist, example, and template together
 - preserve placeholder names unless a migration is documented
+- preserve the Execution discipline section and its documented placeholders
 - classify compatibility for downstream users
 - run template and link validation
 - state checks not run

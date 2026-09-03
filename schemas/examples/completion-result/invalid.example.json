@@ -1,7 +1,94 @@
 {
-  "status": "done",
-  "summary": "",
-  "filesChanged": "README.md",
-  "validation": [],
-  "limitations": []
+  "schemaVersion": "2.0.0",
+  "status": "partially-validated",
+  "summary": "Invalid v2 record that attempts to split one objective across independent failure and success ledgers.",
+  "filesChanged": [
+    "README.md"
+  ],
+  "validation": [
+    {
+      "objectiveId": "validate the fictitious completion record",
+      "actionId": "separate-success-validation",
+      "name": "Schema validation",
+      "result": "passed"
+    }
+  ],
+  "limitations": [
+    "The same objective is intentionally duplicated across the obsolete outcome map and the authoritative retry ledger."
+  ],
+  "executionDiscipline": {
+    "failedOrIndeterminateOutcomes": {
+      "validate the fictitious completion record": {
+        "outcomes": [
+          "The fictitious validation attempt failed."
+        ],
+        "retryLedger": {
+          "priorUnresolvedSequences": [],
+          "currentSequence": {
+            "sequenceId": "sequence-1",
+            "delegationHandoff": {
+              "delegated": false,
+              "summary": "Not applicable; no delegation occurred.",
+              "boundariesPreserved": true
+            },
+            "attempts": {
+              "initialAttempt": {
+                "action": "Run fictitious schema validation",
+                "actor": "fictitious-agent",
+                "executionContext": {
+                  "tool": "fictitious-validator"
+                },
+                "startedAt": "2026-01-01T00:00:00Z",
+                "endedAt": "2026-01-01T00:01:00Z",
+                "effectsReconciliation": "No state changed.",
+                "result": "Failed",
+                "budgetPosition": "initial-attempt",
+                "justification": "Initial validation attempt.",
+                "terminalDisposition": "reported-unresolved"
+              }
+            },
+            "preTerminalNonConsumingActions": [],
+            "nonConsumingActions": []
+          }
+        }
+      }
+    },
+    "authorizationRecoveryContinuity": "No consequential mutation occurred.",
+    "retryLedger": {
+      "validate the fictitious completion record": {
+        "failedOrIndeterminateOutcomes": [],
+        "priorUnresolvedSequences": [],
+        "currentSequence": {
+          "sequenceId": "sequence-1",
+          "delegationHandoff": {
+            "delegated": false,
+            "summary": "Not applicable; no delegation occurred.",
+            "boundariesPreserved": true
+          },
+          "attempts": {
+            "initialAttempt": {
+              "actionId": "separate-success-validation",
+              "action": "Claim a successful validation in a separate ledger",
+              "actor": "fictitious-agent",
+              "executionContext": {
+                "tool": "fictitious-validator"
+              },
+              "startedAt": "2026-01-01T00:02:00Z",
+              "endedAt": "2026-01-01T00:03:00Z",
+              "effectsReconciliation": "No state changed.",
+              "result": "Successful",
+              "budgetPosition": "initial-attempt",
+              "justification": "Illustrates the prohibited split-ledger bypass.",
+              "terminalDisposition": "objective-completed"
+            }
+          },
+          "preTerminalNonConsumingActions": [],
+          "nonConsumingActions": []
+        }
+      }
+    },
+    "resetBasis": "Not applicable; no reset occurred.",
+    "progressOrBlockerNarrowing": "The record attempts to bypass reset authorization by duplicating one objective across two maps.",
+    "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
+  }
 }

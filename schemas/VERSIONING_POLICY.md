@@ -1,7 +1,7 @@
 ---
 id: SCHEMA-VERSION-001
 title: Schema Versioning Policy
-version: 0.3.0
+version: 0.4.0
 status: baseline
 ---
 
@@ -20,6 +20,7 @@ Schema contracts use semantic versioning principles:
 - Rolling paths may advance within the compatibility policy.
 - Versioned major paths preserve backward compatibility within that major. They may receive compatible patch or minor additions, but must not receive a breaking change.
 - A new major version receives a new directory such as `v2/`.
+- Completion-result rolling/current is major v2; `v1/completion-result.schema.json` remains unchanged for historical and pinned v1 consumers. Other contracts remain major v1.
 
 Consumers that require byte-for-byte immutability must pin a repository tag or commit in addition to the major schema path and record the instance `schemaVersion`.
 
@@ -28,10 +29,10 @@ Consumers that require byte-for-byte immutability must pin a repository tag or c
 Instances may include:
 
 ```json
-"schemaVersion": "1.1.0"
+"schemaVersion": "2.0.0"
 ```
 
-Version 1 instances may omit the property for backward compatibility and are then interpreted as `1.0.0`. The project-manifest contract requires `1.1.0` when standard virtualization, operating-system, or networking selections are used.
+Current completion-result instances use `schemaVersion: "2.0.0"` and the required `executionDiscipline` record. Executed validation entries identify their exact retry-ledger objective and action, and reset sequences identify and chronologically follow the immediately prior unresolved sequence. Full v2 validation therefore includes the repository semantic pass after Draft 2020-12 structural validation, including terminal ordering over every RFC 3339 date-time accepted by the schema. Version 1 completion-result instances may omit the property for backward compatibility and are interpreted as `1.0.0` under the preserved v1 contract. Other version 1 contracts use `1.0.0`, except project manifests using standard virtualization, operating-system, or networking selections, which require `1.1.0`.
 
 ## Release requirements
 
@@ -45,6 +46,7 @@ A schema release must identify:
 - validator version
 - unresolved limitations
 - approval for breaking changes
+- handling of retained historical records when a new major is introduced
 
 ## Deprecation
 

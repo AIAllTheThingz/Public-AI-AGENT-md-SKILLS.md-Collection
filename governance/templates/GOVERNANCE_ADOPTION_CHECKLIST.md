@@ -1,7 +1,7 @@
 ---
 id: GOV-TPL-ADOPT-001
 title: Governance Adoption Checklist
-version: 0.2.0
+version: 0.3.0
 status: baseline
 ---
 
@@ -34,6 +34,13 @@ status: baseline
 - [ ] Review and approval record available
 - [ ] Exception record available
 - [ ] Vulnerability triage and closure records available
+- [ ] GOV-WORK-011..014 records selected for failed or indeterminate outcomes, reconciliation, authorization/recovery-control continuity for consequential mutations, retry ledger/budget, terminal disposition/reset basis, progress/blocker narrowing, delegation handoff, and authorized out-of-scope routing
+- [ ] Retry ledger spans the objective or blocker across the active task or change and all tools, tasks, sessions, agents, and strategies; exhaustion stops further attempts and records unresolved
+- [ ] Count a budget-consuming attempt as any execution action directed at the objective or blocker whose observable effects are reconciled with a Failed or Indeterminate result, whether mutating or read-only; count every subsequent execution action after that result as a retry even within the same command sequence, plan, workflow, tool, agent, or strategy; successful read-only discovery, reconciliation, or validation that only gathers evidence is non-consuming, Failed or Indeterminate read-only execution directed at the objective or blocker consumes budget, and a subsequent Successful objective-clearing action is recorded at its current retry position and ends the objective or blocker
+- [ ] Preserve every retry sequence for the objective or blocker; each sequence after the first requires the prior sequence to stop and report, separate accountable requester or owner authorization, and recorded material blocker or relevant scope or system-state change
+- [ ] Completion-result v2 records identify the exact retry-ledger objective and unique action on every executed passed or failed validation, link each reset to the immediately prior sequence with `priorSequenceId`, timestamp authorization in `authorizedAt` between the prior terminal stop and new sequence start, retain only genuinely pre-terminal actions whose end precedes the terminal attempt start, and prohibit activity after objective completion
+- [ ] Completion-result v2 records pass both structural JSON Schema validation and the completion semantic validator
+- [ ] Every executed validation identifies one exact ledger action by objective ID and action ID; completed objectives contain no later action
 
 ## Integration
 

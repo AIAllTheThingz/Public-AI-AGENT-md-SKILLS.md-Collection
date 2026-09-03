@@ -36,7 +36,7 @@ The tools are deliberately conservative. They validate implemented contracts and
 | [Check Links](check-links/) | `check_links.py` | read-only | Validate relative Markdown targets and local heading anchors without network access. |
 | [Check Freshness](check-freshness/) | `check_freshness.py` | read-only | Validate authoritative-source review metadata and report recorded review-date state as Passed, Warning, or NotRun without live network access. |
 | [Validate Skills](validate-skills/) | `validate_skills.py` | read-only | Validate skill metadata, progressive disclosure, package routing, registration, local links, and optional UI metadata. |
-| [Validate Schemas](validate-schemas/) | `validate_schemas.py` | read-only | Validate Draft 2020-12 contracts, examples, versioned equivalence, and repository instances. |
+| [Validate Schemas](validate-schemas/) | `validate_schemas.py` | read-only | Validate Draft 2020-12 contracts, examples, versioned equivalence, repository instances, and completion-result v2 semantic consistency. |
 | [Validate Templates](validate-templates/) | `validate_templates.py` | read-only | Validate template packages, placeholders, examples, stable paths, and schema-backed JSON. |
 | [Validate Tools](validate-tools/) | `validate_tools.py` | read-only | Validate tool package structure, executable entry points, contracts, documentation, workflows, and tests. |
 | [Validate Release](release/) | `validate_release.py` | read-only | Validate VERSION, changelog, release notes, migration notes, release policy, maturity policy, workflow, publication state, and tag matching. |

@@ -1,38 +1,26 @@
 {
   "schemaVersion": "2.0.0",
   "status": "partially-validated",
-  "summary": "Fictitious governance change example with repository validation completed and organizational adoption not performed.",
+  "summary": "Invalid v2 record whose passed validation cites an unrelated objective.",
   "filesChanged": [
-    "governance/README.md",
-    "governance/AGENTS.md"
+    "README.md"
   ],
-  "risk": "moderate",
-  "securityImpact": "No production security control changed in this example.",
-  "compatibilityImpact": "Adopting organizations must review policy and record migration.",
   "validation": [
     {
-      "objectiveId": "validate the fictitious governance change",
-      "actionId": "repository-validation",
-      "name": "repository-validation",
+      "objectiveId": "validate an unrelated objective",
+      "actionId": "schema-validation",
+      "name": "Schema validation",
       "result": "passed",
-      "evidence": "Illustrative local validation record"
-    },
-    {
-      "name": "organizational-approval",
-      "result": "not-run",
-      "evidence": "No real organization adopted this example"
+      "evidence": "example only"
     }
   ],
   "limitations": [
-    "No legal review",
-    "No production authority mapping",
-    "No operational pilot"
+    "The validation-to-objective mismatch is intentional."
   ],
-  "reviewer": "fictitious-governance-reviewer",
   "executionDiscipline": {
     "authorizationRecoveryContinuity": "Not applicable; no consequential mutation occurred.",
     "retryLedger": {
-      "validate the fictitious governance change": {
+      "validate the illustrative completion record": {
         "failedOrIndeterminateOutcomes": [],
         "priorUnresolvedSequences": [],
         "currentSequence": {
@@ -45,18 +33,18 @@
           "preTerminalNonConsumingActions": [],
           "nonConsumingActions": [
             {
-              "actionId": "repository-validation",
-              "action": "Run evidence-only repository validation",
-              "actor": "fictitious-governance-reviewer",
+              "actionId": "schema-validation",
+              "action": "Run evidence-only schema validation",
+              "actor": "fictitious-reviewer",
               "executionContext": {
-                "tool": "validate-standards"
+                "tool": "fictitious-schema-validator"
               },
               "startedAt": "2026-01-01T00:00:00Z",
               "endedAt": "2026-01-01T00:01:00Z",
               "effectsReconciliation": "No target-state mutation; successful output was reconciled.",
               "result": "Successful",
               "budgetPosition": "non-consuming",
-              "justification": "Gathered illustrative repository-validation evidence.",
+              "justification": "Gathered structural validation evidence for a different objective.",
               "terminalDisposition": "not-terminal"
             }
           ]
@@ -64,7 +52,7 @@
       }
     },
     "resetBasis": "Not applicable; no retry budget reset occurred.",
-    "progressOrBlockerNarrowing": "Repository validation completed without a blocker.",
+    "progressOrBlockerNarrowing": "The record intentionally mismatches validation and ledger objectives.",
     "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
   }
 }

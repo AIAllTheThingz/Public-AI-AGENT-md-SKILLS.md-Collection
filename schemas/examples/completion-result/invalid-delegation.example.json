@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "2.0.0",
+  "status": "not-completed",
+  "summary": "Invalid v2 record with an incomplete delegated-work handoff.",
+  "filesChanged": [],
+  "validation": [
+    {
+      "objectiveId": "validate the fictitious artifact",
+      "actionId": "failed-validation",
+      "name": "Fictitious validation",
+      "result": "failed"
+    }
+  ],
+  "limitations": [
+    "The delegated handoff intentionally omits its required unresolved-work state."
+  ],
+  "executionDiscipline": {
+    "authorizationRecoveryContinuity": "No consequential mutation occurred.",
+    "retryLedger": {
+      "validate the fictitious artifact": {
+        "failedOrIndeterminateOutcomes": [
+          "The fictitious validation failed."
+        ],
+        "priorUnresolvedSequences": [],
+        "currentSequence": {
+          "sequenceId": "sequence-1",
+          "delegationHandoff": {
+            "delegated": true,
+            "summary": "Fictitious work was delegated without the required state.",
+            "boundariesPreserved": true
+          },
+          "attempts": {
+            "initialAttempt": {
+              "actionId": "failed-validation",
+              "action": "Run fictitious validation",
+              "actor": "fictitious-agent",
+              "executionContext": {
+                "tool": "fictitious-validator"
+              },
+              "startedAt": "2026-01-01T00:00:00Z",
+              "endedAt": "2026-01-01T00:01:00Z",
+              "effectsReconciliation": "No state changed.",
+              "result": "Failed",
+              "budgetPosition": "initial-attempt",
+              "justification": "Initial validation attempt.",
+              "terminalDisposition": "reported-unresolved"
+            }
+          },
+          "preTerminalNonConsumingActions": [],
+          "nonConsumingActions": []
+        }
+      }
+    },
+    "resetBasis": "Not applicable; no reset occurred.",
+    "progressOrBlockerNarrowing": "The unresolved work is being handed off.",
+    "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
+  }
+}
