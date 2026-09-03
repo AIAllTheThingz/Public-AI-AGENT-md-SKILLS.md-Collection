@@ -1163,18 +1163,46 @@ class ValidateSchemasTests(unittest.TestCase):
 
         self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
 
-    def test_semantic_timestamp_parser_accepts_rfc3339_leap_second(self):
-        _, instance = completion_v2()
+    def test_schema_rejects_rfc3339_leap_second_consistently(self):
+        schema, instance = completion_v2()
         objective = next(
             iter(instance["executionDiscipline"]["retryLedger"].values())
         )
         action = objective["currentSequence"]["nonConsumingActions"][0]
         action["startedAt"] = "2016-12-31T23:59:60Z"
-        action["endedAt"] = "2017-01-01T00:00:01Z"
+
+        errors = list(
+            Draft202012Validator(
+                schema, format_checker=FormatChecker()
+            ).iter_errors(instance)
+        )
+
+        self.assertTrue(
+            any(
+                error.validator == "format"
+                and list(error.absolute_path)[-1:] == ["startedAt"]
+                for error in errors
+            )
+        )
+
+    def test_semantic_timestamp_parser_preserves_submicrosecond_order(self):
+        _, instance = completion_v2()
+        objective = next(
+            iter(instance["executionDiscipline"]["retryLedger"].values())
+        )
+        action = objective["currentSequence"]["nonConsumingActions"][0]
+        action["startedAt"] = "2026-01-01T00:00:00.0000009Z"
+        action["endedAt"] = "2026-01-01T00:00:00.0000001Z"
 
         completed = run_completion_instance(instance)
 
-        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        matching = [
+            item
+            for item in json_result(completed)["findings"]
+            if item["code"] == "COMPLETION_ACTION_TIME_INVALID"
+        ]
+        self.assertEqual(len(matching), 1)
 
     def test_objective_completion_rejects_a_later_action(self):
         instance = json.loads(

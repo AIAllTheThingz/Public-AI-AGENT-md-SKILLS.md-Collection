@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from typing import Any
 
 
-RFC3339_LEAP_SECOND = re.compile(
-    r"^(?P<prefix>.*[Tt]\d{2}:\d{2}):60"
-    r"(?P<fraction>\.\d+)?(?P<offset>[Zz]|[+-]\d{2}:\d{2})$"
+RFC3339_TIMESTAMP = re.compile(
+    r"^(?P<date>\d{4}-\d{2}-\d{2})[Tt]"
+    r"(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})"
+    r"(?:\.(?P<fraction>\d+))?"
+    r"(?P<offset>[Zz]|[+-]\d{2}:\d{2})$"
 )
 
 
@@ -44,18 +46,34 @@ def _actions(sequence: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
-def _timestamp(value: str) -> datetime:
-    leap_second = RFC3339_LEAP_SECOND.fullmatch(value)
-    if leap_second is not None:
-        value = (
-            f"{leap_second.group('prefix')}:59"
-            f"{leap_second.group('fraction') or ''}"
-            f"{leap_second.group('offset')}"
-        )
-    if value.endswith(("Z", "z")):
-        value = f"{value[:-1]}+00:00"
-    parsed = datetime.fromisoformat(value)
-    return parsed + timedelta(seconds=1) if leap_second is not None else parsed
+def _timestamp(value: str) -> tuple[int, str]:
+    """Return an exact UTC instant for a structurally valid RFC 3339 value."""
+
+    match = RFC3339_TIMESTAMP.fullmatch(value)
+    if match is None:
+        raise ValueError(f"Unsupported RFC 3339 timestamp: {value}")
+
+    second = int(match.group("second"))
+    leap_second = second == 60
+    offset = match.group("offset")
+    if offset in {"Z", "z"}:
+        offset = "+00:00"
+    parsed = datetime.fromisoformat(
+        f"{match.group('date')}T{match.group('hour')}:"
+        f"{match.group('minute')}:{59 if leap_second else second:02d}{offset}"
+    ).astimezone(timezone.utc)
+    whole_seconds = (
+        (parsed.toordinal() - 1) * 86_400
+        + parsed.hour * 3_600
+        + parsed.minute * 60
+        + parsed.second
+        + int(leap_second)
+    )
+    # With insignificant trailing zeroes removed, lexicographic comparison of
+    # the remaining digits is exact even when the fraction exceeds Python's
+    # datetime microsecond precision or integer-conversion safety limit.
+    fraction = (match.group("fraction") or "").rstrip("0")
+    return whole_seconds, fraction
 
 
 def _pointer(*parts: str | int) -> str:
