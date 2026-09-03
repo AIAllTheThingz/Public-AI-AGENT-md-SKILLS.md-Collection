@@ -38,8 +38,8 @@ template_type: completion-report
 
 ## Validation performed
 
-| Command or check | Result | Environment | Evidence | Limitations |
-|---|---|---|---|---|
+| Objective ID | Command or check | Result | Environment | Evidence | Limitations |
+|---|---|---|---|---|---|
 {{VALIDATION_ROWS}}
 
 ## Validation not performed
@@ -58,7 +58,7 @@ template_type: completion-report
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 {{RETRY_LEDGER_ROWS}}
 
-For schema-backed JSON, use one `retryLedger` map keyed by objective. Each objective ledger contains its own `failedOrIndeterminateOutcomes` array, and every prior or current sequence contains its own `delegationHandoff`. The outcome array is non-empty exactly when that same ledger contains a Failed or Indeterminate attempt and supplies authoritative failure evidence for a delegated handoff. A delegated handoff requires its containing sequence to end `reported-unresolved`, and its `retryCount` must equal that same sequence's recorded retry depth. Preserve the handoff on a prior sequence when an authorized reset creates a new current sequence. No second objective map exists, so an objective and its failure evidence cannot be split across ledgers. The rendered summaries and table above describe the same per-objective, per-sequence records.
+For schema-backed JSON, use one `retryLedger` map keyed by objective. Each executed `passed` or `failed` validation records an `objectiveId` that exactly matches the ledger key whose action evidence it evaluates. Each objective ledger contains its own `failedOrIndeterminateOutcomes` array, and every prior or current sequence contains its own `delegationHandoff`. The outcome array is non-empty exactly when that same ledger contains a Failed or Indeterminate attempt and supplies authoritative failure evidence for a delegated handoff. A delegated handoff requires its containing sequence to end `reported-unresolved`, and its `retryCount` must equal that same sequence's recorded retry depth. Preserve the handoff on a prior sequence when an authorized reset creates a new current sequence. No second objective map exists, so an objective and its failure evidence cannot be split across ledgers. The rendered summaries and table above describe the same per-objective, per-sequence records.
 
 - Reset basis, if any:
 {{RESET_BASIS}}
@@ -71,7 +71,7 @@ For schema-backed JSON, use one `retryLedger` map keyed by objective. Each objec
 - Authorized routing of non-blocking out-of-scope findings:
 {{OUT_OF_SCOPE_ROUTING}}
 
-The retry budget allows the initial attempt plus at most two justified retries per sequence. A budget-consuming attempt is any execution action directed at achieving the objective or clearing the blocker whose observable effects are reconciled and whose result is Failed or Indeterminate, whether mutating or read-only; every subsequent execution action after that result for the objective or blocker is a retry even within the same command sequence, plan, workflow, tool, agent, or strategy. Successful read-only discovery, reconciliation, or validation that only gathers evidence is non-consuming and is recorded as a non-consuming ledger row; a Failed or Indeterminate read-only execution directed at the objective or blocker consumes budget, and a subsequent Successful objective-clearing action is recorded at its current retry position and ends the objective or blocker. A sequence ending `reported-unresolved` records successful evidence gathered before the terminal attempt in `preTerminalNonConsumingActions` and leaves `nonConsumingActions` empty; further action requires a separately authorized reset sequence. Other sequences leave the pre-terminal array empty. Preserve every stopped sequence and its handoff; each sequence after the first requires the prior sequence stop/report, separate accountable authorization, material-change evidence, and causal rationale explaining why that change creates a concrete reason the new sequence may succeed.
+The retry budget allows the initial attempt plus at most two justified retries per sequence. A budget-consuming attempt is any execution action directed at achieving the objective or clearing the blocker whose observable effects are reconciled and whose result is Failed or Indeterminate, whether mutating or read-only; every subsequent execution action after that result for the objective or blocker is a retry even within the same command sequence, plan, workflow, tool, agent, or strategy. Successful read-only discovery, reconciliation, or validation that only gathers evidence is non-consuming and is recorded as a non-consuming ledger row; a Failed or Indeterminate read-only execution directed at the objective or blocker consumes budget, and a subsequent Successful objective-clearing action is recorded at its current retry position and ends the objective or blocker. A sequence ending `reported-unresolved` records successful evidence gathered before the terminal attempt in `preTerminalNonConsumingActions` and leaves `nonConsumingActions` empty; every such action ends no later than the terminal attempt starts, and further action requires a separately authorized reset sequence. Other sequences leave the pre-terminal array empty. Preserve every stopped sequence and its handoff; each sequence after the first requires the prior sequence stop/report, separate accountable authorization, material-change evidence, and causal rationale explaining why that change creates a concrete reason the new sequence may succeed. Its `resetAuthorization.priorSequenceId` identifies the immediately preceding unresolved sequence, and `authorizedAt` falls after that sequence's terminal attempt ends and before the new sequence starts.
 
 ## Deployment and operational impact
 

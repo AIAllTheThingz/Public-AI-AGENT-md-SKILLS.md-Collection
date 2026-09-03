@@ -20,11 +20,13 @@
   "compatibilityImpact": "Stable example paths and identifiers are introduced or maintained.",
   "validation": [
     {
+      "objectiveId": "validate the documentation-only standards example",
       "name": "Repository structure and identifier validation",
       "result": "passed",
       "evidence": "python tools/validate-standards/validate_repository.py"
     },
     {
+      "objectiveId": "validate the documentation-only standards example",
       "name": "Relative Markdown link validation",
       "result": "passed",
       "evidence": "python tools/check-links/check_links.py"

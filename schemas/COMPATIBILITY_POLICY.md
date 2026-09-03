@@ -61,6 +61,8 @@ The version 1 contracts preserve the repository's existing required fields and c
 
 Optionality for `schemaVersion` and `extensions` applies only where the selected major permits omission. Repository instance discovery selects the current major when `schemaVersion` is omitted, so retained completion-result v1 records discovered there must explicitly declare `1.0.0`; direct consumers pinned to the unchanged v1 contract may continue accepting omission. Completion-result v2 requires `schemaVersion: "2.0.0"` and `executionDiscipline`. Project-manifest version `1.1.0` adds optional `virtualization`, `operatingSystems`, and `networking` arrays without invalidating version `1.0.0` instances. Any instance containing one of those arrays must declare version `1.1.0`.
 
+Completion-result v2 also requires `objectiveId` on executed (`passed` or `failed`) validation records and `priorSequenceId` plus `authorizedAt` on reset authorization. These fields make cross-record relationships explicit. The repository validator, not JSON Schema alone, enforces their objective correlation and chronology; consumers substituting another validator must implement equivalent semantic checks.
+
 ## Validation versus compatibility
 
 A schema can pass meta-validation and still introduce a breaking consumer change. The meta-schema checks schema syntax and dialect rules. It does not know what your consumers built around last Tuesday's interpretation.

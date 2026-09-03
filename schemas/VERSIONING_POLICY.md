@@ -32,7 +32,7 @@ Instances may include:
 "schemaVersion": "2.0.0"
 ```
 
-Current completion-result instances use `schemaVersion: "2.0.0"` and the required `executionDiscipline` record. Version 1 completion-result instances may omit the property for backward compatibility and are interpreted as `1.0.0` under the preserved v1 contract. Other version 1 contracts use `1.0.0`, except project manifests using standard virtualization, operating-system, or networking selections, which require `1.1.0`.
+Current completion-result instances use `schemaVersion: "2.0.0"` and the required `executionDiscipline` record. Executed validation entries identify their exact retry-ledger objective, and reset sequences identify and chronologically follow the immediately prior unresolved sequence. Full v2 validation therefore includes the repository semantic pass after Draft 2020-12 structural validation. Version 1 completion-result instances may omit the property for backward compatibility and are interpreted as `1.0.0` under the preserved v1 contract. Other version 1 contracts use `1.0.0`, except project manifests using standard virtualization, operating-system, or networking selections, which require `1.1.0`.
 
 ## Release requirements
 

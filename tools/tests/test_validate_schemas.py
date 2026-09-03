@@ -84,6 +84,21 @@ def retry_ledger(*sequences: dict, outcomes: tuple[str, ...] = ()) -> dict:
     }
 
 
+def run_completion_instance(instance: dict):
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+        evidence = root / "evidence" / "completion-result.example.json"
+        evidence.parent.mkdir()
+        evidence.write_text(json.dumps(instance), encoding="utf-8")
+        return run_tool(
+            "tools/validate-schemas/validate_schemas.py",
+            "--format",
+            "json",
+            root=root,
+        )
+
+
 class ValidateSchemasTests(unittest.TestCase):
     def test_repository_schema_system_passes(self):
         completed = run_tool("tools/validate-schemas/validate_schemas.py", "--format", "json")
@@ -203,6 +218,132 @@ class ValidateSchemasTests(unittest.TestCase):
                     [],
                 )
 
+    def test_retry_reset_identifies_and_dates_the_prior_sequence(self):
+        # Catches reset evidence that cannot be correlated or ordered against
+        # the unresolved sequence it claims to follow.
+        schema, _ = completion_v2()
+        valid_instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/valid-reset.example.json"
+            ).read_text(encoding="utf-8")
+        )
+        for missing in ("priorSequenceId", "authorizedAt"):
+            with self.subTest(missing=missing):
+                instance = json.loads(json.dumps(valid_instance))
+                objective = next(
+                    iter(instance["executionDiscipline"]["retryLedger"].values())
+                )
+                del objective["currentSequence"]["resetAuthorization"][missing]
+
+                errors = list(Draft202012Validator(schema).iter_errors(instance))
+
+                self.assertTrue(
+                    any(
+                        error.validator == "required"
+                        and error.message == f"'{missing}' is a required property"
+                        for error in errors
+                    )
+                )
+
+    def test_retry_reset_must_reference_the_immediately_prior_sequence(self):
+        # Catches a reset record that cites a different sequence and therefore
+        # cannot prove continuity from the immediately preceding stop.
+        instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/valid-reset.example.json"
+            ).read_text(encoding="utf-8")
+        )
+        objective = next(
+            iter(instance["executionDiscipline"]["retryLedger"].values())
+        )
+        objective["currentSequence"]["resetAuthorization"][
+            "priorSequenceId"
+        ] = "unrelated-sequence"
+
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        matching = [
+            item
+            for item in json_result(completed)["findings"]
+            if item["code"] == "COMPLETION_RESET_SEQUENCE_MISMATCH"
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertTrue(
+            matching[0]["details"]["pointer"].endswith(
+                "/currentSequence/resetAuthorization/priorSequenceId"
+            )
+        )
+
+    def test_retry_reset_authorization_must_fall_between_sequences(self):
+        # Catches authorization recorded before the prior stop or after the
+        # reset sequence already began.
+        cases = (
+            "2025-12-31T23:59:00Z",
+            "2026-01-01T01:00:01Z",
+        )
+        for authorized_at in cases:
+            with self.subTest(authorized_at=authorized_at):
+                instance = json.loads(
+                    (
+                        REPO_ROOT
+                        / "schemas/examples/completion-result/valid-reset.example.json"
+                    ).read_text(encoding="utf-8")
+                )
+                objective = next(
+                    iter(instance["executionDiscipline"]["retryLedger"].values())
+                )
+                objective["currentSequence"]["resetAuthorization"][
+                    "authorizedAt"
+                ] = authorized_at
+
+                completed = run_completion_instance(instance)
+
+                self.assertEqual(
+                    completed.returncode, 1, completed.stdout + completed.stderr
+                )
+                matching = [
+                    item
+                    for item in json_result(completed)["findings"]
+                    if item["code"] == "COMPLETION_RESET_ORDER_INVALID"
+                ]
+                self.assertEqual(len(matching), 1)
+                self.assertTrue(
+                    matching[0]["details"]["pointer"].endswith(
+                        "/currentSequence/resetAuthorization/authorizedAt"
+                    )
+                )
+
+    def test_sequence_ids_must_be_unique_within_an_objective(self):
+        # Catches ambiguous reset linkage caused by reusing a sequence ID.
+        instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/valid-reset.example.json"
+            ).read_text(encoding="utf-8")
+        )
+        objective = next(
+            iter(instance["executionDiscipline"]["retryLedger"].values())
+        )
+        objective["currentSequence"]["sequenceId"] = "sequence-1"
+
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        matching = [
+            item
+            for item in json_result(completed)["findings"]
+            if item["code"] == "COMPLETION_SEQUENCE_ID_DUPLICATE"
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertTrue(
+            matching[0]["details"]["pointer"].endswith(
+                "/currentSequence/sequenceId"
+            )
+        )
+
     def test_split_objective_negative_fixture_is_rejected(self):
         schema, _ = completion_v2()
         instance = json.loads(
@@ -221,12 +362,19 @@ class ValidateSchemasTests(unittest.TestCase):
 
     def test_multiple_authorized_retry_resets_are_valid(self):
         schema, instance = completion_v2()
-        reset = {
+        reset_after_sequence_1 = {
+            "priorSequenceId": "sequence-1",
             "priorSequenceStopReport": "The prior sequence reported unresolved.",
             "authorizedBy": "fictitious-owner",
+            "authorizedAt": "2026-01-01T00:30:00Z",
             "authorizationEvidence": "Fictitious authorization record.",
             "materialChange": "Fictitious material state change.",
             "causalRationale": "The state change removes the prior blocker.",
+        }
+        reset_after_sequence_2 = {
+            **reset_after_sequence_1,
+            "priorSequenceId": "sequence-2",
+            "authorizedAt": "2026-01-01T01:30:00Z",
         }
         instance["executionDiscipline"]["retryLedger"] = retry_ledger(
             retry_sequence(
@@ -243,7 +391,7 @@ class ValidateSchemasTests(unittest.TestCase):
                     )
                 },
                 sequence_id="sequence-2",
-                reset_authorization=reset,
+                reset_authorization=reset_after_sequence_1,
             ),
             retry_sequence(
                 {
@@ -252,7 +400,7 @@ class ValidateSchemasTests(unittest.TestCase):
                     )
                 },
                 sequence_id="sequence-3",
-                reset_authorization=reset,
+                reset_authorization=reset_after_sequence_2,
             ),
             outcomes=(
                 "Two prior fictitious sequences reported the objective unresolved.",
@@ -281,6 +429,22 @@ class ValidateSchemasTests(unittest.TestCase):
         del instance["executionDiscipline"]
         errors = list(Draft202012Validator(schema).iter_errors(instance))
         self.assertTrue(any(error.validator == "required" for error in errors))
+
+    def test_completion_result_v2_validation_requires_objective_id(self):
+        # Catches a validation record that cannot be correlated with its
+        # objective-scoped execution evidence.
+        schema, instance = completion_v2()
+        instance["validation"][0].pop("objectiveId", None)
+
+        errors = list(Draft202012Validator(schema).iter_errors(instance))
+
+        self.assertTrue(
+            any(
+                error.validator == "required"
+                and list(error.absolute_path) == ["validation", 0]
+                for error in errors
+            )
+        )
 
     def test_validated_status_requires_a_passing_validation(self):
         schema, instance = completion_v2()
@@ -372,12 +536,17 @@ class ValidateSchemasTests(unittest.TestCase):
         )
 
     def test_passed_validation_requires_a_nonempty_execution_ledger(self):
-        schema, instance = completion_v2()
+        _, instance = completion_v2()
         instance["executionDiscipline"]["retryLedger"] = {}
-        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+        completed = run_completion_instance(instance)
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        self.assertIn(
+            "COMPLETION_VALIDATION_OBJECTIVE_MISMATCH",
+            {item["code"] for item in json_result(completed)["findings"]},
+        )
 
     def test_passed_validation_requires_a_successful_ledger_action(self):
-        schema, instance = completion_v2()
+        _, instance = completion_v2()
         instance["executionDiscipline"]["retryLedger"] = retry_ledger(
             retry_sequence(
                 {
@@ -390,12 +559,108 @@ class ValidateSchemasTests(unittest.TestCase):
                 "Fictitious validation attempt failed.",
             ),
         )
-        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+        instance["validation"][0]["objectiveId"] = "fictitious objective"
+        completed = run_completion_instance(instance)
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        self.assertIn(
+            "COMPLETION_VALIDATION_OBJECTIVE_MISMATCH",
+            {item["code"] for item in json_result(completed)["findings"]},
+        )
+
+    def test_passed_validation_requires_success_for_the_same_objective(self):
+        # Catches existential matching against a successful action recorded
+        # under an unrelated retry-ledger objective.
+        schema, _ = completion_v2()
+        instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/invalid-validation-objective.example.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(list(Draft202012Validator(schema).iter_errors(instance)), [])
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        matching = [
+            item
+            for item in json_result(completed)["findings"]
+            if item["code"] == "COMPLETION_VALIDATION_OBJECTIVE_MISMATCH"
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertEqual(matching[0]["details"]["pointer"], "/validation/0/objectiveId")
+
+    def test_semantic_negative_fixture_is_part_of_schema_validation(self):
+        # Catches a validator that ignores dedicated semantic-negative fixtures.
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            shutil.copytree(REPO_ROOT / "schemas", root / "schemas")
+            fixture = (
+                root
+                / "schemas/examples/completion-result/invalid-validation-objective.example.json"
+            )
+            instance = json.loads(fixture.read_text(encoding="utf-8"))
+            instance["validation"][0][
+                "objectiveId"
+            ] = "validate the illustrative completion record"
+            fixture.write_text(json.dumps(instance), encoding="utf-8")
+
+            completed = run_tool(
+                "tools/validate-schemas/validate_schemas.py",
+                "--format",
+                "json",
+                "--skip-repository-instances",
+                root=root,
+            )
+
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        self.assertTrue(
+            any(
+                item["code"] == "NEGATIVE_EXAMPLE_PASSED"
+                and item["path"].endswith(
+                    "invalid-validation-objective.example.json"
+                )
+                for item in json_result(completed)["findings"]
+            )
+        )
 
     def test_failed_validation_requires_a_reported_failure(self):
-        schema, instance = completion_v2()
+        _, instance = completion_v2()
         instance["validation"][0]["result"] = "failed"
-        self.assertTrue(list(Draft202012Validator(schema).iter_errors(instance)))
+        completed = run_completion_instance(instance)
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        self.assertIn(
+            "COMPLETION_VALIDATION_OBJECTIVE_MISMATCH",
+            {item["code"] for item in json_result(completed)["findings"]},
+        )
+
+    def test_failed_validation_requires_failure_for_the_same_objective(self):
+        # Catches existential matching against a failed attempt recorded under
+        # an unrelated retry-ledger objective.
+        _, instance = completion_v2()
+        instance["validation"][0]["objectiveId"] = "unrelated objective"
+        instance["validation"][0]["result"] = "failed"
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence(
+                {
+                    "initialAttempt": ledger_action(
+                        "Failed", "initial-attempt", "reported-unresolved"
+                    )
+                }
+            ),
+            outcomes=("Fictitious validation failed.",),
+        )
+
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        matching = [
+            item
+            for item in json_result(completed)["findings"]
+            if item["code"] == "COMPLETION_VALIDATION_OBJECTIVE_MISMATCH"
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertEqual(matching[0]["details"]["pointer"], "/validation/0/objectiveId")
 
     def test_failure_and_success_only_objective_ledgers_can_coexist(self):
         schema, instance = completion_v2()
@@ -816,6 +1081,97 @@ class ValidateSchemasTests(unittest.TestCase):
             )
         )
 
+    def test_pre_terminal_action_must_end_before_the_terminal_attempt(self):
+        # Catches a post-stop action laundered into the pre-terminal array.
+        schema, _ = completion_v2()
+        instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/invalid-pre-terminal-order.example.json"
+            ).read_text(encoding="utf-8")
+        )
+
+        self.assertEqual(list(Draft202012Validator(schema).iter_errors(instance)), [])
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        matching = [
+            item
+            for item in json_result(completed)["findings"]
+            if item["code"] == "COMPLETION_PRE_TERMINAL_ORDER_INVALID"
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertEqual(
+            matching[0]["details"]["pointer"],
+            "/executionDiscipline/retryLedger/validate the fictitious artifact/"
+            "currentSequence/preTerminalNonConsumingActions/0",
+        )
+
+    def test_action_must_not_end_before_it_starts(self):
+        # Catches an internally reversed action interval that remains a valid
+        # pair of JSON Schema date-time strings.
+        _, instance = completion_v2()
+        objective = next(
+            iter(instance["executionDiscipline"]["retryLedger"].values())
+        )
+        action = objective["currentSequence"]["nonConsumingActions"][0]
+        action["endedAt"] = "2025-12-31T23:59:00Z"
+
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        matching = [
+            item
+            for item in json_result(completed)["findings"]
+            if item["code"] == "COMPLETION_ACTION_TIME_INVALID"
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertEqual(
+            matching[0]["details"]["pointer"],
+            "/executionDiscipline/retryLedger/validate the illustrative completion record/"
+            "currentSequence/nonConsumingActions/0",
+        )
+
+    def test_semantic_timestamp_parser_accepts_rfc3339_lowercase(self):
+        # JSON Schema accepts RFC 3339's lower-case t/z forms, so the semantic
+        # layer must not turn a structurally valid timestamp into a tool error.
+        _, instance = completion_v2()
+        objective = next(
+            iter(instance["executionDiscipline"]["retryLedger"].values())
+        )
+        action = objective["currentSequence"]["nonConsumingActions"][0]
+        action["startedAt"] = "2026-01-01t00:00:00z"
+        action["endedAt"] = "2026-01-01t00:01:00z"
+
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+
+    def test_retry_must_start_after_the_previous_attempt_ends(self):
+        # Catches retry evidence whose timestamps overlap or precede the
+        # attempt that allegedly authorized the retry.
+        _, instance = completion_v2()
+        initial = ledger_action("Failed", "initial-attempt", "retry-authorized")
+        retry = ledger_action("Successful", "retry-1", "objective-completed")
+        retry["startedAt"] = "2026-01-01T00:00:30Z"
+        retry["endedAt"] = "2026-01-01T00:02:00Z"
+        instance["validation"][0]["objectiveId"] = "fictitious objective"
+        instance["executionDiscipline"]["retryLedger"] = retry_ledger(
+            retry_sequence({"initialAttempt": initial, "retry1": retry}),
+            outcomes=("Fictitious initial attempt failed.",),
+        )
+
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        matching = [
+            item
+            for item in json_result(completed)["findings"]
+            if item["code"] == "COMPLETION_ACTION_ORDER_INVALID"
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertTrue(matching[0]["details"]["pointer"].endswith("/attempts/retry1"))
+
     def test_failed_budgeted_attempt_cannot_claim_completion(self):
         schema, instance = completion_v2()
         instance["executionDiscipline"]["retryLedger"] = retry_ledger(
@@ -935,8 +1291,10 @@ class ValidateSchemasTests(unittest.TestCase):
                 },
                 sequence_id="sequence-2",
                 reset_authorization={
+                    "priorSequenceId": "sequence-1",
                     "priorSequenceStopReport": "Fictitious prior stop report.",
                     "authorizedBy": "fictitious-owner",
+                    "authorizedAt": "2026-01-01T00:30:00Z",
                     "authorizationEvidence": "Fictitious authorization record.",
                     "materialChange": "Fictitious material state change.",
                     "causalRationale": "The state change removes the prior blocker.",

@@ -10,6 +10,7 @@ status: baseline
 ## Required files
 
 - `validate_schemas.py`
+- `completion_semantics.py`
 - `requirements.txt`
 - `requirements.lock`
 - `README.md`
@@ -32,5 +33,6 @@ status: baseline
 - direct dependencies are represented in the SHA-256-hashed lock
 - hosted workflows use the checked-in lock with hash enforcement
 - positive and negative tests pass
+- completion-result semantic correlation and chronology tests pass
 - stable path remains unchanged
 - documentation and examples match behavior

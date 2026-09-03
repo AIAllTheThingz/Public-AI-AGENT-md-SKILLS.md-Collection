@@ -11,6 +11,7 @@
   "compatibilityImpact": "Adopting organizations must review policy and record migration.",
   "validation": [
     {
+      "objectiveId": "validate the fictitious governance change",
       "name": "repository-validation",
       "result": "passed",
       "evidence": "Illustrative local validation record"

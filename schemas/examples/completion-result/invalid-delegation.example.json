@@ -5,6 +5,7 @@
   "filesChanged": [],
   "validation": [
     {
+      "objectiveId": "validate the fictitious artifact",
       "name": "Fictitious validation",
       "result": "failed"
     }

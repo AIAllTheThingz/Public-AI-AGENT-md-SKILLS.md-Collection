@@ -39,6 +39,8 @@ The rolling and current versioned completion-result contracts are major version 
 
 Files under `schemas/examples/` are handled as explicit positive or negative test cases, including the preserved completion-result v1 compatibility pair.
 
+Completion-result v2 consumers must run both Draft 2020-12 structural validation and the repository's semantic completion checks. The semantic pass correlates `validation.objectiveId` with the exact retry-ledger key and validates action, terminal, sequence-reset, and authorization chronology.
+
 ## Ownership
 
 The adopting repository must assign:

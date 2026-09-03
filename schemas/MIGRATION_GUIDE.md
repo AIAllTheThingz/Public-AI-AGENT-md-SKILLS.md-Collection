@@ -48,6 +48,8 @@ Producers of new or current records must emit v2 records and populate failed or 
 
 A delegated handoff must remain on the sequence it describes within the same objective ledger, and that sequence must end `reported-unresolved`; migrate any completed or retry-authorized handoff record to its actual state instead of labeling it unresolved.
 
+Every `passed` or `failed` validation entry must now include `objectiveId` set to the exact `retryLedger` key it evaluates; `not-run` entries do not require an objective link because they report no executed result. Each reset after the first sequence must include `priorSequenceId` for the immediately preceding unresolved sequence and `authorizedAt` between that terminal attempt's end and the new sequence's first action. Update bindings and producers for those fields. Direct JSON Schema evaluation remains the structural layer; run `tools/validate-schemas/validate_schemas.py` or implement equivalent semantic checks for validation-to-objective correlation, action intervals, retry order, pre-terminal ordering, unique sequence IDs, reset linkage, and authorization chronology.
+
 Retain existing v1 records and validate them against `schemas/v1/completion-result.schema.json`; pinned v1 consumers may remain on that major path. Repository-discovered retained v1 records must explicitly declare `schemaVersion: "1.0.0"`, while direct consumers pinned to v1 may continue accepting omission as the unchanged v1 contract permits. The current validator selects v2 for omitted, current, or new completion records and v1 only for records explicitly marked or pinned at v1. The compatibility class is breaking for completion-result consumers; all other schemas remain v1.
 
 ## Project manifest 1.1

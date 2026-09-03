@@ -8,6 +8,7 @@
   "risk": "low",
   "validation": [
     {
+      "objectiveId": "validate the fictitious completion record",
       "name": "Schema validation",
       "result": "passed",
       "evidence": "example only"
@@ -79,8 +80,10 @@
             "boundariesPreserved": true
           },
           "resetAuthorization": {
+            "priorSequenceId": "sequence-1",
             "priorSequenceStopReport": "Sequence 1 stopped and reported the validation objective unresolved.",
             "authorizedBy": "fictitious-owner",
+            "authorizedAt": "2026-01-01T00:30:00Z",
             "authorizationEvidence": "Fictitious decision record RESET-001.",
             "materialChange": "The missing source fixture became available.",
             "causalRationale": "Availability of the required source removed the blocker that caused the prior failure."

@@ -10,8 +10,11 @@ from pathlib import Path
 from typing import Any
 
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
+SCRIPT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
+sys.path.insert(0, str(SCRIPT_ROOT))
 
+from completion_semantics import validate_completion_semantics  # noqa: E402
 from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
 
 try:
@@ -114,6 +117,34 @@ def remote_refs(value: Any, location: str="/") -> list[tuple[str, str]]:
     return found
 
 
+def completion_semantic_findings(
+    instance: Any, instance_path: Path, schema_path: Path, root: Path
+) -> list[Finding]:
+    if (
+        not isinstance(instance, dict)
+        or schema_path.name != "completion-result.schema.json"
+        or schema_path.parent.name != "v2"
+    ):
+        return []
+
+    rel_instance = instance_path.relative_to(root).as_posix()
+    rel_schema = schema_path.relative_to(root).as_posix()
+    return [
+        Finding(
+            issue.code,
+            issue.message,
+            path=rel_instance,
+            details={
+                "schema": rel_schema,
+                "pointer": issue.pointer,
+                "validator": "completion-semantics",
+                **issue.details,
+            },
+        )
+        for issue in validate_completion_semantics(instance)
+    ]
+
+
 def instance_findings(instance_path: Path, schema_path: Path, root: Path, expect_valid: bool) -> list[Finding]:
     instance = load_json(instance_path)
     schema = load_json(schema_path)
@@ -142,6 +173,28 @@ def instance_findings(instance_path: Path, schema_path: Path, root: Path, expect
             details={"schema": schema_path.relative_to(root).as_posix()},
         )]
     return []
+
+
+def full_instance_findings(
+    instance_path: Path, schema_path: Path, root: Path, expect_valid: bool
+) -> list[Finding]:
+    """Apply the stable structural findings plus v2 completion semantics."""
+
+    structural_findings = instance_findings(
+        instance_path, schema_path, root, expect_valid
+    )
+    if expect_valid:
+        if structural_findings:
+            return structural_findings
+        return completion_semantic_findings(
+            load_json(instance_path), instance_path, schema_path, root
+        )
+    if not structural_findings:
+        return []
+    semantic_findings = completion_semantic_findings(
+        load_json(instance_path), instance_path, schema_path, root
+    )
+    return [] if semantic_findings else structural_findings
 
 
 def discover(path: Path) -> str | None:
@@ -186,7 +239,14 @@ def run(args: argparse.Namespace) -> ToolResult:
     # Complete the offline-reference preflight before validating any instances.
     # The main pass below still emits the public findings with their full context.
     schema_groups: list[
-        tuple[str, Path, Path, list[tuple[Path, str]], bool]
+        tuple[
+            str,
+            Path,
+            list[tuple[Path, str]],
+            bool,
+            list[tuple[Path, Path]],
+            list[tuple[Path, Path]],
+        ]
     ] = list()
     for name in SCHEMA_NAMES:
         rolling = schema_root / f"{name}.schema.json"
@@ -206,8 +266,30 @@ def run(args: argparse.Namespace) -> ToolResult:
                 )
             except json.JSONDecodeError:
                 pass
+        example_root = schema_root / "examples" / name
+        positive_examples = [
+            (example_root / "valid.example.json", current_versioned)
+        ]
+        negative_examples = [
+            (example_root / "invalid.example.json", current_versioned)
+        ]
+        if name == "completion-result":
+            positive_examples.append((historical_valid, v1_completion_schema))
+            negative_examples.append((historical_invalid, v1_completion_schema))
+            negative_examples.extend(
+                (example, current_versioned)
+                for example in sorted(example_root.glob("invalid-*.example.json"))
+                if example != historical_invalid
+            )
         schema_groups.append(
-            (name, rolling, current_versioned, schema_paths, version_mismatch)
+            (
+                name,
+                rolling,
+                schema_paths,
+                version_mismatch,
+                positive_examples,
+                negative_examples,
+            )
         )
         for path, _kind in schema_paths:
             if not path.is_file():
@@ -230,9 +312,16 @@ def run(args: argparse.Namespace) -> ToolResult:
 
     for path, schema_path in repository_instances:
         if schema_path.is_file() and schema_path not in unsafe_schema_paths:
-            findings.extend(instance_findings(path, schema_path, root, True))
+            findings.extend(full_instance_findings(path, schema_path, root, True))
 
-    for name, rolling, current_versioned, schema_paths, version_mismatch in schema_groups:
+    for (
+        _name,
+        rolling,
+        schema_paths,
+        version_mismatch,
+        positive_examples,
+        negative_examples,
+    ) in schema_groups:
         for path, kind in schema_paths:
             if not path.is_file():
                 findings.append(Finding("SCHEMA_MISSING", f"Missing {kind} schema.", path=path.relative_to(root).as_posix()))
@@ -275,27 +364,22 @@ def run(args: argparse.Namespace) -> ToolResult:
                 path=rolling.relative_to(root).as_posix(),
             ))
 
-        example_root = schema_root / "examples" / name
-        valid_example = example_root / "valid.example.json"
-        invalid_example = example_root / "invalid.example.json"
-        positive_examples = [(valid_example, current_versioned)]
-        negative_examples = [(invalid_example, current_versioned)]
-        if name == "completion-result":
-            positive_examples.append((historical_valid, v1_completion_schema))
-            negative_examples.append((historical_invalid, v1_completion_schema))
-
         for example, schema_path in positive_examples:
             if example.is_file() and schema_path.is_file():
                 if schema_path not in unsafe_schema_paths:
                     positive_count += 1
-                    findings.extend(instance_findings(example, schema_path, root, True))
+                    findings.extend(
+                        full_instance_findings(example, schema_path, root, True)
+                    )
             else:
                 findings.append(Finding("SCHEMA_POSITIVE_EXAMPLE_MISSING", "Missing positive example.", path=example.relative_to(root).as_posix()))
         for example, schema_path in negative_examples:
             if example.is_file() and schema_path.is_file():
                 if schema_path not in unsafe_schema_paths:
                     negative_count += 1
-                    findings.extend(instance_findings(example, schema_path, root, False))
+                    findings.extend(
+                        full_instance_findings(example, schema_path, root, False)
+                    )
             else:
                 findings.append(Finding("SCHEMA_NEGATIVE_EXAMPLE_MISSING", "Missing negative example.", path=example.relative_to(root).as_posix()))
 

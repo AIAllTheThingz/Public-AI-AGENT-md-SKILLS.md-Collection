@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2.0.0",
   "status": "not-completed",
-  "summary": "Invalid v2 record that continues acting after a sequence reports unresolved.",
+  "summary": "Invalid v2 record that labels a post-stop action as pre-terminal.",
   "filesChanged": [],
   "validation": [
     {
@@ -11,14 +11,14 @@
     }
   ],
   "limitations": [
-    "The successful evidence action intentionally occurs after the terminal unresolved report."
+    "The successful evidence action intentionally occurs after the terminal attempt."
   ],
   "executionDiscipline": {
     "authorizationRecoveryContinuity": "No consequential mutation occurred.",
     "retryLedger": {
       "validate the fictitious artifact": {
         "failedOrIndeterminateOutcomes": [
-          "The exhausted fictitious validation sequence reported unresolved."
+          "The fictitious validation sequence reported unresolved."
         ],
         "priorUnresolvedSequences": [],
         "currentSequence": {
@@ -44,8 +44,7 @@
               "terminalDisposition": "reported-unresolved"
             }
           },
-          "preTerminalNonConsumingActions": [],
-          "nonConsumingActions": [
+          "preTerminalNonConsumingActions": [
             {
               "action": "Inspect another source after the terminal stop",
               "actor": "fictitious-agent",
@@ -57,15 +56,16 @@
               "effectsReconciliation": "No state changed.",
               "result": "Successful",
               "budgetPosition": "non-consuming",
-              "justification": "This action is intentionally recorded after the terminal stop.",
+              "justification": "This action is intentionally mislabeled as pre-terminal.",
               "terminalDisposition": "not-terminal"
             }
-          ]
+          ],
+          "nonConsumingActions": []
         }
       }
     },
     "resetBasis": "Not applicable; no reset occurred.",
-    "progressOrBlockerNarrowing": "No action is permitted in this stopped sequence.",
+    "progressOrBlockerNarrowing": "No post-stop action is permitted in this sequence.",
     "outOfScopeRouting": "Not applicable; no out-of-scope finding occurred."
   }
 }

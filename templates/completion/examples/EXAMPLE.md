@@ -37,10 +37,10 @@ Stable template paths remain present.
 
 ## Validation performed
 
-| Command or check | Result | Environment | Evidence | Limitations |
-|---|---|---|---|---|
-| `python tools/validate-templates/validate_templates.py` | passed | fictitious CI runner | workflow log | No adopting project tested |
-| `python tools/check-links/check_links.py` | passed | fictitious CI runner | workflow log | External links not fetched |
+| Objective ID | Command or check | Result | Environment | Evidence | Limitations |
+|---|---|---|---|---|---|
+| Completion record migration | `python tools/validate-templates/validate_templates.py` | passed | fictitious CI runner | workflow log | No adopting project tested |
+| Completion record migration | `python tools/check-links/check_links.py` | passed | fictitious CI runner | workflow log | External links not fetched |
 
 ## Validation not performed
 

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/AIAllTheThingz/Public-AI-Governance/main/schemas/completion-result.schema.json",
   "title": "Completion Result",
-  "description": "Records implementation state, validation outcomes, limitations, risk, compatibility impact, review, and execution discipline without treating a single successful command as proof of full completion.",
+  "description": "Records implementation state, validation outcomes, limitations, risk, compatibility impact, review, and execution discipline without treating a single successful command as proof of full completion. Full v2 conformance also requires the completion semantic checks provided by tools/validate-schemas/validate_schemas.py or an equivalent implementation.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -62,6 +62,11 @@
           "result"
         ],
         "properties": {
+          "objectiveId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Exact retryLedger key for the objective or blocker whose execution evidence this validation result evaluates."
+          },
           "name": {
             "type": "string",
             "minLength": 1
@@ -89,6 +94,24 @@
             },
             "uniqueItems": true
           }
+        },
+        "if": {
+          "properties": {
+            "result": {
+              "enum": [
+                "passed",
+                "failed"
+              ]
+            }
+          },
+          "required": [
+            "result"
+          ]
+        },
+        "then": {
+          "required": [
+            "objectiveId"
+          ]
         }
       }
     },
@@ -196,94 +219,6 @@
               ]
             },
             "minContains": 1
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "validation": {
-            "contains": {
-              "properties": {
-                "result": {
-                  "const": "passed"
-                }
-              },
-              "required": [
-                "result"
-              ]
-            }
-          }
-        },
-        "required": [
-          "validation"
-        ]
-      },
-      "then": {
-        "properties": {
-          "executionDiscipline": {
-            "properties": {
-              "retryLedger": {
-                "minProperties": 1,
-                "not": {
-                  "patternProperties": {
-                    "^.+$": {
-                      "not": {
-                        "$ref": "#/$defs/objectiveRetryLedgerWithSuccess"
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "required": [
-              "retryLedger"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "validation": {
-            "contains": {
-              "properties": {
-                "result": {
-                  "const": "failed"
-                }
-              },
-              "required": [
-                "result"
-              ]
-            }
-          }
-        },
-        "required": [
-          "validation"
-        ]
-      },
-      "then": {
-        "properties": {
-          "executionDiscipline": {
-            "properties": {
-              "retryLedger": {
-                "minProperties": 1,
-                "not": {
-                  "patternProperties": {
-                    "^.+$": {
-                      "not": {
-                        "$ref": "#/$defs/objectiveRetryLedgerWithFailure"
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            "required": [
-              "retryLedger"
-            ]
           }
         }
       }
@@ -458,13 +393,20 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "priorSequenceId",
         "priorSequenceStopReport",
         "authorizedBy",
+        "authorizedAt",
         "authorizationEvidence",
         "materialChange",
         "causalRationale"
       ],
       "properties": {
+        "priorSequenceId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact sequenceId of the immediately preceding sequence that stopped and reported unresolved."
+        },
         "priorSequenceStopReport": {
           "type": "string",
           "minLength": 1
@@ -472,6 +414,11 @@
         "authorizedBy": {
           "type": "string",
           "minLength": 1
+        },
+        "authorizedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Time the new sequence was separately authorized after the prior unresolved stop."
         },
         "authorizationEvidence": {
           "type": "string",
@@ -932,119 +879,6 @@
         }
       ]
     },
-    "retrySequenceWithSuccess": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/retrySequence"
-        },
-        {
-          "anyOf": [
-            {
-              "properties": {
-                "attempts": {
-                  "anyOf": [
-                    {
-                      "properties": {
-                        "initialAttempt": {
-                          "properties": {
-                            "result": {
-                              "const": "Successful"
-                            }
-                          },
-                          "required": [
-                            "result"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "initialAttempt"
-                      ]
-                    },
-                    {
-                      "properties": {
-                        "retry1": {
-                          "properties": {
-                            "result": {
-                              "const": "Successful"
-                            }
-                          },
-                          "required": [
-                            "result"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "retry1"
-                      ]
-                    },
-                    {
-                      "properties": {
-                        "retry2": {
-                          "properties": {
-                            "result": {
-                              "const": "Successful"
-                            }
-                          },
-                          "required": [
-                            "result"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "retry2"
-                      ]
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "attempts"
-              ]
-            },
-            {
-              "properties": {
-                "nonConsumingActions": {
-                  "contains": {
-                    "properties": {
-                      "result": {
-                        "const": "Successful"
-                      }
-                    },
-                    "required": [
-                      "result"
-                    ]
-                  },
-                  "minContains": 1
-                }
-              },
-              "required": [
-                "nonConsumingActions"
-              ]
-            },
-            {
-              "properties": {
-                "preTerminalNonConsumingActions": {
-                  "contains": {
-                    "properties": {
-                      "result": {
-                        "const": "Successful"
-                      }
-                    },
-                    "required": [
-                      "result"
-                    ]
-                  },
-                  "minContains": 1
-                }
-              },
-              "required": [
-                "preTerminalNonConsumingActions"
-              ]
-            }
-          ]
-        }
-      ]
-    },
     "retrySequenceWithFailure": {
       "allOf": [
         {
@@ -1392,50 +1226,6 @@
               "$ref": "#/$defs/objectiveRetryLedgerCoreWithFailure"
             }
           }
-        }
-      ]
-    },
-    "objectiveRetryLedgerWithSuccess": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/objectiveRetryLedger"
-        },
-        {
-          "anyOf": [
-            {
-              "properties": {
-                "priorUnresolvedSequences": {
-                  "contains": {
-                    "$ref": "#/$defs/retrySequenceWithSuccess"
-                  },
-                  "minContains": 1
-                }
-              },
-              "required": [
-                "priorUnresolvedSequences"
-              ]
-            },
-            {
-              "properties": {
-                "currentSequence": {
-                  "$ref": "#/$defs/retrySequenceWithSuccess"
-                }
-              },
-              "required": [
-                "currentSequence"
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    "objectiveRetryLedgerWithFailure": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/objectiveRetryLedger"
-        },
-        {
-          "$ref": "#/$defs/objectiveRetryLedgerCoreWithFailure"
         }
       ]
     }
