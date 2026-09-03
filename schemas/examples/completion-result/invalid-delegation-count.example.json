@@ -6,6 +6,7 @@
   "validation": [
     {
       "objectiveId": "validate the fictitious artifact",
+      "actionId": "final-validation-attempt",
       "name": "Fictitious validation",
       "result": "failed"
     }
@@ -64,6 +65,7 @@
               "terminalDisposition": "retry-authorized"
             },
             "retry2": {
+              "actionId": "final-validation-attempt",
               "action": "Run materially different fictitious validation",
               "actor": "fictitious-agent",
               "executionContext": {

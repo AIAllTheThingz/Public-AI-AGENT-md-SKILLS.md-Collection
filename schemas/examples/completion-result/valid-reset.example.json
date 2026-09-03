@@ -9,6 +9,7 @@
   "validation": [
     {
       "objectiveId": "validate the fictitious completion record",
+      "actionId": "fixture-validation",
       "name": "Schema validation",
       "result": "passed",
       "evidence": "example only"
@@ -90,6 +91,7 @@
           },
           "attempts": {
             "initialAttempt": {
+              "actionId": "fixture-validation",
               "action": "Validate the available fictitious fixture",
               "actor": "fictitious-agent",
               "executionContext": {

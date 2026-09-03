@@ -14,7 +14,7 @@ status: baseline
 - [`../../completion-result.schema.json`](../../completion-result.schema.json)
 - [`../../v2/completion-result.schema.json`](../../v2/completion-result.schema.json)
 
-It demonstrates `schemaVersion: "2.0.0"`, required `executionDiscipline` evidence, and a passed validation whose `objectiveId` matches the exact retry-ledger key for a current completion record.
+It demonstrates `schemaVersion: "2.0.0"`, required `executionDiscipline` evidence, and a passed validation whose `objectiveId` and `actionId` identify the exact retry-ledger action that performed the check.
 
 ## Authorized reset positive example
 
@@ -40,7 +40,7 @@ The [`invalid-v1.example.json`](invalid-v1.example.json) compatibility fixture m
 
 [`invalid-pre-terminal-order.example.json`](invalid-pre-terminal-order.example.json) is structurally valid but semantically invalid because its alleged pre-terminal action ends after the unresolved terminal attempt starts. This fixture prevents a later action from being laundered into `preTerminalNonConsumingActions`.
 
-[`invalid-validation-objective.example.json`](invalid-validation-objective.example.json) is structurally valid but semantically invalid because its passed validation names objective A while the only `Successful` action belongs to objective B. Each executed validation must correlate with action evidence under its exact `objectiveId` ledger key.
+[`invalid-validation-objective.example.json`](invalid-validation-objective.example.json) is structurally valid but semantically invalid because its passed validation names objective A while its referenced `Successful` action belongs to objective B. Each executed validation must identify one exact action using both its `objectiveId` and `actionId`.
 
 ## Boundary
 

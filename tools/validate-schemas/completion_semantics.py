@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
+
+
+RFC3339_LEAP_SECOND = re.compile(
+    r"^(?P<prefix>.*[Tt]\d{2}:\d{2}):60"
+    r"(?P<fraction>\.\d+)?(?P<offset>[Zz]|[+-]\d{2}:\d{2})$"
+)
 
 
 @dataclass(frozen=True)
@@ -37,18 +44,18 @@ def _actions(sequence: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
-def _objective_has_result(objective_ledger: dict[str, Any], result: str) -> bool:
-    return any(
-        action["result"] == result
-        for sequence in _sequences(objective_ledger)
-        for action in _actions(sequence)
-    )
-
-
 def _timestamp(value: str) -> datetime:
+    leap_second = RFC3339_LEAP_SECOND.fullmatch(value)
+    if leap_second is not None:
+        value = (
+            f"{leap_second.group('prefix')}:59"
+            f"{leap_second.group('fraction') or ''}"
+            f"{leap_second.group('offset')}"
+        )
     if value.endswith(("Z", "z")):
         value = f"{value[:-1]}+00:00"
-    return datetime.fromisoformat(value)
+    parsed = datetime.fromisoformat(value)
+    return parsed + timedelta(seconds=1) if leap_second is not None else parsed
 
 
 def _pointer(*parts: str | int) -> str:
@@ -135,21 +142,46 @@ def validate_completion_semantics(instance: dict[str, Any]) -> list[SemanticIssu
         if expected_results is None:
             continue
         objective_id = validation["objectiveId"]
+        action_id = validation["actionId"]
         objective_ledger = retry_ledger.get(objective_id)
-        if objective_ledger is None or not any(
-            _objective_has_result(objective_ledger, result)
-            for result in expected_results
-        ):
+        if objective_ledger is None:
             issues.append(
                 SemanticIssue(
                     code="COMPLETION_VALIDATION_OBJECTIVE_MISMATCH",
                     message=(
-                        f"{validation['result'].title()} validation must reference a "
-                        "retry-ledger objective containing a corresponding action result."
+                        f"{validation['result'].title()} validation must reference an "
+                        "existing retry-ledger objective."
                     ),
                     pointer=f"/validation/{index}/objectiveId",
                     details={
                         "objectiveId": objective_id,
+                    },
+                )
+            )
+            continue
+        matching_actions = [
+            action
+            for sequence in _sequences(objective_ledger)
+            for action in _actions(sequence)
+            if action.get("actionId") == action_id
+        ]
+        if (
+            len(matching_actions) != 1
+            or matching_actions[0]["result"] not in expected_results
+        ):
+            issues.append(
+                SemanticIssue(
+                    code="COMPLETION_VALIDATION_ACTION_MISMATCH",
+                    message=(
+                        f"{validation['result'].title()} validation must uniquely "
+                        "reference its corresponding ledger action with a compatible "
+                        "result."
+                    ),
+                    pointer=f"/validation/{index}/actionId",
+                    details={
+                        "objectiveId": objective_id,
+                        "actionId": action_id,
+                        "matchingActions": len(matching_actions),
                         "requiredActionResults": list(expected_results),
                     },
                 )
@@ -274,18 +306,21 @@ def validate_completion_semantics(instance: dict[str, Any]) -> list[SemanticIssu
                     name
                     for name in ("initialAttempt", "retry1", "retry2")
                     if attempts.get(name, {}).get("terminalDisposition")
-                    == "reported-unresolved"
+                    in {"reported-unresolved", "objective-completed"}
                 ),
                 None,
             )
             if terminal_name is None:
                 continue
-            terminal_started_at = _timestamp(attempts[terminal_name]["startedAt"])
+            terminal_action = attempts[terminal_name]
+            terminal_started_at = _timestamp(terminal_action["startedAt"])
             terminal_pointer = _pointer(*location, "attempts", terminal_name)
-            for index, action in enumerate(
-                sequence["preTerminalNonConsumingActions"]
-            ):
-                if _timestamp(action["endedAt"]) > terminal_started_at:
+            if terminal_action["terminalDisposition"] == "reported-unresolved":
+                for index, action in enumerate(
+                    sequence["preTerminalNonConsumingActions"]
+                ):
+                    if _timestamp(action["endedAt"]) <= terminal_started_at:
+                        continue
                     issues.append(
                         SemanticIssue(
                             code="COMPLETION_PRE_TERMINAL_ORDER_INVALID",
@@ -301,5 +336,22 @@ def validate_completion_semantics(instance: dict[str, Any]) -> list[SemanticIssu
                             details={"terminalAttemptPointer": terminal_pointer},
                         )
                     )
+                continue
+            for action, action_location in _action_locations(sequence, location):
+                if action is terminal_action:
+                    continue
+                if _timestamp(action["endedAt"]) <= terminal_started_at:
+                    continue
+                issues.append(
+                    SemanticIssue(
+                        code="COMPLETION_POST_TERMINAL_ACTION",
+                        message=(
+                            "Every other action must end no later than the "
+                            "objective-completing attempt starts."
+                        ),
+                        pointer=_pointer(*action_location),
+                        details={"terminalAttemptPointer": terminal_pointer},
+                    )
+                )
 
     return issues

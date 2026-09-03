@@ -37,10 +37,10 @@ Stable template paths remain present.
 
 ## Validation performed
 
-| Objective ID | Command or check | Result | Environment | Evidence | Limitations |
-|---|---|---|---|---|---|
-| Completion record migration | `python tools/validate-templates/validate_templates.py` | passed | fictitious CI runner | workflow log | No adopting project tested |
-| Completion record migration | `python tools/check-links/check_links.py` | passed | fictitious CI runner | workflow log | External links not fetched |
+| Objective ID | Action ID | Command or check | Result | Environment | Evidence | Limitations |
+|---|---|---|---|---|---|---|
+| Completion record migration | `template-validation-retry` | `python tools/validate-templates/validate_templates.py` | passed | fictitious CI runner | workflow log | No adopting project tested |
+| Completion record migration | `link-validation` | `python tools/check-links/check_links.py` | passed | fictitious CI runner | workflow log | External links not fetched |
 
 ## Validation not performed
 
@@ -52,11 +52,12 @@ Failed or indeterminate outcomes, keyed objective `Completion record migration`:
 
 Authorization/recovery continuity for consequential mutations: Confirmed authorization and recovery controls remained valid; the correction was limited to the fictitious fixture.
 
-| Objective/blocker | Sequence | Sequence reset evidence | Action | Actor | Execution context | Start | End | Observable-effects reconciliation | Result | Budget position/count | Retry material change | Retry causal rationale | Justification | Terminal disposition |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Completion record migration | Sequence 1 | Initial sequence; no reset | Validate completion fixture | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `template-validator`; task `PR-EXAMPLE-0042` | 2026-08-16T10:00:00Z | 2026-08-16T10:00:01Z | No target-state mutation; failed output reconciled | Failed | Initial attempt (1 budget-consuming action) | Not applicable; initial attempt | Not applicable; initial attempt | Detected v1 fixture against the current v2 contract | Retry justified after correcting the fixture |
-| Completion record migration | Sequence 1 | Initial sequence; no reset | Inspect schema-version routing and fixture metadata | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `template-validator`; task `PR-EXAMPLE-0042` | 2026-08-16T10:01:00Z | 2026-08-16T10:01:01Z | No target-state mutation; evidence reconciled | Successful | Non-consuming | Not applicable; non-consuming evidence | Not applicable; non-consuming evidence | Gathered evidence identifying the version mismatch | Not terminal |
-| Completion record migration | Sequence 1 | Initial sequence; no reset | Validate corrected completion fixture | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `template-validator`; task `PR-EXAMPLE-0042` | 2026-08-16T10:02:00Z | 2026-08-16T10:02:01Z | Corrected fixture output reconciled; no target-state mutation | Successful | Retry 1 (successful objective-clearing action) | Producer fixture corrected from v1 to v2 | The version correction addresses the mismatch that caused the initial failure | Corrected producer fixture using reviewed facts | Objective complete |
+| Objective/blocker | Sequence | Sequence reset evidence | Action ID | Action | Actor | Execution context | Start | End | Observable-effects reconciliation | Result | Budget position/count | Retry material change | Retry causal rationale | Justification | Terminal disposition |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Completion record migration | Sequence 1 | Initial sequence; no reset | `template-validation-initial` | Validate completion fixture | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `template-validator`; task `PR-EXAMPLE-0042` | 2026-08-16T10:00:00Z | 2026-08-16T10:00:01Z | No target-state mutation; failed output reconciled | Failed | Initial attempt (1 budget-consuming action) | Not applicable; initial attempt | Not applicable; initial attempt | Detected v1 fixture against the current v2 contract | Retry justified after correcting the fixture |
+| Completion record migration | Sequence 1 | Initial sequence; no reset | `schema-routing-inspection` | Inspect schema-version routing and fixture metadata | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `template-validator`; task `PR-EXAMPLE-0042` | 2026-08-16T10:01:00Z | 2026-08-16T10:01:01Z | No target-state mutation; evidence reconciled | Successful | Non-consuming | Not applicable; non-consuming evidence | Not applicable; non-consuming evidence | Gathered evidence identifying the version mismatch | Not terminal |
+| Completion record migration | Sequence 1 | Initial sequence; no reset | `link-validation` | Run relative Markdown link validation | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `check-links`; task `PR-EXAMPLE-0042` | 2026-08-16T10:01:30Z | 2026-08-16T10:01:31Z | No target-state mutation; successful output reconciled | Successful | Non-consuming | Not applicable; non-consuming evidence | Not applicable; non-consuming evidence | Gathered relative-link evidence | Not terminal |
+| Completion record migration | Sequence 1 | Initial sequence; no reset | `template-validation-retry` | Validate corrected completion fixture | Example maintainer | command sequence `migration-check`; plan `RC-MIGRATION`; workflow `fictitious-ci`; tool `template-validator`; task `PR-EXAMPLE-0042` | 2026-08-16T10:02:00Z | 2026-08-16T10:02:01Z | Corrected fixture output reconciled; no target-state mutation | Successful | Retry 1 (successful objective-clearing action) | Producer fixture corrected from v1 to v2 | The version correction addresses the mismatch that caused the initial failure | Corrected producer fixture using reviewed facts | Objective complete |
 
 Reset basis: None; no new execution sequence was authorized.
 

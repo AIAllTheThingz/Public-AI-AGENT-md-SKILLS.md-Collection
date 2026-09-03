@@ -12,6 +12,7 @@
   "validation": [
     {
       "objectiveId": "validate the fictitious governance change",
+      "actionId": "repository-validation",
       "name": "repository-validation",
       "result": "passed",
       "evidence": "Illustrative local validation record"
@@ -44,6 +45,7 @@
           "preTerminalNonConsumingActions": [],
           "nonConsumingActions": [
             {
+              "actionId": "repository-validation",
               "action": "Run evidence-only repository validation",
               "actor": "fictitious-governance-reviewer",
               "executionContext": {

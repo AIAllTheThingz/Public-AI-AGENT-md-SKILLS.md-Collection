@@ -8,6 +8,7 @@
   "validation": [
     {
       "objectiveId": "validate an unrelated objective",
+      "actionId": "schema-validation",
       "name": "Schema validation",
       "result": "passed",
       "evidence": "example only"
@@ -32,6 +33,7 @@
           "preTerminalNonConsumingActions": [],
           "nonConsumingActions": [
             {
+              "actionId": "schema-validation",
               "action": "Run evidence-only schema validation",
               "actor": "fictitious-reviewer",
               "executionContext": {

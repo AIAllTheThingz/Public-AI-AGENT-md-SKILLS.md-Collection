@@ -8,6 +8,7 @@
   "validation": [
     {
       "objectiveId": "validate the fictitious completion record",
+      "actionId": "separate-success-validation",
       "name": "Schema validation",
       "result": "passed"
     }
@@ -66,6 +67,7 @@
           },
           "attempts": {
             "initialAttempt": {
+              "actionId": "separate-success-validation",
               "action": "Claim a successful validation in a separate ledger",
               "actor": "fictitious-agent",
               "executionContext": {

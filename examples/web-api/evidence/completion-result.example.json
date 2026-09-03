@@ -21,12 +21,14 @@
   "validation": [
     {
       "objectiveId": "validate the documentation-only standards example",
+      "actionId": "repository-structure-validation",
       "name": "Repository structure and identifier validation",
       "result": "passed",
       "evidence": "python tools/validate-standards/validate_repository.py"
     },
     {
       "objectiveId": "validate the documentation-only standards example",
+      "actionId": "relative-link-validation",
       "name": "Relative Markdown link validation",
       "result": "passed",
       "evidence": "python tools/check-links/check_links.py"
@@ -59,6 +61,7 @@
           "preTerminalNonConsumingActions": [],
           "nonConsumingActions": [
             {
+              "actionId": "repository-structure-validation",
               "action": "Run repository structure and identifier validation",
               "actor": "example-maintainer",
               "executionContext": {
@@ -73,6 +76,7 @@
               "terminalDisposition": "not-terminal"
             },
             {
+              "actionId": "relative-link-validation",
               "action": "Run relative Markdown link validation",
               "actor": "example-maintainer",
               "executionContext": {

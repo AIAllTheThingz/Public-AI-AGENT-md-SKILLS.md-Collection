@@ -6,6 +6,7 @@
   "validation": [
     {
       "objectiveId": "validate the fictitious artifact",
+      "actionId": "failed-validation",
       "name": "Fictitious validation",
       "result": "failed"
     }
@@ -30,6 +31,7 @@
           },
           "attempts": {
             "initialAttempt": {
+              "actionId": "failed-validation",
               "action": "Run fictitious validation",
               "actor": "fictitious-agent",
               "executionContext": {

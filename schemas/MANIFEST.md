@@ -57,7 +57,7 @@ Each contract must have:
 - Preserved completion-result v1 positive and negative compatibility fixtures validate and fail, respectively.
 - All discovered repository instances validate.
 - Format checking is enabled.
-- Completion-result v2 structural success is followed by semantic correlation and chronology validation.
+- Completion-result v2 structural success is followed by exact validation-action correlation, terminal-boundary, and full RFC 3339 chronology validation.
 - Every JSON document parses.
 - Relative Markdown links pass.
 - No schema or example contains an unresolved placeholder.

@@ -430,21 +430,37 @@ class ValidateSchemasTests(unittest.TestCase):
         errors = list(Draft202012Validator(schema).iter_errors(instance))
         self.assertTrue(any(error.validator == "required" for error in errors))
 
-    def test_completion_result_v2_validation_requires_objective_id(self):
-        # Catches a validation record that cannot be correlated with its
-        # objective-scoped execution evidence.
+    def test_completion_result_v2_validation_requires_objective_and_action_ids(self):
+        # Catches a validation record that cannot be correlated with its exact
+        # objective-scoped execution action.
         schema, instance = completion_v2()
-        instance["validation"][0].pop("objectiveId", None)
+        for missing in ("objectiveId", "actionId"):
+            with self.subTest(missing=missing):
+                candidate = json.loads(json.dumps(instance))
+                candidate["validation"][0].pop(missing, None)
+                errors = list(Draft202012Validator(schema).iter_errors(candidate))
+                self.assertTrue(
+                    any(
+                        error.validator == "required"
+                        and list(error.absolute_path) == ["validation", 0]
+                        for error in errors
+                    )
+                )
 
-        errors = list(Draft202012Validator(schema).iter_errors(instance))
+    def test_passed_validation_requires_its_exact_ledger_action(self):
+        _, instance = completion_v2()
+        instance["validation"][0]["actionId"] = "omitted-validation-action"
 
-        self.assertTrue(
-            any(
-                error.validator == "required"
-                and list(error.absolute_path) == ["validation", 0]
-                for error in errors
-            )
-        )
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        matching = [
+            item
+            for item in json_result(completed)["findings"]
+            if item["code"] == "COMPLETION_VALIDATION_ACTION_MISMATCH"
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertEqual(matching[0]["details"]["pointer"], "/validation/0/actionId")
 
     def test_validated_status_requires_a_passing_validation(self):
         schema, instance = completion_v2()
@@ -563,7 +579,7 @@ class ValidateSchemasTests(unittest.TestCase):
         completed = run_completion_instance(instance)
         self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
         self.assertIn(
-            "COMPLETION_VALIDATION_OBJECTIVE_MISMATCH",
+            "COMPLETION_VALIDATION_ACTION_MISMATCH",
             {item["code"] for item in json_result(completed)["findings"]},
         )
 
@@ -630,7 +646,7 @@ class ValidateSchemasTests(unittest.TestCase):
         completed = run_completion_instance(instance)
         self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
         self.assertIn(
-            "COMPLETION_VALIDATION_OBJECTIVE_MISMATCH",
+            "COMPLETION_VALIDATION_ACTION_MISMATCH",
             {item["code"] for item in json_result(completed)["findings"]},
         )
 
@@ -1146,6 +1162,46 @@ class ValidateSchemasTests(unittest.TestCase):
         completed = run_completion_instance(instance)
 
         self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+
+    def test_semantic_timestamp_parser_accepts_rfc3339_leap_second(self):
+        _, instance = completion_v2()
+        objective = next(
+            iter(instance["executionDiscipline"]["retryLedger"].values())
+        )
+        action = objective["currentSequence"]["nonConsumingActions"][0]
+        action["startedAt"] = "2016-12-31T23:59:60Z"
+        action["endedAt"] = "2017-01-01T00:00:01Z"
+
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+
+    def test_objective_completion_rejects_a_later_action(self):
+        instance = json.loads(
+            (
+                REPO_ROOT
+                / "schemas/examples/completion-result/valid-reset.example.json"
+            ).read_text(encoding="utf-8")
+        )
+        objective = next(
+            iter(instance["executionDiscipline"]["retryLedger"].values())
+        )
+        later_action = ledger_action(
+            "Successful", "non-consuming", "not-terminal"
+        )
+        later_action["startedAt"] = "2026-01-01T01:02:00Z"
+        later_action["endedAt"] = "2026-01-01T01:03:00Z"
+        objective["currentSequence"]["nonConsumingActions"].append(later_action)
+
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        matching = [
+            item
+            for item in json_result(completed)["findings"]
+            if item["code"] == "COMPLETION_POST_TERMINAL_ACTION"
+        ]
+        self.assertEqual(len(matching), 1)
 
     def test_retry_must_start_after_the_previous_attempt_ends(self):
         # Catches retry evidence whose timestamps overlap or precede the

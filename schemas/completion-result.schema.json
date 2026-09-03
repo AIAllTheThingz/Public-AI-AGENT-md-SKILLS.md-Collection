@@ -67,6 +67,11 @@
             "minLength": 1,
             "description": "Exact retryLedger key for the objective or blocker whose execution evidence this validation result evaluates."
           },
+          "actionId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Exact actionId of the single ledger action that performed this validation check."
+          },
           "name": {
             "type": "string",
             "minLength": 1
@@ -110,7 +115,8 @@
         },
         "then": {
           "required": [
-            "objectiveId"
+            "objectiveId",
+            "actionId"
           ]
         }
       }
@@ -241,6 +247,11 @@
         "terminalDisposition"
       ],
       "properties": {
+        "actionId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable identifier used when a validation entry references this specific ledger action."
+        },
         "action": {
           "type": "string",
           "minLength": 1

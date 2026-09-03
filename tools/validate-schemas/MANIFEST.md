@@ -33,6 +33,6 @@ status: baseline
 - direct dependencies are represented in the SHA-256-hashed lock
 - hosted workflows use the checked-in lock with hash enforcement
 - positive and negative tests pass
-- completion-result semantic correlation and chronology tests pass
+- completion-result exact validation-action correlation, terminal-boundary, and RFC 3339 chronology tests pass
 - stable path remains unchanged
 - documentation and examples match behavior
