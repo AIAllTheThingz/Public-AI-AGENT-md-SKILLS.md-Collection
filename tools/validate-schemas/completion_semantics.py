@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 
@@ -55,19 +55,24 @@ def _timestamp(value: str) -> tuple[int, str]:
 
     second = int(match.group("second"))
     leap_second = second == 60
-    offset = match.group("offset")
-    if offset in {"Z", "z"}:
-        offset = "+00:00"
     parsed = datetime.fromisoformat(
         f"{match.group('date')}T{match.group('hour')}:"
-        f"{match.group('minute')}:{59 if leap_second else second:02d}{offset}"
-    ).astimezone(timezone.utc)
+        f"{match.group('minute')}:{59 if leap_second else second:02d}"
+    )
+    offset = match.group("offset")
+    offset_seconds = 0
+    if offset not in {"Z", "z"}:
+        sign = 1 if offset[0] == "+" else -1
+        offset_seconds = sign * (
+            int(offset[1:3]) * 3_600 + int(offset[4:6]) * 60
+        )
     whole_seconds = (
         (parsed.toordinal() - 1) * 86_400
         + parsed.hour * 3_600
         + parsed.minute * 60
         + parsed.second
         + int(leap_second)
+        - offset_seconds
     )
     # With insignificant trailing zeroes removed, lexicographic comparison of
     # the remaining digits is exact even when the fraction exceeds Python's
@@ -133,7 +138,7 @@ def _reported_unresolved_attempt(sequence: dict[str, Any]) -> dict[str, Any]:
     )
 
 
-def _sequence_started_at(sequence: dict[str, Any]) -> datetime:
+def _sequence_started_at(sequence: dict[str, Any]) -> tuple[int, str]:
     return _timestamp(_sequence_first_action(sequence)["startedAt"])
 
 
@@ -154,6 +159,27 @@ def validate_completion_semantics(instance: dict[str, Any]) -> list[SemanticIssu
         "passed": ("Successful",),
         "failed": ("Failed", "Indeterminate"),
     }
+
+    if instance["status"] == "implemented":
+        completed_actions = [
+            action
+            for objective_ledger in retry_ledger.values()
+            for sequence in _sequences(objective_ledger)
+            for action in _actions(sequence)
+            if action["result"] == "Successful"
+            and action["terminalDisposition"] == "objective-completed"
+        ]
+        if not completed_actions:
+            issues.append(
+                SemanticIssue(
+                    code="COMPLETION_IMPLEMENTED_WITHOUT_SUCCESS",
+                    message=(
+                        "Implemented status requires a Successful "
+                        "objective-completing ledger action."
+                    ),
+                    pointer="/status",
+                )
+            )
 
     for index, validation in enumerate(instance["validation"]):
         expected_results = required_action_results.get(validation["result"])

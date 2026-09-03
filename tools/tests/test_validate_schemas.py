@@ -1204,6 +1204,54 @@ class ValidateSchemasTests(unittest.TestCase):
         ]
         self.assertEqual(len(matching), 1)
 
+    def test_semantic_timestamp_parser_handles_utc_calendar_overflow(self):
+        boundary_values = (
+            "0001-01-01T00:00:00+23:59",
+            "9999-12-31T23:59:59-23:59",
+        )
+        for value in boundary_values:
+            with self.subTest(value=value):
+                _, instance = completion_v2()
+                objective = next(
+                    iter(instance["executionDiscipline"]["retryLedger"].values())
+                )
+                action = objective["currentSequence"]["nonConsumingActions"][0]
+                action["startedAt"] = value
+                action["endedAt"] = value
+
+                completed = run_completion_instance(instance)
+
+                self.assertEqual(
+                    completed.returncode, 0, completed.stdout + completed.stderr
+                )
+
+    def test_implemented_status_rejects_an_empty_retry_ledger(self):
+        schema, instance = completion_v2()
+        instance["status"] = "implemented"
+        instance["executionDiscipline"]["retryLedger"] = {}
+
+        errors = list(Draft202012Validator(schema).iter_errors(instance))
+
+        self.assertTrue(
+            any(
+                error.validator == "minProperties"
+                and list(error.absolute_path)[-1:] == ["retryLedger"]
+                for error in errors
+            )
+        )
+
+    def test_implemented_status_requires_an_objective_completing_action(self):
+        _, instance = completion_v2()
+        instance["status"] = "implemented"
+
+        completed = run_completion_instance(instance)
+
+        self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+        self.assertIn(
+            "COMPLETION_IMPLEMENTED_WITHOUT_SUCCESS",
+            {item["code"] for item in json_result(completed)["findings"]},
+        )
+
     def test_objective_completion_rejects_a_later_action(self):
         instance = json.loads(
             (

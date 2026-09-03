@@ -580,7 +580,7 @@ class ReleaseCandidateCompatibilityGateTests(unittest.TestCase):
             required_actions,
         )
         self.assertIn(
-            "at least one Successful ledger action for any reported passed validation",
+            "require every executed passed or failed validation to use objectiveId and actionId",
             required_actions,
         )
         self.assertIn("use one retryLedger map keyed by objective", required_actions)

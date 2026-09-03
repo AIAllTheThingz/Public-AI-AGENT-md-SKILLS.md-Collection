@@ -28,6 +28,8 @@ The [`invalid-v1.example.json`](invalid-v1.example.json) compatibility fixture m
 
 ## Negative examples
 
+[`invalid-implemented-empty-ledger.example.json`](invalid-implemented-empty-ledger.example.json) is intentionally invalid because `status: "implemented"` requires a non-empty retry ledger and full semantic validation requires a `Successful` action whose terminal disposition is `objective-completed`.
+
 [`invalid.example.json`](invalid.example.json) is intentionally invalid under the current v2 contract because it duplicates the same objective across the removed top-level `failedOrIndeterminateOutcomes` map and the authoritative `retryLedger`. Current records use one `retryLedger` map keyed by objective, with each objective's own `failedOrIndeterminateOutcomes` array, so a failure ledger and a success-only ledger cannot split one objective and bypass reset authorization.
 
 [`invalid-retry.example.json`](invalid-retry.example.json) is intentionally invalid because `retry1` repeats an action without the retry-specific `materialChange` and `causalRationale` evidence required to show why it may now succeed.

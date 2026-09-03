@@ -228,6 +228,29 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "implemented"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "executionDiscipline": {
+            "properties": {
+              "retryLedger": {
+                "minProperties": 1
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "$defs": {

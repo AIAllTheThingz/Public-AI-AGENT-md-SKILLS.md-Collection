@@ -14,6 +14,8 @@ status: baseline
 - [ ] Partially validated
 - [ ] Not completed
 
+Selecting Implemented requires a non-empty retry ledger containing a `Successful` action whose terminal disposition is `objective-completed`.
+
 ## Scope
 
 - Summary:

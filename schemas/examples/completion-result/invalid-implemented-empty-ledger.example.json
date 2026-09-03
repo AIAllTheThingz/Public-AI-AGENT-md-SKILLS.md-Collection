@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "2.0.0",
+  "status": "implemented",
+  "summary": "Invalid implemented result without objective completion evidence.",
+  "filesChanged": [
+    "src/example.py"
+  ],
+  "risk": "low",
+  "validation": [
+    {
+      "name": "Validation not run",
+      "result": "not-run",
+      "limitations": [
+        "No validation evidence is available."
+      ]
+    }
+  ],
+  "limitations": [
+    "No objective-clearing ledger action was recorded."
+  ],
+  "executionDiscipline": {
+    "authorizationRecoveryContinuity": "No consequential recovery action was recorded.",
+    "retryLedger": {},
+    "resetBasis": "Not applicable; no reset was recorded.",
+    "progressOrBlockerNarrowing": "Implementation was claimed without ledger evidence.",
+    "outOfScopeRouting": "Not applicable."
+  }
+}

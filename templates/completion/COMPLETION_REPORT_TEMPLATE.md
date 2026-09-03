@@ -12,6 +12,8 @@ template_type: completion-report
 - Completion status: `{{COMPLETION_STATUS}}`
 - Artifact identifiers: {{ARTIFACT_IDENTIFIERS}}
 
+An `implemented` status requires a non-empty retry ledger containing a `Successful` action whose terminal disposition is `objective-completed`.
+
 ## Scope
 
 {{SCOPE}}
