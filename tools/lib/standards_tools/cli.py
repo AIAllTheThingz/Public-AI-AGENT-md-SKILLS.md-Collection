@@ -30,6 +30,15 @@ def add_common_arguments(parser: argparse.ArgumentParser, *, default_root: Path)
     parser.add_argument("--quiet", action="store_true", help="Suppress stdout output.")
 
 
+def require_date_time_format(format_checker: object) -> None:
+    """Stop when jsonschema lacks its optional date-time checker, which otherwise accepts any string."""
+    if format_checker.conforms("not-a-date", "date-time"):
+        raise SystemExit(
+            "Missing dependency 'rfc3339-validator': jsonschema would accept any date-time value. Install with: "
+            "python -m pip install -r tools/validate-schemas/requirements.txt"
+        )
+
+
 def execute_tool(
     *,
     tool: str,

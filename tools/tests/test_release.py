@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 from helpers import json_result, run_tool
@@ -358,6 +359,46 @@ class ReleaseToolTests(unittest.TestCase):
                 ["git", "rev-parse", "HEAD"], cwd=root, text=True, encoding="utf-8", capture_output=True, check=True
             ).stdout.strip())
             self.assertEqual(manifest["builderVersion"], "1.0.0")
+
+    def test_release_assets_use_committed_content_not_checkout_line_endings(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            make_release_root(root)
+            (root / "README.md").write_text("# Example\n", encoding="utf-8")
+            subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True)
+            subprocess.run(["git", "config", "core.autocrlf", "true"], cwd=root, check=True)
+            init_fixture_repository(root)
+            # Re-check out every file so the working tree carries CRLF while the commit keeps LF.
+            for path in root.rglob("*"):
+                if path.is_file() and ".git" not in path.relative_to(root).parts:
+                    path.unlink()
+            subprocess.run(["git", "checkout", "--", "."], cwd=root, check=True, capture_output=True)
+            self.assertEqual((root / "README.md").read_bytes(), b"# Example\r\n")
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "tools/release/build_release.py"),
+                    "--root",
+                    str(root),
+                    "--output-dir",
+                    "dist",
+                ],
+                cwd=REPO_ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+
+            output = root / "dist"
+            with zipfile.ZipFile(output / "Public-Access-Agents-0.9.0.zip") as archive:
+                names = archive.namelist()
+                self.assertIn("Public-Access-Agents-0.9.0/README.md", names)
+                for name in names:
+                    self.assertNotIn(b"\r\n", archive.read(name), name)
+            for asset in ("RELEASE_NOTES.md", "MIGRATION_NOTES.md"):
+                self.assertNotIn(b"\r\n", (output / asset).read_bytes(), asset)
 
 
 if __name__ == "__main__":

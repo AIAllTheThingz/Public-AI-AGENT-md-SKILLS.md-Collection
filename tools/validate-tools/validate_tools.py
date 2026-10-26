@@ -16,7 +16,7 @@ from typing import Any, Iterable
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 
-from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
+from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool, rel  # noqa: E402
 
 TOOL = "validate-tools"
 VERSION = "1.3.3"
@@ -47,10 +47,6 @@ MATRIX_RUNNER_EXPRESSION = re.compile(r"^\$\{\{\s*matrix\.([A-Za-z_][A-Za-z0-9_-
 REQUIREMENT_PROJECT_NAME = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)(.*)$")
 DIRECT_REQUIREMENTS_PATH = "tools/validate-schemas/requirements.txt"
 FLOATING_HOSTED_RUNNERS = {"ubuntu-latest", "windows-latest", "macos-latest"}
-
-
-def rel(path: Path, root: Path) -> str:
-    return path.relative_to(root).as_posix()
 
 
 def require_yaml() -> Any:

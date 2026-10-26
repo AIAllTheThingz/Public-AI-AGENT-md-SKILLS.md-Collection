@@ -13,7 +13,7 @@ from typing import Any
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 
-from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
+from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool, require_date_time_format  # noqa: E402
 
 try:
     from jsonschema import Draft202012Validator, FormatChecker
@@ -22,6 +22,7 @@ except ImportError as exc:
         "Missing dependency 'jsonschema'. Install with: "
         "python -m pip install -r tools/validate-schemas/requirements.txt"
     ) from exc
+require_date_time_format(FormatChecker())
 
 TOOL = "generate-manifest"
 VERSION = "1.1.0"

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from helpers import REPO_ROOT, run_tool
+from helpers import REPO_ROOT, require_git_history, run_tool
 
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
 EXPECTED_WRITERS = {
@@ -30,6 +30,7 @@ def git_output(*args: str) -> str:
 
 
 def published_stable_writers() -> set[str]:
+    require_git_history(CHECKPOINT_COMMIT)
     paths = git_output(
         "ls-tree", "-r", "--name-only", CHECKPOINT_COMMIT, "tools"
     ).splitlines()
@@ -211,6 +212,40 @@ class ReleaseCandidateWriterSafetyTests(unittest.TestCase):
             self.assertTrue((output / "SHA256SUMS.txt").is_file())
             self.assertTrue((output / "Public-Access-Agents-0.10.1.zip").is_file())
             self.assertTrue((output / "Public-Access-Agents-0.10.1.tar.gz").is_file())
+
+    def test_compose_agents_force_refuses_output_containing_root(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "root"
+            root.mkdir()
+            sentinel = root / "sentinel.txt"
+            sentinel.write_text("keep\n", encoding="utf-8")
+            for output in (root, root.parent):
+                completed = run_tool(
+                    "tools/compose-agents/compose_agents.py",
+                    "--root", str(root),
+                    "--format", "json",
+                    "--output-dir", str(output),
+                    "--force",
+                )
+                self.assertEqual(completed.returncode, 2, completed.stdout + completed.stderr)
+                self.assertIn("must not contain the repository root", completed.stdout)
+                self.assertTrue(sentinel.is_file())
+
+    def test_release_builder_force_refuses_output_containing_root(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "release-root"
+            root.mkdir()
+            init_release_builder_repo(root)
+            for output in (root, root.parent):
+                completed = run_tool(
+                    "tools/release/build_release.py",
+                    "--root", str(root),
+                    "--output-dir", str(output),
+                    "--force",
+                )
+                self.assertEqual(completed.returncode, 2, completed.stdout + completed.stderr)
+                self.assertIn("must not contain the repository root", completed.stderr)
+                self.assertTrue((root / "VERSION").is_file())
 
 
 if __name__ == "__main__":

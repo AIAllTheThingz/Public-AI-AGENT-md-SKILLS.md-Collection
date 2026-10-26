@@ -49,8 +49,10 @@ def anchors_for(path: Path) -> set[str]:
 
 
 def extract_targets(text: str) -> list[tuple[str, int]]:
-    scrubbed = FENCE.sub("", text)
-    scrubbed = INLINE_CODE.sub("", scrubbed)
+    # Keep the newlines of removed code so reported line numbers match the file.
+    blank = lambda match: "\n" * match.group().count("\n")  # noqa: E731
+    scrubbed = FENCE.sub(blank, text)
+    scrubbed = INLINE_CODE.sub(blank, scrubbed)
     targets: list[tuple[str, int]] = []
     for regex in (INLINE_LINK, REFERENCE_DEFINITION):
         for match in regex.finditer(scrubbed):

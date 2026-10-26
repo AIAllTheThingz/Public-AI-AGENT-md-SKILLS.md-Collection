@@ -290,7 +290,7 @@ See [`RELEASE_AND_COMPATIBILITY.md`](RELEASE_AND_COMPATIBILITY.md) and [`../RELE
 
 Common failures and maintenance states include:
 
-- missing `jsonschema` dependency
+- missing `jsonschema` dependency or its date-time format support (`rfc3339-validator`)
 - running from an incomplete checkout
 - stale placeholders in completed examples
 - broken relative links or anchors

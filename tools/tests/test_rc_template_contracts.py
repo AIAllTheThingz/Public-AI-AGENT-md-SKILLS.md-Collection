@@ -5,7 +5,8 @@ import re
 import subprocess
 import unittest
 
-from helpers import REPO_ROOT
+from helpers import REPO_ROOT, require_git_history
+from rc_normative_rule_contracts_base import rendered_markdown
 
 CHECKPOINT = REPO_ROOT / "releases" / "compatibility" / "0.10.0-checkpoint.json"
 PLACEHOLDER_PATTERN = re.compile(r"\{\{(?P<name>[A-Z][A-Z0-9_]*)\}\}")
@@ -14,7 +15,6 @@ SECTION_PATTERN = re.compile(
     re.MULTILINE | re.DOTALL,
 )
 SECTION_HEADING_PATTERN = re.compile(r"^##\s+(?P<title>.+?)\s*$")
-HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
 OBLIGATION_PATTERN = re.compile(
     r"\b(must(?:\s+not)?|shall(?:\s+not)?|may\s+not|cannot|do\s+not|only|required)\b",
     re.IGNORECASE,
@@ -70,11 +70,6 @@ def git_output(*args: str) -> str:
 
 def git_source_at(revision: str, relative: str) -> str:
     return git_output("show", f"{revision}:{relative}")
-
-
-def rendered_markdown(text: str) -> str:
-    """Remove Markdown HTML comments before extracting visible template contracts."""
-    return HTML_COMMENT_PATTERN.sub("", text)
 
 
 def normalize_section(title: str) -> str:
@@ -209,6 +204,7 @@ class ReleaseCandidateTemplateContractTests(unittest.TestCase):
         cls.template_paths = cls.checkpoint["stablePathGroups"]["templates"]
 
     def test_every_published_stable_template_contract_is_preserved(self):
+        require_git_history(self.source_commit)
         self.assertEqual(len(self.template_paths), 7)
         for relative in self.template_paths:
             with self.subTest(template=relative):

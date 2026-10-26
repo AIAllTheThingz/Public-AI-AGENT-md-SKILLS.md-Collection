@@ -17,6 +17,10 @@ python -m unittest discover -s tools/tests -p "test_*.py"
 
 Tests use temporary repositories and subprocess execution to verify public behavior.
 
+Every published finding code in `tools/tests/test_published_finding_codes.py` must keep a test that runs the real tool and asserts the code (see `tools/tests/test_finding_codes_*.py`).
+
+Compatibility tests read the published `v0.10.0` commits, so they need a full clone. In a shallow clone or an extracted source archive they are skipped with a reason; CI sets `PAG_REQUIRE_GIT_HISTORY=1` so missing history fails instead of skipping.
+
 ## Required test classes
 
 Each tool should cover:

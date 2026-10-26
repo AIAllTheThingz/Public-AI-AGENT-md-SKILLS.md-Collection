@@ -5,21 +5,35 @@ import unittest
 from collections import defaultdict
 
 import rc_normative_rule_contracts_base as base
+from helpers import require_git_history
+from test_rc_unnumbered_governance_semantics import _is_permission_expanding_statement
 
 RULE_HEADING_PATTERN = re.compile(
     r"^### (?P<id>[A-Z][A-Z0-9-]*-\d{3})\s*$",
     re.MULTILINE,
 )
 FIELD_PATTERN = re.compile(r"^\*\*(?P<label>[^*\n:]+):\*\*\s*(?P<value>.*)$")
-HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
+# A candidate may not silently weaken an existing published rule by adding a new
+# exception, applicability restriction, override, waiver, exemption, or
+# authorization/approval escape hatch that had no published counterpart.
+_ADDED_BEHAVIORAL_FIELD_MARKERS = (
+    "exception",
+    "applicability",
+    "override",
+    "waiver",
+    "authorization",
+    "approval",
+    "scope",
+    "precedence",
+    "exempt",
+    "dispensation",
+    "carve-out",
+    "carveout",
+)
 
 
 def normalize_contract_text(text: str) -> str:
     return " ".join(text.split())
-
-
-def visible_markdown(text: str) -> str:
-    return HTML_COMMENT_PATTERN.sub("", text)
 
 
 def extract_rule_field_contracts(
@@ -27,7 +41,7 @@ def extract_rule_field_contracts(
 ) -> list[tuple[str, str, dict[str, str]]]:
     """Extract every visible bold-labeled behavioral field in numbered rules."""
 
-    text = visible_markdown(text)
+    text = base.rendered_markdown(text)
     matches = list(RULE_HEADING_PATTERN.finditer(text))
     contracts: list[tuple[str, str, dict[str, str]]] = []
 
@@ -102,6 +116,11 @@ def contracts_by_key(
     return dict(result)
 
 
+def _is_candidate_only_behavioral_field(label: str) -> bool:
+    normalized = normalize_contract_text(label).casefold()
+    return any(marker in normalized for marker in _ADDED_BEHAVIORAL_FIELD_MARKERS)
+
+
 def rule_field_contract_findings(
     published: list[tuple[str, str, dict[str, str]]],
     candidate: list[tuple[str, str, dict[str, str]]],
@@ -126,11 +145,22 @@ def rule_field_contract_findings(
             elif actual_fields[label] != expected_value:
                 findings.append(f"RULE_FIELD_CHANGED:{path}:{rule_id}:{label}")
 
-    return sorted(findings)
+        # Do not rely exclusively on the label vocabulary: a neutral label such as
+        # `Notes:` cannot hide `may be skipped` semantics in a candidate-only field.
+        for label in sorted(set(actual_fields) - set(expected_fields)):
+            if _is_candidate_only_behavioral_field(
+                label
+            ) or _is_permission_expanding_statement(actual_fields[label]):
+                findings.append(
+                    f"RULE_BEHAVIORAL_FIELD_ADDED:{path}:{rule_id}:{label}"
+                )
+
+    return sorted(set(findings))
 
 
 class ReleaseCandidateNumberedRuleSemanticTests(unittest.TestCase):
     def test_every_published_numbered_rule_field_semantic_is_preserved(self):
+        require_git_history(base.CHECKPOINT_COMMIT)
         published = published_rule_field_contracts()
         candidate = candidate_rule_field_contracts()
         self.assertGreater(len(published), 100)

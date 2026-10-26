@@ -14,7 +14,7 @@ from typing import Any
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 
-from standards_tools import Finding, ToolResult, add_common_arguments, ensure_within_root, execute_tool, sha256_file  # noqa: E402
+from standards_tools import Finding, ToolResult, add_common_arguments, ensure_within_root, execute_tool, require_date_time_format, sha256_file  # noqa: E402
 
 try:
     from jsonschema import Draft202012Validator, FormatChecker
@@ -23,6 +23,7 @@ except ImportError as exc:
         "Missing dependency 'jsonschema'. Install with: "
         "python -m pip install -r tools/validate-schemas/requirements.txt"
     ) from exc
+require_date_time_format(FormatChecker())
 
 TOOL = "compose-agents"
 VERSION = "1.1.0"
@@ -264,6 +265,10 @@ def generated_agents(
 
 def run(args: argparse.Namespace) -> ToolResult:
     root = args.root.resolve()
+    output_dir = args.output_dir if args.output_dir.is_absolute() else root / args.output_dir
+    # --force deletes the output directory, so it must never be the repository or a parent of it.
+    if root.is_relative_to(output_dir.resolve()):
+        raise ValueError(f"Output directory must not contain the repository root: {output_dir}")
     manifest_path = args.manifest if args.manifest.is_absolute() else root / args.manifest
     manifest = load_manifest(manifest_path, root)
     governance_sources = selected_governance_sources(root, manifest)
@@ -275,7 +280,6 @@ def run(args: argparse.Namespace) -> ToolResult:
         {"path": path.relative_to(root).as_posix(), "sha256": sha256_file(path)}
         for path in sources
     ]
-    output_dir = args.output_dir if args.output_dir.is_absolute() else root / args.output_dir
     if output_dir.exists() and not args.force and not args.dry_run:
         raise ValueError(f"Output directory already exists; use --force to replace it: {output_dir}")
 

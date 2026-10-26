@@ -22,6 +22,20 @@ Release notes distinguish:
 
 - None.
 
+### Tooling changes
+
+- `compose-agents` and `build_release.py` now reject an output directory that is the repository root or one of its parents, so `--force` can no longer delete the repository being processed.
+- Renamed the 58 `tools/tests/test_rc_zzz…` modules to `test_rc_zNNN_…` so every repository path fits the Windows 260-character limit. Discovery order and test content are unchanged.
+- The 78 test modules that patch, or depend on, import-time patches from other test modules now fail with a "run the full suite" error when run outside full discovery, instead of silently testing different code.
+- `build_release.py` now packages committed `HEAD` content, including release and migration notes, instead of working-tree files, so a Windows checkout with `core.autocrlf` builds the same archives and checksums as CI.
+- `compose-agents`, `generate-manifest`, `validate-schemas`, and `validate-templates` now stop with an install hint when `jsonschema` lacks date-time format support (`rfc3339-validator`); previously every `date-time` value silently passed.
+- Repository tools reuse the shared `load_json`, `rel`, and `sha256_file` helpers instead of local copies.
+- Replaced the AST-based finding-code "semantic signature" test machinery (77 test modules, about 33,000 lines) with behavior tests: each of the 170 finding codes published in `v0.10.0` is pinned in `tools/tests/test_published_finding_codes.py` and asserted by a test that runs the real tool (`tools/tests/test_finding_codes_*.py`). The Markdown rule-contract checks it carried were folded into the rule-contract test modules without import-time patching; the `require_full_suite` guard is removed.
+- `validate-all` no longer replaces `git` with a history wrapper or bootstraps `releases/compatibility/rc-history.bundle` (removed). Tests that read published commits now skip with a reason in shallow clones and extracted archives; CI fetches full history and sets `PAG_REQUIRE_GIT_HISTORY=1` so missing history fails there.
+- `check-links` reports correct line numbers for links that follow fenced or multi-line inline code.
+- `validate-standards` reports an `AGENTS.md` with invalid UTF-8 as `MARKDOWN_ENCODING` instead of exiting with `INPUT_ERROR`.
+- `validate-all --list` is handled once, by its argument parser.
+
 ### Migration notes
 
 - None.

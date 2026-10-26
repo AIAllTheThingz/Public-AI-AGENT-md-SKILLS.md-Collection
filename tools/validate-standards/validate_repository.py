@@ -13,7 +13,7 @@ from pathlib import Path
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 
-from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
+from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool, rel  # noqa: E402
 
 TOOL = "validate-standards"
 VERSION = "1.2.0"
@@ -75,15 +75,11 @@ REQUIRED_CODEOWNER_ROUTES = {
 STALE_OWNERSHIP_ROADMAP = "Add maintainers and code ownership"
 
 
-def relative(path: Path, root: Path) -> str:
-    return path.relative_to(root).as_posix()
-
-
 def read_text(path: Path, findings: list[Finding], code: str) -> str | None:
     try:
         return path.read_text(encoding="utf-8")
     except UnicodeDecodeError as exc:
-        findings.append(Finding(code, str(exc), path=relative(path, path.parent)))
+        findings.append(Finding(code, str(exc), path=rel(path, path.parent)))
         return None
 
 
@@ -314,7 +310,7 @@ def run(args: argparse.Namespace) -> ToolResult:
 
     for path in candidates:
         if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}:
-            generated_artifacts.add(relative(path, root))
+            generated_artifacts.add(rel(path, root))
     for artifact in sorted(generated_artifacts):
         findings.append(Finding(
             "PYTHON_CACHE_PRESENT",
@@ -331,7 +327,7 @@ def run(args: argparse.Namespace) -> ToolResult:
             findings.append(Finding(
                 "JSON_INVALID",
                 str(exc),
-                path=relative(path, root),
+                path=rel(path, root),
                 line=getattr(exc, "lineno", None),
             ))
 
@@ -342,7 +338,7 @@ def run(args: argparse.Namespace) -> ToolResult:
         try:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError as exc:
-            findings.append(Finding("MARKDOWN_ENCODING", str(exc), path=relative(path, root)))
+            findings.append(Finding("MARKDOWN_ENCODING", str(exc), path=rel(path, root)))
             continue
         match = FRONTMATTER_ID.search(text)
         if match:
@@ -350,8 +346,8 @@ def run(args: argparse.Namespace) -> ToolResult:
             if document_id in ids:
                 findings.append(Finding(
                     "DUPLICATE_ID",
-                    f"Duplicate front-matter ID also used by {relative(ids[document_id], root)}: {document_id}",
-                    path=relative(path, root),
+                    f"Duplicate front-matter ID also used by {rel(ids[document_id], root)}: {document_id}",
+                    path=rel(path, root),
                 ))
             else:
                 ids[document_id] = path
@@ -359,12 +355,15 @@ def run(args: argparse.Namespace) -> ToolResult:
     agents_count = 0
     for path in sorted(root.rglob("AGENTS.md")):
         agents_count += 1
-        text = path.read_text(encoding="utf-8").strip()
+        try:
+            text = path.read_text(encoding="utf-8").strip()
+        except UnicodeDecodeError:
+            continue  # already reported as MARKDOWN_ENCODING above
         if len(text) < args.minimum_agents_length:
             findings.append(Finding(
                 "AGENTS_INCOMPLETE",
                 f"AGENTS.md contains {len(text)} characters; minimum is {args.minimum_agents_length}.",
-                path=relative(path, root),
+                path=rel(path, root),
             ))
 
     summary = {

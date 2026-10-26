@@ -25,6 +25,15 @@ class CheckLinksTests(unittest.TestCase):
             codes = {item["code"] for item in json_result(completed)["findings"]}
             self.assertIn("LINK_MISSING_TARGET", codes)
 
+    def test_line_number_counts_lines_inside_code(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            text = "# Doc\n\n```text\none\ntwo\nthree\n```\n\n`multi\nline`\n\n[Missing](missing.md)\n"
+            (root / "a.md").write_text(text, encoding="utf-8")
+            completed = run_tool("tools/check-links/check_links.py", "--format", "json", root=root)
+            findings = json_result(completed)["findings"]
+            self.assertEqual([item["line"] for item in findings], [12])
+
 
 if __name__ == "__main__":
     unittest.main()

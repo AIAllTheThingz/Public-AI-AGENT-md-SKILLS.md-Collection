@@ -15,7 +15,7 @@ from urllib.parse import unquote, urlsplit
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 
-from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
+from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool, rel  # noqa: E402
 
 TOOL = "validate-skills"
 VERSION = "1.0.0"
@@ -45,10 +45,6 @@ class ParsedSkill:
     body_start_line: int
 
 
-def relative(path: Path, root: Path) -> str:
-    return path.relative_to(root).as_posix()
-
-
 def unquote_scalar(value: str) -> str:
     value = value.strip()
     if len(value) >= 2 and value[0] == value[-1] == '"':
@@ -65,7 +61,7 @@ def unquote_scalar(value: str) -> str:
 def parse_skill(path: Path, root: Path, findings: list[Finding]) -> ParsedSkill:
     text = path.read_text(encoding="utf-8")
     lines = text.splitlines()
-    rel_path = relative(path, root)
+    rel_path = rel(path, root)
     if not lines or lines[0].strip() != "---":
         findings.append(Finding(
             "SKILL_FRONTMATTER_MISSING",
@@ -242,7 +238,7 @@ def declared_packages(skill: ParsedSkill, root: Path, findings: list[Finding]) -
                 findings.append(Finding(
                     "SKILL_PACKAGE_DECLARATION_ESCAPE",
                     f"Declared package escapes the repository root: {raw_path}",
-                    path=relative(manifest, root),
+                    path=rel(manifest, root),
                     line=line_number,
                 ))
                 continue
@@ -250,7 +246,7 @@ def declared_packages(skill: ParsedSkill, root: Path, findings: list[Finding]) -
                 findings.append(Finding(
                     "SKILL_PACKAGE_DECLARATION_MISSING",
                     f"Declared skill package does not exist: {raw_path}",
-                    path=relative(manifest, root),
+                    path=rel(manifest, root),
                     line=line_number,
                 ))
                 continue
@@ -262,7 +258,7 @@ def validate_metadata(
     skill: ParsedSkill, root: Path, findings: list[Finding], require_metadata: bool
 ) -> int:
     metadata = skill.path.parent / "agents" / "openai.yaml"
-    rel_skill = relative(skill.path, root)
+    rel_skill = rel(skill.path, root)
     if not metadata.is_file():
         if require_metadata:
             findings.append(Finding(
@@ -278,12 +274,12 @@ def validate_metadata(
         findings.append(Finding(
             "SKILL_METADATA_ESCAPE",
             "agents/openai.yaml resolves outside the skill directory.",
-            path=relative(metadata, root),
+            path=rel(metadata, root),
         ))
         return 1
 
     text = metadata.read_text(encoding="utf-8")
-    rel_metadata = relative(metadata, root)
+    rel_metadata = rel(metadata, root)
     if not re.search(r"^interface:\s*$", text, re.MULTILINE):
         findings.append(Finding(
             "SKILL_METADATA_INTERFACE_MISSING",
@@ -358,7 +354,7 @@ def registry_entries(root: Path, findings: list[Finding]) -> Counter[str]:
         for raw_path in BACKTICK_SKILL.findall(line):
             candidate = (root / raw_path).resolve()
             try:
-                normalized = relative(candidate, root)
+                normalized = rel(candidate, root)
             except ValueError:
                 findings.append(Finding(
                     "SKILL_REGISTRY_ESCAPE",
@@ -407,7 +403,7 @@ def run(args: argparse.Namespace) -> ToolResult:
             findings.append(Finding(
                 "SKILL_FILE_ESCAPE",
                 "SKILL.md resolves outside the repository root.",
-                path=relative(path, root),
+                path=rel(path, root),
             ))
         else:
             skill_paths.append(path)
@@ -425,7 +421,7 @@ def run(args: argparse.Namespace) -> ToolResult:
     metadata_files = 0
 
     for skill in parsed_skills:
-        rel_path = relative(skill.path, root)
+        rel_path = rel(skill.path, root)
         if registry[rel_path] == 0:
             findings.append(Finding(
                 "SKILL_NOT_REGISTERED",
@@ -565,13 +561,13 @@ def run(args: argparse.Namespace) -> ToolResult:
             if count == 0:
                 findings.append(Finding(
                     "SKILL_PACKAGE_ROUTE_MISSING",
-                    f"Skill does not route to package: {relative(package, root)}",
+                    f"Skill does not route to package: {rel(package, root)}",
                     path=rel_path,
                 ))
             elif count > 1:
                 findings.append(Finding(
                     "SKILL_PACKAGE_ROUTE_DUPLICATE",
-                    f"Skill routes to package {count} times: {relative(package, root)}",
+                    f"Skill routes to package {count} times: {rel(package, root)}",
                     path=rel_path,
                 ))
             else:
@@ -581,12 +577,12 @@ def run(args: argparse.Namespace) -> ToolResult:
 
     for name, skills in sorted(names.items()):
         if len(skills) > 1:
-            locations = [relative(skill.path, root) for skill in skills]
+            locations = [rel(skill.path, root) for skill in skills]
             for skill in skills:
                 findings.append(Finding(
                     "SKILL_NAME_DUPLICATE",
-                    f"Skill name '{name}' is also used by: {', '.join(path for path in locations if path != relative(skill.path, root))}",
-                    path=relative(skill.path, root),
+                    f"Skill name '{name}' is also used by: {', '.join(path for path in locations if path != rel(skill.path, root))}",
+                    path=rel(skill.path, root),
                     line=2,
                 ))
 
@@ -597,7 +593,7 @@ def run(args: argparse.Namespace) -> ToolResult:
         findings=findings,
         summary={
             "skillFiles": len(skill_paths),
-            "registeredSkills": sum(1 for path in skill_paths if registry[relative(path, root)] == 1),
+            "registeredSkills": sum(1 for path in skill_paths if registry[rel(path, root)] == 1),
             "packageRoutes": package_routes,
             "metadataFiles": metadata_files,
             "findings": len(findings),

@@ -28,7 +28,8 @@ jobs:
           set -euo pipefail
           git init .
           git remote add origin "https://github.com/${HEAD_REPO}.git"
-          git -c protocol.version=2 fetch --no-tags --depth=1 origin "$HEAD_SHA"
+          # Full history: compatibility tests read the published v0.10.0 commits.
+          git -c protocol.version=2 fetch --no-tags origin "$HEAD_SHA"
           git checkout --detach FETCH_HEAD
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
 
@@ -52,6 +53,8 @@ jobs:
 
       - name: Run complete validation pipeline
         shell: bash
+        env:
+          PAG_REQUIRE_GIT_HISTORY: "1"
         run: |
           result_file="$(mktemp)"
           set +e

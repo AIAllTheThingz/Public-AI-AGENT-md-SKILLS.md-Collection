@@ -4,6 +4,7 @@ import hashlib
 import re
 
 import rc_normative_rule_contracts_base as base
+from helpers import require_git_history
 
 CSHARP_NORMATIVE_ROOT = base.CSHARP_NORMATIVE_ROOT
 CSHARP_PROMOTION_EVIDENCE_COMMIT = base.CSHARP_PROMOTION_EVIDENCE_COMMIT
@@ -22,6 +23,7 @@ NORMATIVE_IMPERATIVE_PATTERN = re.compile(
 
 
 def csharp_standard_paths_at(revision: str) -> list[str]:
+    require_git_history(revision)
     prefix = f"{CSHARP_NORMATIVE_ROOT}/"
     return sorted(
         path

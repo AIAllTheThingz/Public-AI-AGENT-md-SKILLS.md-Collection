@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import gzip
-import hashlib
 import io
 import json
 import shutil
@@ -21,6 +20,7 @@ _previous_dont_write_bytecode = sys.dont_write_bytecode
 sys.dont_write_bytecode = True
 try:
     from validate_release import read_release_state as validate_release_state
+    from standards_tools import sha256_file
 finally:
     sys.dont_write_bytecode = _previous_dont_write_bytecode
 
@@ -63,61 +63,71 @@ def ensure_clean_tracked_tree(root: Path) -> None:
         )
 
 
-def tracked_files(root: Path) -> list[Path]:
-    raw = subprocess.run(
-        ["git", "-C", str(root), "ls-files", "-z"],
+def tracked_files(root: Path) -> list[tuple[str, bytes]]:
+    """Return committed HEAD content, so local checkout settings such as autocrlf cannot change archives."""
+    listing = subprocess.run(
+        ["git", "-C", str(root), "ls-tree", "-r", "-z", "HEAD"],
         capture_output=True,
         check=False,
     )
-    if raw.returncode != 0:
+    if listing.returncode != 0:
         raise RuntimeError("Unable to enumerate tracked repository files.")
-    paths: list[Path] = []
-    for item in raw.stdout.split(b"\0"):
+    entries: list[tuple[str, str]] = []
+    for item in listing.stdout.split(b"\0"):
         if not item:
             continue
-        relative = Path(item.decode("utf-8", errors="surrogateescape"))
-        if relative.parts and relative.parts[0] in {".git", "dist"}:
+        meta, name = item.split(b"\t", 1)
+        _, kind, oid = meta.decode("ascii").split()
+        relative = name.decode("utf-8", errors="surrogateescape")
+        if kind != "blob" or relative.split("/", 1)[0] in {".git", "dist"}:
             continue
-        path = root / relative
-        if path.is_file():
-            paths.append(path)
-    return sorted(paths, key=lambda path: path.relative_to(root).as_posix())
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
+        entries.append((relative, oid))
+    batch = subprocess.run(
+        ["git", "-C", str(root), "cat-file", "--batch"],
+        input="".join(f"{oid}\n" for _, oid in entries).encode("ascii"),
+        capture_output=True,
+        check=False,
+    )
+    if batch.returncode != 0:
+        raise RuntimeError("Unable to read tracked repository content.")
+    files: list[tuple[str, bytes]] = []
+    output = batch.stdout
+    offset = 0
+    for relative, oid in entries:
+        header_end = output.index(b"\n", offset)
+        header = output[offset:header_end].decode("ascii").split()
+        if header[:2] != [oid, "blob"]:
+            raise RuntimeError(f"Unexpected git object for {relative}: {' '.join(header)}")
+        start = header_end + 1
+        end = start + int(header[2])
+        files.append((relative, output[start:end]))
+        offset = end + 1
+    return sorted(files)
 
 
 def artifact_record(path: Path, role: str) -> dict:
     return {
         "name": path.name,
         "role": role,
-        "sha256": sha256(path),
+        "sha256": sha256_file(path),
         "sizeBytes": path.stat().st_size,
     }
 
 
-def write_zip(root: Path, files: list[Path], output: Path, top: str) -> None:
+def write_zip(files: list[tuple[str, bytes]], output: Path, top: str) -> None:
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
-        for path in files:
-            relative = path.relative_to(root).as_posix()
+        for relative, data in files:
             info = zipfile.ZipInfo(f"{top}/{relative}", date_time=FIXED_ZIP_TIME)
             info.compress_type = zipfile.ZIP_DEFLATED
             info.create_system = 3
             info.external_attr = (0o644 & 0xFFFF) << 16
-            archive.writestr(info, path.read_bytes())
+            archive.writestr(info, data)
 
 
-def write_tar_gz(root: Path, files: list[Path], output: Path, top: str) -> None:
+def write_tar_gz(files: list[tuple[str, bytes]], output: Path, top: str) -> None:
     tar_buffer = io.BytesIO()
     with tarfile.open(fileobj=tar_buffer, mode="w", format=tarfile.PAX_FORMAT) as archive:
-        for path in files:
-            relative = path.relative_to(root).as_posix()
-            data = path.read_bytes()
+        for relative, data in files:
             info = tarfile.TarInfo(f"{top}/{relative}")
             info.size = len(data)
             info.mtime = 0
@@ -166,6 +176,9 @@ def build(root: Path, output_dir: Path, tag: str | None, force: bool) -> dict:
         if not path.is_file():
             raise FileNotFoundError(path)
 
+    # --force deletes the output directory, so it must never be the repository or a parent of it.
+    if root.resolve().is_relative_to(output_dir.resolve()):
+        raise ValueError(f"Output directory must not contain the repository root: {output_dir}")
     if output_dir.exists():
         if not force:
             raise FileExistsError(f"Output directory already exists: {output_dir}")
@@ -186,10 +199,14 @@ def build(root: Path, output_dir: Path, tag: str | None, force: bool) -> dict:
         migration_asset = staging / "MIGRATION_NOTES.md"
         manifest_path = staging / "release-manifest.json"
 
-        write_zip(root, files, zip_path, top)
-        write_tar_gz(root, files, tar_path, top)
-        release_asset.write_text(release_notes.read_text(encoding="utf-8"), encoding="utf-8")
-        migration_asset.write_text(migration_notes.read_text(encoding="utf-8"), encoding="utf-8")
+        write_zip(files, zip_path, top)
+        write_tar_gz(files, tar_path, top)
+        committed = dict(files)
+        for source, asset in ((release_notes, release_asset), (migration_notes, migration_asset)):
+            relative = source.relative_to(root).as_posix()
+            if relative not in committed:
+                raise FileNotFoundError(f"{relative} is not committed at HEAD")
+            asset.write_bytes(committed[relative])
 
         artifacts = [
             artifact_record(zip_path, "source-archive-zip"),
@@ -220,7 +237,7 @@ def build(root: Path, output_dir: Path, tag: str | None, force: bool) -> dict:
         checksum_targets = [zip_path, tar_path, release_asset, migration_asset, manifest_path]
         (staging / "SHA256SUMS.txt").write_text(
             "".join(
-                f"{sha256(path)}  {path.name}\n"
+                f"{sha256_file(path)}  {path.name}\n"
                 for path in sorted(checksum_targets, key=lambda value: value.name)
             ),
             encoding="utf-8",

@@ -6,7 +6,7 @@ import subprocess
 import unittest
 from collections import defaultdict
 
-from helpers import REPO_ROOT, sha256_utf8_text_file
+from helpers import REPO_ROOT, require_git_history, sha256_utf8_text_file
 
 CANDIDATE_INVENTORY = REPO_ROOT / "releases" / "compatibility" / "1.0.0-rc.1.json"
 RULE_CHECKPOINT = REPO_ROOT / "releases" / "compatibility" / "0.10.0-rule-contracts.json"
@@ -15,6 +15,10 @@ CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
 CSHARP_PROMOTION_EVIDENCE_COMMIT = "2f6d39288e5c1a7d416e62cd75651b3d6da48dfe"
 CSHARP_NORMATIVE_ROOT = "languages/csharp/standards"
 HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
+_FENCE_OPEN_PATTERN = re.compile(r"^[ \t]{0,3}(?P<marker>`{3,}|~{3,})")
+_ATX_HEADING_PATTERN = re.compile(r"^#{1,6}(?:[ \t]+|$)")
+_LIST_MARKER_PATTERN = re.compile(r"^(?:[-+*]|\d{1,9}[.)])(?:[ \t]+|$)")
+_SETEXT_OR_RULE_PATTERN = re.compile(r"^(?:=+|-+|(?:\*\s*){3,}|(?:_\s*){3,})[ \t]*$")
 RULE_PATTERN = re.compile(
     r"^### (?P<id>[A-Z][A-Z0-9-]*-\d{3})\s*$\n\n"
     r"\*\*Requirement:\*\* (?P<requirement>[^\n]+)$",
@@ -36,6 +40,7 @@ def git_output(*args: str) -> str:
 
 
 def git_source_at(revision: str, relative: str) -> str:
+    require_git_history(revision)
     return git_output("show", f"{revision}:{relative}")
 
 
@@ -48,9 +53,112 @@ def git_object_sha_at(revision: str, relative: str) -> str:
     return git_output("rev-parse", f"{revision}:{relative}").strip()
 
 
+def _indent_columns(text: str) -> int:
+    columns = 0
+    for character in text:
+        if character == " ":
+            columns += 1
+        elif character == "\t":
+            columns += 4 - (columns % 4)
+        else:
+            break
+    return columns
+
+
+def _line_break(raw_line: str) -> str:
+    return "\n" if raw_line.endswith(("\n", "\r")) else ""
+
+
+def _opens_or_continues_paragraph(candidate: str) -> bool:
+    """Return whether a following indented line would interrupt paragraph/list text."""
+
+    stripped = candidate.lstrip(" \t")
+    if not stripped:
+        return False
+    if _ATX_HEADING_PATTERN.match(stripped):
+        return False
+    if stripped.startswith(">"):
+        return False
+    if _SETEXT_OR_RULE_PATTERN.match(stripped):
+        return False
+    # List content owns ambiguous indentation ahead of indented-code parsing.
+    if _LIST_MARKER_PATTERN.match(stripped):
+        return True
+    return True
+
+
 def rendered_markdown(text: str) -> str:
-    """Remove Markdown HTML comments before extracting visible normative contracts."""
-    return HTML_COMMENT_PATTERN.sub("", text)
+    """Project Markdown to operative source text for compatibility scanners.
+
+    Compatibility contracts describe operative rendered guidance, not text hidden
+    in HTML comments, fenced code, or CommonMark indented code blocks. Every
+    Markdown semantic extractor (numbered rules, rule fields, unnumbered
+    governance, templates, and skill routers) uses this one projection for both
+    the immutable published source and the candidate, so a published obligation
+    cannot survive comparison merely by moving into a non-operative region.
+
+    This intentionally is not a full Markdown renderer. Four-column indentation
+    begins code when it does not interrupt an active paragraph/list continuation;
+    headings and other block boundaries therefore permit indented code without
+    requiring an extra blank line.
+    """
+
+    without_comments = HTML_COMMENT_PATTERN.sub("", text)
+    output: list[str] = []
+    fence_character: str | None = None
+    fence_length = 0
+    in_indented_code = False
+    paragraph_or_list_open = False
+
+    for raw_line in without_comments.splitlines(keepends=True):
+        candidate = raw_line.rstrip("\r\n")
+        blank = candidate.strip(" \t") == ""
+        leading_columns = _indent_columns(candidate)
+        eligible_fence_indent = leading_columns <= 3
+        stripped = candidate.lstrip(" \t") if eligible_fence_indent else candidate
+
+        if fence_character is not None:
+            if eligible_fence_indent:
+                closing = re.match(
+                    rf"^{re.escape(fence_character)}{{{fence_length},}}[ \t]*$",
+                    stripped,
+                )
+                if closing is not None:
+                    fence_character = None
+                    fence_length = 0
+            output.append(_line_break(raw_line))
+            paragraph_or_list_open = False
+            continue
+
+        if in_indented_code:
+            if blank or leading_columns >= 4:
+                output.append(_line_break(raw_line))
+                paragraph_or_list_open = False
+                continue
+            in_indented_code = False
+
+        match = _FENCE_OPEN_PATTERN.match(candidate)
+        if match is not None:
+            marker = match.group("marker")
+            fence_character = marker[0]
+            fence_length = len(marker)
+            output.append(_line_break(raw_line))
+            paragraph_or_list_open = False
+            continue
+
+        if leading_columns >= 4 and not paragraph_or_list_open and not blank:
+            in_indented_code = True
+            output.append(_line_break(raw_line))
+            paragraph_or_list_open = False
+            continue
+
+        output.append(raw_line)
+        if blank:
+            paragraph_or_list_open = False
+        elif leading_columns < 4:
+            paragraph_or_list_open = _opens_or_continues_paragraph(candidate)
+
+    return "".join(output)
 
 
 def extract_rule_contracts(text: str, path: str) -> list[tuple[str, str, str]]:
@@ -150,6 +258,7 @@ class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
         self.assertIn("grandfathered", self.checkpoint["coverageRule"])
 
     def test_every_published_numbered_rule_occurrence_and_meaning_is_preserved(self):
+        require_git_history(CHECKPOINT_COMMIT)
         published = published_rule_contracts()
         candidate = candidate_rule_contracts()
         self.assertGreater(len(published), 100)
@@ -249,6 +358,7 @@ class ReleaseCandidateNormativeRuleContractTests(unittest.TestCase):
         self.assertEqual(len(actual), 10)
 
     def test_full_csharp_normative_standards_match_promotion_evidence_candidate(self):
+        require_git_history(CSHARP_PROMOTION_EVIDENCE_COMMIT)
         promoted_tree = git_object_sha_at(CSHARP_PROMOTION_EVIDENCE_COMMIT, CSHARP_NORMATIVE_ROOT)
         current_tree = git_object_sha_at("HEAD", CSHARP_NORMATIVE_ROOT)
         self.assertEqual(

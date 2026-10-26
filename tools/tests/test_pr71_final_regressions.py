@@ -2,63 +2,20 @@ from __future__ import annotations
 
 import ast
 import importlib.util
-import json
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
-from collections import Counter
 from pathlib import Path
 from unittest import mock
 
-from helpers import REPO_ROOT
+from helpers import REPO_ROOT, require_git_history
 import rc_compatibility_gate_base as compatibility
-import rc_finding_code_contracts_base as finding_codes
 import rc_normative_rule_contracts_base as normative
-import rc_parameterized_finding_codes_base as parameterized_codes
-from rc_reachability_semantics import statement_always_terminates
 import test_rc_agent_skill_entrypoints as agent_skills
-import test_rc_extended_finding_reachability as literal
-import test_rc_finding_helper_runtime as finding_runtime
-import test_rc_finding_reachability as finding_reachability
-import test_rc_parameterized_finding_helper_semantics as parameterized_helpers
-import test_rc_parameterized_finding_reachability as parameterized
 import test_rc_template_contracts as template_contracts
 import test_rc_unnumbered_governance_semantics as unnumbered
-import test_rc_writer_safety as writer_safety
-
-
-CHECKPOINT_INVENTORY_PATH = (
-    REPO_ROOT / "releases" / "compatibility" / "0.10.0-checkpoint.json"
-)
-
-# These stable root documents are deliberately forward-moving status/index
-# surfaces rather than durable policy authorities. Their current-version,
-# readiness, and roadmap prose must advance after publication without turning
-# every version bump into a compatibility break. Normative root documents such
-# as SECURITY.md, CONTRIBUTING.md, MAINTAINERS.md, MATURITY_POLICY.md,
-# RELEASE_POLICY.md, and the PR template remain derived from the authenticated
-# stable-root checkpoint and protected semantically.
-FORWARD_MOVING_INFORMATIONAL_ROOT_PATHS = frozenset(
-    {
-        "README.md",
-        "CATALOG.md",
-        "CHANGELOG.md",
-        "ROADMAP.md",
-    }
-)
-
-# This paragraph is deliberately forward-moving release-state narrative, not a
-# stable governance obligation.  The immutable v0.10.0 copy said the next
-# intended publication was v0.10.0; after publication the correct forward-only
-# text names 1.0.0-rc.1.  Keep the rest of the Pre-1.0 policy protected.
-MUTABLE_ROOT_NARRATIVE = {
-    (
-        "RELEASE_POLICY.md",
-        "pre-1.0 policy",
-    ): "The repository originally prepared ",
-}
 
 
 def _load_validate_all_module():
@@ -126,58 +83,6 @@ def _is_git_text_subprocess(call: ast.Call, relative: Path) -> bool:
     )
 
 
-def _stable_root_contracts(text: str, path: str) -> Counter[tuple[str, str, str]]:
-    contracts = unnumbered.extract_unnumbered_governance_contracts(text, path)
-    for (contract_path, section, statement), count in list(contracts.items()):
-        prefix = MUTABLE_ROOT_NARRATIVE.get((contract_path, section))
-        if prefix is not None and statement.startswith(prefix):
-            del contracts[(contract_path, section, statement)]
-    return contracts
-
-
-def _published_normative_stable_root_paths() -> tuple[str, ...]:
-    """Derive durable normative Markdown roots from the authenticated stable-root inventory."""
-    checkpoint = json.loads(CHECKPOINT_INVENTORY_PATH.read_text(encoding="utf-8"))
-    stable_roots = checkpoint["stablePathGroups"]["root"]
-    normative: list[str] = []
-    for relative in stable_roots:
-        if not relative.endswith(".md"):
-            continue
-        if relative in FORWARD_MOVING_INFORMATIONAL_ROOT_PATHS:
-            continue
-        published_text = unnumbered.base.git_source_at(
-            unnumbered.base.CHECKPOINT_COMMIT,
-            relative,
-        )
-        if _stable_root_contracts(published_text, relative):
-            normative.append(relative)
-    return tuple(normative)
-
-
-def _root_governance_contracts_at_checkpoint() -> Counter[tuple[str, str, str]]:
-    contracts: Counter[tuple[str, str, str]] = Counter()
-    for relative in _published_normative_stable_root_paths():
-        contracts.update(
-            _stable_root_contracts(
-                unnumbered.base.git_source_at(unnumbered.base.CHECKPOINT_COMMIT, relative),
-                relative,
-            )
-        )
-    return contracts
-
-
-def _candidate_root_governance_contracts() -> Counter[tuple[str, str, str]]:
-    contracts: Counter[tuple[str, str, str]] = Counter()
-    for relative in _published_normative_stable_root_paths():
-        contracts.update(
-            _stable_root_contracts(
-                (REPO_ROOT / relative).read_text(encoding="utf-8"),
-                relative,
-            )
-        )
-    return contracts
-
-
 class Pr71FinalRegressionTests(unittest.TestCase):
     def test_git_text_subprocess_boundaries_declare_utf8(self):
         offenders: list[str] = []
@@ -192,15 +97,9 @@ class Pr71FinalRegressionTests(unittest.TestCase):
                     offenders.append(f"{relative.as_posix()}:{call.lineno}")
 
         self.assertEqual(offenders, [])
-        wrapper_test = (
-            REPO_ROOT / "tools/tests/test_validate_all_windows_wrapper.py"
-        ).read_text(encoding="utf-8")
-        self.assertIn(
-            '"text=True, encoding=\'utf-8\', capture_output=True, check=False); "',
-            wrapper_test,
-        )
 
     def test_checkpoint_git_sources_use_utf8_under_non_utf8_locale(self):
+        require_git_history(compatibility.CHECKPOINT_COMMIT)
         build_release = _load_module(
             "pr71_build_release_regression",
             "tools/release/build_release.py",
@@ -209,7 +108,6 @@ class Pr71FinalRegressionTests(unittest.TestCase):
             "pr71_validate_release_regression",
             "tools/release/validate_release.py",
         )
-        validate_all = _load_validate_all_module()
         revision = compatibility.CHECKPOINT_COMMIT
         relative = "RELEASE_POLICY.md"
 
@@ -217,13 +115,8 @@ class Pr71FinalRegressionTests(unittest.TestCase):
             checkpoints = (
                 compatibility.git_source_at(revision, relative),
                 normative.git_source_at(revision, relative),
-                finding_codes.git_source_at(revision, relative),
-                parameterized_codes.git_source_at(revision, relative),
                 agent_skills.git_source_at(revision, relative),
-                finding_reachability.git_source_at(revision, relative),
-                parameterized_helpers.git_source_at(revision, relative),
                 template_contracts.git_source_at(revision, relative),
-                writer_safety.git_output("show", f"{revision}:{relative}"),
                 build_release.run_git(
                     REPO_ROOT,
                     "show",
@@ -234,16 +127,6 @@ class Pr71FinalRegressionTests(unittest.TestCase):
                     "show",
                     f"{revision}:{relative}",
                 ),
-                validate_all._git(
-                    REPO_ROOT,
-                    "show",
-                    f"{revision}:{relative}",
-                ).stdout,
-            )
-            finding_runtime.run_git(
-                REPO_ROOT,
-                "show",
-                f"{revision}:{relative}",
             )
             object_sha = agent_skills.git_object_sha(revision, relative)
 
@@ -255,11 +138,7 @@ class Pr71FinalRegressionTests(unittest.TestCase):
         asserting_helpers = (
             compatibility.git_source_at,
             normative.git_source_at,
-            finding_codes.git_source_at,
-            parameterized_codes.git_source_at,
             agent_skills.git_source_at,
-            finding_reachability.git_source_at,
-            parameterized_helpers.git_source_at,
             template_contracts.git_source_at,
         )
         for source_at in asserting_helpers:
@@ -271,17 +150,9 @@ class Pr71FinalRegressionTests(unittest.TestCase):
                     )
 
         with self.assertRaises(AssertionError):
-            writer_safety.git_output("show", "missing-checkpoint-revision:RELEASE_POLICY.md")
-        with self.assertRaises(AssertionError):
             agent_skills.git_object_sha(
                 "missing-checkpoint-revision",
                 "RELEASE_POLICY.md",
-            )
-        with self.assertRaises(AssertionError):
-            finding_runtime.run_git(
-                REPO_ROOT,
-                "show",
-                "missing-checkpoint-revision:RELEASE_POLICY.md",
             )
 
         build_release = _load_module(
@@ -292,7 +163,6 @@ class Pr71FinalRegressionTests(unittest.TestCase):
             "pr71_validate_release_error_regression",
             "tools/release/validate_release.py",
         )
-        validate_all = _load_validate_all_module()
         with self.assertRaises(RuntimeError):
             build_release.run_git(REPO_ROOT, "show", "missing-checkpoint-revision:path")
         self.assertIsNone(
@@ -302,19 +172,12 @@ class Pr71FinalRegressionTests(unittest.TestCase):
                 "missing-checkpoint-revision:path",
             )
         )
-        self.assertNotEqual(
-            validate_all._git(
-                REPO_ROOT,
-                "show",
-                "missing-checkpoint-revision:path",
-            ).returncode,
-            0,
-        )
 
     def test_root_governance_unnumbered_controls_are_preserved(self):
-        root_paths = _published_normative_stable_root_paths()
-        published = _root_governance_contracts_at_checkpoint()
-        candidate = _candidate_root_governance_contracts()
+        require_git_history(unnumbered.base.CHECKPOINT_COMMIT)
+        root_paths = unnumbered._published_normative_stable_root_paths()
+        published = unnumbered._root_governance_contracts_at_checkpoint()
+        candidate = unnumbered._candidate_root_governance_contracts()
 
         # These were the concrete gaps that exposed the danger of a four-file
         # hand-maintained list. Keep them as sentinels while deriving the full
@@ -332,7 +195,7 @@ class Pr71FinalRegressionTests(unittest.TestCase):
             root_paths,
         )
         self.assertFalse(
-            FORWARD_MOVING_INFORMATIONAL_ROOT_PATHS & set(root_paths),
+            unnumbered.FORWARD_MOVING_INFORMATIONAL_ROOT_PATHS & set(root_paths),
             "release/index/status documents must remain forward-mutable",
         )
 
@@ -349,11 +212,12 @@ class Pr71FinalRegressionTests(unittest.TestCase):
         )
 
     def test_security_reporting_prohibition_is_a_stable_root_contract(self):
+        require_git_history(unnumbered.base.CHECKPOINT_COMMIT)
         checkpoint = unnumbered.base.git_source_at(
             unnumbered.base.CHECKPOINT_COMMIT,
             "SECURITY.md",
         )
-        published = _stable_root_contracts(checkpoint, "SECURITY.md")
+        published = unnumbered._stable_root_contracts(checkpoint, "SECURITY.md")
         reporting_controls = [
             statement
             for path, _section, statement in published
@@ -368,13 +232,14 @@ class Pr71FinalRegressionTests(unittest.TestCase):
             "A public issue may be opened for an exploitable vulnerability",
             1,
         )
-        candidate = _stable_root_contracts(weakened, "SECURITY.md")
+        candidate = unnumbered._stable_root_contracts(weakened, "SECURITY.md")
         self.assertTrue(
             unnumbered.unnumbered_contract_findings(published, candidate),
             "weakening the published confidential-reporting control must be detected",
         )
 
     def test_forward_release_state_narrative_is_not_a_frozen_contract(self):
+        require_git_history(unnumbered.base.CHECKPOINT_COMMIT)
         checkpoint = unnumbered.base.git_source_at(
             unnumbered.base.CHECKPOINT_COMMIT,
             "RELEASE_POLICY.md",
@@ -383,7 +248,7 @@ class Pr71FinalRegressionTests(unittest.TestCase):
             checkpoint,
             "RELEASE_POLICY.md",
         )
-        stable = _stable_root_contracts(checkpoint, "RELEASE_POLICY.md")
+        stable = unnumbered._stable_root_contracts(checkpoint, "RELEASE_POLICY.md")
 
         historical = [
             contract
@@ -400,114 +265,6 @@ class Pr71FinalRegressionTests(unittest.TestCase):
                 for path, section, _statement in stable
             ),
             "durable Pre-1.0 obligations must remain protected",
-        )
-
-    def test_exhaustive_match_with_terminal_catchall_makes_successor_unreachable(self):
-        literal_source = '''
-def validate(value):
-    match value:
-        case "known":
-            return None
-        case _:
-            return None
-    Finding("PUBLIC_CODE", "unreachable")
-'''
-        self.assertEqual(
-            literal.reachable_contracts(literal_source, "sample.py"),
-            Counter(),
-        )
-
-        parameterized_source = '''
-def read_text(path, findings, code):
-    Finding(code, "decode failed", path="sample")
-def validate(root, findings, value):
-    match value:
-        case "known":
-            return None
-        case _:
-            return None
-    read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
-'''
-        self.assertEqual(
-            parameterized.reachable_parameterized_contracts(
-                parameterized_source, "sample.py"
-            ),
-            set(),
-        )
-
-    def test_non_exhaustive_or_guarded_match_remains_fallthrough_capable(self):
-        for source in (
-            '''
-def validate(value):
-    match value:
-        case "known":
-            return None
-    Finding("PUBLIC_CODE", "reachable")
-''',
-            '''
-def validate(value, flag):
-    match value:
-        case _ if flag:
-            return None
-    Finding("PUBLIC_CODE", "reachable")
-''',
-        ):
-            with self.subTest(source=source):
-                contracts = literal.reachable_contracts(source, "sample.py")
-                self.assertEqual(
-                    contracts[("sample.py", "validate", "PUBLIC_CODE")],
-                    1,
-                )
-
-    def test_capture_pattern_without_guard_is_irrefutable_and_terminal(self):
-        tree = ast.parse(
-            '''
-def validate(value):
-    match value:
-        case captured:
-            return None
-'''
-        )
-        function = tree.body[0]
-        self.assertIsInstance(function, ast.FunctionDef)
-        self.assertTrue(statement_always_terminates(function.body[0]))
-
-    def test_statically_false_assert_makes_successor_unreachable(self):
-        literal_source = '''
-def validate():
-    assert False
-    Finding("PUBLIC_CODE", "unreachable")
-'''
-        self.assertEqual(
-            literal.reachable_contracts(literal_source, "sample.py"),
-            Counter(),
-        )
-
-        parameterized_source = '''
-def read_text(path, findings, code):
-    Finding(code, "decode failed", path="sample")
-def validate(root, findings):
-    enabled = False
-    assert enabled
-    read_text(root / "LICENSE", findings, "LICENSE_ENCODING")
-'''
-        self.assertEqual(
-            parameterized.reachable_parameterized_contracts(
-                parameterized_source, "sample.py"
-            ),
-            set(),
-        )
-
-        unknown_assert = '''
-def validate(flag):
-    assert flag
-    Finding("PUBLIC_CODE", "reachable")
-'''
-        self.assertEqual(
-            literal.reachable_contracts(unknown_assert, "sample.py")[
-                ("sample.py", "validate", "PUBLIC_CODE")
-            ],
-            1,
         )
 
     def test_bytecode_reenabled_by_child_is_redirected_outside_source(self):

@@ -10,7 +10,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from helpers import REPO_ROOT, json_result, run_tool, sha256_utf8_text_file
+from helpers import REPO_ROOT, json_result, require_git_history, run_tool, sha256_utf8_text_file
 
 TOOLS_LIB = REPO_ROOT / "tools" / "lib"
 if str(TOOLS_LIB) not in sys.path:
@@ -48,6 +48,7 @@ SCHEMA_STRUCTURAL_KEYS = {"required", "properties", "items"}
 
 
 def git_source_at(revision: str, relative: str) -> str:
+    require_git_history(revision)
     completed = subprocess.run(
         ["git", "-C", str(REPO_ROOT), "show", f"{revision}:{relative}"],
         text=True,

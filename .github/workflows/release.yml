@@ -45,6 +45,8 @@ jobs:
 
       - name: Run complete validation pipeline
         shell: bash
+        env:
+          PAG_REQUIRE_GIT_HISTORY: "1"
         run: python tools/validate-all/run_all.py --include-tests
 
       - name: Validate release tag

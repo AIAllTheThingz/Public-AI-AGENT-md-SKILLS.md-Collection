@@ -12,6 +12,10 @@ def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def rel(path: Path, root: Path) -> str:
+    return path.relative_to(root).as_posix()
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:

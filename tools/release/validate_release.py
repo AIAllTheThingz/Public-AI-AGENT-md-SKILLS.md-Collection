@@ -14,7 +14,7 @@ from typing import Any
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 
-from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
+from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool, rel  # noqa: E402
 
 TOOL = "validate-release"
 VERSION = "1.0.0"
@@ -55,10 +55,6 @@ REQUIRED_MATURITY_HEADINGS = (
     "## Demotion and deprecation",
     "## Review record",
 )
-
-
-def rel(path: Path, root: Path) -> str:
-    return path.relative_to(root).as_posix()
 
 
 def read_version(root: Path, findings: list[Finding]) -> str | None:

@@ -15,7 +15,7 @@ sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 sys.path.insert(0, str(SCRIPT_ROOT))
 
 from completion_semantics import validate_completion_semantics  # noqa: E402
-from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
+from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool, load_json, require_date_time_format  # noqa: E402
 
 try:
     import jsonschema
@@ -25,6 +25,7 @@ except ImportError as exc:
         "Missing dependency 'jsonschema'. Install with: "
         "python -m pip install -r tools/validate-schemas/requirements.txt"
     ) from exc
+require_date_time_format(FormatChecker())
 
 TOOL = "validate-schemas"
 VERSION = "1.2.0"
@@ -61,10 +62,6 @@ INSTANCE_RULES = [
     ("exception-record", "exception-record"),
     ("risk-classification", "risk-classification"),
 ]
-
-
-def load_json(path: Path) -> Any:
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def pointer(parts: list[Any]) -> str:

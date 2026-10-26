@@ -5,14 +5,14 @@ import re
 import subprocess
 import unittest
 
-from helpers import REPO_ROOT, sha256_utf8_text_file
+from helpers import REPO_ROOT, require_git_history, sha256_utf8_text_file
+from rc_normative_rule_contracts_base import rendered_markdown
 
 CHECKPOINT_COMMIT = "83c73f3ab9a049ff2321d463164fcf98fb453a9c"
 CHECKPOINT_PATH = REPO_ROOT / "releases" / "compatibility" / "0.10.0-agent-skill-entrypoints.json"
 CHECKPOINT_SHA256 = "635e34c53f967d1b0bff9602037f7c716650cbf815f7aae3efc6f15c936921fb"
 _LINK_PATTERN = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 _TABLE_SEPARATOR = re.compile(r"^:?-{3,}:?$")
-_HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 def git_source_at(commit: str, relative: str) -> str:
@@ -41,12 +41,8 @@ def git_object_sha(commit: str, relative: str) -> str:
     return completed.stdout.strip()
 
 
-def visible_markdown(text: str) -> str:
-    return _HTML_COMMENT_PATTERN.sub("", text)
-
-
 def agent_skill_entry_paths(manifest_text: str) -> set[str]:
-    manifest_text = visible_markdown(manifest_text)
+    manifest_text = rendered_markdown(manifest_text)
     section = manifest_text.split("## Agent skill entry points", 1)[1].split(
         "## Repository licensing", 1
     )[0]
@@ -78,7 +74,7 @@ def _is_separator_row(cells: list[str] | None) -> bool:
 def skill_routing_contract(skill_text: str) -> set[str]:
     """Extract stable evidence -> package routing rows from visible router tables."""
 
-    lines = visible_markdown(skill_text).splitlines()
+    lines = rendered_markdown(skill_text).splitlines()
     contracts: set[str] = set()
     index = 0
 
@@ -139,6 +135,7 @@ class ReleaseCandidateAgentSkillEntryPointTests(unittest.TestCase):
         cls.checkpoint = json.loads(cls.checkpoint_bytes.decode("utf-8"))
 
     def test_checkpoint_is_immutable_and_derived_from_published_manifest(self):
+        require_git_history(CHECKPOINT_COMMIT)
         self.assertEqual(sha256_utf8_text_file(CHECKPOINT_PATH), CHECKPOINT_SHA256)
         self.assertEqual(self.checkpoint["releaseVersion"], "0.10.0")
         self.assertEqual(self.checkpoint["tag"], "v0.10.0")
@@ -170,6 +167,7 @@ class ReleaseCandidateAgentSkillEntryPointTests(unittest.TestCase):
                 self.assertTrue((REPO_ROOT / relative).is_file(), relative)
 
     def test_candidate_preserves_published_router_trigger_and_target_semantics(self):
+        require_git_history(CHECKPOINT_COMMIT)
         router_count = 0
         for relative in self.checkpoint["stableAgentSkillEntryPaths"]:
             published = skill_routing_contract(
@@ -202,6 +200,7 @@ class ReleaseCandidateAgentSkillEntryPointTests(unittest.TestCase):
         )
 
     def test_language_router_detects_trigger_mapping_change(self):
+        require_git_history(CHECKPOINT_COMMIT)
         published_text = git_source_at(CHECKPOINT_COMMIT, "languages/SKILL.md")
         published = skill_routing_contract(published_text)
         changed = published_text.replace(
@@ -216,6 +215,7 @@ class ReleaseCandidateAgentSkillEntryPointTests(unittest.TestCase):
         )
 
     def test_language_router_detects_package_target_change(self):
+        require_git_history(CHECKPOINT_COMMIT)
         published_text = git_source_at(CHECKPOINT_COMMIT, "languages/SKILL.md")
         published = skill_routing_contract(published_text)
         changed = published_text.replace(

@@ -110,7 +110,7 @@ The archive prefix is the project artifact identity and is intentionally distinc
 
 ## Determinism
 
-Archives are generated from Git-tracked files in sorted path order.
+Archives are generated from the committed `HEAD` content of Git-tracked files in sorted path order, so checkout settings such as `core.autocrlf` cannot change archive bytes.
 
 The builder normalizes:
 

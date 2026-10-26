@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 import sys
+import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -20,6 +22,33 @@ def sha256_utf8_text_file(path: Path) -> str:
     if b"\0" in content:
         raise ValueError(f"expected UTF-8 text file: {path}")
     return hashlib.sha256(content.replace(b"\r\n", b"\n")).hexdigest()
+
+
+def require_git_history(*commits: str) -> None:
+    """Skip tests that read old commits when this tree lacks them; CI sets PAG_REQUIRE_GIT_HISTORY=1 to fail instead."""
+
+    # A source archive has no .git; never let git walk up into an unrelated parent checkout.
+    has_repository = (REPO_ROOT / ".git").exists()
+    missing = [
+        commit
+        for commit in commits
+        if not has_repository
+        or subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "cat-file", "-e", f"{commit}^{{commit}}"],
+            capture_output=True,
+            check=False,
+        ).returncode
+        != 0
+    ]
+    if missing:
+        message = (
+            "needs full git history (missing "
+            + ", ".join(commit[:12] for commit in missing)
+            + "); run from a full clone, for example after git fetch --unshallow"
+        )
+        if os.environ.get("PAG_REQUIRE_GIT_HISTORY") == "1":
+            raise AssertionError(message)
+        raise unittest.SkipTest(message)
 
 
 def run_tool(relative_script: str, *args: str, root: Path | None=None):

@@ -8,12 +8,11 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any
 
 TOOLS_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(TOOLS_ROOT / "lib"))
 
-from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool  # noqa: E402
+from standards_tools import Finding, ToolResult, add_common_arguments, execute_tool, load_json, rel, require_date_time_format  # noqa: E402
 
 try:
     from jsonschema import Draft202012Validator, FormatChecker
@@ -22,6 +21,7 @@ except ImportError as exc:
         "Missing dependency 'jsonschema'. Install with: "
         "python -m pip install -r tools/validate-schemas/requirements.txt"
     ) from exc
+require_date_time_format(FormatChecker())
 
 TOOL = "validate-templates"
 VERSION = "1.0.0"
@@ -65,14 +65,6 @@ SECRET_PATTERNS = [
     re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),
     re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"),
 ]
-
-
-def load_json(path: Path) -> Any:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def rel(path: Path, root: Path) -> str:
-    return path.relative_to(root).as_posix()
 
 
 def run(args: argparse.Namespace) -> ToolResult:

@@ -26,6 +26,16 @@ class ValidateStandardsTests(unittest.TestCase):
             codes = {item["code"] for item in json_result(completed)["findings"]}
             self.assertIn("BOOTSTRAP_PRESENT", codes)
 
+    def test_agents_file_with_invalid_utf8_is_a_finding_not_a_crash(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            make_required_root(root)
+            (root / "AGENTS.md").write_bytes(b"# Agents \xff\xfe\n")
+            completed = run_tool("tools/validate-standards/validate_repository.py", "--format", "json", root=root)
+            self.assertEqual(completed.returncode, 1, completed.stdout + completed.stderr)
+            codes = {item["code"] for item in json_result(completed)["findings"]}
+            self.assertIn("MARKDOWN_ENCODING", codes)
+
     def test_python_cache_fails(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

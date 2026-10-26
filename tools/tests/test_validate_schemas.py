@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +10,9 @@ from pathlib import Path
 from jsonschema import Draft202012Validator, FormatChecker
 
 from helpers import REPO_ROOT, json_result, run_tool
+
+sys.path.insert(0, str(REPO_ROOT / "tools" / "lib"))
+from standards_tools import require_date_time_format  # noqa: E402
 
 
 def completion_v2() -> tuple[dict, dict]:
@@ -1774,6 +1778,20 @@ class ValidateSchemasTests(unittest.TestCase):
             self.assertIn("SCHEMA_VERSION_MISMATCH", codes)
             self.assertNotIn("INTERNAL_ERROR", codes)
             self.assertEqual(result["summary"]["repositoryInstances"], 1)
+
+
+class DateTimeFormatSupportTests(unittest.TestCase):
+    def test_checker_that_accepts_any_date_time_stops_the_tool(self):
+        class AcceptsEverything:
+            def conforms(self, instance, format):  # noqa: A002 - mirrors jsonschema
+                return True
+
+        with self.assertRaises(SystemExit) as raised:
+            require_date_time_format(AcceptsEverything())
+        self.assertIn("rfc3339-validator", str(raised.exception))
+
+    def test_installed_jsonschema_checks_date_time(self):
+        require_date_time_format(FormatChecker())
 
 
 if __name__ == "__main__":
