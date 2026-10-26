@@ -369,8 +369,9 @@ class CheckFreshnessTests(unittest.TestCase):
         self.assertIn("workflow_dispatch:", workflow)
         self.assertIn("tools/check-freshness/check_freshness.py", workflow)
         self.assertIn("runs-on: ubuntu-24.04", workflow)
-        self.assertIn("actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1", workflow)
-        self.assertIn("actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97", workflow)
+        # Pinned to a full commit SHA; which SHA is Dependabot's to bump.
+        self.assertRegex(workflow, r"uses: actions/checkout@[0-9a-f]{40}\b")
+        self.assertRegex(workflow, r"uses: actions/setup-python@[0-9a-f]{40}\b")
         self.assertNotIn("curl ", workflow)
         self.assertNotIn("wget ", workflow)
 
